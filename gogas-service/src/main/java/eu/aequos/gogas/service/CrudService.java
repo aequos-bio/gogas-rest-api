@@ -9,9 +9,16 @@ import java.util.Optional;
 public abstract class CrudService<Model, ID> {
 
     CrudRepository<Model, ID> crudRepository;
+    String type;
 
-    public CrudService(CrudRepository<Model, ID> crudRepository) {
+    public CrudService(CrudRepository<Model, ID> crudRepository, String type) {
         this.crudRepository = crudRepository;
+        this.type = type;
+    }
+
+    public Model getRequired(ID id) throws ItemNotFoundException {
+        return crudRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException(type, id));
     }
 
     public Model create(ConvertibleDTO<Model> dto) {
@@ -19,10 +26,7 @@ public abstract class CrudService<Model, ID> {
     }
 
     public Model update(ID id, ConvertibleDTO<Model> dto) throws ItemNotFoundException {
-        Model existingModel = crudRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Item"));
-
-        return createOrUpdate(existingModel, dto);
+        return createOrUpdate(getRequired(id), dto);
     }
 
     public void delete(ID id) {

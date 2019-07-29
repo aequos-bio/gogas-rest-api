@@ -1,18 +1,14 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.exception.GoGasException;
-import eu.aequos.gogas.exception.ItemNotFoundException;
-import eu.aequos.gogas.exception.UnknownOrderStatusException;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderType;
-import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
+import eu.aequos.gogas.dto.OrderItemUpdateRequest;
+import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.exception.OrderClosedException;
+import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
-import eu.aequos.gogas.persistence.repository.UserRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -23,20 +19,21 @@ import java.util.stream.Collectors;
 public class OrderUserService {
 
     private OrderItemRepo orderItemRepo;
-    private OrderRepo orderRepo;
+    private OrderService orderService;
     private ProductService productService;
-    private UserRepo userRepo;
+    private UserService userService;
 
-    public OrderUserService(OrderItemRepo orderItemRepo, OrderRepo orderRepo, ProductService productService, UserRepo userRepo) {
+    public OrderUserService(OrderItemRepo orderItemRepo, OrderService orderService,
+                            ProductService productService, UserService userService) {
         this.orderItemRepo = orderItemRepo;
-        this.orderRepo = orderRepo;
+        this.orderService = orderService;
         this.productService = productService;
-        this.userRepo = userRepo;
+        this.userService = userService;
     }
 
-    public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws UnknownOrderStatusException, ItemNotFoundException {
-        Order order = orderRepo.findByIdWithType(orderId).orElseThrow(() -> new ItemNotFoundException("Order"));
-        User user = userRepo.findById(userId).orElseThrow(() -> new ItemNotFoundException("User"));
+    public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {
+        Order order = orderService.getRequiredWithType(orderId);
+        User user = userService.getRequired(userId);
 
         boolean isOrderOpen = order.getStatus().isOpen();
         boolean showAllProductsOnPriceList = isOrderOpen && order.isEditable();
@@ -53,8 +50,38 @@ public class OrderUserService {
         return convertToDTO(userOrderMap, products, productOrderTotalMap);
     }
 
-    private boolean isOrderEditable(Order order) {
-        return new Date().before(order.getDeliveryDateAndTime());
+    public SmallUserOrderItemDTO updateUserOrder(String orderId, OrderItemUpdateRequest orderItemUpdate) throws ItemNotFoundException, OrderClosedException {
+        User user = userService.getRequired(orderItemUpdate.getUserId());
+        Product product = productService.getRequired(orderItemUpdate.getProductId());
+        Order order = orderService.getRequired(orderId);
+
+        if (!order.getStatus().isOpen() || !order.isEditable())
+            throw new OrderClosedException();
+
+        OrderItem orderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false)
+                .orElse(newOrderItem(orderId, user, product.getId()));
+
+        orderItem.setOrderedQuantity(orderItemUpdate.getQuantity());
+        orderItem.setUm(orderItemUpdate.getUnitOfMeasure());
+        orderItem.setPrice(product.getPrice());
+        orderItemRepo.save(orderItem);
+
+        Optional<ProductTotalOrder> productTotalOrder = orderItemRepo.totalQuantityAndUsersByProductForOpenOrder(orderId, product.getId());
+
+        return new SmallUserOrderItemDTO()
+                .fromModel(product, orderItem, productTotalOrder.orElse(null));
+    }
+
+    private OrderItem newOrderItem(String orderId, User user, String productId) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(orderId);
+        orderItem.setUser(user.getId());
+        orderItem.setProduct(productId);
+
+        if (user.getRoleEnum().isFriend())
+            orderItem.setFriendReferral(user.getFriendReferral().getId());
+
+        return orderItem;
     }
 
     private boolean showGroupedOrderItems(boolean isOrderOpen, OrderType orderType, User user) {

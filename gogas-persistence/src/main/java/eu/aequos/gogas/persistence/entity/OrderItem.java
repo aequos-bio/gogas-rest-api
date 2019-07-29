@@ -1,5 +1,6 @@
 package eu.aequos.gogas.persistence.entity;
 
+import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -9,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 @Entity
 @Table(name = "ordini")
-public class OrderItem {
+public class OrderItem implements OpenOrderItem {
 
     @Id
     @GenericGenerator(name = "generator", strategy = "uuid2")
@@ -47,7 +48,9 @@ public class OrderItem {
     @Column(name = "riepilogoutente", nullable = false)
     private boolean summary;
 
+    @Column(name = "contabilizzato", nullable = false)
+    private boolean accounted;
+
     @Column(name = "idprodottosostituito" , columnDefinition="uniqueidentifier")
     private String replacedProduct;
-
 }

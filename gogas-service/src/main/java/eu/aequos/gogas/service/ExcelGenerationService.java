@@ -38,7 +38,7 @@ public class ExcelGenerationService {
     }
 
     public byte[] extractProductPriceList(String orderTypeId) {
-        List<ProductPriceListExport> products = productRepo.findByTypeWithSupplier(orderTypeId).stream()
+        List<ProductPriceListExport> products = productRepo.findByType(orderTypeId).stream()
                 .map(this::convertProductForPriceListExport)
                 .collect(Collectors.toList());
 
@@ -65,7 +65,7 @@ public class ExcelGenerationService {
 
     public byte[] extractOrderDetails(String orderId) throws ItemNotFoundException {
         Order order = orderRepo.findByIdWithType(orderId)
-                .orElseThrow(() -> new ItemNotFoundException("Order"));
+                .orElseThrow(() -> new ItemNotFoundException("Order", orderId));
 
         List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
                 .map(this::getOrderItemsForExport)

@@ -1,15 +1,13 @@
 package eu.aequos.gogas.persistence.entity;
 
-import eu.aequos.gogas.exception.UnknownOrderStatusException;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -41,14 +39,10 @@ public class Order {
         public boolean isOpen() {
             return this == Opened;
         }
-
-        public static OrderStatus getByCode(int statusCode) throws UnknownOrderStatusException {
-            return Arrays.stream(OrderStatus.values())
-                    .filter(s -> s.getStatusCode() == statusCode)
-                    .findAny()
-                    .orElseThrow(() -> new UnknownOrderStatusException());
-        }
     }
+
+    private static Map<Integer, OrderStatus> orderStatusMap = Arrays.stream(OrderStatus.values())
+            .collect(Collectors.toMap(OrderStatus::getStatusCode, Function.identity()));
 
     @Id
     @GenericGenerator(name = "generator", strategy = "uuid2")
@@ -115,8 +109,8 @@ public class Order {
     @JoinColumn(name = "iddateordini")
     private Set<OrderSummary> orderSummaries;
     
-    public OrderStatus getStatus() throws UnknownOrderStatusException {
-        return OrderStatus.getByCode(this.statusCode);
+    public OrderStatus getStatus() {
+        return orderStatusMap.get(this.statusCode);
     }
 
     public Date getDeliveryDateAndTime() {
@@ -127,6 +121,7 @@ public class Order {
     }
 
     public boolean isEditable() {
-        return new Date().before(this.getDeliveryDateAndTime());
+        Date now = new Date();
+        return now.after(openingDate) && now.before(this.getDeliveryDateAndTime());
     }
 }

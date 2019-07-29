@@ -1,8 +1,9 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.OrderItemUpdateRequest;
+import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
 import eu.aequos.gogas.exception.GoGasException;
-import eu.aequos.gogas.exception.UnknownOrderStatusException;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.service.OrderUserService;
@@ -24,8 +25,14 @@ public class OrderUserController {
     }
 
     @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<UserOrderItemDTO> getUserOrderItems(@PathVariable String orderId, @RequestParam String userId) throws GoGasException, UnknownOrderStatusException {
+    public List<UserOrderItemDTO> getUserOrderItems(@PathVariable String orderId, @RequestParam String userId) throws GoGasException {
         return orderUserService.getUserOrderItems(orderId, userId);
+    }
+
+    @PostMapping(value = "{orderId}/item", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public SmallUserOrderItemDTO updateUserOrder(@PathVariable String orderId, @RequestBody OrderItemUpdateRequest orderItemUpdate) throws GoGasException {
+        //TODO: check user authorized
+         return orderUserService.updateUserOrder(orderId, orderItemUpdate);
     }
 
     @GetMapping(value = "open", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

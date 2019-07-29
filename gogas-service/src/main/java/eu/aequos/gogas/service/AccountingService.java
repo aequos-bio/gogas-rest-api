@@ -19,7 +19,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     private AccountingRepo accountingRepo;
 
     public AccountingService(AccountingRepo accountingRepo) {
-        super(accountingRepo);
+        super(accountingRepo, "accounting entry");
         this.accountingRepo = accountingRepo;
     }
 

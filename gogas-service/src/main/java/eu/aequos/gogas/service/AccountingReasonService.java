@@ -19,7 +19,7 @@ public class AccountingReasonService extends CrudService<AccountingEntryReason, 
     private SelectItemsConverter selectItemsConverter;
 
     public AccountingReasonService(AccountingReasonRepo accountingReasonRepo, SelectItemsConverter selectItemsConverter) {
-        super(accountingReasonRepo);
+        super(accountingReasonRepo,"accounting reason");
 
         this.accountingReasonRepo = accountingReasonRepo;
         this.selectItemsConverter = selectItemsConverter;

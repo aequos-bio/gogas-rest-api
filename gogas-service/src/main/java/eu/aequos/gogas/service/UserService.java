@@ -23,7 +23,7 @@ public class UserService extends CrudService<User, String> {
     private UserRepo userRepo;
 
     public UserService(ConfigurationService configurationService, SelectItemsConverter selectItemsConverter, UserRepo userRepo) {
-        super(userRepo);
+        super(userRepo, "user");
 
         this.configurationService = configurationService;
         this.selectItemsConverter = selectItemsConverter;
