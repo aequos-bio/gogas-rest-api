@@ -11,10 +11,10 @@ import java.util.stream.Stream;
 @Service
 public class SelectItemsConverter {
 
-    public <T> List<SelectItemDTO> toSelectItems(Stream<T> originalItems, Function<T, SelectItemDTO> convertion,
+    public <T> List<SelectItemDTO> toSelectItems(Stream<T> originalItems, Function<T, SelectItemDTO> conversion,
                                                  boolean addEmptySelection, String emptySelectionLabel) {
 
-        Stream<SelectItemDTO> selectItems = originalItems.map(convertion);
+        Stream<SelectItemDTO> selectItems = originalItems.map(conversion);
 
         if (addEmptySelection)
             selectItems = Stream.concat(Stream.of(SelectItemDTO.empty(emptySelectionLabel)), selectItems);

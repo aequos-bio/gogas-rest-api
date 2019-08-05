@@ -6,6 +6,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Entity
@@ -77,6 +78,9 @@ public final class User implements UserCoreInfo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="idreferente")
     private User friendReferral;
+
+    @OneToMany(mappedBy = "user")
+    private List<OrderManager> managedOrders;
 
     public User withUserId(String id) {
         this.id = id;

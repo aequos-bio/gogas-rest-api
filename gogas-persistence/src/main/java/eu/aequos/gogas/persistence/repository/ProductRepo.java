@@ -18,4 +18,6 @@ public interface ProductRepo extends CrudRepository<Product, String>, JpaSpecifi
 
     @Query("SELECT p FROM Product p JOIN FETCH p.category c JOIN FETCH p.supplier s WHERE p.id IN (?1) ORDER BY c.priceListPosition, p.description")
     List<Product> findByIdInOrderByPriceList(Set<String> productIds);
+
+    List<Product> findByIdIn(Set<String> productIds);
 }

@@ -34,9 +34,4 @@ public class OrderUserController {
         //TODO: check user authorized
          return orderUserService.updateUserOrder(orderId, orderItemUpdate);
     }
-
-    @GetMapping(value = "open", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<Order> getUserOrderItems(@RequestParam String userId) {
-        return orderRepo.openOrders(userId);
-    }
 }

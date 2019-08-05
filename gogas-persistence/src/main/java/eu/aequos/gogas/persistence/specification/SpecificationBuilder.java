@@ -2,8 +2,11 @@ package eu.aequos.gogas.persistence.specification;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SpecificationBuilder<T> {
     Specification<T> filter;
@@ -27,10 +30,23 @@ public class SpecificationBuilder<T> {
                                                       Function<U, Specification<T>> func,
                                                       BiFunction<Specification<T>, Specification<T>, Specification<T>> operator,
                                                       U value) {
-        if (value == null)
+        if (isEmpty(value))
             return spec;
 
         return operator.apply(spec, func.apply(value));
+    }
+
+    private boolean isEmpty(Object value) {
+        if (value == null)
+            return true;
+
+        if (value instanceof String)
+            return ((String) value).isEmpty();
+
+        if (value instanceof Collection)
+            return ((Collection) value).isEmpty();
+
+        return false;
     }
 
     public Specification<T> build() {

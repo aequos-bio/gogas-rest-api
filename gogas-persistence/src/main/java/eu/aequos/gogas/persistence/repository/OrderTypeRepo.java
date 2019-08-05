@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface OrderTypeRepo extends CrudRepository<OrderType, String> {
 
-    List<OrderType> findAll();
+    List<OrderType> findAllByOrderByDescription();
 }

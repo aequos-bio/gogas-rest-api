@@ -1,11 +1,9 @@
 package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Data
@@ -14,7 +12,9 @@ import java.math.BigDecimal;
 public class SupplierOrderItem {
 
     @Id
-    @Column(name = "idrigaordine", nullable = false)
+    @GenericGenerator(name = "generator", strategy = "uuid2")
+    @GeneratedValue(generator = "generator")
+    @Column(name = "idrigaordine" , columnDefinition="uniqueidentifier")
     private String id;
 
     @Column(name = "iddateordine", nullable = false)

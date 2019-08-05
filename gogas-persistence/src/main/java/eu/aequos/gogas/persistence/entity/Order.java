@@ -59,11 +59,11 @@ public class Order {
     @Column(name = "datachiusura", nullable = false)
     private Date dueDate;
 
+    @Column(name = "orachiusura", nullable = false)
+    private int dueHour;
+
     @Column(name = "dataconsegna", nullable = false)
     private Date deliveryDate;
-
-    @Column(name = "orachiusura", nullable = false)
-    private int deliveryHour;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idtipologiaordine", nullable = false)
@@ -105,23 +105,19 @@ public class Order {
     @Column(name = "lastweightupdate")
     private Timestamp lastWeightUpdate;
 
-    @OneToMany
-    @JoinColumn(name = "iddateordini")
-    private Set<OrderSummary> orderSummaries;
-    
     public OrderStatus getStatus() {
         return orderStatusMap.get(this.statusCode);
     }
 
-    public Date getDeliveryDateAndTime() {
+    public Date getDueDateAndTime() {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(this.deliveryDate);
-        calendar.set(Calendar.HOUR_OF_DAY, this.deliveryHour);
+        calendar.setTime(this.dueDate);
+        calendar.set(Calendar.HOUR_OF_DAY, this.dueHour);
         return calendar.getTime();
     }
 
     public boolean isEditable() {
         Date now = new Date();
-        return now.after(openingDate) && now.before(this.getDeliveryDateAndTime());
+        return now.after(openingDate) && now.before(this.getDueDateAndTime());
     }
 }

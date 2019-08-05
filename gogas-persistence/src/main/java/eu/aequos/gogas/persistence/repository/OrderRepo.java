@@ -1,17 +1,38 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.QueryByExampleExecutor;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-public interface OrderRepo extends CrudRepository<Order, String> {
-
-    @Query("SELECT DISTINCT o FROM Order o JOIN FETCH o.orderType t LEFT JOIN FETCH o.orderSummaries s LEFT JOIN FETCH s.user u WHERE (u.id = ?1 OR u IS NULL) AND CURRENT_TIMESTAMP BETWEEN o.openingDate AND o.dueDate")
-    List<Order> openOrders(String userId);
+public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificationExecutor<Order> {
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.id = ?1")
     Optional<Order> findByIdWithType(String orderId);
+
+    List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, Date dueDate, Date deliveryDate);
+
+    @Query(value = "SELECT idDateOrdini AS orderId, " +
+            "CASE " +
+            "   WHEN t.\"external\" = 1 OR t.totaleCalcolato = 0 THEN " +
+            "       (SELECT SUM(importo) FROM movimenti m WHERE d.idDateOrdini = m.idDateOrdini) " +
+            "   ELSE " +
+            "       (SELECT SUM(qtaRitirataKg * prezzoKg) FROM ordini o WHERE d.idDateOrdini = o.idDateOrdine AND riepilogoUtente = 1) " +
+            "END as totalAmount " +
+            "FROM dateOrdini d " +
+            "INNER JOIN tipologiaOrdine t ON d.idTipologiaOrdine = t.idTipologiaOrdine " +
+            "WHERE d.idDateOrdini IN ?1", nativeQuery = true)
+    List<OrderSummary> findOrderSummary(Set<String> orderIds);
+
+    @Modifying
+    @Query("UPDATE Order o SET o.statusCode = ?2 WHERE o.id = ?1")
+    int updateOrderStatus(String orderId, int status);
 }
