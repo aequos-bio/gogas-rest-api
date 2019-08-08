@@ -10,6 +10,11 @@ import eu.aequos.gogas.service.ConfigurationService.RoundingMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 @Service
 public class OrderWorkflowHandler {
 
@@ -68,5 +73,53 @@ public class OrderWorkflowHandler {
             default:
                 return null; //TODO throw exception
         }
+    }
+
+    public List<String> getAvailableActions(Order order, User.Role userRole) {
+        switch (order.getStatus()) {
+            case Opened :
+                return getOpenedActions(order);
+
+            case Closed :
+                return Arrays.asList("gestisci", "riapri", "contabilizza");
+
+            case Accounted :
+                return getAccountedAction(userRole);
+
+            case Cancelled :
+                return Arrays.asList("undocancel");
+
+            default:
+                return new ArrayList<>();
+        }
+    }
+
+    private List<String> getAccountedAction(User.Role userRole) {
+        List<String> result = new ArrayList<>();
+        result.add("dettaglio");
+
+        if (userRole.isAdmin())
+            result.add("storna");
+
+        return result;
+    }
+
+    private List<String> getOpenedActions(Order order) {
+        List<String> result = new ArrayList<>();
+        Date now = new Date();
+
+        result.add("modifica");
+
+        if (order.getOpeningDate().after(now))
+            result.add("elimina");
+        else {
+            result.add("dettaglio");
+            result.add("cancel");
+        }
+
+        if (order.getDueDateAndTime().before(now))
+            result.add("chiudi");
+
+        return result;
     }
 }

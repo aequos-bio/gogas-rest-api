@@ -2,6 +2,7 @@ package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.UserSummary;
+import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.Procedure;
@@ -23,7 +24,9 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     List<User> findByRole(String role);
 
-    List<User> findByIdIn(Set<String> usrIds);
+    <T> List<T> findByIdIn(Set<String> usrIds, Class<T> type);
+
+    List<UserCoreInfo> findByIdNotInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
 
     List<UserSummary> findByFriendReferralId(String referralId);
 

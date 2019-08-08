@@ -8,10 +8,8 @@ import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,14 +17,14 @@ import java.util.stream.Collectors;
 @Service
 public class OrderUserService {
 
-    private OrderItemRepo orderItemRepo;
+    private OrderItemService orderItemService;
     private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
 
-    public OrderUserService(OrderItemRepo orderItemRepo, OrderManagerService orderManagerService,
+    public OrderUserService(OrderItemService orderItemService, OrderManagerService orderManagerService,
                             ProductService productService, UserService userService) {
-        this.orderItemRepo = orderItemRepo;
+        this.orderItemService = orderItemService;
         this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
@@ -40,8 +38,7 @@ public class OrderUserService {
         boolean showAllProductsOnPriceList = isOrderOpen && order.isEditable();
         boolean showGroupedOrderItems = showGroupedOrderItems(isOrderOpen, order.getOrderType(), user);
 
-        Map<String, OpenOrderItem> userOrderMap = orderItemRepo.findByUserAndOrderAndSummary(userId, orderId, showGroupedOrderItems, OpenOrderItem.class).stream()
-                .collect(Collectors.toMap(OpenOrderItem::getProduct, Function.identity()));
+        Map<String, OpenOrderItem> userOrderMap = orderItemService.getUserOrderItems(userId, orderId, showGroupedOrderItems);
 
         Map<String, ProductTotalOrder> productOrderTotalMap = getProductOrderTotal(orderId, isOrderOpen).stream()
                 .collect(Collectors.toMap(ProductTotalOrder::getProduct, Function.identity()));
@@ -59,39 +56,12 @@ public class OrderUserService {
 
         User user = userService.getRequired(orderItemUpdate.getUserId());
         Product product = productService.getRequired(orderItemUpdate.getProductId());
-        OrderItem orderItem = updateOrDeleteItem(user, product, orderId, orderItemUpdate);
+        OrderItem orderItem = orderItemService.updateOrDeleteItemByUser(user, product, orderId, orderItemUpdate);
 
-        Optional<ProductTotalOrder> productTotalOrder = orderItemRepo.totalQuantityAndUsersByProductForOpenOrder(orderId, product.getId());
+        Optional<ProductTotalOrder> productTotalOrder = orderItemService.getTotalQuantityByProduct(orderId, product.getId());
 
         return new SmallUserOrderItemDTO()
                 .fromModel(product, orderItem, productTotalOrder.orElse(null));
-    }
-
-    private OrderItem updateOrDeleteItem(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
-        Optional<OrderItem> existingOrderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false);
-
-        if (orderItemUpdate.getQuantity() == null || orderItemUpdate.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            existingOrderItem.ifPresent(orderItemRepo::delete);
-            return null;
-        }
-
-        OrderItem orderItem = existingOrderItem.orElse(newOrderItem(orderId, user, product.getId()));
-        orderItem.setOrderedQuantity(orderItemUpdate.getQuantity());
-        orderItem.setUm(orderItemUpdate.getUnitOfMeasure());
-        orderItem.setPrice(product.getPrice());
-        return orderItemRepo.save(orderItem);
-    }
-
-    private OrderItem newOrderItem(String orderId, User user, String productId) {
-        OrderItem orderItem = new OrderItem();
-        orderItem.setOrder(orderId);
-        orderItem.setUser(user.getId());
-        orderItem.setProduct(productId);
-
-        if (user.getRoleEnum().isFriend())
-            orderItem.setFriendReferral(user.getFriendReferral().getId());
-
-        return orderItem;
     }
 
     private boolean showGroupedOrderItems(boolean isOrderOpen, OrderType orderType, User user) {
@@ -116,7 +86,7 @@ public class OrderUserService {
 
     private List<ProductTotalOrder> getProductOrderTotal(String orderId, boolean isOrderOpen) {
         if (isOrderOpen)
-            return orderItemRepo.totalQuantityAndUsersByProductForOpenOrder(orderId);
+            return orderItemService.getTotalQuantityByProduct(orderId, true);
 
         return new ArrayList<>();
     }

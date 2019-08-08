@@ -47,7 +47,7 @@ public class ProductService extends CrudService<Product, String> {
                 .collect(Collectors.toList());
     }
 
-    public List<Product> fetchProducts(String productType, String category,
+    private List<Product> fetchProducts(String productType, String category,
                                        Boolean available, Boolean cancelled,
                                        boolean orderByPriceList) {
 

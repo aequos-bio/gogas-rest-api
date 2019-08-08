@@ -6,4 +6,5 @@ public interface ProductTotalOrder {
     String getProduct();
     BigDecimal getTotalQuantity();
     BigDecimal getUserCount();
+    boolean isCancelled();
 }

@@ -1,23 +1,24 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.dto.OrderDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
-import eu.aequos.gogas.exception.InvalidOrderActionException;
-import eu.aequos.gogas.exception.ItemNotFoundException;
-import eu.aequos.gogas.exception.OrderAlreadyExistsException;
-import eu.aequos.gogas.exception.UserNotAuthorizedException;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderManager;
-import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.workflow.OrderWorkflowHandler;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,17 +28,27 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     private OrderRepo orderRepo;
     private OrderManagerRepo orderManagerRepo;
+    private OrderItemService orderItemService;
+    private SupplierOrderItemRepo supplierOrderItemRepo;
+
     private OrderWorkflowHandler orderWorkflowHandler;
+
     private UserService userService;
+    private ProductService productService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
-                               OrderWorkflowHandler orderWorkflowHandler, UserService userService) {
+                               OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
+                               OrderWorkflowHandler orderWorkflowHandler, UserService userService,
+                               ProductService productService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
         this.orderManagerRepo = orderManagerRepo;
+        this.orderItemService = orderItemService;
+        this.supplierOrderItemRepo = supplierOrderItemRepo;
         this.orderWorkflowHandler = orderWorkflowHandler;
         this.userService = userService;
+        this.productService = productService;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -45,7 +56,29 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .orElseThrow(() -> new ItemNotFoundException(type, id));
     }
 
+    public List<OrderByProductDTO> getOrderDetailByProduct(String orderId) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
+        //TODO: check user permissions
+        boolean isOrderOpen = order.getStatus().isOpen();
+
+        List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(orderId, isOrderOpen);
+        Map<String, ProductTotalOrder> productTotalOrders = productOrderTotal
+                .toMap(ProductTotalOrder::getProduct);
+
+        List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
+
+        Map<String, SupplierOrderItem> supplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId)
+                .toMap(SupplierOrderItem::getProductId);
+
+        return orderedProducts.stream()
+                .map(p -> new OrderByProductDTO().fromModel(p, productTotalOrders.get(p.getId()), supplierOrderItems.get(p.getId())))
+                .collect(Collectors.toList());
+    }
+
+
+
     public synchronized Order create(OrderDTO dto) throws OrderAlreadyExistsException {
+        //TODO: check user permissions
         List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(dto.getOrderTypeId(), dto.getDueDate(), dto.getDeliveryDate());
 
         if (!duplicateOrders.isEmpty())
@@ -88,7 +121,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
 
         return orderList.stream()
-                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId()), getActions(entry, User.Role.A)))
+                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId()),  orderWorkflowHandler.getAvailableActions(entry, User.Role.A)))
                 .collect(Collectors.toList());
     }
 
@@ -109,51 +142,84 @@ public class OrderManagerService extends CrudService<Order, String> {
                 && !managedOrderTypes.stream().anyMatch(o -> o.equalsIgnoreCase(filterOrderType));
     }
 
-    private List<String> getActions(Order order, User.Role userRole) {
-        switch (order.getStatus()) {
-            case Opened :
-                return getOpenedActions(order);
+    /*** OPERATIONS *****/
 
-            case Closed :
-                return Arrays.asList("gestisci", "riapri", "contabilizza");
+    public List<OrderItemByProductDTO> getOrderItemsByProduct(String orderId, String productId) throws ItemNotFoundException {
+        Order order = this.getRequiredWithType(orderId);
+        //TODO: check user permissions
 
-            case Accounted :
-                return getAccountedAction(userRole);
+        List<ByProductOrderItem> orderItems = orderItemService.getItemsByProduct(productId, orderId, !order.getStatus().isOpen());
+        Map<String, String> userFullNameMap = userService.getUsersFullNameMap(orderItems.extractIds(ByProductOrderItem::getUser));
 
-            case Cancelled :
-                return Arrays.asList("undocancel");
-
-            default:
-                return new ArrayList<>();
-        }
+        return orderItems.stream()
+                .map(o -> new OrderItemByProductDTO().fromModel(o, userFullNameMap.get(o.getUser())))
+                .sorted(Comparator.comparing(OrderItemByProductDTO::getUser))
+                .collect(Collectors.toList());
     }
 
-    private List<String> getAccountedAction(User.Role userRole) {
-        List<String> result = new ArrayList<>();
-        result.add("dettaglio");
-
-        if (userRole.isAdmin())
-            result.add("storna");
-
-        return result;
+    public boolean updateItemDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
+        //TODO: check user permissions
+        return orderItemService.updateDeliveredQty(orderId, orderItemId, deliveredQty);
     }
 
-    private List<String> getOpenedActions(Order order) {
-        List<String> result = new ArrayList<>();
-        Date now = new Date();
+    public void insertOrderItem(String orderId, OrderItemUpdateRequest orderItem) throws GoGasException {
+        if (orderItem.getQuantity() == null || orderItem.getQuantity().compareTo(BigDecimal.ZERO) <= 0)
+            throw new GoGasException("Inserire una quantità maggiore di zero");
 
-        result.add("modifica");
+        Order order = getRequired(orderId);
 
-        if (order.getOpeningDate().after(now))
-            result.add("elimina");
-        else {
-            result.add("dettaglio");
-            result.add("cancel");
-        }
+        if (order.getStatus() != Order.OrderStatus.Closed)
+            throw new OrderClosedException();
 
-        if (order.getDueDateAndTime().before(now))
-            result.add("chiudi");
+        User user = userService.getRequired(orderItem.getUserId());
+        Product product = productService.getRequired(orderItem.getProductId());
+        orderItemService.insertItemByManager(user, product, orderId, orderItem);
+    }
 
-        return result;
+    public List<SelectItemDTO> getUsersNotOrdering(String orderId, String productId) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
+        Set<String> userIds = orderItemService.getUsersWithOrder(orderId, productId);
+        Set<String> userRoles = userService.getAllUserRolesAsString(false, !order.getOrderType().isSummaryRequired());
+
+        return userService.getActiveUsersForSelectByBlackListAndRoles(userIds, userRoles);
+    }
+
+    public void updateSupplierOrderQty(String orderId, String productId, int boxes) {
+        supplierOrderItemRepo.updateBoxesByOrderIdAndProductId(orderId, productId, new BigDecimal(boxes));
+    }
+
+    public void replaceOrderItemWithProduct(String orderId, String orderItemId, String productId) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
+
+        SupplierOrderItem supplierOrderItem = supplierOrderItemRepo.findByOrderIdAndProductId(orderId, productId)
+                .orElseThrow(() -> new ItemNotFoundException("SupplierOrder", Arrays.asList(orderId, productId)));
+
+        orderItemService.replaceOrderItemsProduct(orderItemId, order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
+    }
+
+    @Transactional
+    public void updateProductPrice(String orderId, String productId, BigDecimal price) throws GoGasException {
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0)
+            throw new GoGasException("Il prezzo deve essere un valore maggiore di zero");
+
+        supplierOrderItemRepo.updatePriceByOrderIdAndProductId(orderId, productId, price);
+        orderItemService.updatePriceByOrderIdAndProductId(orderId, productId, price);
+    }
+
+    public void distributeRemainingQuantities(String orderId, String productId) throws ItemNotFoundException {
+        SupplierOrderItem supplierOrderItem = supplierOrderItemRepo.findByOrderIdAndProductId(orderId, productId)
+                .orElseThrow(() -> new ItemNotFoundException("SupplierOrder", Arrays.asList(orderId, productId)));
+
+        List<ByProductOrderItem> productOrderItems = orderItemService.getItemsByProduct(productId, orderId, true);
+
+        BigDecimal totalDeliveredQuantity = productOrderItems.stream()
+                .map(ByProductOrderItem::getDeliveredQuantity)
+                .reduce(BigDecimal::add)
+                .get();
+
+        BigDecimal remainingQuantity = supplierOrderItem.getTotalQuantity().subtract(totalDeliveredQuantity);
+        BigDecimal remainingQuantityRatio = remainingQuantity.divide(totalDeliveredQuantity, RoundingMode.HALF_UP);
+
+        orderItemService.increaseDeliveredQtyByProduct(orderId, productId, remainingQuantityRatio);
     }
 }

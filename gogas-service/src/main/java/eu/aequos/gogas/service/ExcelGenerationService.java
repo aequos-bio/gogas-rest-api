@@ -111,7 +111,7 @@ public class ExcelGenerationService {
                 .map(item -> item.getUserId())
                 .collect(Collectors.toSet());
 
-        return userRepo.findByIdIn(userIdsInOrder);
+        return userRepo.findByIdIn(userIdsInOrder, User.class);
     }
 
     private UserExport convertUserForExport(User user) {

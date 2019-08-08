@@ -8,10 +8,11 @@ import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.stream;
 
 @Service
 public class UserService extends CrudService<User, String> {
@@ -22,6 +23,8 @@ public class UserService extends CrudService<User, String> {
     private SelectItemsConverter selectItemsConverter;
     private UserRepo userRepo;
 
+    //TODO: cache users
+
     public UserService(ConfigurationService configurationService, SelectItemsConverter selectItemsConverter, UserRepo userRepo) {
         super(userRepo, "user");
 
@@ -31,17 +34,35 @@ public class UserService extends CrudService<User, String> {
     }
 
     public List<SelectItemDTO> getUsersForSelect(String role, boolean withAll) {
-        Stream<UserCoreInfo> users = userRepo.findByRole(role, UserCoreInfo.class).stream()
+        return toSelectItems(userRepo.findByRole(role, UserCoreInfo.class), withAll);
+    }
+
+    public List<SelectItemDTO> getActiveUsersForSelectByBlackListAndRoles(Set<String> blackList, Set<String> role) {
+        return toSelectItems(userRepo.findByIdNotInAndRoleInAndEnabled(blackList, role, true), false);
+    }
+
+    private List<SelectItemDTO> toSelectItems(List<UserCoreInfo> users, boolean withAll) {
+        Stream<UserCoreInfo> userStream = users.stream()
                 .sorted(getUserSorting());
 
-        return selectItemsConverter.toSelectItems(users, this::getSelectItem, withAll, "Tutti");
+        return selectItemsConverter.toSelectItems(userStream, this::getSelectItem, false, "Tutti");
     }
+
+    public Map<String, String> getUsersFullNameMap(Set<String> userIds) {
+        return userRepo.findByIdIn(userIds, UserCoreInfo.class).stream()
+                .collect(Collectors.toMap(UserCoreInfo::getId, this::getUserDisplayName));
+    }
+
 
     private SelectItemDTO getSelectItem(UserCoreInfo user) {
         String icon = user.isEnabled() ? "" : DISABLED_ICON;
-        String label = icon + getUserDisplayName(user.getFirstName(), user.getLastName());
+        String label = icon + getUserDisplayName(user);
 
         return new SelectItemDTO(user.getId(), label);
+    }
+
+    private String getUserDisplayName(UserCoreInfo user) {
+        return getUserDisplayName(user.getFirstName(), user.getLastName());
     }
 
     public String getUserDisplayName(String firstName, String lastName) {
@@ -69,5 +90,13 @@ public class UserService extends CrudService<User, String> {
                 .sorted(getUserSorting())
                 .map(u -> new UserDTO().fromModel(u))
                 .collect(Collectors.toList());
+    }
+
+    public Set<String> getAllUserRolesAsString(boolean includeAdmin, boolean includeFriend) {
+        return Arrays.stream(User.Role.values())
+                .filter(r -> includeAdmin || !r.isAdmin())
+                .filter(r -> includeFriend || !r.isFriend())
+                .map(Enum::name)
+                .collect(Collectors.toSet());
     }
 }
