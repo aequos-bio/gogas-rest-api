@@ -7,6 +7,7 @@ import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
+import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
@@ -87,6 +88,10 @@ public class OrderItemService {
             return orderItemRepo.totalQuantityAndUsersByProductForOpenOrder(orderId);
         else
             return orderItemRepo.totalQuantityAndUsersByProductForClosedOrder(orderId);
+    }
+
+    public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId) {
+        return orderItemRepo.itemsCountAndAmountByUserForClosedOrder(orderId);
     }
 
     public List<ByProductOrderItem> getItemsByProduct(String productId, String orderId, boolean summary) {

@@ -77,4 +77,8 @@ public class ConfigurationService {
             return null;
         }
     }
+
+    public static DateFormat getDateFormat() {
+        return format;
+    }
 }

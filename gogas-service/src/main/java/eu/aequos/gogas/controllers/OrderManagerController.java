@@ -93,6 +93,38 @@ public class OrderManagerController {
         return orderManagerService.getUsersNotOrdering(orderId, productId);
     }
 
+    @GetMapping(value = "{orderId}/byUser/list")
+    public List<OrderByUserDTO> getOrderDetailsByUser(@PathVariable String orderId) throws ItemNotFoundException {
+        return orderManagerService.getOrderDetailByUser(orderId);
+    }
+
+    @GetMapping(value = "{orderId}/byUser/availableUsers")
+    public List<SelectItemDTO> getUsersNotOrdering(@PathVariable String orderId) throws ItemNotFoundException {
+        return orderManagerService.getUsersNotOrdering(orderId);
+    }
+
+    @GetMapping(value = "{orderId}/byUser/{userId}")
+    public List<OrderItemByUserDTO> getByUserDetails(@PathVariable String orderId, @PathVariable String userId) throws ItemNotFoundException {
+        return orderManagerService.getOrderItemsByUser(orderId, userId);
+    }
+
+    @PostMapping(value = "{orderId}/byUser/{userId}")
+    public String updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+        return orderManagerService.updateUserCost(orderId, userId, cost);
+    }
+
+    @DeleteMapping(value = "{orderId}/byUser/{userId}")
+    public BasicResponseDTO deleteEntryByUser(@PathVariable String orderId, @PathVariable String userId) throws ItemNotFoundException {
+        orderManagerService.deleteUserCost(orderId, userId);
+        return new BasicResponseDTO("OK");
+
+    }
+
+    @PostMapping(value = "{orderId}/shippingCost")
+    public List<OrderByUserDTO> updateShippingCost(@PathVariable String orderId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+        return orderManagerService.updateShippingCost(orderId, cost);
+    }
+
     /********************************/
 
     @PutMapping(value = "{orderId}/product/{productId}/supplier")

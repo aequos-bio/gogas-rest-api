@@ -22,6 +22,8 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     <T> List<T> findByRole(String role, Class<T> type);
 
+    List<UserCoreInfo> findByRoleInAndEnabled(Set<String> roles, boolean enabled);
+
     List<User> findByRole(String role);
 
     <T> List<T> findByIdIn(Set<String> usrIds, Class<T> type);

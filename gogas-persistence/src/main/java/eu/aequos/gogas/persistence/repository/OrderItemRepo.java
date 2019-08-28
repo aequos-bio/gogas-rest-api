@@ -1,6 +1,7 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.OrderItem;
+import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -53,6 +54,12 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     Optional<ProductTotalOrder> totalQuantityAndUsersByProductForOpenOrder(String orderId, String productId);
 
     long countDistinctUserByOrder(String orderId);
+
+    @Query("SELECT o.user AS userId, COUNT(o.product) AS orderedItems, SUM(o.deliveredQuantity * o.price) AS totalAmount " +
+            "FROM OrderItem o " +
+            "WHERE o.order = ?1 and o.summary = true " +
+            "GROUP BY o.user")
+    List<ByUserOrderItem> itemsCountAndAmountByUserForClosedOrder(String orderId);
 
     @Modifying
     int deleteByOrderAndSummary(String orderId, boolean summary);

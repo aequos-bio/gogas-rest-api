@@ -4,11 +4,10 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
-import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ShippingCostRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
@@ -22,6 +21,7 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
@@ -30,25 +30,30 @@ public class OrderManagerService extends CrudService<Order, String> {
     private OrderManagerRepo orderManagerRepo;
     private OrderItemService orderItemService;
     private SupplierOrderItemRepo supplierOrderItemRepo;
+    private ShippingCostRepo shippingCostRepo;
 
     private OrderWorkflowHandler orderWorkflowHandler;
 
     private UserService userService;
     private ProductService productService;
+    private AccountingService accountingService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
-                               OrderWorkflowHandler orderWorkflowHandler, UserService userService,
-                               ProductService productService) {
+                               ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
+                               UserService userService, ProductService productService,
+                               AccountingService accountingService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
         this.orderManagerRepo = orderManagerRepo;
         this.orderItemService = orderItemService;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
+        this.shippingCostRepo = shippingCostRepo;
         this.orderWorkflowHandler = orderWorkflowHandler;
         this.userService = userService;
         this.productService = productService;
+        this.accountingService = accountingService;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -64,6 +69,9 @@ public class OrderManagerService extends CrudService<Order, String> {
         List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(orderId, isOrderOpen);
         Map<String, ProductTotalOrder> productTotalOrders = productOrderTotal
                 .toMap(ProductTotalOrder::getProduct);
+
+        if (productTotalOrders.isEmpty())
+            return new ArrayList<>();
 
         List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
 
@@ -177,9 +185,21 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public List<SelectItemDTO> getUsersNotOrdering(String orderId, String productId) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
         Set<String> userIds = orderItemService.getUsersWithOrder(orderId, productId);
+        return getUsersNotOrdering(orderId, userIds);
+    }
+
+    public List<SelectItemDTO> getUsersNotOrdering(String orderId) throws ItemNotFoundException {
+        Set<String> userIds = accountingService.getUsersWithOrder(orderId);
+        return getUsersNotOrdering(orderId, userIds);
+    }
+
+    private List<SelectItemDTO> getUsersNotOrdering(String orderId, Set<String> userIds) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
         Set<String> userRoles = userService.getAllUserRolesAsString(false, !order.getOrderType().isSummaryRequired());
+
+        if (userIds.isEmpty())
+            return userService.getActiveUsersByRoles(userRoles);
 
         return userService.getActiveUsersForSelectByBlackListAndRoles(userIds, userRoles);
     }
@@ -221,5 +241,107 @@ public class OrderManagerService extends CrudService<Order, String> {
         BigDecimal remainingQuantityRatio = remainingQuantity.divide(totalDeliveredQuantity, RoundingMode.HALF_UP);
 
         orderItemService.increaseDeliveredQtyByProduct(orderId, productId, remainingQuantityRatio);
+    }
+
+    public String updateUserCost(String orderId, String userId, BigDecimal cost) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
+        User user = userService.getRequired(userId);
+
+        return accountingService.createOrUpdateEntryForOrder(order, user, cost); //TODO: ricalcolare costo trasporto
+    }
+
+    public boolean deleteUserCost(String orderId, String userId) {
+        return accountingService.deleteUserEntryForOrder(orderId, userId);
+    }
+
+    public List<OrderByUserDTO> getOrderDetailByUser(String orderId) throws ItemNotFoundException {
+        return getOrderDetailByUser(getRequiredWithType(orderId));
+    }
+
+    private List<OrderByUserDTO> getOrderDetailByUser(Order order) {
+        boolean computedAmount = order.getOrderType().isComputedAmount();
+
+        Map<String, BigDecimal> accountingEntries = accountingService.getOrderAccountingEntries(order.getId()).stream()
+                .collect(Collectors.toMap(entry -> entry.getUser().getId(), AccountingEntry::getAmount));
+
+        Map<String, ByUserOrderItem> userOrderItems = orderItemService.getItemsCountAndAmountByUser(order.getId())
+                .toMap(ByUserOrderItem::getUserId);
+
+        Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()
+                .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
+
+        Set<String> allUserIds = Stream.concat(accountingEntries.keySet().stream(), userOrderItems.keySet().stream())
+                .collect(Collectors.toSet());
+
+        Map<String, String> users = userService.getUsersFullNameMap(allUserIds);
+
+         return users.entrySet().stream()
+                 .map(user -> getOrderByUser(user, userOrderItems.get(user.getKey()), accountingEntries.get(user.getKey()), shippingCostMap.get(user.getKey()), computedAmount))
+                 .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
+                 .collect(Collectors.toList());
+    }
+
+    private OrderByUserDTO getOrderByUser(Map.Entry<String, String> user, ByUserOrderItem userOrderItem,
+                                          BigDecimal accountingEntryAmount, BigDecimal shippingCost,
+                                          boolean computedAmount) {
+
+        OrderByUserDTO orderByUser = new OrderByUserDTO();
+        orderByUser.setUserId(user.getKey());
+        orderByUser.setUserFullName(user.getValue());
+        orderByUser.setOrderedItemsCount(userOrderItem != null ? userOrderItem.getOrderedItems() : 0);
+        orderByUser.setShippingCost(shippingCost);
+        orderByUser.setNegativeBalance(false); //TODO: riempire correttamente
+
+        if (computedAmount)
+            orderByUser.setNetAmount(userOrderItem.getTotalAmount());
+        else
+            orderByUser.setNetAmount(Optional.ofNullable(accountingEntryAmount).orElse(BigDecimal.ZERO));
+
+        return orderByUser;
+    }
+
+    @Transactional
+    public List<OrderByUserDTO> updateShippingCost(String orderId, BigDecimal shippingCost) throws ItemNotFoundException {
+        Order order = getRequiredWithType(orderId);
+        order.setShippingCost(shippingCost);
+
+        List<OrderByUserDTO> userOrders = getOrderDetailByUser(order);
+        BigDecimal totalOrderAmount = userOrders.stream()
+                .map(OrderByUserDTO::getNetAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal::add)
+                .orElse(BigDecimal.ZERO);
+
+        for (OrderByUserDTO userOrder : userOrders) {
+            BigDecimal userShippingCost = BigDecimal.ZERO;
+
+            if (totalOrderAmount.compareTo(BigDecimal.ZERO) > 0 && userOrder.getNetAmount() != null)
+                userShippingCost = shippingCost.multiply(userOrder.getNetAmount().divide(totalOrderAmount, RoundingMode.HALF_UP));
+
+            if (userShippingCost.compareTo(BigDecimal.ZERO) > 0) {
+                ShippingCost shippingCostEntity = new ShippingCost();
+                shippingCostEntity.setOrderId(orderId);
+                shippingCostEntity.setUserId(userOrder.getUserId());
+                shippingCostEntity.setAmount(userShippingCost);
+                shippingCostRepo.save(shippingCostEntity);
+            } else {
+                shippingCostRepo.deleteByOrderIdAndUserId(orderId, userOrder.getUserId());
+            }
+
+            userOrder.setShippingCost(userShippingCost);
+        }
+
+        return userOrders;
+    }
+
+    public List<OrderItemByUserDTO> getOrderItemsByUser(String orderId, String userId) throws ItemNotFoundException {
+        boolean computedAmount = getRequiredWithType(orderId).getOrderType().isComputedAmount();
+
+        Map<String, OpenOrderItem> orderItemsMap = orderItemService.getUserOrderItems(userId, orderId, true);
+        List<Product> orderedProducts = productService.getProducts(orderItemsMap.keySet());
+
+        return orderedProducts.stream()
+                .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), computedAmount))
+                .collect(Collectors.toList());
     }
 }
