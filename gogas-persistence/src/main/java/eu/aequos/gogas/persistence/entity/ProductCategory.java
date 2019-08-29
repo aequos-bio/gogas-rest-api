@@ -1,11 +1,9 @@
 package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Data
 @Entity
@@ -13,19 +11,21 @@ import javax.persistence.Table;
 public class ProductCategory {
 
     @Id
-    @Column(name = "\"idcategoriaprodotto\"", nullable = false)
+    @GenericGenerator(name = "generator", strategy = "uuid2")
+    @GeneratedValue(generator = "generator")
+    @Column(name = "idcategoriaprodotto", columnDefinition="uniqueidentifier", nullable = false)
     private String id;
 
-    @Column(name = "\"idtipologiaordine\"", nullable = false)
+    @Column(name = "idtipologiaordine", nullable = false)
     private String orderTypeId;
 
-    @Column(name = "\"descrizione\"", nullable = false)
+    @Column(name = "descrizione", nullable = false)
     private String description;
 
-    @Column(name = "\"ordine_listino\"", nullable = false)
+    @Column(name = "ordine_listino", nullable = false)
     private int priceListPosition;
 
-    @Column(name = "\"colore_listino\"", nullable = true)
+    @Column(name = "colore_listino", nullable = true)
     private String priceListColor;
 
     public ProductCategory withId(String categoryId) {

@@ -20,6 +20,9 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, Date dueDate, Date deliveryDate);
 
+    @Query("SELECT DISTINCT o.orderType.id FROM Order o")
+    Set<String> findAllUsedOrderTypes();
+
     @Query(value = "SELECT idDateOrdini AS orderId, " +
             "CASE " +
             "   WHEN t.\"external\" = 1 OR t.totaleCalcolato = 0 THEN " +
