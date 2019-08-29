@@ -34,7 +34,7 @@ public class OrderManagerController {
     }
 
     @GetMapping(value = "{orderId}")
-    public List<OrderByProductDTO> getOrderDetails(@PathVariable String orderId, @RequestParam String groupBy) throws ItemNotFoundException {
+    public List<OrderByProductDTO> getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException {
         return orderManagerService.getOrderDetailByProduct(orderId);
     }
 
@@ -114,7 +114,7 @@ public class OrderManagerController {
     }
 
     @DeleteMapping(value = "{orderId}/byUser/{userId}")
-    public BasicResponseDTO deleteEntryByUser(@PathVariable String orderId, @PathVariable String userId) throws ItemNotFoundException {
+    public BasicResponseDTO deleteEntryByUser(@PathVariable String orderId, @PathVariable String userId) {
         orderManagerService.deleteUserCost(orderId, userId);
         return new BasicResponseDTO("OK");
 
@@ -123,6 +123,12 @@ public class OrderManagerController {
     @PostMapping(value = "{orderId}/shippingCost")
     public List<OrderByUserDTO> updateShippingCost(@PathVariable String orderId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
         return orderManagerService.updateShippingCost(orderId, cost);
+    }
+
+    @PostMapping(value = "{orderId}/invoice")
+    public BasicResponseDTO updateInvoiceData(@PathVariable String orderId, @RequestBody OrderInvoiceDataDTO invoiceData) throws GoGasException {
+        orderManagerService.updateInvoiceData(orderId, invoiceData);
+        return new BasicResponseDTO("OK");
     }
 
     /********************************/
@@ -134,25 +140,25 @@ public class OrderManagerController {
     }
 
     @PutMapping(value = "{orderId}/product/{productId}/cancel")
-    public BasicResponseDTO cancelProductOrder(@PathVariable String orderId, @PathVariable String productId) throws ItemNotFoundException {
+    public BasicResponseDTO cancelProductOrder(@PathVariable String orderId, @PathVariable String productId) {
         orderItemService.cancelProductOrder(orderId, productId);
         return new BasicResponseDTO("OK");
     }
 
     @PutMapping(value = "{orderId}/product/{productId}/restore")
-    public BasicResponseDTO restoreProductOrder(@PathVariable String orderId, @PathVariable String productId) throws ItemNotFoundException {
+    public BasicResponseDTO restoreProductOrder(@PathVariable String orderId, @PathVariable String productId) {
         orderItemService.restoreProductOrder(orderId, productId);
         return new BasicResponseDTO("OK");
     }
 
     @PutMapping(value = "{orderId}/item/{orderItemId}/cancel")
-    public BasicResponseDTO cancelOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) throws ItemNotFoundException {
+    public BasicResponseDTO cancelOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) {
         orderItemService.cancelOrderItem(orderItemId);
         return new BasicResponseDTO("OK");
     }
 
     @PutMapping(value = "{orderId}/item/{orderItemId}/restore")
-    public BasicResponseDTO restoreOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) throws ItemNotFoundException {
+    public BasicResponseDTO restoreOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) {
         orderItemService.restoreOrderItem(orderItemId);
         return new BasicResponseDTO("OK");
     }

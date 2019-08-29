@@ -344,4 +344,19 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), computedAmount))
                 .collect(Collectors.toList());
     }
+
+    public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
+
+        if (invoiceData.getInvoiceAmount() != null && invoiceData.getInvoiceAmount().compareTo(BigDecimal.ZERO) <= 0)
+            throw new GoGasException("L'importo fattura deve essere un valore maggiore di zero");
+
+        Order order = getRequiredWithType(orderId);
+        order.setInvoiceNumber(invoiceData.getInvoiceNumber());
+        order.setInvoiceDate(invoiceData.getInvoiceDate());
+        order.setInvoiceAmount(invoiceData.getInvoiceAmount());
+        order.setPaymentDate(invoiceData.getPaymentDate());
+        order.setPaid(invoiceData.isPaid());
+
+        orderRepo.save(order);
+    }
 }

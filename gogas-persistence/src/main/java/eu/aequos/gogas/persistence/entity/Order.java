@@ -91,19 +91,19 @@ public class Order {
     private String attachmentType;
     
     @Column(name = "invoicedate")
-    private Timestamp invoiceDate;
+    private Date invoiceDate;
     
     @Column(name = "paid", nullable = false)
     private boolean paid;
     
     @Column(name = "paymentdate")
-    private Timestamp paymentDate;
+    private Date paymentDate;
     
     @Column(name = "lastsynchro")
-    private Timestamp lastSynchro;
+    private Date lastSynchro;
     
     @Column(name = "lastweightupdate")
-    private Timestamp lastWeightUpdate;
+    private Date lastWeightUpdate;
 
     public OrderStatus getStatus() {
         return orderStatusMap.get(this.statusCode);
