@@ -10,6 +10,9 @@ import javax.persistence.*;
 @Table(name = "categoriaprodotti")
 public class ProductCategory {
 
+    private static final String DEFAULT_PRICELIST_COLOR = "FFFFFF";
+    private static final int DEFAULT_PRICELIST_POSITION = 1;
+
     @Id
     @GenericGenerator(name = "generator", strategy = "uuid2")
     @GeneratedValue(generator = "generator")
@@ -27,6 +30,15 @@ public class ProductCategory {
 
     @Column(name = "colore_listino", nullable = true)
     private String priceListColor;
+
+    public ProductCategory() {}
+
+    public ProductCategory(String orderTypeId, String description) {
+        this.orderTypeId = orderTypeId;
+        this.description = description;
+        this.priceListColor = DEFAULT_PRICELIST_COLOR;
+        this.priceListPosition = DEFAULT_PRICELIST_POSITION;
+    }
 
     public ProductCategory withId(String categoryId) {
         this.setId(categoryId);

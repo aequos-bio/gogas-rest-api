@@ -83,7 +83,7 @@ public class UserOrderItemDTO extends SmallUserOrderItemDTO {
         this.boxesOnly = p.isBoxOnly();
         this.orderMultiple = p.getMultiple();
         this.productNotes = p.getNotes();
-        this.productProvince = p.getSupplier().getProvincia();
+        this.productProvince = p.getSupplier().getProvince();
 
         if (userOrder != null)
             this.orderCancelled = userOrder.isCancelled();

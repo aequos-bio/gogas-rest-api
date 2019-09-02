@@ -82,8 +82,8 @@ public class ProductDTO implements ConvertibleDTO<Product> {
         cancelled = product.isCancelled();
         categoryId = product.getCategory().getId().toLowerCase();
         categoryName = product.getCategory().getDescription();
-        supplierId = product.getSupplier().getIdproduttore().toLowerCase();
-        supplierName = product.getSupplier().getRagionesociale();
+        supplierId = product.getSupplier().getId().toLowerCase();
+        supplierName = product.getSupplier().getName();
         description = product.getDescription();
         externalId = product.getExternalId();
         frequency = product.getFrequency();

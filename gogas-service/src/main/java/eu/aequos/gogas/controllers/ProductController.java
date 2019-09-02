@@ -1,8 +1,10 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
+import eu.aequos.gogas.dto.ProductDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.dto.ProductDTO;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.ProductService;
@@ -68,5 +70,10 @@ public class ProductController {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.getOutputStream().write(reportService.extractProductPriceList(productType));
         response.getOutputStream().flush();
+    }
+
+    @PutMapping(value = "{productType}/sync")
+    public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
+        return productService.syncPriceList(productType);
     }
 }

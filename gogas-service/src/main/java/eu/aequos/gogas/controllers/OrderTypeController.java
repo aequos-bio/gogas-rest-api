@@ -1,10 +1,13 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
+import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
@@ -22,14 +25,15 @@ public class OrderTypeController {
     private OrderTypeService orderTypeService;
     private OrderManagerRepo orderManagerRepo;
     private UserService userService;
+    private AequosIntegrationService aequosIntegrationService;
 
-    public OrderTypeController(OrderTypeService orderTypeService,
-                               OrderManagerRepo orderManagerRepo,
-                               UserService userService) {
+    public OrderTypeController(OrderTypeService orderTypeService, OrderManagerRepo orderManagerRepo,
+                               UserService userService, AequosIntegrationService aequosIntegrationService) {
 
         this.orderTypeService = orderTypeService;
         this.orderManagerRepo = orderManagerRepo;
         this.userService = userService;
+        this.aequosIntegrationService = aequosIntegrationService;
     }
 
     @GetMapping(value = "select")
@@ -46,6 +50,12 @@ public class OrderTypeController {
         return orderTypeService.getAll();
     }
 
+    @PutMapping(value = "aequos/sync")
+    public BasicResponseDTO synchronizeWithAequos() {
+        aequosIntegrationService.synchronizeOrderTypes();
+        return new BasicResponseDTO("OK");
+    }
+
     @PostMapping()
     public String create(@RequestBody OrderTypeDTO orderTypeDTO) {
         return orderTypeService.create(orderTypeDTO).getId();
@@ -60,6 +70,16 @@ public class OrderTypeController {
     public BasicResponseDTO delete(@PathVariable String orderTypeId) {
         orderTypeService.delete(orderTypeId);
         return new BasicResponseDTO("OK");
+    }
+
+    @GetMapping(value = "{orderTypeId}/synchro/info")
+    public OrderSynchroInfoDTO getSynchroInfo(@PathVariable String orderTypeId) throws ItemNotFoundException {
+        OrderType orderType = orderTypeService.getRequired(orderTypeId);
+
+        if (orderType.getAequosOrderId() == null)
+            return new OrderSynchroInfoDTO(null, null);
+        else
+            return new OrderSynchroInfoDTO(orderType.getAequosOrderId(), orderType.getLastsynchro());
     }
 
     @GetMapping(value = "{orderTypeId}/manager")

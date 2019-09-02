@@ -10,6 +10,7 @@ import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,6 +45,21 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         return orderTypeRepo.findAllByOrderByDescription().stream()
                 .map(type -> new OrderTypeDTO().fromModel(type, usedOrderTypes.contains(type.getId())))
                 .collect(Collectors.toList());
+    }
+
+    public Set<Integer> getAequosOrderTypes() {
+        return orderTypeRepo.findByAequosOrderIdNotNull().stream()
+                .map(OrderType::getAequosOrderId)
+                .collect(Collectors.toSet());
+    }
+
+    public Map<Integer, OrderType> getAequosOrderTypesMapping() {
+        return orderTypeRepo.findByAequosOrderIdNotNull().stream()
+                .collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
+    }
+
+    public void createAll(List<OrderType> orderTypesToBeCreated) {
+        orderTypeRepo.saveAll(orderTypesToBeCreated);
     }
 
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {

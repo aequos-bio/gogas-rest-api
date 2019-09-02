@@ -1,29 +1,32 @@
 package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Data
-@Entity()
+@Entity
 @Table(name = "produttori")
 public class Supplier {
 
     @Id
-    @Column(name = "idproduttore", nullable = false)
-    private String idproduttore;
+    @GenericGenerator(name = "generator", strategy = "uuid2")
+    @GeneratedValue(generator = "generator")
+    @Column(name = "idproduttore" , columnDefinition = "uniqueidentifier", nullable = false)
+    private String id;
+
     @Column(name = "ragionesociale", nullable = true)
-    private String ragionesociale;
+    private String name;
+
     @Column(name = "provincia", nullable = true)
-    private String provincia;
+    private String province;
+
     @Column(name = "idesterno", nullable = true)
-    private String idesterno;
+    private String externalId;
 
     public Supplier withId(String supplierId) {
-        this.idproduttore = supplierId;
+        this.id = supplierId;
         return this;
     }
 }

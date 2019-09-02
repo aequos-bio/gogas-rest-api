@@ -49,9 +49,9 @@ public class ExcelGenerationService {
         ProductPriceListExport exp = new ProductPriceListExport();
         exp.setExternalId(p.getExternalId());
         exp.setName(p.getDescription());
-        exp.setSupplierExternalId(p.getSupplier().getIdesterno());
-        exp.setSupplierName(p.getSupplier().getRagionesociale());
-        exp.setSupplierProvince(p.getSupplier().getProvincia());
+        exp.setSupplierExternalId(p.getSupplier().getExternalId());
+        exp.setSupplierName(p.getSupplier().getName());
+        exp.setSupplierProvince(p.getSupplier().getProvince());
         exp.setCategory(p.getCategory().getDescription());
         exp.setUnitOfMeasure(p.getUm());
         exp.setUnitPrice(p.getPrice());

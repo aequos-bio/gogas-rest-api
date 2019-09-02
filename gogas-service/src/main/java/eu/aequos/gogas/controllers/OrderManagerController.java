@@ -52,7 +52,7 @@ public class OrderManagerController {
     }
 
     @PostMapping()
-    public String create(@RequestBody OrderDTO orderDTO) throws OrderAlreadyExistsException {
+    public String create(@RequestBody OrderDTO orderDTO) throws GoGasException {
         return orderManagerService.create(orderDTO).getId();
     }
 
@@ -129,6 +129,11 @@ public class OrderManagerController {
     public BasicResponseDTO updateInvoiceData(@PathVariable String orderId, @RequestBody OrderInvoiceDataDTO invoiceData) throws GoGasException {
         orderManagerService.updateInvoiceData(orderId, invoiceData);
         return new BasicResponseDTO("OK");
+    }
+
+    @GetMapping(value = "aequos/available")
+    public List<OrderDTO> getAequosAvailableOpenOrders() {
+        return orderManagerService.getAequosAvailableOpenOrders();
     }
 
     /********************************/

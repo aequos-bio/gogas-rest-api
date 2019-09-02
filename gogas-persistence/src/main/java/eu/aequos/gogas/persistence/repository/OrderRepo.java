@@ -6,12 +6,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.QueryByExampleExecutor;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificationExecutor<Order> {
 
@@ -22,6 +18,8 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     @Query("SELECT DISTINCT o.orderType.id FROM Order o")
     Set<String> findAllUsedOrderTypes();
+
+    List<Order> findByOrderTypeIdInAndStatusCodeIn(Set<String> orderTypeId, Set<Integer> statusCodes);
 
     @Query(value = "SELECT idDateOrdini AS orderId, " +
             "CASE " +

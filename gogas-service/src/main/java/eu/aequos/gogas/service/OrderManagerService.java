@@ -3,6 +3,7 @@ package eu.aequos.gogas.service;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -35,14 +36,16 @@ public class OrderManagerService extends CrudService<Order, String> {
     private OrderWorkflowHandler orderWorkflowHandler;
 
     private UserService userService;
+    private OrderTypeService orderTypeService;
     private ProductService productService;
     private AccountingService accountingService;
+    private AequosIntegrationService aequosIntegrationService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
-                               UserService userService, ProductService productService,
-                               AccountingService accountingService) {
+                               UserService userService, OrderTypeService orderTypeService, ProductService productService,
+                               AccountingService accountingService, AequosIntegrationService aequosIntegrationService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -52,8 +55,10 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.shippingCostRepo = shippingCostRepo;
         this.orderWorkflowHandler = orderWorkflowHandler;
         this.userService = userService;
+        this.orderTypeService = orderTypeService;
         this.productService = productService;
         this.accountingService = accountingService;
+        this.aequosIntegrationService = aequosIntegrationService;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -85,14 +90,19 @@ public class OrderManagerService extends CrudService<Order, String> {
 
 
 
-    public synchronized Order create(OrderDTO dto) throws OrderAlreadyExistsException {
+    public synchronized Order create(OrderDTO dto) throws GoGasException {
         //TODO: check user permissions
         List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(dto.getOrderTypeId(), dto.getDueDate(), dto.getDeliveryDate());
 
         if (!duplicateOrders.isEmpty())
             throw new OrderAlreadyExistsException();
 
-        return super.create(dto);
+        Order createdOrder = super.create(dto);
+
+        if (dto.isUpdateProductList())
+            productService.syncPriceList(dto.getOrderTypeId());
+
+        return createdOrder;
     }
 
     public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
@@ -358,5 +368,42 @@ public class OrderManagerService extends CrudService<Order, String> {
         order.setPaid(invoiceData.isPaid());
 
         orderRepo.save(order);
+    }
+
+    public List<OrderDTO> getAequosAvailableOpenOrders() {
+
+        Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
+
+        Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
+                .map(Order.OrderStatus::getStatusCode)
+                .collect(Collectors.toSet());
+
+        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeMapping.values().stream().map(OrderType::getId).collect(Collectors.toSet()), statusCodes)
+                .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), Collectors.toList()));
+
+        //TODO: filtrare per visibilità referente
+        return aequosIntegrationService.getOpenOrders().stream()
+                .map(o -> {
+                    OrderType type = aequosOrderTypeMapping.get(o.getId());
+
+                    OrderDTO orderDTO = new OrderDTO();
+                    orderDTO.setOrderTypeId(type.getId());
+                    orderDTO.setOrderTypeName(type.getDescription());
+                    orderDTO.setOpeningDate(o.getOpeningDate());
+                    orderDTO.setDueDate(o.getDueDate());
+                    orderDTO.setDeliveryDate(o.getDeliveryDate());
+
+                    return orderDTO;
+                })
+                .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
+                .collect(Collectors.toList());
+    }
+
+    public boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrder) {
+        return gogasOrder == null || gogasOrder.isEmpty();
+
+        //TODO: filtrare per date non collidono
+        //return gogasOrder.getOpeningDate().before(aequosOpenOrder.getOpeningDate()) ||
+        //        gogasOrder.getOpeningDate().after(aequosOpenOrder.getDueDate());
     }
 }
