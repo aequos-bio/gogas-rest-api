@@ -28,7 +28,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "login")
-    public String createAuthenticationToken(@RequestBody JwtAuthenticationRequest authenticationRequest, HttpServletResponse response) throws AuthenticationException {
+    public String createAuthenticationToken(@RequestBody JwtAuthenticationRequest authenticationRequest, @RequestParam String tenantId) throws AuthenticationException {
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -38,7 +38,9 @@ public class AuthenticationController {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        GoGasUserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
+        GoGasUserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername())
+                .withTenant(tenantId);
+
         String token = jwtTokenUtil.generateToken(userDetails);
 
         return token;

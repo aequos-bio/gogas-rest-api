@@ -18,6 +18,7 @@ public class JwtTokenUtil implements Serializable {
     private static final long serialVersionUID = -3301605591108950415L;
 
     private static final String ISSUER = "gogas";
+    private static final String CLAIM_KEY_TENANT = "tenant";
     private static final String CLAIM_KEY_USERID = "id";
     private static final String CLAIM_KEY_ROLE = "role";
     private static final String CLAIM_KEY_ENABLED = "enabled";
@@ -37,6 +38,7 @@ public class JwtTokenUtil implements Serializable {
                 .withIssuer(ISSUER)
                 .withIssuedAt(new Date())
                 .withSubject(userDetails.getUsername())
+                .withClaim(CLAIM_KEY_TENANT, userDetails.getTenant())
                 .withClaim(CLAIM_KEY_USERID, userDetails.getId())
                 .withClaim(CLAIM_KEY_ROLE, getRoleFromUserDetails(userDetails))
                 .withClaim(CLAIM_KEY_ENABLED, userDetails.isEnabled())
@@ -52,6 +54,7 @@ public class JwtTokenUtil implements Serializable {
         DecodedJWT decodedToken = verifier.verify(token);
 
         return new GoGasUserDetails(decodedToken.getSubject())
+                .withTenant(decodedToken.getClaim(CLAIM_KEY_TENANT).asString())
                 .withId(decodedToken.getClaim(CLAIM_KEY_USERID).asString())
                 .withRole(decodedToken.getClaim(CLAIM_KEY_ROLE).asString())
                 .withEnabled(decodedToken.getClaim(CLAIM_KEY_ENABLED).asBoolean())
