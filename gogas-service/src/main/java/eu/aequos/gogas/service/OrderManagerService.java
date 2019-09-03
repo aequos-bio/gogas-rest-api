@@ -143,13 +143,10 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(Collectors.toList());
     }
 
-    public void changeStatus(String userId, String orderId,
-                             String actionCode, int roundType) throws ItemNotFoundException, UserNotAuthorizedException, InvalidOrderActionException {
+    public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
-        User user = userService.getRequired(userId);
         Order order = this.getRequiredWithType(orderId);
-
-        orderWorkflowHandler.changeStatus(user, order, actionCode, roundType);
+        orderWorkflowHandler.changeStatus(order, actionCode, roundType);
     }
 
     private boolean managedOrderTypeNotFound(List<String> managedOrderTypes, String filterOrderType) {
@@ -370,9 +367,13 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderRepo.save(order);
     }
 
-    public List<OrderDTO> getAequosAvailableOpenOrders() {
+    public List<OrderDTO> getAequosAvailableOpenOrders(String userId) {
 
         Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
+
+        List<String> managedOrderTypes = orderManagerRepo.findByUser(userId).stream()
+                .map(OrderManager::getOrderType)
+                .collect(Collectors.toList());
 
         Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
                 .map(Order.OrderStatus::getStatusCode)
@@ -381,7 +382,6 @@ public class OrderManagerService extends CrudService<Order, String> {
         Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeMapping.values().stream().map(OrderType::getId).collect(Collectors.toSet()), statusCodes)
                 .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), Collectors.toList()));
 
-        //TODO: filtrare per visibilità referente
         return aequosIntegrationService.getOpenOrders().stream()
                 .map(o -> {
                     OrderType type = aequosOrderTypeMapping.get(o.getId());
@@ -395,6 +395,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
                     return orderDTO;
                 })
+                .filter(o -> managedOrderTypes.contains(o.getOrderTypeId()))
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
                 .collect(Collectors.toList());
     }

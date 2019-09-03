@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.persistence.entity.ProductCategory;
 import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
+import eu.aequos.gogas.security.annotations.IsAdmin;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class ProductCategoryController {
                  .collect(Collectors.toList());
     }
 
+    @IsAdmin
     @PostMapping(value = "{orderTypeId}")
     public String create(@PathVariable String orderTypeId, @RequestBody String category) {
         ProductCategory productCategory = new ProductCategory();
@@ -35,6 +37,7 @@ public class ProductCategoryController {
         return productCategoryRepo.save(productCategory).getId();
     }
 
+    @IsAdmin
     @DeleteMapping(value = "{categoryId}")
     public BasicResponseDTO delete(@PathVariable String categoryId) {
         productCategoryRepo.deleteById(categoryId);

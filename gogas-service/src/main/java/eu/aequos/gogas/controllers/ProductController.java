@@ -6,6 +6,7 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
+import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.ProductService;
 import org.springframework.http.MediaType;
@@ -65,6 +66,7 @@ public class ProductController {
     }
 
 
+    @IsOrderTypeManager
     @GetMapping(value = "list/{productType}/export")
     public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -72,6 +74,7 @@ public class ProductController {
         response.getOutputStream().flush();
     }
 
+    @IsOrderTypeManager
     @PutMapping(value = "{productType}/sync")
     public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
         return productService.syncPriceList(productType);

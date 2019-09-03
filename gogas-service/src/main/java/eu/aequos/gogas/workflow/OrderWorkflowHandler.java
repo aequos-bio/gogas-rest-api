@@ -40,11 +40,7 @@ public class OrderWorkflowHandler {
     }
 
     @Transactional
-    public void changeStatus(User user, Order order, String changeAction, int roundType) throws UserNotAuthorizedException, InvalidOrderActionException {
-
-        if (!user.getRoleEnum().isAdmin() && orderManagerRepo.findByUserAndOrderType(user.getId(), order.getOrderType().getId()).isEmpty())
-            throw new UserNotAuthorizedException();
-
+    public void changeStatus(Order order, String changeAction, int roundType) throws InvalidOrderActionException {
         OrderStatusAction statusAction = getAction(changeAction, order, roundType);
         statusAction.performAction();
     }

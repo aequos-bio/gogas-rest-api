@@ -4,6 +4,7 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.AccountingReasonService;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("accounting")
+@IsAdmin
 public class AccountingController {
 
     private AccountingService accountingService;
@@ -34,6 +36,7 @@ public class AccountingController {
     public BigDecimal getBalance(@PathVariable String userId) {
         return accountingService.getBalance(userId);
     }
+
 
 
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

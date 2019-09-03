@@ -9,6 +9,7 @@ import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
+import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -50,22 +51,26 @@ public class OrderTypeController {
         return orderTypeService.getAll();
     }
 
+    @IsAdmin
     @PutMapping(value = "aequos/sync")
     public BasicResponseDTO synchronizeWithAequos() {
         aequosIntegrationService.synchronizeOrderTypes();
         return new BasicResponseDTO("OK");
     }
 
+    @IsAdmin
     @PostMapping()
     public String create(@RequestBody OrderTypeDTO orderTypeDTO) {
         return orderTypeService.create(orderTypeDTO).getId();
     }
 
+    @IsAdmin
     @PutMapping(value = "{orderTypeId}")
     public String update(@PathVariable String orderTypeId, @RequestBody OrderTypeDTO orderTypeDTO) throws ItemNotFoundException {
         return orderTypeService.update(orderTypeId, orderTypeDTO).getId();
     }
 
+    @IsAdmin
     @DeleteMapping(value = "{orderTypeId}")
     public BasicResponseDTO delete(@PathVariable String orderTypeId) {
         orderTypeService.delete(orderTypeId);
@@ -82,6 +87,7 @@ public class OrderTypeController {
             return new OrderSynchroInfoDTO(orderType.getAequosOrderId(), orderType.getLastsynchro());
     }
 
+    @IsAdmin
     @GetMapping(value = "{orderTypeId}/manager")
     public List<SelectItemDTO> listManagers(@PathVariable String orderTypeId) {
         List<OrderManager> orderManagerList = orderManagerRepo.findByOrderType(orderTypeId);
@@ -94,6 +100,7 @@ public class OrderTypeController {
                 .collect(Collectors.toList());
     }
 
+    @IsAdmin
     @GetMapping(value = "{orderTypeId}/manager/available")
     public List<SelectItemDTO> listNotManagers(@PathVariable String orderTypeId) {
         Set<String> managers = orderManagerRepo.findByOrderType(orderTypeId).stream()
@@ -105,6 +112,7 @@ public class OrderTypeController {
         return userService.getActiveUsersForSelectByBlackListAndRoles(managers, roles);
     }
 
+    @IsAdmin
     @PutMapping(value = "{orderTypeId}/manager/{userId}")
     public String createManager(@PathVariable String orderTypeId, @PathVariable String userId) {
         OrderManager orderManager = new OrderManager();
@@ -114,6 +122,7 @@ public class OrderTypeController {
         return orderManagerRepo.save(orderManager).getId();
     }
 
+    @IsAdmin
     @DeleteMapping(value = "manager/{orderManagerId}")
     public BasicResponseDTO deleteManager(@PathVariable String orderManagerId) {
         orderManagerRepo.deleteById(orderManagerId);

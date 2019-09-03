@@ -3,9 +3,13 @@ package eu.aequos.gogas.controllers;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.security.AuthorizationService;
+import eu.aequos.gogas.security.annotations.IsManager;
+import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.OrderItemService;
 import eu.aequos.gogas.service.OrderManagerService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -15,22 +19,26 @@ import java.util.List;
 
 @RestController
 @RequestMapping("order/manage")
+@IsOrderManager
 public class OrderManagerController {
 
     private ExcelGenerationService reportService;
     private OrderManagerService orderManagerService;
     private OrderItemService orderItemService;
+    private AuthorizationService authorizationService;
 
     public OrderManagerController(ExcelGenerationService reportService, OrderManagerService orderManagerService,
-                                  OrderItemService orderItemService) {
+                                  OrderItemService orderItemService, AuthorizationService authorizationService) {
         this.reportService = reportService;
         this.orderManagerService = orderManagerService;
         this.orderItemService = orderItemService;
+        this.authorizationService = authorizationService;
     }
 
+    @IsManager
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
-        return orderManagerService.search(searchFilter, "00000000-0000-0000-0000-000000000000"); //TODO: set user in session
+        return orderManagerService.search(searchFilter, authorizationService.getCurrentUser().getId()); //TODO: set user in session
     }
 
     @GetMapping(value = "{orderId}")
@@ -38,12 +46,14 @@ public class OrderManagerController {
         return orderManagerService.getOrderDetailByProduct(orderId);
     }
 
+
     @GetMapping(value = "{orderId}/product/{productId}")
     public List<OrderItemByProductDTO> getProductDetails(@PathVariable String orderId, @PathVariable String productId) throws ItemNotFoundException {
         return orderManagerService.getOrderItemsByProduct(orderId, productId);
     }
 
 
+    //TODO: check come fare per token
     @GetMapping(value = "{orderId}/export")
     public void getUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -51,6 +61,7 @@ public class OrderManagerController {
         response.getOutputStream().flush();
     }
 
+    @PreAuthorize("@authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
     public String create(@RequestBody OrderDTO orderDTO) throws GoGasException {
         return orderManagerService.create(orderDTO).getId();
@@ -70,7 +81,7 @@ public class OrderManagerController {
     public String update(@PathVariable String orderId, @PathVariable String actionCode,
                          @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, UserNotAuthorizedException, InvalidOrderActionException {
 
-        orderManagerService.changeStatus("00000000-0000-0000-0000-000000000000", orderId, actionCode, roundType);
+        orderManagerService.changeStatus(orderId, actionCode, roundType);
         return "OK";
     }
 
@@ -131,9 +142,10 @@ public class OrderManagerController {
         return new BasicResponseDTO("OK");
     }
 
+    @IsManager
     @GetMapping(value = "aequos/available")
     public List<OrderDTO> getAequosAvailableOpenOrders() {
-        return orderManagerService.getAequosAvailableOpenOrders();
+        return orderManagerService.getAequosAvailableOpenOrders(authorizationService.getCurrentUser().getId());
     }
 
     /********************************/

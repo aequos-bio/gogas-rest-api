@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface UserRepo extends CrudRepository<User, String> {
@@ -19,6 +20,8 @@ public interface UserRepo extends CrudRepository<User, String> {
     List<User> findAll();
 
     List<User> findByFirstNameContainingAndLastNameContaining(String firstName, String lastName);
+
+    Optional<User> findByUsername(String username);
 
     <T> List<T> findByRole(String role, Class<T> type);
 
@@ -31,6 +34,8 @@ public interface UserRepo extends CrudRepository<User, String> {
     List<UserCoreInfo> findByIdNotInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
 
     List<UserSummary> findByFriendReferralId(String referralId);
+
+    boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
 
     @Modifying
     @Query(value = "UPDATE utenti SET nome = :name WHERE idutente = :id", nativeQuery = true)

@@ -3,6 +3,7 @@ package eu.aequos.gogas.controllers;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("user")
+@IsAdmin
 public class UserController {
 
     private UserService userService;
