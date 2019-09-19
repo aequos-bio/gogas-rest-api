@@ -21,7 +21,7 @@ public class DataSourceRegistry {
         dataSource1.setPassword("gastabien");
 
         Map<Object, Object> hashMap = new HashMap<>();
-        hashMap.put("gastabien", dataSource);
+        hashMap.put("localhost", dataSource);
         hashMap.put("rovellasgas", dataSource1);
         return hashMap;
     }

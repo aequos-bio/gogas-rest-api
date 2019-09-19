@@ -1,8 +1,9 @@
 package eu.aequos.gogas.security;
 
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import eu.aequos.gogas.service.OrderManagerService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,14 +14,14 @@ public class AuthorizationService implements UserDetailsService {
 
     private UserRepo userRepo;
     private OrderManagerRepo orderManagerRepo;
-    private OrderRepo orderRepo;
+    private OrderManagerService orderManagerService;
 
     public AuthorizationService(UserRepo userRepo, OrderManagerRepo orderManagerRepo,
-                                OrderRepo orderRepo) {
+                                OrderManagerService orderManagerService) {
 
         this.userRepo = userRepo;
         this.orderManagerRepo = orderManagerRepo;
-        this.orderRepo = orderRepo;
+        this.orderManagerService = orderManagerService;
     }
 
     @Override
@@ -41,8 +42,8 @@ public class AuthorizationService implements UserDetailsService {
                 userRepo.existsUserByIdAndFriendReferralId(userId, currentUserId);
     }
 
-    public boolean isOrderManager(String orderId) {
-        String orderTypeId = orderRepo.findByIdWithType(orderId).map(o -> o.getOrderType().getId()).get();
+    public boolean isOrderManager(String orderId) throws ItemNotFoundException {
+        String orderTypeId = orderManagerService.getRequiredWithType(orderId).getOrderType().getId();
         return isOrderTypeManager(orderTypeId);
     }
 

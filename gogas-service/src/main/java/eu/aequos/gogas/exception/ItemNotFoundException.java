@@ -1,6 +1,8 @@
 package eu.aequos.gogas.exception;
 
-public class ItemNotFoundException extends GoGasException {
+import org.springframework.security.access.AccessDeniedException;
+
+public class ItemNotFoundException extends AccessDeniedException {
 
     private static final String MESSAGE_TEMPLATE = "Item not found. Type: %s, Id: %s";
 
@@ -8,7 +10,7 @@ public class ItemNotFoundException extends GoGasException {
     private Object itemId;
 
     public ItemNotFoundException(String itemName, Object itemId) {
-        super();
+        super(String.format(MESSAGE_TEMPLATE, itemName, itemId));
         this.itemType = itemName;
         this.itemId = itemId;
     }
@@ -19,10 +21,5 @@ public class ItemNotFoundException extends GoGasException {
 
     public Object getItemId() {
         return itemId;
-    }
-
-    @Override
-    public String getMessage() {
-        return String.format(MESSAGE_TEMPLATE, itemType, itemId);
     }
 }

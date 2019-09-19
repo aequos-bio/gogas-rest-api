@@ -49,7 +49,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             return false;
 
         String tenantId = CustomRoutingDataSource.extractTenantId(request);
-        if (!tenantId.equals(userDetails.getTenant()))
+        if (tenantId == null || !tenantId.equals(userDetails.getTenant()))
             return false; //TODO: log failures
 
         return true; //TODO: check user on DB

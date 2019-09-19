@@ -18,7 +18,7 @@ public class CustomRoutingDataSource extends AbstractRoutingDataSource {
     protected Object determineCurrentLookupKey() {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();     // get request object
         if (attr == null) {
-            return "gastabien";   // default data source TODO: throw error
+            return "localhost";   // default data source TODO: throw error
         }
 
         return extractTenantId(attr.getRequest());
