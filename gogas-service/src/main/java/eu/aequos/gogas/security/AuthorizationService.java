@@ -31,9 +31,13 @@ public class AuthorizationService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(username));
     }
 
-    //TODO:  retrieve info always from db???
+    //TODO: retrieve info always from db???
     public GoGasUserDetails getCurrentUser() {
         return (GoGasUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public boolean isCurrentUser(String userId) {
+        return userId != null && userId.equalsIgnoreCase(userId);
     }
 
     public boolean isUserOrFriend(String userId) {
