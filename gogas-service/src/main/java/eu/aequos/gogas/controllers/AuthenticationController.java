@@ -1,6 +1,9 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.datasource.CustomRoutingDataSource;
 import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.persistence.entity.Configuration;
+import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.JwtAuthenticationRequest;
@@ -12,6 +15,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
@@ -20,15 +30,20 @@ public class AuthenticationController {
     private AuthenticationManager authenticationManager;
     private JwtTokenUtil jwtTokenUtil;
     private AuthorizationService userDetailsService;
+    private ConfigurationRepo configurationRepo;
 
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, AuthorizationService userDetailsService) {
+    public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager, 
+            JwtTokenUtil jwtTokenUtil, AuthorizationService userDetailsService) {
+                    this.configurationRepo = configurationRepo;
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
     }
 
-    @PostMapping(value = "login")
-    public String createAuthenticationToken(@RequestBody JwtAuthenticationRequest authenticationRequest, @RequestParam String tenantId) throws AuthenticationException {
+    @PostMapping(value = "authenticate")
+    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
+        
+        String tenantId = CustomRoutingDataSource.extractTenantId(req);
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -42,7 +57,19 @@ public class AuthenticationController {
                 .withTenant(tenantId);
 
         String token = jwtTokenUtil.generateToken(userDetails);
-
+        resp.setHeader("Authentication", "bearer " + token);
         return token;
     }
+
+    @GetMapping(value = "info")
+    public @ResponseBody Map<String,Object> getInfo() {
+        List<Configuration> configs = configurationRepo.findAll();
+        Map<String,Object> map = new HashMap<>();
+        for(Configuration cfg : configs) {
+            if (cfg.isVisible()) {
+                map.put(cfg.getKey(), cfg);
+            }
+        }
+        return map;                  
+    }      
 }

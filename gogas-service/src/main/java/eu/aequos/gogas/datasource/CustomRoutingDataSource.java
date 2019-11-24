@@ -8,10 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 
 public class CustomRoutingDataSource extends AbstractRoutingDataSource {
 
-    private static final String TENANT_KEY = "tenantId";
-
     public static final String extractTenantId(HttpServletRequest request) {
-        return request.getParameter(TENANT_KEY);
+        String address = request.getServerName();
+        int firstPoint = address.indexOf(".");
+        if (firstPoint==-1) firstPoint = address.length();
+        String tenantId = address.substring(0, firstPoint);
+        return tenantId;
     }
 
     @Override

@@ -1,0 +1,47 @@
+/* COMMON.SCSS */
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/scss/font-awesome.scss';
+@import './variables.scss';
+@import '~bootstrap/scss/bootstrap.scss';
+
+$COLOR_DEV: #abf28c;
+$COLOR_FORM: #f2cd8c;
+$COLOR_TEST: #878787;
+$COLOR_PROD: #8cb7f2;
+
+body {
+  padding-top: 0px;
+  padding-bottom: 40px;
+  background-color: #fff;
+}
+
+.qstore-page {
+  padding-top: 15px;
+}
+
+.color-secondary {
+  color: $secondary;
+}
+
+.form-label {
+  color: $secondary;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}
+
+$web-font-path: "https://fonts.googleapis.com/css?family=Roboto:400,500,700" !default;
+@import url($web-font-path);
+$font-family-sans-serif: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
+body {
+  font-family: Roboto
+}
+
+.swal-modal {
+  width: 600px;
+}
+
+.swal-title:first-child {
+    margin-top: 10px;
+}

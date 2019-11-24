@@ -26,4 +26,12 @@ public interface AccountingRepo extends CrudRepository<AccountingEntry, String>,
     @Modifying
     @Query("DELETE AccountingEntry a WHERE a.orderId = ?1 AND a.user.id = ?2 AND confirmed = false")
     int deleteByOrderIdAndUserId(String orderId, String userId);
+
+    @Query(nativeQuery = true, value = "select m.idMovimento, m.idUtente, " +
+            "m.idReferente, m.dataMovimento, m.causale, m.descrizione, " +
+            "m.importo + COALESCE (s.importo, 0) as importo, m.confermato, m.idDateOrdini " +
+            "from movimenti m " +
+            "LEFT OUTER JOIN speseTrasporto AS s ON m.idUtente = s.idUtente AND m.idDateOrdini = s.idDateOrdini " +
+            "where m.confermato=1 and (m.idUtente=? or m.idReferente=?)")
+    public List<AccountingEntry> getUserTransactions(String userId, String refId);
 }
