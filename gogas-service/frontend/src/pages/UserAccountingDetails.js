@@ -59,7 +59,7 @@ function UserAccountingDetails({location, authentication}) {
   }, []);
 
   const downloadXls = useCallback(() => {
-    window.open('/api/exportUserDetails?userId=' + user.idUtente, '_blank');
+    window.open('/api/useraccounting/exportUserDetails?userId=' + user.idUtente, '_blank');
   }, [user, transactions])
 
   useEffect(() => {
