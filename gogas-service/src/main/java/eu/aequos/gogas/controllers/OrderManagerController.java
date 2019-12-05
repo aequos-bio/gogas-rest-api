@@ -85,6 +85,7 @@ public class OrderManagerController {
         return "OK";
     }
 
+    @IsOrderManager
     @PutMapping(value = "{orderId}/item/{itemId}")
     public BasicResponseDTO updateQty(@PathVariable String orderId, @PathVariable String itemId, @RequestBody BigDecimal qty) throws ItemNotFoundException {
         if (!orderManagerService.updateItemDeliveredQty(orderId, itemId, qty))

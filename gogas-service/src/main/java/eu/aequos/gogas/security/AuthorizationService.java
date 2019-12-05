@@ -3,6 +3,7 @@ package eu.aequos.gogas.security;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import eu.aequos.gogas.service.OrderItemService;
 import eu.aequos.gogas.service.OrderManagerService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,13 +16,15 @@ public class AuthorizationService implements UserDetailsService {
     private UserRepo userRepo;
     private OrderManagerRepo orderManagerRepo;
     private OrderManagerService orderManagerService;
+    private OrderItemService orderItemService;
 
     public AuthorizationService(UserRepo userRepo, OrderManagerRepo orderManagerRepo,
-                                OrderManagerService orderManagerService) {
+                                OrderManagerService orderManagerService, OrderItemService orderItemService) {
 
         this.userRepo = userRepo;
         this.orderManagerRepo = orderManagerRepo;
         this.orderManagerService = orderManagerService;
+        this.orderItemService = orderItemService;
     }
 
     @Override
@@ -37,13 +40,19 @@ public class AuthorizationService implements UserDetailsService {
     }
 
     public boolean isCurrentUser(String userId) {
-        return userId != null && userId.equalsIgnoreCase(userId);
+        String currentUserId = getCurrentUser().getId();
+        return userId != null && currentUserId != null && currentUserId.equalsIgnoreCase(userId);
     }
 
     public boolean isUserOrFriend(String userId) {
         String currentUserId = getCurrentUser().getId();
         return userId.equalsIgnoreCase(currentUserId) ||
                 userRepo.existsUserByIdAndFriendReferralId(userId, currentUserId);
+    }
+
+    public boolean isFriend(String userId) {
+        String currentUserId = getCurrentUser().getId();
+        return userRepo.existsUserByIdAndFriendReferralId(userId, currentUserId);
     }
 
     public boolean isOrderManager(String orderId) throws ItemNotFoundException {
@@ -57,5 +66,13 @@ public class AuthorizationService implements UserDetailsService {
 
         String currentUserId = getCurrentUser().getId();
         return !orderManagerRepo.findByUserAndOrderType(currentUserId, orderTypeId).isEmpty();
+    }
+
+    public boolean isOrderItemOwner(String orderItem) {
+        if (orderItem == null)
+            return false;
+
+        String currentUserId = getCurrentUser().getId();
+        return orderItemService.isOrderItemBelongingToUserOrFriend(orderItem, currentUserId);
     }
 }

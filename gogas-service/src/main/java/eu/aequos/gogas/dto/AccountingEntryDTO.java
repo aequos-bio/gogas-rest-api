@@ -40,6 +40,8 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
     @JsonProperty(value = "importo")
     private BigDecimal amount;
 
+    private String friendReferralId;
+
     @Override
     public AccountingEntryDTO fromModel(AccountingEntry model) {
         id = model.getId();
@@ -63,6 +65,7 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         model.setReason(new AccountingEntryReason().withReasonCode(reasonCode));
         model.setAmount(amount);
         model.setConfirmed(true);
+        model.setFriendReferralId(friendReferralId);
 
         return model;
     }

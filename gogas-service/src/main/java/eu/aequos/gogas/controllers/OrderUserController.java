@@ -5,7 +5,6 @@ import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.service.OrderUserService;
 import org.springframework.http.MediaType;
@@ -18,14 +17,12 @@ import java.util.List;
 public class OrderUserController {
 
     private OrderUserService orderUserService;
-    private OrderRepo orderRepo;
     private AuthorizationService authorizationService;
 
-    public OrderUserController(OrderUserService orderUserService, OrderRepo orderRepo,
+    public OrderUserController(OrderUserService orderUserService,
                                AuthorizationService authorizationService) {
 
         this.orderUserService = orderUserService;
-        this.orderRepo = orderRepo;
         this.authorizationService = authorizationService;
     }
 
