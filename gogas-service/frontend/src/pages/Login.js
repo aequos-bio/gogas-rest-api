@@ -6,19 +6,18 @@ import { connect } from 'react-redux';
 import { login } from '../store/actions';
 import Logo from '../logo_aequos.png';
 
-function Login(props) {
-  if (props.authentication && props.authentication.jwtToken)
-    return <Redirect to={props.location.state ? props.location.state.from : '/'} />;
-  console.log('match', props.match)
-  const login = useCallback(e => {
+function Login({authentication, location, login, history, info}) {
+  if (authentication && authentication.jwtToken)
+    return <Redirect to={location.state ? location.state.from : '/'} />;
+  
+  const dologin = useCallback(e => {
     e.preventDefault();
     const username = e.target.username.value;
     const password = e.target.password.value;
-    props.login(username, password);
-    console.log('login finish')
-    props.history.push('/');
+    login(username, password);
+    history.push('/');
     return false;
-  }, []);
+  }, [login, history]);
 
   return (
     <Container>
@@ -26,14 +25,14 @@ function Login(props) {
         <Col md={{ span: 6, offset: 3 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
           <img src={Logo} width="50px" height="50px" alt="" />
           <h1 style={{ margin: '0px 15px' }}>
-            {props.info['gas.nome'] ? props.info['gas.nome'].value : 'GoGas'}
+            {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
           </h1>
         </Col>
       </Row>
 
       <Row>
         <Col md={{ span: 6, offset: 3 }}>
-          <Form className="form-signin" name="loginForm" onSubmit={login}>
+          <Form className="form-signin" name="loginForm" onSubmit={dologin}>
             <h2 className="form-signin-heading" style={{ marginTop: '0px' }}>
               Autenticazione
             </h2>
@@ -55,7 +54,7 @@ function Login(props) {
         </Col>
       </Row>
 
-      {props.authentication.error_message ?
+      {authentication.error_message ?
         <Row style={{ marginTop: '10px' }}>
           <Col md={{ span: 6, offset: 3 }}>
             <Alert variant='danger'>

@@ -3,5 +3,8 @@ target
 .factorypath
 .project
 .classpath
+.idea
 *.code-workspace
 node_modules
+*.iml
+jrebel.xml

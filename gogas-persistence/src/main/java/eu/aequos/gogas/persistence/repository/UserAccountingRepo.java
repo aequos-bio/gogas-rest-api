@@ -54,10 +54,10 @@ public interface UserAccountingRepo extends JpaRepository<Order, String> {
     "INNER JOIN ordini AS o ON d.idDateOrdini = o.idDateOrdine " + 
     "INNER JOIN utenti AS u ON o.idUtente = u.idUtente " + 
     "LEFT OUTER JOIN speseTrasporto AS s ON u.idUtente = s.idUtente AND d.idDateOrdini = s.idDateOrdini " + 
-    "WHERE o.riepilogoUtente = 1 AND o.contabilizzato=1 AND (o.idUtente=?1 OR o.idReferenteAmico=?1)" + 
+    "WHERE o.riepilogoUtente = 1 AND o.contabilizzato=1 AND (o.idUtente=?1 OR o.idReferenteAmico=?2)" +
     "GROUP BY CASE WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico ELSE o.idUtente END, " + 
     "d.dataConsegna, d.idDateOrdini, s.importo, 'Totale ordine ' + t.tipoOrdine + ' in consegna ' + CONVERT(VARCHAR, d.dataConsegna, 3), o.contabilizzato")
-    List<UserTransactionFullProjection> getUserRecordedOrders(String userId);
+    List<UserTransactionFullProjection> getUserRecordedOrders(String userId, String refId);
 
 
     

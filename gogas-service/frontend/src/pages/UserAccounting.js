@@ -44,9 +44,9 @@ function UserAccounting({authentication, history}) {
       }
     }).then(value => {
       if (value === 'simple')
-        window.open('/api/exportUserTotals', '_blank');
+        window.open('/api/useraccounting/exportUserTotals', '_blank');
       else if (value === 'full')
-        window.open('/api/exportUserTotals?includeUsers=true', '_blank');
+        window.open('/api/useraccounting/exportUserTotals?includeUsers=true', '_blank');
     });
 
   }, [total, totals])
