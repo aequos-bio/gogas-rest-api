@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("order/friend")
+@RequestMapping("api/order/friend")
 public class OrderFriendController {
 
     private OrderFriendService orderFriendService;

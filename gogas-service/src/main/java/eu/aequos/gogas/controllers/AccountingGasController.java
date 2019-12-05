@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("accounting/gas")
+@RequestMapping("api/accounting/gas")
 @IsAdmin
 public class AccountingGasController {
 

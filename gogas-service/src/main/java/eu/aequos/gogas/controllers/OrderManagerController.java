@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("order/manage")
+@RequestMapping("api/order/manage")
 @IsOrderManager
 public class OrderManagerController {
 

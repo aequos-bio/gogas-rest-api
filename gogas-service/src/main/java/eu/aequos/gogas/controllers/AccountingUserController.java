@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("accounting/user")
+@RequestMapping("api/accounting/user")
 @IsAdmin
 public class AccountingUserController {
 

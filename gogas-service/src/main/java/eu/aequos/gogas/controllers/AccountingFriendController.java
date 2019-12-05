@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("accounting/friend")
+@RequestMapping("api/accounting/friend")
 public class AccountingFriendController {
 
     private AccountingService accountingService;

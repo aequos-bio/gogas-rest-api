@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("accounting/reason")
+@RequestMapping("api/accounting/reason")
 public class AccountingReasonController {
 
     private AccountingReasonService accountingReasonService;

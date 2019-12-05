@@ -1,6 +1,8 @@
 package eu.aequos.gogas.security;
 
 import eu.aequos.gogas.datasource.CustomRoutingDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationTokenFilter.class);
 
     public static final String TOKEN_HEADER = "Authorization";
     public static final String TOKEN_PREFIX = "Bearer ";
@@ -48,9 +52,11 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         if (userDetails == null)
             return false;
 
-        String tenantId = CustomRoutingDataSource.extractTenantId(request);
-        if (tenantId == null || !tenantId.equals(userDetails.getTenant()))
-            return false; //TODO: log failures
+        String tenantId = CustomRoutingDataSource.extractTenantIdFromHostName(request);
+        if (tenantId == null || !tenantId.equals(userDetails.getTenant())) {
+            LOGGER.warn("Missing or mismatching tenant id, user not authorized");
+            return false;
+        }
 
         return true; //TODO: check user on DB
     }

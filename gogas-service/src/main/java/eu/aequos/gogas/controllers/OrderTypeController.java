@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("ordertype")
+@RequestMapping("api/ordertype")
 public class OrderTypeController {
 
     private OrderTypeService orderTypeService;
