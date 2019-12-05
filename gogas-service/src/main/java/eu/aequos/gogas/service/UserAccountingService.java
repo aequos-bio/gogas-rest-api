@@ -19,6 +19,7 @@ import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
 import eu.aequos.gogas.persistence.utils.UserTransactionFullProjection;
 
+//TODO: check if we can merge with other services
 @Service
 public class UserAccountingService {
   @Autowired

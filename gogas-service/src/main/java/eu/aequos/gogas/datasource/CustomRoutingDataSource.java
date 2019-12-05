@@ -8,12 +8,14 @@ import javax.servlet.http.HttpServletRequest;
 
 public class CustomRoutingDataSource extends AbstractRoutingDataSource {
 
-    public static final String extractTenantId(HttpServletRequest request) {
-        String address = request.getServerName();
-        int firstPoint = address.indexOf(".");
-        if (firstPoint==-1) firstPoint = address.length();
-        String tenantId = address.substring(0, firstPoint);
-        return tenantId;
+    /**
+     * Extract tenantID from the host name by taking the most internal subdomain
+     * Example: gasname.aequos.eu -> gasname
+     * @param request the HTTP request
+     * @return the tenant id
+     */
+    public static final String extractTenantIdFromHostName(HttpServletRequest request) {
+        return request.getServerName().split("\\.")[0];
     }
 
     @Override
@@ -23,6 +25,6 @@ public class CustomRoutingDataSource extends AbstractRoutingDataSource {
             return "localhost";   // default data source TODO: throw error
         }
 
-        return extractTenantId(attr.getRequest());
+        return extractTenantIdFromHostName(attr.getRequest());
     }
 }

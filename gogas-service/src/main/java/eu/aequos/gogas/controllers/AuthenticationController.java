@@ -1,11 +1,10 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.datasource.CustomRoutingDataSource;
-import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
-import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.AuthorizationService;
+import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtAuthenticationRequest;
 import eu.aequos.gogas.security.JwtTokenUtil;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,14 +14,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class AuthenticationController {
@@ -43,7 +40,7 @@ public class AuthenticationController {
     @PostMapping(value = "authenticate")
     public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
         
-        String tenantId = CustomRoutingDataSource.extractTenantId(req);
+        String tenantId = CustomRoutingDataSource.extractTenantIdFromHostName(req);
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

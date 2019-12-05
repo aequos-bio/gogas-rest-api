@@ -25,6 +25,7 @@ import eu.aequos.gogas.utils.RestResponse;
 
 import javax.servlet.http.HttpServletResponse;
 
+//TODO: check if we can merge with other controllers
 @RestController
 @RequestMapping(value = "api/useraccounting")
 public class UserAccountingController {
