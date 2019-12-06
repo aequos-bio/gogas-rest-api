@@ -38,7 +38,7 @@ public class OrderManagerController {
     @IsManager
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
-        return orderManagerService.search(searchFilter, authorizationService.getCurrentUser().getId()); //TODO: set user in session
+        return orderManagerService.search(searchFilter, authorizationService.getCurrentUser().getId());
     }
 
     @GetMapping(value = "{orderId}")
@@ -79,7 +79,7 @@ public class OrderManagerController {
 
     @PostMapping(value = "{orderId}/action/{actionCode}")
     public String update(@PathVariable String orderId, @PathVariable String actionCode,
-                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, UserNotAuthorizedException, InvalidOrderActionException {
+                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         orderManagerService.changeStatus(orderId, actionCode, roundType);
         return "OK";

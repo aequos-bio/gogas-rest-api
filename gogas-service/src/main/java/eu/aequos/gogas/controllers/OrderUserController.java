@@ -1,8 +1,10 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
 import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
@@ -24,6 +26,11 @@ public class OrderUserController {
 
         this.orderUserService = orderUserService;
         this.authorizationService = authorizationService;
+    }
+
+    @PostMapping(value = "list")
+    public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
+        return orderUserService.search(searchFilter, authorizationService.getCurrentUser().getId());
     }
 
     @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

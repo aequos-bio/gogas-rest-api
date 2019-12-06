@@ -1,10 +1,12 @@
 package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,6 +17,7 @@ import java.util.Optional;
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderDTO implements ConvertibleDTO<Order> {
 
     private String id;
@@ -55,6 +58,9 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     @JsonProperty("totaleordine")
     private BigDecimal totalAmount;
 
+    @JsonProperty("numarticoli")
+    private int itemsCount;
+
     @JsonProperty("totalefattura")
     private BigDecimal invoiceAmount;
 
@@ -62,6 +68,15 @@ public class OrderDTO implements ConvertibleDTO<Order> {
 
     @JsonProperty("externallink")
     private String externalLink;
+
+    @JsonProperty("amici")
+    private boolean hasFriends;
+
+    @JsonProperty("contabilizzato")
+    private boolean accounted;
+
+    @JsonProperty("contabilizzabile")
+    private boolean accountable;
 
     //output only
     private String actions;
@@ -74,6 +89,21 @@ public class OrderDTO implements ConvertibleDTO<Order> {
 
         this.totalAmount = totalAmount != null ? totalAmount.getTotalAmount() : BigDecimal.ZERO;
         this.actions = String.join(",", actions);
+
+        return this;
+    }
+
+    public OrderDTO fromModel(Order order, UserOrderSummary totalAmount) {
+        fromModel(order);
+
+        if (totalAmount != null) {
+            this.itemsCount = totalAmount.getItemsCount();
+            this.hasFriends = totalAmount.getFriendCount() > 0;
+            this.accounted = totalAmount.getfriendAccounted() > 0;
+        }
+
+        this.accountable = !order.getStatus().isOpen() && order.getOrderType().isSummaryRequired();
+        this.totalAmount = totalAmount != null ? totalAmount.getTotalAmount() : BigDecimal.ZERO;
 
         return this;
     }

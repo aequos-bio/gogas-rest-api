@@ -1,13 +1,21 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
 import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
+import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
+import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.specification.OrderSpecs;
+import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,13 +29,46 @@ public class OrderUserService {
     private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
+    private OrderRepo orderRepo;
 
     public OrderUserService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                            ProductService productService, UserService userService) {
+                            ProductService productService, UserService userService, OrderRepo orderRepo) {
         this.orderItemService = orderItemService;
         this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
+        this.orderRepo = orderRepo;
+    }
+
+    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
+
+        Specification<Order> filter = new SpecificationBuilder<Order>()
+                .withBaseFilter(OrderSpecs.select())
+                .and(OrderSpecs::type, searchFilter.getOrderType())
+                .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())
+                .and(OrderSpecs::dueDateTo, searchFilter.getDueDateTo())
+                .and(OrderSpecs::deliveryDateFrom, searchFilter.getDeliveryDateFrom())
+                .and(OrderSpecs::deliveryDateTo, searchFilter.getDeliveryDateTo())
+                .and(OrderSpecs::statusIn, searchFilter.getStatus())
+                .build();
+
+        List<Order> orderList = orderRepo.findAll(filter);
+
+        if (orderList.isEmpty())
+            return new ArrayList<>();
+
+        Set<String> orderIds = orderList.stream()
+                .map(Order::getId)
+                .collect(Collectors.toSet());
+
+        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderIds)
+                .stream()
+                .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
+
+
+        return orderList.stream()
+                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
+                .collect(Collectors.toList());
     }
 
     public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {

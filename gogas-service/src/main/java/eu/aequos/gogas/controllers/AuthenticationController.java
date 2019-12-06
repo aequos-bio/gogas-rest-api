@@ -58,7 +58,7 @@ public class AuthenticationController {
         return token;
     }
 
-    @GetMapping(value = "info")
+    @GetMapping(value = "api/info")
     public @ResponseBody Map<String,Object> getInfo() {
         List<Configuration> configs = configurationRepo.findAll();
         Map<String,Object> map = new HashMap<>();

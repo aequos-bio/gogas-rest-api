@@ -216,6 +216,6 @@ public class OrderItemService {
     }
 
     public boolean isOrderItemBelongingToUserOrFriend(String orderItem, String userId) {
-        return orderItemRepo.fingOrderItemByIdAndUserOrFriend(orderItem, userId).isPresent();
+        return orderItemRepo.findOrderItemByIdAndUserOrFriend(orderItem, userId).isPresent();
     }
 }
