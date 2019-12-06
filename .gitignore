@@ -9,3 +9,6 @@ node_modules
 *.iml
 jrebel.xml
 GoGas2-secrets.txt
+rebel.xml
+resources/static
+resources/templates
