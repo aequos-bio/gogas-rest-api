@@ -10,5 +10,4 @@ node_modules
 jrebel.xml
 GoGas2-secrets.txt
 rebel.xml
-resources/static
-resources/templates
+/gogas-service/src/main/resources/static/
