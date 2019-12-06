@@ -37,7 +37,7 @@ public class AuthenticationController {
         this.userDetailsService = userDetailsService;
     }
 
-    @PostMapping(value = "api/authenticate")
+    @PostMapping(value = "authenticate")
     public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
         
         String tenantId = CustomRoutingDataSource.extractTenantIdFromHostName(req);
