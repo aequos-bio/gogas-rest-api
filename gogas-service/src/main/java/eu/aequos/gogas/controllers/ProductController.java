@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("products")
+@RequestMapping("api/products")
 public class ProductController {
 
     private ProductRepo productRepo;

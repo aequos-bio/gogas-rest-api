@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-@Repository
 public interface UserRepo extends CrudRepository<User, String> {
 
     @Override
@@ -27,6 +26,8 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     <T> List<T> findByRole(String role, Class<T> type);
 
+    <T> List<T> findByFriendReferralId(String friendReferralId, Class<T> type);
+
     List<UserCoreInfo> findByRoleInAndEnabled(Set<String> roles, boolean enabled);
 
     List<User> findByRole(String role);
@@ -34,8 +35,6 @@ public interface UserRepo extends CrudRepository<User, String> {
     <T> List<T> findByIdIn(Set<String> usrIds, Class<T> type);
 
     List<UserCoreInfo> findByIdNotInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
-
-    List<UserSummary> findByFriendReferralId(String referralId);
 
     boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
 

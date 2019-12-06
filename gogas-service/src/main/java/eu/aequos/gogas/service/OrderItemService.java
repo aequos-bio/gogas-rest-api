@@ -6,10 +6,7 @@ import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
-import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
-import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
-import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,26 +26,30 @@ public class OrderItemService {
     }
 
     public OrderItem insertItemByManager(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true);
+        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, true);
+    }
+
+    public OrderItem insertItemByFriendReferral(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, false);
     }
 
     public OrderItem updateOrDeleteItemByUser(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
-        Optional<OrderItem> existingOrderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false);
+        Optional<OrderItem> existingOrderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false, OrderItem.class);
 
         if (orderItemUpdate.getQuantity() == null || orderItemUpdate.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
             existingOrderItem.ifPresent(orderItemRepo::delete);
             return null;
         }
 
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false);
+        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false, false);
     }
 
     private OrderItem insertOrUpdateItem(User user, Product product, String orderId,
                                          OrderItemUpdateRequest orderItemUpdate,
                                          Optional<OrderItem> existingOrderItem,
-                                         boolean orderClosed) {
+                                         boolean orderClosed, boolean isSummaryOrder) {
 
-        OrderItem orderItem = existingOrderItem.orElse(newOrderItem(orderId, user, product.getId(), orderClosed));
+        OrderItem orderItem = existingOrderItem.orElse(newOrderItem(orderId, user, product.getId(), isSummaryOrder));
         orderItem.setUm(orderItemUpdate.getUnitOfMeasure());
         orderItem.setPrice(product.getPrice());
 
@@ -90,6 +91,11 @@ public class OrderItemService {
             return orderItemRepo.totalQuantityAndUsersByProductForClosedOrder(orderId);
     }
 
+    public Map<String, FriendTotalOrder> getFriendTotalQuantity(String userId, String orederId) {
+        return orderItemRepo.totalQuantityNotSummaryByUserOrReferral(userId, orederId).stream()
+                .collect(Collectors.toMap(FriendTotalOrder::getProduct, Function.identity()));
+    }
+
     public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId) {
         return orderItemRepo.itemsCountAndAmountByUserForClosedOrder(orderId);
     }
@@ -98,13 +104,33 @@ public class OrderItemService {
         return orderItemRepo.findByProductAndOrderAndSummary(productId, orderId, summary, ByProductOrderItem.class);
     }
 
+    public List<ByProductOrderItem> getFriendItemsByProduct(String userId, String productId, String orderId) {
+        return orderItemRepo.findNotSummaryByUserOrReferral(userId, orderId, productId, ByProductOrderItem.class);
+    }
+
+    public Optional<OrderItem> getSummaryUserItemByProduct(String userId, String productId, String orderId) {
+        return orderItemRepo.findByUserAndOrderAndProductAndSummary(userId, orderId, productId, true, OrderItem.class);
+    }
+
+    public List<OrderItemQtyOnly> getFriendQuantitiesByProduct(String userId, String productId, String orderId) {
+        return orderItemRepo.findNotSummaryByUserOrReferral(userId, orderId, productId, OrderItemQtyOnly.class);
+    }
+
+    public Optional<OrderItemQtyOnly> getSummaryUserQuantityByProduct(String userId, String productId, String orderId) {
+        return orderItemRepo.findByUserAndOrderAndProductAndSummary(userId, orderId, productId, true, OrderItemQtyOnly.class);
+    }
+
     public boolean updateDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
         int updatedRows = orderItemRepo.updateDeliveredQtyByItemId(orderId, orderItemId, deliveredQty);
         return updatedRows > 0;
     }
 
     public Set<String> getUsersWithOrder(String orderId, String productId) {
-        return orderItemRepo.findUserOrderingByProduct(orderId, productId);
+        return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, true);
+    }
+
+    public Set<String> getUsersWithNotSummaryOrder(String orderId, String productId) {
+        return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, false);
     }
 
     public void cancelProductOrder(String orderId, String productId) {
@@ -170,9 +196,9 @@ public class OrderItemService {
                                               String product, boolean summaryRequired) {
 
         if (summaryRequired)
-            return orderItemRepo.findNotSummaryByUserOrReferral(user, order, product);
+            return orderItemRepo.findNotSummaryByUserOrReferral(user, order, product, OrderItem.class);
 
-        return orderItemRepo.findByUserAndOrderAndProductAndSummary(user, order, product, false)
+        return orderItemRepo.findByUserAndOrderAndProductAndSummary(user, order, product, false, OrderItem.class)
                 .map(Arrays::asList)
                 .orElse(new ArrayList<>());
     }
@@ -183,5 +209,13 @@ public class OrderItemService {
 
     public void increaseDeliveredQtyByProduct(String orderId, String product, BigDecimal deliveredQtyRatio) {
         orderItemRepo.increaseDeliveredQtyByProduct(orderId, product, deliveredQtyRatio);
+    }
+
+    public void accountFriendOrder(String userId, String orderId, String productId, boolean accounted) {
+        orderItemRepo.updateAccountedByOrderIdAndProductIdAndUserOrFriend(userId, orderId, productId, accounted);
+    }
+
+    public boolean isOrderItemBelongingToUserOrFriend(String orderItem, String userId) {
+        return orderItemRepo.fingOrderItemByIdAndUserOrFriend(orderItem, userId).isPresent();
     }
 }

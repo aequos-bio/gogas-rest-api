@@ -5,7 +5,6 @@ import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.service.OrderUserService;
 import org.springframework.http.MediaType;
@@ -14,18 +13,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("order/user")
+@RequestMapping("api/order/user")
 public class OrderUserController {
 
     private OrderUserService orderUserService;
-    private OrderRepo orderRepo;
     private AuthorizationService authorizationService;
 
-    public OrderUserController(OrderUserService orderUserService, OrderRepo orderRepo,
+    public OrderUserController(OrderUserService orderUserService,
                                AuthorizationService authorizationService) {
 
         this.orderUserService = orderUserService;
-        this.orderRepo = orderRepo;
         this.authorizationService = authorizationService;
     }
 

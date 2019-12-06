@@ -2,6 +2,7 @@ package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
+import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,10 +22,19 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
 
     List<OrderItem> findByOrderAndSummary(String orderId, boolean summary);
 
-    Optional<OrderItem> findByUserAndOrderAndProductAndSummary(String userId, String orderId, String product, boolean summary);
+    <T> Optional<T> findByUserAndOrderAndProductAndSummary(String userId, String orderId, String product, boolean summary, Class<T> type);
+
+    @Query("SELECT o.id FROM OrderItem o WHERE o.id = ?1 AND (o.user = ?2 OR o.friendReferral = ?2)")
+    Optional<String> fingOrderItemByIdAndUserOrFriend(String orderItemId, String userId);
 
     @Query("SELECT o FROM OrderItem o WHERE (o.user = ?1 OR o.friendReferral = ?1) AND o.order = ?2 AND o.product = ?3 AND o.summary = false")
-    List<OrderItem> findNotSummaryByUserOrReferral(String userId, String orderId, String product);
+    <T> List<T> findNotSummaryByUserOrReferral(String userId, String orderId, String product, Class<T> type);
+
+    @Query("SELECT o.product AS product, SUM(o.deliveredQuantity) AS totalQuantity, COUNT(DISTINCT o.user) AS userCount, " +
+            "CASE WHEN SUM(1 - o.accounted) = 0 THEN true ELSE false END AS accounted " +
+            "FROM OrderItem o WHERE (o.user = ?1 OR o.friendReferral = ?1) AND o.order = ?2 AND o.summary = false " +
+            "GROUP BY o.product")
+    List<FriendTotalOrder> totalQuantityNotSummaryByUserOrReferral(String userId, String orderId);
 
     @Query("SELECT o.product AS product, SUM(o.deliveredQuantity) AS totalQuantity, COUNT(DISTINCT o.user) AS userCount, " +
             "CASE WHEN SUM(1 - o.cancelled) = 0 THEN true ELSE false END AS cancelled " +
@@ -110,6 +120,12 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     @Query("UPDATE OrderItem o SET o.price = ?3 WHERE o.order = ?1 AND o.product = ?2")
     int updatePriceByOrderIdAndProductId(String orderId, String productId, BigDecimal price);
 
-    @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 AND o.product = ?2 and o.summary = true")
-    Set<String> findUserOrderingByProduct(String orderId, String productId);
+    @Transactional
+    @Modifying
+    @Query("UPDATE OrderItem o SET o.accounted = ?4 WHERE o.order = ?2 AND o.product = ?3 AND (o.user = ?1 OR o.friendReferral = ?1) AND o.summary = false")
+    int updateAccountedByOrderIdAndProductIdAndUserOrFriend(String userId, String orderId, String productId, boolean accounted);
+
+
+    @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 AND o.product = ?2 and o.summary = ?3")
+    Set<String> findUserOrderingByProductAndSummary(String orderId, String productId, boolean summary);
 }

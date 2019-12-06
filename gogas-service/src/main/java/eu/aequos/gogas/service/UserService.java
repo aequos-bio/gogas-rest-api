@@ -37,6 +37,10 @@ public class UserService extends CrudService<User, String> {
         return toSelectItems(userRepo.findByRole(role, UserCoreInfo.class), withAll);
     }
 
+    public List<SelectItemDTO> getFriendsForSelect(String referralUserId, boolean withAll) {
+        return toSelectItems(userRepo.findByFriendReferralId(referralUserId, UserCoreInfo.class), withAll);
+    }
+
     public List<SelectItemDTO> getActiveUsersByRoles(Set<String> roles) {
         return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true), false);
     }
@@ -87,9 +91,16 @@ public class UserService extends CrudService<User, String> {
                 .thenComparing(UserCoreInfo::getLastName);
     }
 
+    public List<UserDTO> getFriends(String friendReferralId) {
+        return convertFromModel(userRepo.findByFriendReferralId(friendReferralId, User.class));
+    }
+
     public List<UserDTO> getUsers(String role) {
         List<User> users = role != null ? userRepo.findByRole(role) : userRepo.findAll();
+        return convertFromModel(users);
+    }
 
+    private List<UserDTO> convertFromModel(List<User> users) {
         return users.stream()
                 .sorted(getUserSorting())
                 .map(u -> new UserDTO().fromModel(u))
@@ -102,5 +113,10 @@ public class UserService extends CrudService<User, String> {
                 .filter(r -> includeFriend || !r.isFriend())
                 .map(Enum::name)
                 .collect(Collectors.toSet());
+    }
+
+    public User createFriend(UserDTO userDTO, String friendReferral) {
+        userDTO.setFriendReferralId(friendReferral);
+        return super.create(userDTO);
     }
 }

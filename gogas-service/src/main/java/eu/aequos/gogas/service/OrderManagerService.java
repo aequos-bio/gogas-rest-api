@@ -173,7 +173,6 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public boolean updateItemDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
-        //TODO: check user permissions
         return orderItemService.updateDeliveredQty(orderId, orderItemId, deliveredQty);
     }
 

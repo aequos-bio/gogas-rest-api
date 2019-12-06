@@ -2,6 +2,7 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Product;
+import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import lombok.Data;
@@ -87,6 +88,32 @@ public class UserOrderItemDTO extends SmallUserOrderItemDTO {
 
         if (userOrder != null)
             this.orderCancelled = userOrder.isCancelled();
+
+        return this;
+    }
+
+    /** builder **/
+    public UserOrderItemDTO fromModel(Product p, OpenOrderItem userOrder, FriendTotalOrder totalFriendOrder) {
+        super.fromModel(p, userOrder, null);
+
+        this.productId = p.getId();
+        this.productName = p.getDescription();
+        this.category = p.getCategory().getDescription();
+        this.categoryColor = p.getCategory().getPriceListColor();
+        this.unitOfMeasure = p.getUm();
+        this.boxesOnly = p.isBoxOnly();
+        this.orderMultiple = p.getMultiple();
+        this.productNotes = p.getNotes();
+        this.productProvince = p.getSupplier().getProvince();
+
+        if (userOrder != null)
+            this.orderCancelled = userOrder.isCancelled();
+
+        if (totalFriendOrder != null) {
+            this.accounted = totalFriendOrder.isAccounted();
+            this.friendOrderSum = Optional.ofNullable(totalFriendOrder.getTotalQuantity())
+                    .orElse(BigDecimal.ZERO);
+        }
 
         return this;
     }

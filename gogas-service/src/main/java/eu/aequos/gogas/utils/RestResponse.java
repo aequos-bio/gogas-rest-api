@@ -1,5 +1,6 @@
 package eu.aequos.gogas.utils;
 
+//TODO: check if we can merge with other structure to have one single "base response"
 public class RestResponse<T> {
   private T data;
   private boolean error;

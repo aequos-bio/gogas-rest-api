@@ -1,9 +1,9 @@
 package eu.aequos.gogas.datasource;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
 import eu.aequos.gogas.configuration.MasterDatasetConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -13,33 +13,56 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DataSourceRegistry {
-    public static Map<Object, Object> getDataSourceMap(MasterDatasetConfig cfg) throws SQLException {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceRegistry.class);
+
+    private static final String SQLSERVER_DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    private static final String TENANTS_QUERY = "SELECT tenant_id, username, password, url FROM tenants";
+
+    public static Map<Object, Object> getDataSourceMap(MasterDatasetConfig cfg) {
+        DriverManagerDataSource dataSource = createMasterDataSource(cfg);
+        return createDataSourceMap(dataSource);
+    }
+
+    private static DriverManagerDataSource createMasterDataSource(MasterDatasetConfig cfg) {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(cfg.getDriverClassName());
         dataSource.setUrl(cfg.getUrl());
         dataSource.setUsername(cfg.getUsername());
         dataSource.setPassword(cfg.getPassword());
 
-        Connection conn = dataSource.getConnection();
-        Statement stat = conn.createStatement();
-        String sql = "select tenant_id, username, password, url from tenants";
-        ResultSet rs = stat.executeQuery(sql);
-        Map<Object, Object> hashMap = new HashMap<>();
-        while(rs.next()) {
-            String tenantId = rs.getString("tenant_id");
-            String username = rs.getString("username");
-            String password = rs.getString("password");
-            String url = rs.getString("url");
-            DriverManagerDataSource ds = new DriverManagerDataSource();
-            ds.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            ds.setUrl(url);
-            ds.setUsername(username);
-            ds.setPassword(password);
-            hashMap.put(tenantId, ds);    
-            System.out.println("### Addes datasource for tenant key " + tenantId);
+        return dataSource;
+    }
+
+    private static Map<Object, Object> createDataSourceMap(DriverManagerDataSource dataSource) {
+        Map<Object, Object> dataSourceMap = new HashMap<>();
+
+        try (
+            Connection conn = dataSource.getConnection();
+            Statement stat = conn.createStatement();
+            ResultSet rs = stat.executeQuery(TENANTS_QUERY)
+        ) {
+            while (rs.next()) {
+                String tenantId = rs.getString("tenant_id");
+                dataSourceMap.put(tenantId, createTenantDataSource(rs));
+                LOGGER.info("### Added datasource for tenant key " + tenantId);
+            }
+        } catch (Exception ex) {
+            LOGGER.error("Error while creating tenants data source map", ex);
         }
 
-        return hashMap;
+        return dataSourceMap;
     }
+
+    private static DriverManagerDataSource createTenantDataSource(ResultSet rs) throws SQLException {
+        DriverManagerDataSource ds = new DriverManagerDataSource();
+        ds.setDriverClassName(SQLSERVER_DRIVER_CLASS);
+        ds.setUrl(rs.getString("url"));
+        ds.setUsername(rs.getString("username"));
+        ds.setPassword(rs.getString("password"));
+
+        return ds;
+    }
+
 
 }

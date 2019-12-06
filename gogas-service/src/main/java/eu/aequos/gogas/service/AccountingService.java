@@ -44,7 +44,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public List<AccountingEntryDTO> getAccountingEntries(String userId, String reasonCode,
-                                                         String description, Date dateFrom, Date dateTo) {
+                                                         String description, Date dateFrom,
+                                                         Date dateTo, String friendReferralId) {
 
         Specification<AccountingEntry> filter = new SpecificationBuilder<AccountingEntry>()
                 .withBaseFilter(AccountingSpecs.notLinkedToOrder())
@@ -53,6 +54,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .and(AccountingSpecs::descriptionLike, description)
                 .and(AccountingSpecs::fromDate, dateFrom)
                 .and(AccountingSpecs::toDate, dateTo)
+                .and(AccountingSpecs::isFriendOf, friendReferralId)
                 .build();
 
         return accountingRepo.findAll(filter).stream()
