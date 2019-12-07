@@ -1,9 +1,6 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.OrderDTO;
-import eu.aequos.gogas.dto.OrderItemUpdateRequest;
-import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
-import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
@@ -26,6 +23,11 @@ public class OrderUserController {
 
         this.orderUserService = orderUserService;
         this.authorizationService = authorizationService;
+    }
+
+    @GetMapping(value = "open")
+    public List<OpenOrderDTO> getOpenOrders() {
+        return orderUserService.getOpenOrders(authorizationService.getCurrentUser().getId());
     }
 
     @PostMapping(value = "list")

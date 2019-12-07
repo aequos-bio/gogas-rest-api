@@ -1,17 +1,11 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.dto.OrderDTO;
-import eu.aequos.gogas.dto.OrderItemUpdateRequest;
-import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
-import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
-import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
-import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
@@ -40,7 +34,39 @@ public class OrderUserService {
         this.orderRepo = orderRepo;
     }
 
+    public List<OpenOrderDTO> getOpenOrders(String userId) {
+        List<Order> openOrders = orderRepo.getOpenOrders();
+
+        if (openOrders.isEmpty())
+            return new ArrayList<>();
+
+        Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, openOrders.extractIds(Order::getId)).stream()
+                .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
+
+        return openOrders.stream()
+                .map(o -> new OpenOrderDTO().fromModel(o, openOrderSummaries.getOrDefault(o.getId(), new ArrayList<>())))
+                .collect(Collectors.toList());
+    }
+
     public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
+
+        List<Order> orderList = getFilteredOrders(searchFilter, userId);
+
+        if (orderList.isEmpty())
+            return new ArrayList<>();
+
+        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderList.extractIds(Order::getId)).stream()
+                .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
+
+        return orderList.stream()
+                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
+                .collect(Collectors.toList());
+    }
+
+    private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
+
+        if (searchFilter.inDelivery)
+            return orderRepo.getInDeliveryOrders(userId);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
@@ -52,23 +78,7 @@ public class OrderUserService {
                 .and(OrderSpecs::statusIn, searchFilter.getStatus())
                 .build();
 
-        List<Order> orderList = orderRepo.findAll(filter);
-
-        if (orderList.isEmpty())
-            return new ArrayList<>();
-
-        Set<String> orderIds = orderList.stream()
-                .map(Order::getId)
-                .collect(Collectors.toSet());
-
-        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderIds)
-                .stream()
-                .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
-
-
-        return orderList.stream()
-                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
-                .collect(Collectors.toList());
+        return orderRepo.findAll(filter);
     }
 
     public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {
