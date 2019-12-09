@@ -184,7 +184,7 @@ public class OrderFriendService {
 
     public List<SelectItemDTO> getFriendsNotOrdering(String userId, String orderId, String productId) {
         Set<String> userIdsAlreadyOrdered = orderItemService.getUsersWithNotSummaryOrder(orderId, productId);
-        List<SelectItemDTO> friendsList = userService.getFriendsForSelect(userId, false);
+        List<SelectItemDTO> friendsList = userService.getFriendsForSelect(userId, false, false);
 
         return friendsList.stream()
                 .filter(u -> !userIdsAlreadyOrdered.contains(u.getId()))

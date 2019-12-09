@@ -65,7 +65,7 @@ public class OrderUserService {
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
 
-        if (searchFilter.inDelivery)
+        if (searchFilter.inDelivery != null && searchFilter.inDelivery)
             return orderRepo.getInDeliveryOrders(userId);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()

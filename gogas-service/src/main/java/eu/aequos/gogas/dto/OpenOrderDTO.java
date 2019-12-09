@@ -42,6 +42,8 @@ public class OpenOrderDTO {
     @JsonProperty("externallink")
     private String externalLink;
 
+    private boolean showAdvance;
+
     private List<OpenOrderSummaryDTO> userOrders;
 
     public OpenOrderDTO fromModel(Order order, List<OpenOrderSummary> singleOrders) {
@@ -53,6 +55,7 @@ public class OpenOrderDTO {
         this.deliveryDate = order.getDeliveryDate();
         this.external = order.getOrderType().isExternal();
         this.externalLink = order.getExternaLlink();
+        this.showAdvance = order.getOrderType().isShowAdvance();
 
         this.userOrders = singleOrders.stream()
                 .map(o -> new OpenOrderSummaryDTO().fromModel(o))

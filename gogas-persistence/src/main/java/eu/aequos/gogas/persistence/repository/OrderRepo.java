@@ -47,10 +47,10 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
             "       ) " +
             "END as totalAmount, " +
             "(SELECT COUNT(*) FROM ordini o WHERE d.idDateOrdini = o.idDateOrdine AND o.riepilogoUtente = CAST(d.stato AS BIT) AND o.idUtente = ?1) as itemsCount, " +
-            "f.friendCount, f.friendAccounted " +
+            "COALESCE(f.friendCount, 0) as friendCount, COALESCE(f.friendAccounted, 0) as friendAccounted " +
             "FROM dateOrdini d " +
             "INNER JOIN tipologiaOrdine t ON d.idTipologiaOrdine = t.idTipologiaOrdine " +
-            "INNER JOIN (" +
+            "LEFT OUTER JOIN (" +
             "  SELECT o.idDateOrdine, COUNT(*) AS friendCount, " +
             "  CASE WHEN SUM(1 - o.contabilizzato) = 0 THEN 1 ELSE 0 END AS friendAccounted " +
             "  FROM ordini o WHERE idReferenteAmico = ?1 AND o.riepilogoUtente = 0 " +

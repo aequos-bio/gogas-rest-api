@@ -3,16 +3,14 @@ package eu.aequos.gogas.service;
 import eu.aequos.gogas.converter.SelectItemsConverter;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
-import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.Arrays.stream;
 
 @Service
 public class UserService extends CrudService<User, String> {
@@ -37,8 +35,15 @@ public class UserService extends CrudService<User, String> {
         return toSelectItems(userRepo.findByRole(role, UserCoreInfo.class), withAll);
     }
 
-    public List<SelectItemDTO> getFriendsForSelect(String referralUserId, boolean withAll) {
-        return toSelectItems(userRepo.findByFriendReferralId(referralUserId, UserCoreInfo.class), withAll);
+    public List<SelectItemDTO> getFriendsForSelect(String referralUserId, boolean withAll, boolean includeReferral) {
+        List<SelectItemDTO> selectItems = new ArrayList<>();
+
+        if (includeReferral)
+            selectItems.add(getSelectItem(getRequired(referralUserId)));
+
+        selectItems.addAll(toSelectItems(userRepo.findByFriendReferralId(referralUserId, UserCoreInfo.class), withAll));
+
+        return selectItems;
     }
 
     public List<SelectItemDTO> getActiveUsersByRoles(Set<String> roles) {
