@@ -42,10 +42,14 @@ public class OrderManagerController {
     }
 
     @GetMapping(value = "{orderId}")
-    public List<OrderByProductDTO> getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException {
-        return orderManagerService.getOrderDetailByProduct(orderId);
+    public OrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException {
+        return orderManagerService.getOrderDetails(orderId);
     }
 
+    @GetMapping(value = "{orderId}/product")
+    public List<OrderByProductDTO> getOrderDetailsByProduct(@PathVariable String orderId) throws ItemNotFoundException {
+        return orderManagerService.getOrderDetailByProduct(orderId);
+    }
 
     @GetMapping(value = "{orderId}/product/{productId}")
     public List<OrderItemByProductDTO> getProductDetails(@PathVariable String orderId, @PathVariable String productId) throws ItemNotFoundException {

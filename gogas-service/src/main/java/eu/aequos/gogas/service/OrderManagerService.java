@@ -406,4 +406,9 @@ public class OrderManagerService extends CrudService<Order, String> {
         //return gogasOrder.getOpeningDate().before(aequosOpenOrder.getOpeningDate()) ||
         //        gogasOrder.getOpeningDate().after(aequosOpenOrder.getDueDate());
     }
+
+    public OrderDetailsDTO getOrderDetails(String orderId) {
+        Order order = getRequiredWithType(orderId);
+        return new OrderDetailsDTO().fromModel(order);
+    }
 }

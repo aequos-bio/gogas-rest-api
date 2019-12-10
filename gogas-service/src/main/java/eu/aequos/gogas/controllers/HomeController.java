@@ -1,6 +1,8 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.MenuDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.MenuService;
 import org.springframework.http.MediaType;
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/home")
@@ -32,5 +36,13 @@ public class HomeController {
     @GetMapping(value = "menu", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<MenuDTO> getMenu(@RequestParam String role) {
         return menuService.getMenuTreeByRole(role);
+    }
+
+    //TODO: move to appropriate controller and put logic in service
+    @GetMapping(value = "order/status")
+    public List<SelectItemDTO> getOrderStatusList() {
+        return Arrays.stream(Order.OrderStatus.values())
+                .map(s -> new SelectItemDTO(Integer.toString(s.getStatusCode()), s.getDescription()))
+                .collect(Collectors.toList());
     }
 }

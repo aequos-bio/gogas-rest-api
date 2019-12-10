@@ -148,4 +148,9 @@ public class OrderUserService {
                 .map(product -> new UserOrderItemDTO().fromModel(product, userOrderMap.get(product.getId()), productTotalOrdersMap.get(product.getId())))
                 .collect(Collectors.toList());
     }
+
+    public UserOrderDetailsDTO getOrderDetails(String orderId) throws ItemNotFoundException {
+        Order order = orderManagerService.getRequiredWithType(orderId);
+        return new UserOrderDetailsDTO().fromModel(order);
+    }
 }

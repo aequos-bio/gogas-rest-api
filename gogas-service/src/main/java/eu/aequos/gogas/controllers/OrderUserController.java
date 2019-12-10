@@ -35,8 +35,16 @@ public class OrderUserController {
         return orderUserService.search(searchFilter, authorizationService.getCurrentUser().getId());
     }
 
+    @GetMapping(value = "{orderId}")
+    public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws GoGasException {
+        return orderUserService.getOrderDetails(orderId);
+    }
+
     @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<UserOrderItemDTO> getUserOrderItems(@PathVariable String orderId, @RequestParam String userId) throws GoGasException {
+        if (!authorizationService.isUserOrFriend(userId))
+            throw new UserNotAuthorizedException();
+
         return orderUserService.getUserOrderItems(orderId, userId);
     }
 
