@@ -25,18 +25,13 @@ public class OrderTypeService extends CrudService<OrderType, String> {
             new OrderTypeSelectItemDTO(t.getId(), t.getDescription(), t.getAequosOrderId(), t.isExternal(), t.getExternallink());
 
     private OrderTypeRepo orderTypeRepo;
-    private UserService userService;
     private OrderRepo orderRepo;
-    private ListConverter listConverter;
 
-    public OrderTypeService(OrderTypeRepo orderTypeRepo, UserService userService,
-                            OrderRepo orderRepo, ListConverter listConverter) {
+    public OrderTypeService(OrderTypeRepo orderTypeRepo, OrderRepo orderRepo) {
         super(orderTypeRepo, "order type");
 
         this.orderTypeRepo = orderTypeRepo;
-        this.userService = userService;
         this.orderRepo = orderRepo;
-        this.listConverter = listConverter;
     }
 
     public List<OrderTypeDTO> getAll() {

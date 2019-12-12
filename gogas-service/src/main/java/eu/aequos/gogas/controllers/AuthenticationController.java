@@ -1,6 +1,7 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.datasource.CustomRoutingDataSource;
+import eu.aequos.gogas.multitenancy.TenantRegistry;
+import eu.aequos.gogas.multitenancy.TenantRoutingDataSource;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
@@ -28,19 +29,23 @@ public class AuthenticationController {
     private JwtTokenUtil jwtTokenUtil;
     private AuthorizationService userDetailsService;
     private ConfigurationRepo configurationRepo;
+    private TenantRegistry tenantRegistry;
 
-    public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager, 
-            JwtTokenUtil jwtTokenUtil, AuthorizationService userDetailsService) {
-                    this.configurationRepo = configurationRepo;
+    public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager,
+                                    JwtTokenUtil jwtTokenUtil, AuthorizationService userDetailsService,
+                                    TenantRegistry tenantRegistry) {
+
+        this.configurationRepo = configurationRepo;
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
+        this.tenantRegistry = tenantRegistry;
     }
 
     @PostMapping(value = "authenticate")
     public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
         
-        String tenantId = CustomRoutingDataSource.extractTenantIdFromHostName(req);
+        String tenantId = tenantRegistry.extractFromHostName(req.getServerName());
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

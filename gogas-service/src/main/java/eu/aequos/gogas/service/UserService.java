@@ -18,16 +18,14 @@ public class UserService extends CrudService<User, String> {
     private final String DISABLED_ICON = "<span class='glyphicon glyphicon-ban-circle' style='margin-right:10px'></span>";
 
     private ConfigurationService configurationService;
-    private ListConverter listConverter;
     private UserRepo userRepo;
 
     //TODO: cache users
 
-    public UserService(ConfigurationService configurationService, ListConverter listConverter, UserRepo userRepo) {
+    public UserService(ConfigurationService configurationService, UserRepo userRepo) {
         super(userRepo, "user");
 
         this.configurationService = configurationService;
-        this.listConverter = listConverter;
         this.userRepo = userRepo;
     }
 

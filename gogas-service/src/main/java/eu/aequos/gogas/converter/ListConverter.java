@@ -36,11 +36,6 @@ public class ListConverter<T> {
         return selectItems.collect(Collectors.toList());
     }
 
-    public List<String> extractId(Function<T, String> idGetter) {
-        return items.map(idGetter)
-                .collect(Collectors.toList());
-    }
-
     public Set<String> extractIds(Function<T, String> idGetter) {
         return items.map(idGetter)
                 .collect(Collectors.toSet());
