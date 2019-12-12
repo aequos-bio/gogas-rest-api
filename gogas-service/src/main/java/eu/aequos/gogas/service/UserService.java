@@ -1,6 +1,6 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.converter.SelectItemsConverter;
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.persistence.entity.User;
@@ -18,16 +18,16 @@ public class UserService extends CrudService<User, String> {
     private final String DISABLED_ICON = "<span class='glyphicon glyphicon-ban-circle' style='margin-right:10px'></span>";
 
     private ConfigurationService configurationService;
-    private SelectItemsConverter selectItemsConverter;
+    private ListConverter listConverter;
     private UserRepo userRepo;
 
     //TODO: cache users
 
-    public UserService(ConfigurationService configurationService, SelectItemsConverter selectItemsConverter, UserRepo userRepo) {
+    public UserService(ConfigurationService configurationService, ListConverter listConverter, UserRepo userRepo) {
         super(userRepo, "user");
 
         this.configurationService = configurationService;
-        this.selectItemsConverter = selectItemsConverter;
+        this.listConverter = listConverter;
         this.userRepo = userRepo;
     }
 
@@ -58,7 +58,8 @@ public class UserService extends CrudService<User, String> {
         Stream<UserCoreInfo> userStream = users.stream()
                 .sorted(getUserSorting());
 
-        return selectItemsConverter.toSelectItems(userStream, this::getSelectItem, false, "Tutti");
+        return ListConverter.fromStream(userStream)
+                .toSelectItems(this::getSelectItem, false, "Tutti");
     }
 
     public Map<String, String> getUsersFullNameMap(Set<String> userIds) {

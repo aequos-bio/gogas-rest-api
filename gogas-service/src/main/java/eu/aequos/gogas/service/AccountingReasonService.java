@@ -1,6 +1,6 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.converter.SelectItemsConverter;
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.persistence.repository.AccountingReasonRepo;
@@ -16,18 +16,18 @@ public class AccountingReasonService extends CrudService<AccountingEntryReason, 
     private static final Function<AccountingEntryReason, SelectItemDTO> SELECT_ITEM_CONVERSION = t -> new SelectItemDTO(t.getReasonCode(), t.getDescription());
 
     private AccountingReasonRepo accountingReasonRepo;
-    private SelectItemsConverter selectItemsConverter;
 
-    public AccountingReasonService(AccountingReasonRepo accountingReasonRepo, SelectItemsConverter selectItemsConverter) {
+    public AccountingReasonService(AccountingReasonRepo accountingReasonRepo) {
         super(accountingReasonRepo,"accounting reason");
 
         this.accountingReasonRepo = accountingReasonRepo;
-        this.selectItemsConverter = selectItemsConverter;
     }
 
     public List<SelectItemDTO> getAccountingReasonsForSelect() {
         Stream<AccountingEntryReason> reasons = accountingReasonRepo.findAllByOrderByDescription().stream();
-        return selectItemsConverter.toSelectItems(reasons, SELECT_ITEM_CONVERSION, false, null);
+
+        return ListConverter.fromStream(reasons)
+                .toSelectItems(SELECT_ITEM_CONVERSION, false, null);
     }
 
     public List<AccountingEntryReason> getAccountingReasons() {

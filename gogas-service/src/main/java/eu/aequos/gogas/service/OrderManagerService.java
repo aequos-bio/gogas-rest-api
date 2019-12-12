@@ -1,5 +1,6 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
@@ -72,7 +73,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         boolean isOrderOpen = order.getStatus().isOpen();
 
         List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(orderId, isOrderOpen);
-        Map<String, ProductTotalOrder> productTotalOrders = productOrderTotal
+        Map<String, ProductTotalOrder> productTotalOrders = ListConverter.fromList(productOrderTotal)
                 .toMap(ProductTotalOrder::getProduct);
 
         if (productTotalOrders.isEmpty())
@@ -80,7 +81,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
 
-        Map<String, SupplierOrderItem> supplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId)
+        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(orderId))
                 .toMap(SupplierOrderItem::getProductId);
 
         return orderedProducts.stream()
@@ -164,7 +165,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         //TODO: check user permissions
 
         List<ByProductOrderItem> orderItems = orderItemService.getItemsByProduct(productId, orderId, !order.getStatus().isOpen());
-        Map<String, String> userFullNameMap = userService.getUsersFullNameMap(orderItems.extractIds(ByProductOrderItem::getUser));
+        Set<String> orderItemsId = ListConverter.fromList(orderItems).extractIds(ByProductOrderItem::getUser);
+        Map<String, String> userFullNameMap = userService.getUsersFullNameMap(orderItemsId);
 
         return orderItems.stream()
                 .map(o -> new OrderItemByProductDTO().fromModel(o, userFullNameMap.get(o.getUser())))
@@ -270,7 +272,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         Map<String, BigDecimal> accountingEntries = accountingService.getOrderAccountingEntries(order.getId()).stream()
                 .collect(Collectors.toMap(entry -> entry.getUser().getId(), AccountingEntry::getAmount));
 
-        Map<String, ByUserOrderItem> userOrderItems = orderItemService.getItemsCountAndAmountByUser(order.getId())
+        Map<String, ByUserOrderItem> userOrderItems = ListConverter.fromList(orderItemService.getItemsCountAndAmountByUser(order.getId()))
                 .toMap(ByUserOrderItem::getUserId);
 
         Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()

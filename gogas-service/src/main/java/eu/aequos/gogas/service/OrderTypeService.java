@@ -1,6 +1,6 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.converter.SelectItemsConverter;
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.dto.OrderTypeSelectItemDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
@@ -27,16 +27,16 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     private OrderTypeRepo orderTypeRepo;
     private UserService userService;
     private OrderRepo orderRepo;
-    private SelectItemsConverter selectItemsConverter;
+    private ListConverter listConverter;
 
     public OrderTypeService(OrderTypeRepo orderTypeRepo, UserService userService,
-                            OrderRepo orderRepo, SelectItemsConverter selectItemsConverter) {
+                            OrderRepo orderRepo, ListConverter listConverter) {
         super(orderTypeRepo, "order type");
 
         this.orderTypeRepo = orderTypeRepo;
         this.userService = userService;
         this.orderRepo = orderRepo;
-        this.selectItemsConverter = selectItemsConverter;
+        this.listConverter = listConverter;
     }
 
     public List<OrderTypeDTO> getAll() {
@@ -65,6 +65,7 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {
         Stream<OrderType> orderTypeStream = orderTypeRepo.findAllByOrderByDescription().stream();
         Function<OrderType, SelectItemDTO> conversionFunc = extended ? SELECT_ITEM_EXTENDED_CONVERSION : SELECT_ITEM_CONVERSION;
-        return selectItemsConverter.toSelectItems(orderTypeStream, conversionFunc, firstEmpty, EMPTY_SELECTION_LABEL);
+        return ListConverter.fromStream(orderTypeStream)
+                .toSelectItems(conversionFunc, firstEmpty, EMPTY_SELECTION_LABEL);
     }
 }

@@ -1,5 +1,6 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
@@ -40,7 +41,10 @@ public class OrderUserService {
         if (openOrders.isEmpty())
             return new ArrayList<>();
 
-        Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, openOrders.extractIds(Order::getId)).stream()
+        Set<String> orderIds = ListConverter.fromList(openOrders)
+                .extractIds(Order::getId);
+
+        Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, orderIds).stream()
                 .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
 
         return openOrders.stream()
@@ -55,7 +59,10 @@ public class OrderUserService {
         if (orderList.isEmpty())
             return new ArrayList<>();
 
-        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderList.extractIds(Order::getId)).stream()
+        Set<String> orderIds = ListConverter.fromList(orderList)
+                .extractIds(Order::getId);
+
+        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderIds).stream()
                 .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
 
         return orderList.stream()

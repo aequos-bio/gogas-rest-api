@@ -1,5 +1,6 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.OrderItemByProductDTO;
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
 import eu.aequos.gogas.dto.SelectItemDTO;
@@ -73,7 +74,8 @@ public class OrderFriendService {
         User user = userService.getRequired(userId);
 
         List<ByProductOrderItem> orderItems = orderItemService.getFriendItemsByProduct(userId, productId, orderId);
-        Map<String, String> userFullNameMap = userService.getUsersFullNameMap(orderItems.extractIds(ByProductOrderItem::getUser));
+        Map<String, String> userFullNameMap = userService.getUsersFullNameMap(ListConverter.fromList(orderItems)
+                .extractIds(ByProductOrderItem::getUser));
 
         return orderItems.stream()
                 .map(o -> new OrderItemByProductDTO().fromModel(o, userFullNameMap.get(o.getUser())))
