@@ -1,0 +1,837 @@
+2019-12-13 22:29:47 logFileName=gasmio [http-nio-8081-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:29:50 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:34:35 logFileName=gasmio [http-nio-8081-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:34:42 logFileName=gasmio [http-nio-8081-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:34:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:35:21 logFileName=gasmio [http-nio-8081-exec-7] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:36:22 logFileName=gasmio [http-nio-8081-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:36:24 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        userId,
+        sum(total) as total   
+    from
+        (          SELECT
+            d.idDateOrdini AS idOrdine,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END AS userId,
+            ROUND(SUM(CASE 
+                WHEN t.totaleCalcolato = 1 THEN o.qtaRitirataKg * o.prezzoKg 
+                ELSE o.prezzoKg 
+            END),
+            2) + COALESCE(s.importo,
+            0) AS total          
+        FROM
+            dateOrdini AS d                 
+        INNER JOIN
+            tipologiaOrdine AS t 
+                ON d.idTipologiaOrdine = t.idTipologiaOrdine                 
+        INNER JOIN
+            ordini AS o 
+                ON d.idDateOrdini = o.idDateOrdine                 
+        INNER JOIN
+            utenti AS u 
+                ON o.idUtente = u.idUtente                 
+        LEFT OUTER JOIN
+            speseTrasporto AS s 
+                ON u.idUtente = s.idUtente 
+                AND d.idDateOrdini = s.idDateOrdini          
+        WHERE
+            o.riepilogoUtente = 1            
+            AND o.contabilizzato = 1          
+        GROUP BY
+            d.idDateOrdini,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END,
+            s.importo        ) as ordertotals 
+    group by
+        userId;
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END as userId,
+        sum(CASE 
+            WHEN c.segno = '-' THEN m.importo * - 1 
+            ELSE m.importo 
+        END - COALESCE (s.importo,
+        0) ) as total 
+    from
+        movimenti m 
+    inner join
+        causale c 
+            on c.codiceCausale=m.causale 
+    LEFT OUTER JOIN
+        speseTrasporto AS s 
+            ON m.idUtente = s.idUtente 
+            AND m.idDateOrdini = s.idDateOrdini 
+    where
+        m.confermato=1 
+    group by
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [00000000-0000-0000-0000-000000000000]
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [C9BE182B-BF87-43DF-817C-87E54178E284]
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A8097B30-A0B4-4B04-BD32-B7D950D6B16F]
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:37:01 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [D3C1A567-049C-4D6C-B003-F62DA2421D20]
+2019-12-13 22:37:47 logFileName=gasmio [http-nio-8081-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-5] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:37:50 logFileName=gasmio [http-nio-8081-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        year0_.[anno] as anno1_0_,
+        year0_.[chiuso] as chiuso2_0_ 
+    from
+        [anno] year0_ 
+    where
+        year0_.[chiuso]=0 
+    order by
+        year0_.[anno] desc
+2019-12-13 22:38:19 logFileName=gasmio [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        configurat0_.[chiave] as chiave1_3_,
+        configurat0_.[descrizione] as descrizi2_3_,
+        configurat0_.[valore] as valore3_3_,
+        configurat0_.[visibile] as visibile4_3_ 
+    from
+        [configurazione] configurat0_
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_ 
+    where
+        user0_.[utente]=?
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [ermanno]
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        ordermanag0_.[idresponsabili] as idrespon1_13_,
+        ordermanag0_.[idtipologiaordine] as idtipolo2_13_,
+        ordermanag0_.[idutente] as idutente3_13_ 
+    from
+        [responsabili] ordermanag0_ 
+    where
+        ordermanag0_.[idutente]=?
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-8] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:38:21 logFileName=gasmio [http-nio-8081-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        year0_.[anno] as anno1_0_,
+        year0_.[chiuso] as chiuso2_0_ 
+    from
+        [anno] year0_ 
+    where
+        year0_.[chiuso]=0 
+    order by
+        year0_.[anno] desc
+2019-12-13 22:39:31 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        userId,
+        sum(total) as total   
+    from
+        (          SELECT
+            d.idDateOrdini AS idOrdine,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END AS userId,
+            ROUND(SUM(CASE 
+                WHEN t.totaleCalcolato = 1 THEN o.qtaRitirataKg * o.prezzoKg 
+                ELSE o.prezzoKg 
+            END),
+            2) + COALESCE(s.importo,
+            0) AS total          
+        FROM
+            dateOrdini AS d                 
+        INNER JOIN
+            tipologiaOrdine AS t 
+                ON d.idTipologiaOrdine = t.idTipologiaOrdine                 
+        INNER JOIN
+            ordini AS o 
+                ON d.idDateOrdini = o.idDateOrdine                 
+        INNER JOIN
+            utenti AS u 
+                ON o.idUtente = u.idUtente                 
+        LEFT OUTER JOIN
+            speseTrasporto AS s 
+                ON u.idUtente = s.idUtente 
+                AND d.idDateOrdini = s.idDateOrdini          
+        WHERE
+            o.riepilogoUtente = 1            
+            AND o.contabilizzato = 1          
+        GROUP BY
+            d.idDateOrdini,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END,
+            s.importo        ) as ordertotals 
+    group by
+        userId;
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        year0_.[anno] as anno1_0_,
+        year0_.[chiuso] as chiuso2_0_ 
+    from
+        [anno] year0_ 
+    where
+        year0_.[chiuso]=0 
+    order by
+        year0_.[anno] asc
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END as userId,
+        sum(CASE 
+            WHEN c.segno = '-' THEN m.importo * - 1 
+            ELSE m.importo 
+        END - COALESCE (s.importo,
+        0) ) as total 
+    from
+        movimenti m 
+    inner join
+        causale c 
+            on c.codiceCausale=m.causale 
+    LEFT OUTER JOIN
+        speseTrasporto AS s 
+            ON m.idUtente = s.idUtente 
+            AND m.idDateOrdini = s.idDateOrdini 
+    where
+        m.confermato=1 
+    group by
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [00000000-0000-0000-0000-000000000000]
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [C9BE182B-BF87-43DF-817C-87E54178E284]
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A8097B30-A0B4-4B04-BD32-B7D950D6B16F]
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:39:32 logFileName=gasmio [http-nio-8081-exec-10] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [D3C1A567-049C-4D6C-B003-F62DA2421D20]
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        userId,
+        sum(total) as total   
+    from
+        (          SELECT
+            d.idDateOrdini AS idOrdine,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END AS userId,
+            ROUND(SUM(CASE 
+                WHEN t.totaleCalcolato = 1 THEN o.qtaRitirataKg * o.prezzoKg 
+                ELSE o.prezzoKg 
+            END),
+            2) + COALESCE(s.importo,
+            0) AS total          
+        FROM
+            dateOrdini AS d                 
+        INNER JOIN
+            tipologiaOrdine AS t 
+                ON d.idTipologiaOrdine = t.idTipologiaOrdine                 
+        INNER JOIN
+            ordini AS o 
+                ON d.idDateOrdini = o.idDateOrdine                 
+        INNER JOIN
+            utenti AS u 
+                ON o.idUtente = u.idUtente                 
+        LEFT OUTER JOIN
+            speseTrasporto AS s 
+                ON u.idUtente = s.idUtente 
+                AND d.idDateOrdini = s.idDateOrdini          
+        WHERE
+            o.riepilogoUtente = 1            
+            AND o.contabilizzato = 1          
+        GROUP BY
+            d.idDateOrdini,
+            CASE 
+                WHEN o.idReferenteAmico IS NOT NULL THEN o.idReferenteAmico 
+                ELSE o.idUtente 
+            END,
+            s.importo        ) as ordertotals 
+    group by
+        userId;
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END as userId,
+        sum(CASE 
+            WHEN c.segno = '-' THEN m.importo * - 1 
+            ELSE m.importo 
+        END - COALESCE (s.importo,
+        0) ) as total 
+    from
+        movimenti m 
+    inner join
+        causale c 
+            on c.codiceCausale=m.causale 
+    LEFT OUTER JOIN
+        speseTrasporto AS s 
+            ON m.idUtente = s.idUtente 
+            AND m.idDateOrdini = s.idDateOrdini 
+    where
+        m.confermato=1 
+    group by
+        CASE 
+            WHEN m.idReferente IS NOT NULL THEN m.idReferente 
+            ELSE m.idUtente 
+        END
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        user0_.[idutente] as idutente1_18_,
+        user0_.[email] as email2_18_,
+        user0_.[attivo] as attivo3_18_,
+        user0_.[nome] as nome4_18_,
+        user0_.[idreferente] as idrefer10_18_,
+        user0_.[cognome] as cognome5_18_,
+        user0_.[pwd] as pwd6_18_,
+        user0_.[telefono] as telefono7_18_,
+        user0_.[ruolo] as ruolo8_18_,
+        user0_.[utente] as utente9_18_ 
+    from
+        [utenti] user0_
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [00000000-0000-0000-0000-000000000000]
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A7827556-FA97-4E14-9137-7234C9125ED8]
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [C9BE182B-BF87-43DF-817C-87E54178E284]
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [A8097B30-A0B4-4B04-BD32-B7D950D6B16F]
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        managedord0_.[idutente] as idutente3_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_0_,
+        managedord0_.[idresponsabili] as idrespon1_13_1_,
+        managedord0_.[idtipologiaordine] as idtipolo2_13_1_,
+        managedord0_.[idutente] as idutente3_13_1_ 
+    from
+        [responsabili] managedord0_ 
+    where
+        managedord0_.[idutente]=?
+2019-12-13 22:40:14 logFileName=gasmio [http-nio-8081-exec-2] TRACE o.h.type.descriptor.sql.BasicBinder - binding parameter [1] as [VARCHAR] - [D3C1A567-049C-4D6C-B003-F62DA2421D20]

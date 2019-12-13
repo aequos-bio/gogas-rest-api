@@ -13,7 +13,8 @@ const styles = {
     position: 'sticky',
     top: '0',
     padding: '5px 16px',
-    marginBottom: '20px'
+    marginBottom: '20px',
+    backgroundColor: 'white'
   },
   brand: {
     display: 'flex',
