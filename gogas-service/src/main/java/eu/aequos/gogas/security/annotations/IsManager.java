@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("authentication.principal.isManager()")
+@PreAuthorize("hasRole('A') OR authentication.principal.isManager()")
 public @interface IsManager {
 }

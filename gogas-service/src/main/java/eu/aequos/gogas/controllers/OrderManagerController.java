@@ -3,6 +3,7 @@ package eu.aequos.gogas.controllers;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
@@ -38,7 +39,9 @@ public class OrderManagerController {
     @IsManager
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
-        return orderManagerService.search(searchFilter, authorizationService.getCurrentUser().getId());
+        String userId = authorizationService.getCurrentUser().getId();
+        User.Role userRole = User.Role.valueOf(authorizationService.getCurrentUser().getRole());
+        return orderManagerService.search(searchFilter, userId, userRole);
     }
 
     @GetMapping(value = "{orderId}")
@@ -150,7 +153,9 @@ public class OrderManagerController {
     @IsManager
     @GetMapping(value = "aequos/available")
     public List<OrderDTO> getAequosAvailableOpenOrders() {
-        return orderManagerService.getAequosAvailableOpenOrders(authorizationService.getCurrentUser().getId());
+        String userId = authorizationService.getCurrentUser().getId();
+        User.Role userRole = User.Role.valueOf(authorizationService.getCurrentUser().getRole());
+        return orderManagerService.getAequosAvailableOpenOrders(userId, userRole);
     }
 
     /********************************/

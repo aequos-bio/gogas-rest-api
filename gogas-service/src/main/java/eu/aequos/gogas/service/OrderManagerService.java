@@ -106,14 +106,9 @@ public class OrderManagerService extends CrudService<Order, String> {
         return createdOrder;
     }
 
-    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
+    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, User.Role userRole) {
 
-        List<String> managedOrderTypes = orderManagerRepo.findByUser(userId).stream()
-                .map(OrderManager::getOrderType)
-                .collect(Collectors.toList());
-
-        if (managedOrderTypeNotFound(managedOrderTypes, searchFilter.getOrderType()))
-            return new ArrayList<>();
+        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
@@ -144,18 +139,20 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(Collectors.toList());
     }
 
+    //TODO: cambiare spostando logica in un oggetto utente o referente
+    private List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
+        if (userRole.isAdmin())
+            return null;
+
+        return orderManagerRepo.findByUser(userId).stream()
+                .map(OrderManager::getOrderType)
+                .collect(Collectors.toList());
+    }
+
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         Order order = this.getRequiredWithType(orderId);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
-    }
-
-    private boolean managedOrderTypeNotFound(List<String> managedOrderTypes, String filterOrderType) {
-        if (managedOrderTypes.isEmpty())
-            return true;
-
-        return filterOrderType != null && filterOrderType.length() > 0
-                && !managedOrderTypes.stream().anyMatch(o -> o.equalsIgnoreCase(filterOrderType));
     }
 
     /*** OPERATIONS *****/
@@ -368,22 +365,21 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderRepo.save(order);
     }
 
-    public List<OrderDTO> getAequosAvailableOpenOrders(String userId) {
+    public List<OrderDTO> getAequosAvailableOpenOrders(String userId, User.Role userRole) {
 
         Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
-
-        List<String> managedOrderTypes = orderManagerRepo.findByUser(userId).stream()
-                .map(OrderManager::getOrderType)
-                .collect(Collectors.toList());
 
         Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
                 .map(Order.OrderStatus::getStatusCode)
                 .collect(Collectors.toSet());
 
-        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeMapping.values().stream().map(OrderType::getId).collect(Collectors.toSet()), statusCodes)
+        Set<String> aequosOrderTypeIds = ListConverter.fromList(aequosOrderTypeMapping.values())
+                .extractIds(OrderType::getId);
+
+        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeIds, statusCodes)
                 .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), Collectors.toList()));
 
-        return aequosIntegrationService.getOpenOrders().stream()
+        Stream<OrderDTO> aequosOpenOrders = aequosIntegrationService.getOpenOrders().stream()
                 .map(o -> {
                     OrderType type = aequosOrderTypeMapping.get(o.getId());
 
@@ -395,8 +391,13 @@ public class OrderManagerService extends CrudService<Order, String> {
                     orderDTO.setDeliveryDate(o.getDeliveryDate());
 
                     return orderDTO;
-                })
-                .filter(o -> managedOrderTypes.contains(o.getOrderTypeId()))
+                });
+
+        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
+        if (managedOrderTypes != null)
+            aequosOpenOrders = aequosOpenOrders.filter(managedOrderTypes::contains);
+
+        return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
                 .collect(Collectors.toList());
     }

@@ -2,6 +2,7 @@ package eu.aequos.gogas.converter;
 
 import eu.aequos.gogas.dto.SelectItemDTO;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +22,7 @@ public class ListConverter<T> {
         return new ListConverter<>(items);
     }
 
-    public static <T> ListConverter<T> fromList(List<T> itemsList) {
+    public static <T> ListConverter<T> fromList(Collection<T> itemsList) {
         return new ListConverter<>(itemsList.stream());
     }
 
