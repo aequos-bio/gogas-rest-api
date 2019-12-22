@@ -33,6 +33,14 @@ public class OrderDetailsDTO {
 
     private boolean editable;
 
+    private boolean external;
+
+    @JsonProperty("totaleCalcolato")
+    private boolean computedAmount;
+
+    @JsonProperty("speseTrasporto")
+    private BigDecimal shippingCost;
+
     @JsonProperty("contabilizzato")
     private boolean accounted;
 
@@ -81,8 +89,11 @@ public class OrderDetailsDTO {
         this.orderTypeName = order.getOrderType().getDescription();
         this.deliveryDate = order.getDeliveryDate();
         this.aequosId = order.getOrderType().getAequosOrderId();
+        this.computedAmount = order.getOrderType().isComputedAmount();
+        this.shippingCost = order.getShippingCost();
         this.editable = order.getStatus().equals(Order.OrderStatus.Closed);
         this.accounted = order.getStatus().equals(Order.OrderStatus.Accounted);
+        this.external = order.getOrderType().isExternal();
         this.invoiceNumber = order.getInvoiceNumber();
         this.invoiceDate = order.getInvoiceDate();
         this.invoiceAmount = order.getInvoiceAmount();
