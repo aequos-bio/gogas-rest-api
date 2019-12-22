@@ -45,7 +45,7 @@ function Users({authentication, info}) {
   }, [users]);
 console.log('users', users)
   return (
-    <Container fluid>
+    <Container fluid style={{backgroundColor: 'white'}}>
       {error ?
         <Alert variant='danger'>{error}</Alert>
         : []}
