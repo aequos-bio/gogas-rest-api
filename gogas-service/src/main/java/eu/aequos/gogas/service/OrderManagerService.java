@@ -25,6 +25,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
 
@@ -86,7 +88,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderedProducts.stream()
                 .map(p -> new OrderByProductDTO().fromModel(p, productTotalOrders.get(p.getId()), supplierOrderItems.get(p.getId())))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
 
@@ -136,7 +138,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderList.stream()
                 .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId()),  orderWorkflowHandler.getAvailableActions(entry, User.Role.A)))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     //TODO: cambiare spostando logica in un oggetto utente o referente
@@ -146,7 +148,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderManagerRepo.findByUser(userId).stream()
                 .map(OrderManager::getOrderType)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
@@ -168,7 +170,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         return orderItems.stream()
                 .map(o -> new OrderItemByProductDTO().fromModel(o, userFullNameMap.get(o.getUser())))
                 .sorted(Comparator.comparing(OrderItemByProductDTO::getUser))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public boolean updateItemDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
@@ -283,7 +285,7 @@ public class OrderManagerService extends CrudService<Order, String> {
          return users.entrySet().stream()
                  .map(user -> getOrderByUser(user, userOrderItems.get(user.getKey()), accountingEntries.get(user.getKey()), shippingCostMap.get(user.getKey()), computedAmount))
                  .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
-                 .collect(Collectors.toList());
+                 .collect(toList());
     }
 
     private OrderByUserDTO getOrderByUser(Map.Entry<String, String> user, ByUserOrderItem userOrderItem,
@@ -347,7 +349,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderedProducts.stream()
                 .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), computedAmount))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
@@ -377,7 +379,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .extractIds(OrderType::getId);
 
         Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeIds, statusCodes)
-                .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), Collectors.toList()));
+                .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), toList()));
 
         Stream<OrderDTO> aequosOpenOrders = aequosIntegrationService.getOpenOrders().stream()
                 .map(o -> {
@@ -399,7 +401,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrder) {

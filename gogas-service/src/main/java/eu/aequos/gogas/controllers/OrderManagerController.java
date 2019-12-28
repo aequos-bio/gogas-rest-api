@@ -7,15 +7,15 @@ import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
-import eu.aequos.gogas.service.ExcelGenerationService;
-import eu.aequos.gogas.service.OrderItemService;
-import eu.aequos.gogas.service.OrderManagerService;
+import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
+import eu.aequos.gogas.service.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -27,13 +27,19 @@ public class OrderManagerController {
     private OrderManagerService orderManagerService;
     private OrderItemService orderItemService;
     private AuthorizationService authorizationService;
+    private BuyersReportService buyersReportService;
+    private ConfigurationService configurationService;
 
     public OrderManagerController(ExcelGenerationService reportService, OrderManagerService orderManagerService,
-                                  OrderItemService orderItemService, AuthorizationService authorizationService) {
+                                  OrderItemService orderItemService, AuthorizationService authorizationService,
+                                  BuyersReportService buyersReportService, ConfigurationService configurationService) {
+
         this.reportService = reportService;
         this.orderManagerService = orderManagerService;
         this.orderItemService = orderItemService;
         this.authorizationService = authorizationService;
+        this.buyersReportService = buyersReportService;
+        this.configurationService = configurationService;
     }
 
     @IsManager
@@ -206,5 +212,15 @@ public class OrderManagerController {
     public BasicResponseDTO updateProductPrice(@PathVariable String orderId, @PathVariable String productId, @RequestBody BigDecimal price) throws GoGasException {
         orderManagerService.updateProductPrice(orderId, productId, price);
         return new BasicResponseDTO("OK");
+    }
+
+    /**************** REPORT ******************/
+
+    @IsOrderTypeManager
+    @GetMapping(value = "{productTypeId}/report/buyers")
+    public BuyersReportDTO generateBuyersReport(@PathVariable String productTypeId, @RequestParam(required = false) String dateFrom, @RequestParam(required = false) String dateTo) {
+        Date dateFromParsed = configurationService.parseDate(dateFrom);
+        Date dateToParsed = configurationService.parseDate(dateTo);
+        return buyersReportService.generateBuyersReport(productTypeId, dateFromParsed, dateToParsed);
     }
 }

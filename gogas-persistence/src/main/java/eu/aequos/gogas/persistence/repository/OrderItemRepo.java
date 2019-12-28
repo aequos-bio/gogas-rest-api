@@ -3,6 +3,7 @@ package eu.aequos.gogas.persistence.repository;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.OrderItemUserOnly;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -128,4 +129,6 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
 
     @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 AND o.product = ?2 and o.summary = ?3")
     Set<String> findUserOrderingByProductAndSummary(String orderId, String productId, boolean summary);
+
+    List<OrderItemUserOnly> findDistinctByOrderIn(Set<String> orderIds);
 }
