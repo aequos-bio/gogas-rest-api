@@ -1,11 +1,12 @@
 package eu.aequos.gogas.excel.products;
 
+import eu.aequos.gogas.service.pricelist.ExternalPriceListItem;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-public class ProductPriceListExport {
+public class ExcelPriceListItem implements ExternalPriceListItem {
     private String externalId;
     private String name;
     private String supplierExternalId;

@@ -82,9 +82,10 @@ public class OrderTypeController {
         OrderType orderType = orderTypeService.getRequired(orderTypeId);
 
         if (orderType.getAequosOrderId() == null)
-            return new OrderSynchroInfoDTO(null, null);
+            return new OrderSynchroInfoDTO( null);
         else
-            return new OrderSynchroInfoDTO(orderType.getAequosOrderId(), orderType.getLastsynchro());
+            return new OrderSynchroInfoDTO(orderType.getLastsynchro())
+                    .withAequosOrderId(orderType.getAequosOrderId());
     }
 
     @IsAdmin

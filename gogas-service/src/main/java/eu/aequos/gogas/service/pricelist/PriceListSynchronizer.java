@@ -1,8 +1,5 @@
-package eu.aequos.gogas.service;
+package eu.aequos.gogas.service.pricelist;
 
-import eu.aequos.gogas.integration.api.AequosPriceList;
-import eu.aequos.gogas.integration.api.AequosPriceListCategory;
-import eu.aequos.gogas.integration.api.AequosPriceListItem;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.ProductCategory;
@@ -39,17 +36,17 @@ public class PriceListSynchronizer {
     }
 
     @Transactional
-    public Date syncPriceList(OrderType orderType, AequosPriceList externalPriceList) {
+    public Date syncPriceList(OrderType orderType, ExternalPriceList externalPriceList) {
         Map<String, Supplier> suppliersMap = externalPriceList.getProducts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> createOrUpdateSupplier(e.getKey(), e.getValue().get(0))));
 
         Map<String, ProductCategory> categoriesMap = externalPriceList.getCategories().values().stream()
                 .flatMap(Collection::stream)
-                .collect(Collectors.toMap(AequosPriceListCategory::getDescription, c -> createOrUpdateCategory(orderType.getId(), c), (v1, v2) -> v2));
+                .collect(Collectors.toMap(ExternalPriceListCategory::getDescription, c -> createOrUpdateCategory(orderType.getId(), c), (v1, v2) -> v2));
 
         Set<String> synchedProductIds = externalPriceList.getProducts().values().stream()
                 .flatMap(Collection::stream)
-                .map(p -> createOrUpdateProduct(p, suppliersMap.get(p.getSupplierCode()), categoriesMap, orderType.getId()))
+                .map(p -> createOrUpdateProduct(p, suppliersMap.get(p.getSupplierExternalId()), categoriesMap, orderType.getId()))
                 .collect(Collectors.toSet());
 
         productRepo.setNotAvailableByTypeAndIdNotIn(orderType.getId(), synchedProductIds);
@@ -57,18 +54,18 @@ public class PriceListSynchronizer {
         return updateLastSynchroDate(orderType);
     }
 
-    private Supplier createOrUpdateSupplier(String externalCode, AequosPriceListItem product) {
+    private Supplier createOrUpdateSupplier(String externalCode, ExternalPriceListItem product) {
         Supplier supplier = supplierRepo.findByExternalId(externalCode)
                 .orElse(new Supplier());
 
-        supplier.setName(product.getSupplierDescription());
-        supplier.setProvince(product.getProvince());
+        supplier.setName(product.getSupplierName());
+        supplier.setProvince(product.getSupplierProvince());
         supplier.setExternalId(externalCode);
 
         return supplierRepo.save(supplier);
     }
 
-    private ProductCategory createOrUpdateCategory(String orderTypeId, AequosPriceListCategory externalCategory) {
+    private ProductCategory createOrUpdateCategory(String orderTypeId, ExternalPriceListCategory externalCategory) {
         ProductCategory category = productCategoryRepo.findByOrderTypeIdAndDescription(orderTypeId, externalCategory.getDescription())
                 .orElse(new ProductCategory(orderTypeId, externalCategory.getDescription()));
 
@@ -91,26 +88,26 @@ public class PriceListSynchronizer {
         return category;
     }
 
-    private String createOrUpdateProduct(AequosPriceListItem externalProduct, Supplier supplier,
+    private String createOrUpdateProduct(ExternalPriceListItem externalProduct, Supplier supplier,
                                          Map<String, ProductCategory> categoriesMap, String orderTypeId) {
 
-        Product product = productRepo.findByExternalId(externalProduct.getCode())
+        Product product = productRepo.findByExternalId(externalProduct.getExternalId())
                 .orElse(new Product());
 
-        product.setExternalId(externalProduct.getCode());
-        product.setDescription(externalProduct.getDescription());
+        product.setExternalId(externalProduct.getExternalId());
+        product.setDescription(externalProduct.getName());
         product.setUm(externalProduct.getUnitOfMeasure());
-        product.setBoxWeight(externalProduct.getBoxWight());
-        product.setPrice(externalProduct.getPrice());
+        product.setBoxWeight(externalProduct.getBoxWeight());
+        product.setPrice(externalProduct.getUnitPrice());
         product.setType(orderTypeId);
-        product.setBoxUm(externalProduct.getBoxWight().compareTo(BigDecimal.ONE) > 0 ? "Cassa" : null);
+        product.setBoxUm(externalProduct.getBoxWeight().compareTo(BigDecimal.ONE) > 0 ? "Cassa" : null);
         product.setSupplier(supplier);
         product.setCategory(createOrUpdateCategory(categoriesMap, orderTypeId, externalProduct.getCategory()));
         product.setCancelled(false);
         product.setAvailable(true);
         product.setNotes(externalProduct.getNotes());
         product.setFrequency(externalProduct.getFrequency());
-        product.setBoxOnly(externalProduct.isBoxOnly());
+        product.setBoxOnly(externalProduct.isWholeBoxesOnly());
         product.setMultiple(externalProduct.getMultiple());
 
         return productRepo.save(product).getId();
