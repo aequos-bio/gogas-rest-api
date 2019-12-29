@@ -71,10 +71,13 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public List<OrderByProductDTO> getOrderDetailByProduct(String orderId) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
-        //TODO: check user permissions
+        return getOrderDetailByProduct(order);
+    }
+
+    public List<OrderByProductDTO> getOrderDetailByProduct(Order order) throws ItemNotFoundException {
         boolean isOrderOpen = order.getStatus().isOpen();
 
-        List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(orderId, isOrderOpen);
+        List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(order.getId(), isOrderOpen);
         Map<String, ProductTotalOrder> productTotalOrders = ListConverter.fromList(productOrderTotal)
                 .toMap(ProductTotalOrder::getProduct);
 
@@ -83,7 +86,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
 
-        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(orderId))
+        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(order.getId()))
                 .toMap(SupplierOrderItem::getProductId);
 
         return orderedProducts.stream()

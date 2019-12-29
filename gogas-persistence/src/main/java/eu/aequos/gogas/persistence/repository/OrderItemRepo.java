@@ -118,6 +118,10 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     int updateDeliveredQtyByItemId(String orderId, String orderItemId, BigDecimal deliveredQty);
 
     @Modifying
+    @Query("UPDATE OrderItem o SET o.deliveredQuantity = ?4 WHERE o.order = ?1 AND o.user = ?2 AND o.product = ?3 AND summary = true")
+    int updateDeliveredQty(String orderId, String userId, String productId, BigDecimal deliveredQty);
+
+    @Modifying
     @Query("UPDATE OrderItem o SET o.price = ?3 WHERE o.order = ?1 AND o.product = ?2")
     int updatePriceByOrderIdAndProductId(String orderId, String productId, BigDecimal price);
 
