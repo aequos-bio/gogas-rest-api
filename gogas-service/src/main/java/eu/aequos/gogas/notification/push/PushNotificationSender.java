@@ -77,16 +77,4 @@ public class PushNotificationSender {
 
         return request;
     }
-
-    /*private List<String> users() {
-        return Stream.of("1d5a914a-2880-48dd-af1f-644c3663db51",
-        "394672a8-e8c0-448b-9bba-b69619c3415d" ,
-        "50284528-b96e-4479-be74-50092baac2e2"  ,
-        "58b275cd-bbb0-4c64-be99-3dd7e4ae0235",
-        "68cbc4b2-cebf-42b1-9ea5-ee037f0efb63",
-        "8ace7d97-b0ab-4b6c-8c04-bc02401789b6",
-        "c1276cd8-1b44-465d-be53-452941976131",
-        "dfb96e8e-ab56-4c73-8cf1-be808714fa02",
-        "f0864c0a-51d8-489e-a137-0838fbae602b").collect(Collectors.toList());
-    }*/
 }
