@@ -1,26 +1,25 @@
 package eu.aequos.gogas.workflow;
 
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.repository.AccountingRepo;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AccountAction extends OrderStatusAction {
 
     private AccountingRepo accountingRepo;
+    private PushNotificationSender pushNotificationSender;
 
     public AccountAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                          SupplierOrderItemRepo supplierOrderItemRepo, Order order,
-                         AccountingRepo accountingRepo) {
+                         AccountingRepo accountingRepo, PushNotificationSender pushNotificationSender) {
 
         super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Accounted);
         this.accountingRepo = accountingRepo;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     @Override
@@ -35,7 +34,7 @@ public class AccountAction extends OrderStatusAction {
         else
             updateAccountingEntries();
 
-        //TODO: send mobile notifications
+        pushNotificationSender.sendOrderNotification(order, OrderEvent.Accounted);
     }
 
     private void updateAccountingEntries() {

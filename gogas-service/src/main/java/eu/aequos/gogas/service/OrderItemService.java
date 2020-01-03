@@ -130,8 +130,16 @@ public class OrderItemService {
         return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, true);
     }
 
+    public Set<String> getUsersWithOrder(String orderId) {
+        return orderItemRepo.findUserOrderingBySummary(orderId, true);
+    }
+
     public Set<String> getUsersWithNotSummaryOrder(String orderId, String productId) {
         return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, false);
+    }
+
+    public Set<String> getUsersWithNotSummaryOrder(String orderId) {
+        return orderItemRepo.findUserOrderingBySummary(orderId, false);
     }
 
     public void cancelProductOrder(String orderId, String productId) {

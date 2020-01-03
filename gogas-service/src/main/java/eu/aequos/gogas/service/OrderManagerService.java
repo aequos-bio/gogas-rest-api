@@ -5,6 +5,8 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.integration.AequosIntegrationService;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -43,12 +45,14 @@ public class OrderManagerService extends CrudService<Order, String> {
     private ProductService productService;
     private AccountingService accountingService;
     private AequosIntegrationService aequosIntegrationService;
+    private PushNotificationSender pushNotificationSender;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
-                               AccountingService accountingService, AequosIntegrationService aequosIntegrationService) {
+                               AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
+                               PushNotificationSender pushNotificationSender) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -62,6 +66,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.productService = productService;
         this.accountingService = accountingService;
         this.aequosIntegrationService = aequosIntegrationService;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -97,13 +102,14 @@ public class OrderManagerService extends CrudService<Order, String> {
 
 
     public synchronized Order create(OrderDTO dto) throws GoGasException {
-        //TODO: check user permissions
         List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(dto.getOrderTypeId(), dto.getDueDate(), dto.getDeliveryDate());
 
         if (!duplicateOrders.isEmpty())
             throw new OrderAlreadyExistsException();
 
         Order createdOrder = super.create(dto);
+
+        pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
 
         if (dto.isUpdateProductList())
             productService.syncPriceList(dto.getOrderTypeId());

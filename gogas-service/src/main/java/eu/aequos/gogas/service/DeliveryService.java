@@ -6,6 +6,8 @@ import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.OrderType;
@@ -26,13 +28,15 @@ public class DeliveryService {
     private OrderManagerService orderManagerService;
     private OrderItemRepo orderItemRepo;
     private UserService userService;
+    private PushNotificationSender pushNotificationSender;
 
     public DeliveryService(OrderManagerService orderManagerService, OrderItemRepo orderItemRepo,
-                           UserService userService) {
+                           UserService userService, PushNotificationSender pushNotificationSender) {
 
         this.orderManagerService = orderManagerService;
         this.orderItemRepo = orderItemRepo;
         this.userService = userService;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     public DeliveryOrderDTO getOrderForDelivery(String orderId) {
@@ -97,6 +101,8 @@ public class DeliveryService {
         if (!orderId.equalsIgnoreCase(deliveredOrder.getOrderId()))
             throw new GoGasException("Order id is not valid");
 
+        Order order = orderManagerService.getRequiredWithType(orderId);
+
         List<OrderItem> itemsCreated = new ArrayList<>();
 
         Map<String, String> usersReferralMap = deliveredOrder.getUsers().stream()
@@ -112,6 +118,8 @@ public class DeliveryService {
 
         if (!itemsCreated.isEmpty())
             orderItemRepo.saveAll(itemsCreated);
+
+        pushNotificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
 
     private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap, DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem) {
