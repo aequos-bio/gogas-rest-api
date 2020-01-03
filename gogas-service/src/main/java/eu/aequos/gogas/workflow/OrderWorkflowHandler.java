@@ -1,7 +1,7 @@
 package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.exception.InvalidOrderActionException;
-import eu.aequos.gogas.exception.UserNotAuthorizedException;
+import eu.aequos.gogas.notification.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.*;
@@ -25,10 +25,12 @@ public class OrderWorkflowHandler {
     private AccountingRepo accountingRepo;
     private ProductRepo productRepo;
     private ConfigurationService configurationService;
+    private PushNotificationSender pushNotificationSender;
 
     public OrderWorkflowHandler(OrderManagerRepo orderManagerRepo, OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                                 SupplierOrderItemRepo supplierOrderItemRepo, AccountingRepo accountingRepo,
-                                ProductRepo productRepo, ConfigurationService configurationService) {
+                                ProductRepo productRepo, ConfigurationService configurationService,
+                                PushNotificationSender pushNotificationSender) {
 
         this.orderManagerRepo = orderManagerRepo;
         this.orderItemRepo = orderItemRepo;
@@ -37,6 +39,7 @@ public class OrderWorkflowHandler {
         this.accountingRepo = accountingRepo;
         this.productRepo = productRepo;
         this.configurationService = configurationService;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     @Transactional
@@ -55,7 +58,7 @@ public class OrderWorkflowHandler {
                 return new ReopenAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
 
             case "contabilizza":
-                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingRepo);
+                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingRepo, pushNotificationSender);
 
             case "tornachiuso":
                 return new UndoAccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingRepo);
