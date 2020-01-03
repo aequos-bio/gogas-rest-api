@@ -1,5 +1,10 @@
-package eu.aequos.gogas.notification;
+package eu.aequos.gogas.notification.push;
 
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.builder.OrderPushNotificationBuilder;
+import eu.aequos.gogas.notification.push.builder.PushNotificationBuilderSelector;
+import eu.aequos.gogas.notification.push.client.PushNotificationClient;
+import eu.aequos.gogas.notification.push.client.PushNotificationRequest;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
@@ -8,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,75 +26,54 @@ public class PushNotificationSender {
 
     private PushNotificationClient pushNotificationClient;
     private NotificationPreferencesRepo notificationPreferencesRepo;
+    private PushNotificationBuilderSelector pushNotificationBuilderSelector;
     private PushTokenRepo pushTokenRepo;
 
     public PushNotificationSender(@Value("${notification.push.apikey}") String serviceKey,
                                   @Value("${notification.push.appid}") String serviceAppId,
                                   PushNotificationClient pushNotificationClient,
                                   NotificationPreferencesRepo notificationPreferencesRepo,
+                                  PushNotificationBuilderSelector pushNotificationBuilderSelector,
                                   PushTokenRepo pushTokenRepo) {
 
         this.serviceKey = serviceKey;
         this.serviceAppId = serviceAppId;
         this.pushNotificationClient = pushNotificationClient;
         this.notificationPreferencesRepo = notificationPreferencesRepo;
+        this.pushNotificationBuilderSelector = pushNotificationBuilderSelector;
         this.pushTokenRepo = pushTokenRepo;
     }
 
-    public void sendOrderNotificationToAllUsers(Order order, OrderEventPushNotification event) {
-        List<NotificationPreferencesView> notificationPrefs = notificationPreferencesRepo.findByOrderTypeId(order.getOrderType().getId());
-        sendNotification(order, event, notificationPrefs);
-    }
-
-    public void sendOrderNotificationToSpecificUsers(Order order, OrderEventPushNotification event, Set<String> userIds) {
-        List<NotificationPreferencesView> notificationPrefs = notificationPreferencesRepo.findByOrderTypeIdAndUserIdIn(order.getOrderType().getId(), userIds);
-        sendNotification(order, event, notificationPrefs);
-    }
-
-    private void sendNotification(Order order, OrderEventPushNotification event, List<NotificationPreferencesView> notificationPrefs) {
-        List<String> targetTokens = extractNotificationTokens(order, event, notificationPrefs);
-        PushNotificationRequest request = buildRequest(order.getId(), event, targetTokens);
+    public void sendOrderNotification(Order order, OrderEvent event) {
+        OrderPushNotificationBuilder pushNotificationBuilder = pushNotificationBuilderSelector.select(event);
+        List<String> targetTokens = extractNotificationTokens(order, pushNotificationBuilder);
+        PushNotificationRequest request = buildRequest(order.getId(), event, pushNotificationBuilder, targetTokens);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
         log.info("Notification send, response: " + response);
     }
 
-    private List<String> extractNotificationTokens(Order order, OrderEventPushNotification event,
-                                                   List<NotificationPreferencesView> notificationPrefs) {
+    private List<String> extractNotificationTokens(Order order, OrderPushNotificationBuilder orderPushNotification) {
 
-        Set<String> targetUsers = notificationPrefs.stream()
-                .filter(event.getPreferencesFilter())
-                .filter(pref -> filterByDateAndTime(order, pref, event))
+        String orderTypeId = order.getOrderType().getId();
+        List<NotificationPreferencesView> notificationPrefs = notificationPreferencesRepo.findByOrderTypeId(orderTypeId);
+
+        Set<String> targetUsers = orderPushNotification.filterPreferences(order, notificationPrefs)
                 .map(NotificationPreferencesView::getUserId)
                 .collect(Collectors.toSet());
 
         return pushTokenRepo.findTokensByUserIdIn(targetUsers);
     }
 
-    private boolean filterByDateAndTime(Order order, NotificationPreferencesView preference, OrderEventPushNotification event) {
-        switch (event) {
-            case Expiration : return order.isExpiring(preference.getOnExpirationMinutesBefore());
-            case Delivery : return order.isInDelivery(11, preference.getOnDeliveryMinutesBefore());
-            default: return true; //other events are not filtered by date
-        }
-    }
-
-    public Date addHours(Date originalDate, int hours) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(originalDate);
-        calendar.set(Calendar.HOUR_OF_DAY, hours);
-        return calendar.getTime();
-    }
-
-
-    private PushNotificationRequest buildRequest(String orderId, OrderEventPushNotification event, List<String> targetTokens) {
+    private PushNotificationRequest buildRequest(String orderId, OrderEvent event,
+                                                 OrderPushNotificationBuilder orderPushNotification, List<String> targetTokens) {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
-        request.setHeadings(event.getHeading());
-        request.setContents(event.getMessageTemplate());
+        request.setHeadings(orderPushNotification.getHeading());
+        request.setContents(orderPushNotification.getMessageTemplate());
         request.setTargetTokens(targetTokens);
         request.setOrderId(orderId);
         request.setAndroidGroup("order_" + event.name());
-        request.setAndroidGroupMessage("$[notif_count] " + event.getMultipleNotificationsHeading());
+        request.setAndroidGroupMessage("$[notif_count] " + orderPushNotification.getMultipleNotificationsHeading());
 
         return request;
     }

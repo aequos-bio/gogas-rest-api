@@ -1,7 +1,7 @@
 package eu.aequos.gogas.schedule;
 
-import eu.aequos.gogas.notification.OrderEventPushNotification;
-import eu.aequos.gogas.notification.PushNotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
@@ -30,11 +30,11 @@ public class OrderNotificationTask {
     @Scheduled(cron = "${notification.task.cron}")
     public void sendOrderNotifications() {
         log.info("Notification process started");
-        sendNotifications(OrderSpecs::dueDateFrom, OrderEventPushNotification.Expiration);
-        sendNotifications(OrderSpecs::deliveryDateFrom, OrderEventPushNotification.Delivery);
+        sendNotifications(OrderSpecs::dueDateFrom, OrderEvent.Expiration);
+        sendNotifications(OrderSpecs::deliveryDateFrom, OrderEvent.Delivery);
     }
 
-    private void sendNotifications(Function<Date, Specification<Order>> orderDateFilter, OrderEventPushNotification event) {
+    private void sendNotifications(Function<Date, Specification<Order>> orderDateFilter, OrderEvent event) {
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
                 .and(orderDateFilter, new Date())

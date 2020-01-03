@@ -1,7 +1,7 @@
 package eu.aequos.gogas.workflow;
 
-import eu.aequos.gogas.notification.OrderEventPushNotification;
-import eu.aequos.gogas.notification.PushNotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.AccountingRepo;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
@@ -34,7 +34,7 @@ public class AccountAction extends OrderStatusAction {
         else
             updateAccountingEntries();
 
-        pushNotificationSender.sendOrderNotification(order, OrderEventPushNotification.Accounted);
+        pushNotificationSender.sendOrderNotification(order, OrderEvent.Accounted);
     }
 
     private void updateAccountingEntries() {

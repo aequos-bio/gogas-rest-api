@@ -1,11 +1,12 @@
 package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
-@Data
+@Setter
 @Entity
 @IdClass(NotificationPreferencesView.NotificationPreferencesViewPK.class)
 @Table(name = "notificationprefsview")
@@ -39,6 +40,42 @@ public class NotificationPreferencesView {
 
     @Column(name = "aggiornamentoqta")
     private boolean onOrderAccounted;
+
+    public boolean onOrderOpened() {
+        return onOrderOpened;
+    }
+
+    public boolean onOrderExpiration() {
+        return onOrderExpiration;
+    }
+
+    public boolean onOrderDelivery() {
+        return onOrderDelivery;
+    }
+
+    public boolean onOrderUpdatedQuantity() {
+        return onOrderUpdatedQuantity;
+    }
+
+    public boolean onOrderAccounted() {
+        return onOrderAccounted;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getOrderTypeId() {
+        return orderTypeId;
+    }
+
+    public int getOnExpirationMinutesBefore() {
+        return onExpirationMinutesBefore;
+    }
+
+    public int getOnDeliveryMinutesBefore() {
+        return onDeliveryMinutesBefore;
+    }
 
     @Data
     public static class NotificationPreferencesViewPK implements Serializable {

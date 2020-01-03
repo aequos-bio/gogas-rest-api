@@ -5,8 +5,8 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.integration.AequosIntegrationService;
-import eu.aequos.gogas.notification.OrderEventPushNotification;
-import eu.aequos.gogas.notification.PushNotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -109,7 +109,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         Order createdOrder = super.create(dto);
 
-        pushNotificationSender.sendOrderNotification(createdOrder, OrderEventPushNotification.Opened);
+        pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
 
         if (dto.isUpdateProductList())
             productService.syncPriceList(dto.getOrderTypeId());

@@ -134,5 +134,8 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 AND o.product = ?2 and o.summary = ?3")
     Set<String> findUserOrderingByProductAndSummary(String orderId, String productId, boolean summary);
 
+    @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 and o.summary = ?3")
+    Set<String> findUserOrderingBySummary(String orderId, boolean summary);
+
     List<OrderItemUserOnly> findDistinctByOrderIn(Set<String> orderIds);
 }

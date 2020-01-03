@@ -1,7 +1,7 @@
 package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.exception.InvalidOrderActionException;
-import eu.aequos.gogas.notification.PushNotificationSender;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.*;

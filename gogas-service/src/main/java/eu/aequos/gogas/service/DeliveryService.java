@@ -6,8 +6,8 @@ import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
-import eu.aequos.gogas.notification.OrderEventPushNotification;
-import eu.aequos.gogas.notification.PushNotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.OrderType;
@@ -119,7 +119,7 @@ public class DeliveryService {
         if (!itemsCreated.isEmpty())
             orderItemRepo.saveAll(itemsCreated);
 
-        pushNotificationSender.sendOrderNotification(order, OrderEventPushNotification.QuantityUpdated);
+        pushNotificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
 
     private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap, DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem) {
