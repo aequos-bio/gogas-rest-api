@@ -23,7 +23,7 @@ public class NotificationPreferences {
     @Column(name = "apertura")
     private boolean onOrderOpened;
 
-    @Column(name = "apertura")
+    @Column(name = "scadenza")
     private boolean onOrderExpiration;
 
     @Column(name = "minutiscadenza")
@@ -38,6 +38,6 @@ public class NotificationPreferences {
     @Column(name = "aggiornamentoqta")
     private boolean onOrderUpdatedQuantity;
 
-    @Column(name = "aggiornamentoqta")
+    @Column(name = "contabilizzazione")
     private boolean onOrderAccounted;
 }

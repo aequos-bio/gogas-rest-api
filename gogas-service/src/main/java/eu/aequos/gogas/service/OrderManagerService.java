@@ -151,7 +151,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     //TODO: cambiare spostando logica in un oggetto utente o referente
-    public List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
+    private List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
         if (userRole.isAdmin())
             return null;
 

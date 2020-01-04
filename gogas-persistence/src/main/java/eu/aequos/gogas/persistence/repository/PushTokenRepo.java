@@ -9,6 +9,6 @@ import java.util.Set;
 
 public interface PushTokenRepo extends CrudRepository<PushToken, String> {
 
-    @Query("SELECT p.token PushToken p WHERE p.userId IN ?1")
+    @Query("SELECT p.token FROM PushToken p WHERE p.userId IN ?1")
     List<String> findTokensByUserIdIn(Set<String> userIds);
 }
