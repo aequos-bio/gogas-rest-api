@@ -15,6 +15,8 @@ public class GoGasUserDetails implements UserDetails {
     private String id;
     private String username;
     private String password;
+    private String firstname;
+    private String lastname;
     private String role;
     private String tenant;
     private boolean enabled;
@@ -28,6 +30,8 @@ public class GoGasUserDetails implements UserDetails {
         this.id = user.getId();
         this.username = user.getUsername();
         this.password = user.getPassword();
+        this.firstname = user.getFirstName();
+        this.lastname = user.getLastName();
         this.role = user.getRole();
         this.enabled = user.isEnabled();
         this.isManager = isManager;
@@ -108,4 +112,13 @@ public class GoGasUserDetails implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
 }

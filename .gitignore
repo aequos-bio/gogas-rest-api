@@ -11,3 +11,4 @@ jrebel.xml
 GoGas2-secrets.txt
 rebel.xml
 /gogas-service/src/main/resources/static/
+log

@@ -4,20 +4,20 @@ import { Container, Row, Col, Table, Alert } from 'react-bootstrap';
 import _ from 'lodash';
 import { getJson } from '../utils/axios_utils';
 
-function Users({authentication, info}) {
+function Users({info}) {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(undefined);
   const sort = info['visualizzazione.utenti'] ? info['visualizzazione.utenti'].value : 'NC';
 
   const reload = useCallback(() => {
-    getJson('/api/user/list', {}, authentication.jwtToken).then(users => {
+    getJson('/api/user/list', {}).then(users => {
       if (users.error) {
         setError(users.errorMessage);
       } else {
         setUsers( _.orderBy(users, ['attivo', sort==='NC' ? 'nome' : 'cognome', sort==='NC' ? 'cognome' : 'nome'], ['desc', 'asc', 'asc']) );
       }
     });
-  }, [authentication, info]);
+  }, [info]);
 
   useEffect(() => {
     reload();

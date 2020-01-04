@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <property name="LOG_PATH" value="C:/dlorusso/GOGAS/log" />
+    <property name="LOG_PATH" value="./log" />
 
     <appender name="FILE-THREAD" class="ch.qos.logback.classic.sift.SiftingAppender">
 

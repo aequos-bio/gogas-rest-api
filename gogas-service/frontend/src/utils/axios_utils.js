@@ -1,21 +1,11 @@
 import axios from 'axios';
 const baseUrl = '';
 
-axios.interceptors.response.use(response => {
-  console.log('response headers', response.headers)
-  //if (response.status >= 200 && response.status < 300) {
-    return response;
-  //}
-  //return response.text().then(text => Promise.reject(text));
-}, error => {
- throw error;
-});
-
 export const json = response => {
   return response ? response.data : undefined
 };
 
-export const getJson = (url, data, auth) => {
+export const getJson = (url, data) => {
   let params = [];
   if (data) {
     Object.keys(data).forEach(p => {
@@ -25,7 +15,7 @@ export const getJson = (url, data, auth) => {
   let _url = url;
   if (params.length)
     _url += '?' + params.join('&');
-  return apiGet(_url, auth)
+  return apiGet(_url)
     .then(json);
 }
 
@@ -46,8 +36,8 @@ export const post = (url, data) => {
   return apiPost(url, form);
 }
 
-const apiGet = (url, token) =>
-  axios.get(baseUrl + url, token ? {headers:{'Authorization': "Bearer " + token}} : null)
+const apiGet = (url) =>
+  axios.get(baseUrl + url)
 
 export const apiPost = (url, data) =>
   axios.post(baseUrl + url, data)
