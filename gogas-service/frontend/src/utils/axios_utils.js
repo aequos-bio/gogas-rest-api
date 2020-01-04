@@ -1,16 +1,6 @@
 import axios from 'axios';
 const baseUrl = '';
 
-axios.interceptors.response.use(response => {
-  console.log('response headers', response.headers)
-  //if (response.status >= 200 && response.status < 300) {
-    return response;
-  //}
-  //return response.text().then(text => Promise.reject(text));
-}, error => {
- throw error;
-});
-
 export const json = response => {
   return response ? response.data : undefined
 };

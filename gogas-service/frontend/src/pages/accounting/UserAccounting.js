@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { connect } from "react-redux";
 import { Container, Row, Col, Table, Alert, Button } from 'react-bootstrap';
-import { getJson } from '../utils/axios_utils';
-import Excel from '../excel-50.png';
 import swal from 'sweetalert';
 import _ from 'lodash';
+import { getJson } from '../../utils/axios_utils';
+import Excel from '../../excel-50.png';
+import AddTransactionDialog from "./components/AddTransactionDialog";
 
 const styles = {
   iconbtn: {
@@ -25,6 +26,7 @@ function UserAccounting({history}) {
   const [total, setTotal] = useState(0);
   const [totals, setTotals] = useState([]);
   const [error, setError] = useState(undefined);
+  const [showDlg, setShowDlg] = useState(false);
 
   const reload = useCallback(() => {
     getJson('/api/useraccounting/userTotals', {}).then(totals => {
@@ -85,7 +87,7 @@ function UserAccounting({history}) {
           <h2>
             Situazione contabile utenti
             <img className='pull-right' src={Excel} alt='excel' title='Esporta dati su file Excel' style={styles.excelbtn} onClick={downloadXls} />
-            <Button className='pull-right' size='sm' style={styles.button} variant='outline-primary'>Nuovo movimento</Button>
+            <Button className='pull-right' size='sm' style={styles.button} variant='outline-primary' onClick={() => setShowDlg(true)}>Nuovo movimento</Button>
           </h2>
           <Table striped bordered hover size="sm">
             <thead>
@@ -112,6 +114,8 @@ function UserAccounting({history}) {
           </Table>
         </Col>
       </Row>
+
+      <AddTransactionDialog title='Nuovo movimento' show={showDlg} onClose={(refresh) => {setShowDlg(false); if (refresh) reload();}}/>
     </Container>
   );
 }
