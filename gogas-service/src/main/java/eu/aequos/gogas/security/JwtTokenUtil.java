@@ -20,6 +20,8 @@ public class JwtTokenUtil implements Serializable {
     private static final String ISSUER = "gogas";
     private static final String CLAIM_KEY_TENANT = "tenant";
     private static final String CLAIM_KEY_USERID = "id";
+    private static final String CLAIM_KEY_USERFIRSTNAME = "firstname";
+    private static final String CLAIM_KEY_USERLASTNAME = "lastname";
     private static final String CLAIM_KEY_ROLE = "role";
     private static final String CLAIM_KEY_ENABLED = "enabled";
     private static final String CLAIM_KEY_MANAGER = "manager";
@@ -40,6 +42,8 @@ public class JwtTokenUtil implements Serializable {
                 .withSubject(userDetails.getUsername())
                 .withClaim(CLAIM_KEY_TENANT, userDetails.getTenant())
                 .withClaim(CLAIM_KEY_USERID, userDetails.getId())
+                .withClaim(CLAIM_KEY_USERFIRSTNAME, userDetails.getFirstname())
+                .withClaim(CLAIM_KEY_USERLASTNAME, userDetails.getLastname())
                 .withClaim(CLAIM_KEY_ROLE, getRoleFromUserDetails(userDetails))
                 .withClaim(CLAIM_KEY_ENABLED, userDetails.isEnabled())
                 .withClaim(CLAIM_KEY_MANAGER, userDetails.isManager())

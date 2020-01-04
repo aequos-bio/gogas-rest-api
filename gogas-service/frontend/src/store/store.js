@@ -2,6 +2,7 @@ import thunkMiddleware from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import { createStore, applyMiddleware } from 'redux';
 import Cookies from 'cookies-js';
+import { composeWithDevTools } from 'redux-devtools-extension';
 import reducers from './reducers';
 const loggerMiddleware = createLogger();
 
@@ -18,7 +19,9 @@ export const Store = createStore(
     info: {
     }
   }, 
-  applyMiddleware(thunkMiddleware, loggerMiddleware)
+  composeWithDevTools(
+    applyMiddleware(thunkMiddleware, loggerMiddleware)
+  )
 );
 
 
