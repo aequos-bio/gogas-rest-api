@@ -9,8 +9,11 @@ import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.ProductService;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -66,7 +69,7 @@ public class ProductController {
     }
 
 
-    @IsOrderTypeManager
+    //@IsOrderTypeManager TODO: find a way to authenticate for download
     @GetMapping(value = "list/{productType}/export")
     public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -78,5 +81,13 @@ public class ProductController {
     @PutMapping(value = "{productType}/sync")
     public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
         return productService.syncPriceList(productType);
+    }
+
+    @IsOrderTypeManager
+    @PostMapping(value = "{productType}/import")
+    public OrderSynchroInfoDTO importProductsFromExcel(@PathVariable String productType, @RequestParam("file") MultipartFile excelFile) throws IOException, GoGasException {
+        byte[] excelFileContent = IOUtils.toByteArray(excelFile.getInputStream());
+        String excelType = FilenameUtils.getExtension(excelFile.getOriginalFilename());
+        return productService.loadProductsFromExcel(productType, excelFileContent, excelType);
     }
 }

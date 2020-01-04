@@ -1,11 +1,11 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.excel.ExcelGeneratorClient;
+import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.excel.order.*;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
-import eu.aequos.gogas.excel.products.ProductPriceListExport;
+import eu.aequos.gogas.excel.products.ExcelPriceListItem;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class ExcelGenerationService {
 
-    ExcelGeneratorClient reportClient;
+    ExcelServiceClient excelServiceClient;
 
     UserRepo userRepo;
     OrderRepo orderRepo;
@@ -25,10 +25,10 @@ public class ExcelGenerationService {
     SupplierOrderItemRepo supplierOrderItemRepo;
     UserService userService;
 
-    public ExcelGenerationService(ExcelGeneratorClient reportClient, UserRepo userRepo, UserService userService,
+    public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
                                   OrderRepo orderRepo, OrderItemRepo orderItemRepo,
                                   ProductRepo productRepo, SupplierOrderItemRepo supplierOrderItemRepo) {
-        this.reportClient = reportClient;
+        this.excelServiceClient = excelServiceClient;
         this.userRepo = userRepo;
         this.userService = userService;
         this.orderRepo = orderRepo;
@@ -38,15 +38,15 @@ public class ExcelGenerationService {
     }
 
     public byte[] extractProductPriceList(String orderTypeId) {
-        List<ProductPriceListExport> products = productRepo.findByType(orderTypeId).stream()
+        List<ExcelPriceListItem> products = productRepo.findByType(orderTypeId).stream()
                 .map(this::convertProductForPriceListExport)
                 .collect(Collectors.toList());
 
-        return reportClient.products(products);
+        return excelServiceClient.products(products);
     }
 
-    private ProductPriceListExport convertProductForPriceListExport(Product p) {
-        ProductPriceListExport exp = new ProductPriceListExport();
+    private ExcelPriceListItem convertProductForPriceListExport(Product p) {
+        ExcelPriceListItem exp = new ExcelPriceListItem();
         exp.setExternalId(p.getExternalId());
         exp.setName(p.getDescription());
         exp.setSupplierExternalId(p.getSupplier().getExternalId());
@@ -91,7 +91,7 @@ public class ExcelGenerationService {
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
 
-        return reportClient.order(orderExportRequest);
+        return excelServiceClient.order(orderExportRequest);
     }
 
     private OrderItemExport getOrderItemsForExport(OrderItem item) {

@@ -3,6 +3,7 @@ package eu.aequos.gogas.persistence.repository;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.OrderItemUserOnly;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -117,6 +118,10 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     int updateDeliveredQtyByItemId(String orderId, String orderItemId, BigDecimal deliveredQty);
 
     @Modifying
+    @Query("UPDATE OrderItem o SET o.deliveredQuantity = ?4 WHERE o.order = ?1 AND o.user = ?2 AND o.product = ?3 AND summary = true")
+    int updateDeliveredQty(String orderId, String userId, String productId, BigDecimal deliveredQty);
+
+    @Modifying
     @Query("UPDATE OrderItem o SET o.price = ?3 WHERE o.order = ?1 AND o.product = ?2")
     int updatePriceByOrderIdAndProductId(String orderId, String productId, BigDecimal price);
 
@@ -128,4 +133,9 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
 
     @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 AND o.product = ?2 and o.summary = ?3")
     Set<String> findUserOrderingByProductAndSummary(String orderId, String productId, boolean summary);
+
+    @Query("SELECT DISTINCT o.user FROM OrderItem o WHERE o.order = ?1 and o.summary = ?2")
+    Set<String> findUserOrderingBySummary(String orderId, boolean summary);
+
+    List<OrderItemUserOnly> findDistinctByOrderIn(Set<String> orderIds);
 }

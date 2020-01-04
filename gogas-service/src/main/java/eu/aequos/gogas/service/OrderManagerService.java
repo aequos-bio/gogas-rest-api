@@ -5,6 +5,8 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.integration.AequosIntegrationService;
+import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -25,6 +27,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
 
@@ -41,12 +45,14 @@ public class OrderManagerService extends CrudService<Order, String> {
     private ProductService productService;
     private AccountingService accountingService;
     private AequosIntegrationService aequosIntegrationService;
+    private PushNotificationSender pushNotificationSender;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
-                               AccountingService accountingService, AequosIntegrationService aequosIntegrationService) {
+                               AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
+                               PushNotificationSender pushNotificationSender) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -60,6 +66,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.productService = productService;
         this.accountingService = accountingService;
         this.aequosIntegrationService = aequosIntegrationService;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -69,10 +76,13 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public List<OrderByProductDTO> getOrderDetailByProduct(String orderId) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
-        //TODO: check user permissions
+        return getOrderDetailByProduct(order);
+    }
+
+    public List<OrderByProductDTO> getOrderDetailByProduct(Order order) throws ItemNotFoundException {
         boolean isOrderOpen = order.getStatus().isOpen();
 
-        List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(orderId, isOrderOpen);
+        List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(order.getId(), isOrderOpen);
         Map<String, ProductTotalOrder> productTotalOrders = ListConverter.fromList(productOrderTotal)
                 .toMap(ProductTotalOrder::getProduct);
 
@@ -81,18 +91,17 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
 
-        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(orderId))
+        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(order.getId()))
                 .toMap(SupplierOrderItem::getProductId);
 
         return orderedProducts.stream()
                 .map(p -> new OrderByProductDTO().fromModel(p, productTotalOrders.get(p.getId()), supplierOrderItems.get(p.getId())))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
 
 
     public synchronized Order create(OrderDTO dto) throws GoGasException {
-        //TODO: check user permissions
         List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(dto.getOrderTypeId(), dto.getDueDate(), dto.getDeliveryDate());
 
         if (!duplicateOrders.isEmpty())
@@ -100,20 +109,17 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         Order createdOrder = super.create(dto);
 
+        pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
+
         if (dto.isUpdateProductList())
             productService.syncPriceList(dto.getOrderTypeId());
 
         return createdOrder;
     }
 
-    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
+    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, User.Role userRole) {
 
-        List<String> managedOrderTypes = orderManagerRepo.findByUser(userId).stream()
-                .map(OrderManager::getOrderType)
-                .collect(Collectors.toList());
-
-        if (managedOrderTypeNotFound(managedOrderTypes, searchFilter.getOrderType()))
-            return new ArrayList<>();
+        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
@@ -141,21 +147,23 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderList.stream()
                 .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId()),  orderWorkflowHandler.getAvailableActions(entry, User.Role.A)))
-                .collect(Collectors.toList());
+                .collect(toList());
+    }
+
+    //TODO: cambiare spostando logica in un oggetto utente o referente
+    private List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
+        if (userRole.isAdmin())
+            return null;
+
+        return orderManagerRepo.findByUser(userId).stream()
+                .map(OrderManager::getOrderType)
+                .collect(toList());
     }
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         Order order = this.getRequiredWithType(orderId);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
-    }
-
-    private boolean managedOrderTypeNotFound(List<String> managedOrderTypes, String filterOrderType) {
-        if (managedOrderTypes.isEmpty())
-            return true;
-
-        return filterOrderType != null && filterOrderType.length() > 0
-                && !managedOrderTypes.stream().anyMatch(o -> o.equalsIgnoreCase(filterOrderType));
     }
 
     /*** OPERATIONS *****/
@@ -171,7 +179,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         return orderItems.stream()
                 .map(o -> new OrderItemByProductDTO().fromModel(o, userFullNameMap.get(o.getUser())))
                 .sorted(Comparator.comparing(OrderItemByProductDTO::getUser))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public boolean updateItemDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
@@ -286,7 +294,7 @@ public class OrderManagerService extends CrudService<Order, String> {
          return users.entrySet().stream()
                  .map(user -> getOrderByUser(user, userOrderItems.get(user.getKey()), accountingEntries.get(user.getKey()), shippingCostMap.get(user.getKey()), computedAmount))
                  .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
-                 .collect(Collectors.toList());
+                 .collect(toList());
     }
 
     private OrderByUserDTO getOrderByUser(Map.Entry<String, String> user, ByUserOrderItem userOrderItem,
@@ -350,7 +358,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         return orderedProducts.stream()
                 .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), computedAmount))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
@@ -368,22 +376,21 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderRepo.save(order);
     }
 
-    public List<OrderDTO> getAequosAvailableOpenOrders(String userId) {
+    public List<OrderDTO> getAequosAvailableOpenOrders(String userId, User.Role userRole) {
 
         Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
-
-        List<String> managedOrderTypes = orderManagerRepo.findByUser(userId).stream()
-                .map(OrderManager::getOrderType)
-                .collect(Collectors.toList());
 
         Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
                 .map(Order.OrderStatus::getStatusCode)
                 .collect(Collectors.toSet());
 
-        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeMapping.values().stream().map(OrderType::getId).collect(Collectors.toSet()), statusCodes)
-                .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), Collectors.toList()));
+        Set<String> aequosOrderTypeIds = ListConverter.fromList(aequosOrderTypeMapping.values())
+                .extractIds(OrderType::getId);
 
-        return aequosIntegrationService.getOpenOrders().stream()
+        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeIds, statusCodes)
+                .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), toList()));
+
+        Stream<OrderDTO> aequosOpenOrders = aequosIntegrationService.getOpenOrders().stream()
                 .map(o -> {
                     OrderType type = aequosOrderTypeMapping.get(o.getId());
 
@@ -395,10 +402,15 @@ public class OrderManagerService extends CrudService<Order, String> {
                     orderDTO.setDeliveryDate(o.getDeliveryDate());
 
                     return orderDTO;
-                })
-                .filter(o -> managedOrderTypes.contains(o.getOrderTypeId()))
+                });
+
+        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
+        if (managedOrderTypes != null)
+            aequosOpenOrders = aequosOpenOrders.filter(managedOrderTypes::contains);
+
+        return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrder) {

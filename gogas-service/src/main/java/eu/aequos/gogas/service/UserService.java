@@ -104,6 +104,11 @@ public class UserService extends CrudService<User, String> {
         return convertFromModel(users);
     }
 
+    public List<UserDTO> getUsersByRoles(Set<String> roles) {
+        List<User> users = !roles.isEmpty() ? userRepo.findByRoleIn(roles) : userRepo.findAll();
+        return convertFromModel(users);
+    }
+
     private List<UserDTO> convertFromModel(List<User> users) {
         return users.stream()
                 .sorted(getUserSorting())

@@ -8,8 +8,11 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
+import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
+import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsAdmin;
+import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -27,23 +30,35 @@ public class OrderTypeController {
     private OrderManagerRepo orderManagerRepo;
     private UserService userService;
     private AequosIntegrationService aequosIntegrationService;
+    private AuthorizationService authorizationService;
 
     public OrderTypeController(OrderTypeService orderTypeService, OrderManagerRepo orderManagerRepo,
-                               UserService userService, AequosIntegrationService aequosIntegrationService) {
+                               UserService userService, AequosIntegrationService aequosIntegrationService,
+                               AuthorizationService authorizationService) {
 
         this.orderTypeService = orderTypeService;
         this.orderManagerRepo = orderManagerRepo;
         this.userService = userService;
         this.aequosIntegrationService = aequosIntegrationService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping(value = "select")
     public List<SelectItemDTO> listOrderTypes(@RequestParam boolean firstEmpty,
-                                              @RequestParam boolean referenteOnly,
                                               @RequestParam(required = false) boolean extended) {
 
-        //TODO: filtrare visibili per referenti
         return orderTypeService.getAllAsSelectItems(extended, firstEmpty);
+    }
+
+    @IsManager
+    @GetMapping(value = "select/manager")
+    public List<SelectItemDTO> listManagerOrderTypes(@RequestParam boolean firstEmpty,
+                                                     @RequestParam(required = false) boolean extended) {
+
+        String userId = authorizationService.getCurrentUser().getId();
+        User.Role userRole = User.Role.valueOf(authorizationService.getCurrentUser().getRole());
+        return orderTypeService.getManagedAsSelectItems(extended, firstEmpty, userId, userRole);
+
     }
 
     @GetMapping(value = "list")
@@ -82,9 +97,10 @@ public class OrderTypeController {
         OrderType orderType = orderTypeService.getRequired(orderTypeId);
 
         if (orderType.getAequosOrderId() == null)
-            return new OrderSynchroInfoDTO(null, null);
+            return new OrderSynchroInfoDTO( null);
         else
-            return new OrderSynchroInfoDTO(orderType.getAequosOrderId(), orderType.getLastsynchro());
+            return new OrderSynchroInfoDTO(orderType.getLastsynchro())
+                    .withAequosOrderId(orderType.getAequosOrderId());
     }
 
     @IsAdmin

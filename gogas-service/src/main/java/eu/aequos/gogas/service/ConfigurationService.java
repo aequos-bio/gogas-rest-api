@@ -1,5 +1,7 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.dto.ConfigurationItemDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ConfigurationService {
@@ -80,5 +84,19 @@ public class ConfigurationService {
 
     public static DateFormat getDateFormat() {
         return format;
+    }
+
+    public List<ConfigurationItemDTO> getVisibleConfigurationItems() {
+        return configurationRepo.findByVisibleOrderByKey(true).stream()
+                .map(c -> new ConfigurationItemDTO().fromModel(c))
+                .collect(Collectors.toList());
+    }
+
+    public boolean updateConfigurationItem(ConfigurationItemDTO configurationItem) throws GoGasException {
+        if (configurationItem.getKey() == null || configurationItem.getValue() == null)
+            throw new GoGasException("Configurazione non valida");
+
+        int itemsUpdated = configurationRepo.updateConfiguration(configurationItem.getKey(), configurationItem.getValue());
+        return itemsUpdated == 1;
     }
 }

@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @Service
 public class OrderItemService {
@@ -77,7 +78,7 @@ public class OrderItemService {
 
     public Map<String, OpenOrderItem> getUserOrderItems(String userId, String orderId, boolean showGroupedOrderItems) {
         return orderItemRepo.findByUserAndOrderAndSummary(userId, orderId, showGroupedOrderItems, OpenOrderItem.class).stream()
-                .collect(Collectors.toMap(OpenOrderItem::getProduct, Function.identity()));
+                .collect(toMap(OpenOrderItem::getProduct, Function.identity()));
     }
 
     public Optional<ProductTotalOrder> getTotalQuantityByProduct(String orderId, String productId) {
@@ -93,7 +94,7 @@ public class OrderItemService {
 
     public Map<String, FriendTotalOrder> getFriendTotalQuantity(String userId, String orederId) {
         return orderItemRepo.totalQuantityNotSummaryByUserOrReferral(userId, orederId).stream()
-                .collect(Collectors.toMap(FriendTotalOrder::getProduct, Function.identity()));
+                .collect(toMap(FriendTotalOrder::getProduct, Function.identity()));
     }
 
     public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId) {
@@ -129,8 +130,16 @@ public class OrderItemService {
         return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, true);
     }
 
+    public Set<String> getUsersWithOrder(String orderId) {
+        return orderItemRepo.findUserOrderingBySummary(orderId, true);
+    }
+
     public Set<String> getUsersWithNotSummaryOrder(String orderId, String productId) {
         return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, false);
+    }
+
+    public Set<String> getUsersWithNotSummaryOrder(String orderId) {
+        return orderItemRepo.findUserOrderingBySummary(orderId, false);
     }
 
     public void cancelProductOrder(String orderId, String productId) {
@@ -167,7 +176,7 @@ public class OrderItemService {
 
             List<OrderItem> clonedOrderItems = originalOrderItems.stream()
                     .map(o -> cloneForProductReplacement(o, targetProduct, supplierOrderItem))
-                    .collect(Collectors.toList());
+                    .collect(toList());
 
             orderItemRepo.saveAll(clonedOrderItems);
         }
@@ -217,5 +226,10 @@ public class OrderItemService {
 
     public boolean isOrderItemBelongingToUserOrFriend(String orderItem, String userId) {
         return orderItemRepo.findOrderItemByIdAndUserOrFriend(orderItem, userId).isPresent();
+    }
+
+    public Map<String, List<String>> getBuyersInOrderIds(Set<String> orderIds) {
+        return orderItemRepo.findDistinctByOrderIn(orderIds).stream()
+                .collect(groupingBy(OrderItemUserOnly::getUser, mapping(OrderItemUserOnly::getOrder, toList())));
     }
 }

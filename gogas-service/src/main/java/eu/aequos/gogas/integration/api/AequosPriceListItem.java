@@ -1,39 +1,40 @@
 package eu.aequos.gogas.integration.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.service.pricelist.ExternalPriceListItem;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-public class AequosPriceListItem {
+public class AequosPriceListItem implements ExternalPriceListItem {
 
     @JsonProperty("codice")
-    String code;
+    String externalId;
 
     @JsonProperty("descrizione")
-    String description;
+    String name;
 
     @JsonProperty("cod_forn")
-    String supplierCode;
+    String supplierExternalId;
 
     @JsonProperty("rag")
-    String supplierDescription;
+    String supplierName;
 
     @JsonProperty("piva")
     String vatCode;
 
     @JsonProperty("provincia")
-    String province;
+    String supplierProvince;
 
     @JsonProperty("disponibile")
     String available;
 
     @JsonProperty("peso_collo")
-    BigDecimal boxWight;
+    BigDecimal boxWeight;
 
     @JsonProperty("prezzo")
-    BigDecimal price;
+    BigDecimal unitPrice;
 
     @JsonProperty("um")
     String unitOfMeasure;
@@ -48,7 +49,7 @@ public class AequosPriceListItem {
     String frequency;
 
     @JsonProperty("solo_collo")
-    boolean boxOnly;
+    boolean wholeBoxesOnly;
 
     @JsonProperty("multiplo")
     BigDecimal multiple;

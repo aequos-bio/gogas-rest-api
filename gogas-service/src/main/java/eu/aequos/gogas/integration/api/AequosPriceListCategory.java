@@ -1,13 +1,11 @@
 package eu.aequos.gogas.integration.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.service.pricelist.ExternalPriceListCategory;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class AequosPriceListCategory {
+public class AequosPriceListCategory implements ExternalPriceListCategory {
 
     @JsonProperty("id")
     String id;

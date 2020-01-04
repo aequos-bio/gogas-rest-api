@@ -4,7 +4,10 @@ import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.dto.OrderTypeSelectItemDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
+import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class OrderTypeService extends CrudService<OrderType, String> {
@@ -26,12 +30,15 @@ public class OrderTypeService extends CrudService<OrderType, String> {
 
     private OrderTypeRepo orderTypeRepo;
     private OrderRepo orderRepo;
+    private OrderManagerRepo orderManagerRepo;
 
-    public OrderTypeService(OrderTypeRepo orderTypeRepo, OrderRepo orderRepo) {
+    public OrderTypeService(OrderTypeRepo orderTypeRepo, OrderRepo orderRepo,
+                            OrderManagerRepo orderManagerRepo) {
         super(orderTypeRepo, "order type");
 
         this.orderTypeRepo = orderTypeRepo;
         this.orderRepo = orderRepo;
+        this.orderManagerRepo = orderManagerRepo;
     }
 
     public List<OrderTypeDTO> getAll() {
@@ -58,9 +65,25 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     }
 
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {
-        Stream<OrderType> orderTypeStream = orderTypeRepo.findAllByOrderByDescription().stream();
+        List<OrderType> orderTypeStream = orderTypeRepo.findAllByOrderByDescription();
+        return convertToSelectItems(extended, firstEmpty, orderTypeStream);
+    }
+
+    public List<SelectItemDTO> getManagedAsSelectItems(boolean extended, boolean firstEmpty, String userId, User.Role userRole) {
+        if (userRole.isAdmin())
+            return getAllAsSelectItems(extended, firstEmpty);
+
+        List<String> managedOrderIds = orderManagerRepo.findByUser(userId).stream()
+                .map(OrderManager::getOrderType)
+                .collect(toList());
+
+        List<OrderType> orderTypeStream = orderTypeRepo.findByIdInOrderByDescription(managedOrderIds);
+        return convertToSelectItems(extended, firstEmpty, orderTypeStream);
+    }
+
+    private List<SelectItemDTO> convertToSelectItems(boolean extended, boolean firstEmpty, List<OrderType> orderTypeStream) {
         Function<OrderType, SelectItemDTO> conversionFunc = extended ? SELECT_ITEM_EXTENDED_CONVERSION : SELECT_ITEM_CONVERSION;
-        return ListConverter.fromStream(orderTypeStream)
+        return ListConverter.fromList(orderTypeStream)
                 .toSelectItems(conversionFunc, firstEmpty, EMPTY_SELECTION_LABEL);
     }
 }

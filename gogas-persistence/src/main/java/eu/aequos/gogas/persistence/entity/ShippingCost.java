@@ -17,7 +17,7 @@ public class ShippingCost {
     }
     
     @Id
-    @Column(name = "idDateOrdini", nullable = false)
+    @Column(name = "iddateordini", nullable = false)
     private String orderId;
     
     @Id

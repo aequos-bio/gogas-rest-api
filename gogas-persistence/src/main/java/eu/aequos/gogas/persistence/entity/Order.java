@@ -110,14 +110,33 @@ public class Order {
     }
 
     public Date getDueDateAndTime() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(this.dueDate);
-        calendar.set(Calendar.HOUR_OF_DAY, this.dueHour);
-        return calendar.getTime();
+        return addHours(this.dueDate, this.dueHour);
     }
 
     public boolean isEditable() {
         Date now = new Date();
         return now.after(openingDate) && now.before(this.getDueDateAndTime());
+    }
+
+    public boolean isExpiring(int minutesBefore) {
+        return isDateTimeWithinMinutesFromNow(getDueDateAndTime(), minutesBefore);
+    }
+
+    public boolean isInDelivery(int referenceHour, int minutesBefore) {
+        Date deliveryDateAndTime = addHours(this.deliveryDate, referenceHour);
+        return isDateTimeWithinMinutesFromNow(deliveryDateAndTime, minutesBefore);
+    }
+
+    private boolean isDateTimeWithinMinutesFromNow(Date orderDate, int minutes) {
+        Date now = new Date();
+        long diffInMinutesFromNow = (orderDate.getTime() - now.getTime()) / 60000;
+        return Math.abs(diffInMinutesFromNow - minutes) < 2;
+    }
+
+    public Date addHours(Date originalDate, int hours) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(originalDate);
+        calendar.set(Calendar.HOUR_OF_DAY, hours);
+        return calendar.getTime();
     }
 }

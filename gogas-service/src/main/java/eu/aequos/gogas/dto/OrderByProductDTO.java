@@ -4,44 +4,46 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+@Getter
 public class OrderByProductDTO {
 
     @JsonProperty("idProdotto")
-    String productId;
+    private String productId;
 
     @JsonProperty("nomeProdotto")
-    String productName;
+    private String productName;
 
     @JsonProperty("categoria")
-    String category;
+    private String category;
 
     @JsonProperty("umProdotto")
-    String unitOfMeasure;
+    private String unitOfMeasure;
 
     @JsonProperty("pesoCollo")
-    BigDecimal boxWeight;
+    private BigDecimal boxWeight;
 
     @JsonProperty("prezzoKg")
-    BigDecimal price;
+    private BigDecimal price;
 
     @JsonProperty("qta")
-    BigDecimal deliveredQty;
+    private BigDecimal deliveredQty;
 
     @JsonProperty("numeroOrdinanti")
-    int orderingUsersCount;
+    private int orderingUsersCount;
 
     @JsonProperty("qtaOrdinata")
-    BigDecimal orderedQty;
+    private BigDecimal orderedQty;
 
     @JsonProperty("colliOrdinati")
-    BigDecimal orderedBoxes;
+    private BigDecimal orderedBoxes;
 
     @JsonProperty("annullato")
-    boolean cancelled;
+    private boolean cancelled;
 
     /** derived values **/
 

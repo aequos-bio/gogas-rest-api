@@ -7,11 +7,12 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 public interface OrderTypeRepo extends CrudRepository<OrderType, String> {
 
     List<OrderType> findAllByOrderByDescription();
+
+    List<OrderType> findByIdInOrderByDescription(List<String> orderIds);
 
     List<OrderType> findByAequosOrderIdNotNull();
 

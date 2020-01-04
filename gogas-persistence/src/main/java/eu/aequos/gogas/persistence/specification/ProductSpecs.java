@@ -14,11 +14,11 @@ public class ProductSpecs {
     }
 
     public static Specification<Product> available(Boolean available) {
-        return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get("available"), available);
+        return (entry, cq, cb) -> cb.equal(entry.get("available"), available);
     }
 
     public static Specification<Product> cancelled(Boolean cancelled) {
-        return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get("cancelled"), cancelled);
+        return (entry, cq, cb) -> cb.equal(entry.get("cancelled"), cancelled);
     }
 
     public static Specification<Product> type(String type, boolean orderByPriceList) {

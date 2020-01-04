@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("@authorizationService.isOrderManager(#orderId)")
+@PreAuthorize("hasRole('A') OR @authorizationService.isOrderManager(#orderId)")
 public @interface IsOrderManager {
 }
