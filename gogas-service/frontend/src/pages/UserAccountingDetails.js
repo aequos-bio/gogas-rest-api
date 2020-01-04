@@ -15,7 +15,7 @@ const styles = {
   }
 }
 
-function UserAccountingDetails({location, authentication}) {
+function UserAccountingDetails({location}) {
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
@@ -23,7 +23,7 @@ function UserAccountingDetails({location, authentication}) {
   const [error, setError] = useState(undefined);
 
   const reload = useCallback(() => {
-    getJson('/api/user/' + search.userId, {}, authentication.jwtToken)
+    getJson('/api/user/' + search.userId, {})
       .then(user => {
         if (user.error) {
           setError(user.errorMessage);
@@ -31,7 +31,7 @@ function UserAccountingDetails({location, authentication}) {
           setUser(user)
       });
 
-    getJson('/api/useraccounting/userTransactions?userId=' + search.userId, {}, authentication.jwtToken)
+    getJson('/api/useraccounting/userTransactions?userId=' + search.userId, {})
       .then(transactions => {
         if (transactions.error) {
           setError(user.errorMessage);

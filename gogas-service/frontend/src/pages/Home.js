@@ -3,11 +3,11 @@ import { connect } from "react-redux";
 import { Container, Row, Col } from 'react-bootstrap';
 import { getJson } from '../utils/axios_utils';
 
-function Home({authentication}) {
+function Home() {
 	const [year, setYear ] = useState();
 
 	useEffect(() => {
-		getJson('/api/year/current', {}, authentication.jwtToken).then(y => setYear(y));
+		getJson('/api/year/current', {}).then(y => setYear(y));
 	}, []);
 
 	return (

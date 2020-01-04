@@ -1,3 +1,4 @@
+import Cookies from 'cookies-js';
 import { getJson, apiPost } from "../utils/axios_utils";
 
 export const INIT = 'INIT';
@@ -78,30 +79,13 @@ function loginError(message) {
 
 export const logout = () => {
   return function (dispatch) {
-    //return post('/j_spring_security_logout', {})
-    //  .then(() => {
-    //    console.log('Logout done');
-        dispatch(logoutEnd());
-    //  })
-    //  .catch(error => {
-    //    console.log('Logout error', error);
-    //    dispatch(logoutError(error));
-    //  });
+    Cookies.expire('jwt-token');
+    dispatch({
+      type: LOGOUT_END
+    });
   }
 }
 
-function logoutEnd() {
-  return {
-    type: LOGOUT_END
-  }
-}
-
-// function logoutError(message) {
-//   return {
-//     type: LOGOUT_ERROR,
-//     payload: message
-//   }
-// }
 
 
 

@@ -15,6 +15,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -60,6 +61,8 @@ public class AuthenticationController {
 
         String token = jwtTokenUtil.generateToken(userDetails);
         resp.setHeader("Authentication", "bearer " + token);
+        Cookie ck = new Cookie("jwt-token", token);
+        resp.addCookie(ck);
         return token;
     }
 

@@ -24,11 +24,11 @@ function Login({authentication, location, login, history, info}) {
       <Row style={{marginTop: '100px'}}>
         <Col xs={{span: 8, offset: 2}} sm={{ span: 8, offset: 2 }} md={{span: 8, offset: 2}} lg={{span: 6, offset:3}} style={{padding:0}}>
           <Form className="form-signin" name="loginForm" onSubmit={dologin}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-            <img src={Logo} width="50px" height="50px" alt="" />
-          <h1 style={{ margin: '0px 15px' }}>
-            {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
-          </h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
+              <img src={Logo} width="50px" height="50px" alt="" />
+              <h1 style={{ margin: '0px 15px' }}>
+                {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
+              </h1>
 
             </div>
 
@@ -62,7 +62,7 @@ function Login({authentication, location, login, history, info}) {
           </Form>
         </Col>
         <Col xs={{span: 8, offset: 2}} sm={{ span: 8, offset: 2 }} md={{span: 8, offset: 2}} lg={{span: 6, offset:3}} style={{marginTop: '10px', textAlign: 'center', fontWeight: 'lighter'}}>
-          Copyright 2019 Cooperativa Aequos<br/>
+          Copyright 2019-2020 Cooperativa Aequos<br/>
           Tutti i diritti riservati
         </Col>
       </Row>

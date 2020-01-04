@@ -71,7 +71,7 @@ function PageHeader({ authentication, info, logout, history }) {
         </Nav>
 
         <Navbar.Text>
-          <NavDropdown title={<span style={{ marginLeft: '-16px' }}><span className='fa fa-user-circle-o' /> {jwt ? jwt.sub : ''}</span>}>
+          <NavDropdown alignRight={true} title={<span style={{ marginLeft: '-16px' }}><span className='fa fa-user-circle-o' /> {jwt ? jwt.sub : ''}</span>}>
             {jwt ?
               <LinkContainer to={'/useraccountingdetails?userId=' + jwt.id} style={{ color: 'var(--gray)' }} >
                 <NavDropdown.Item>Saldo</NavDropdown.Item>
