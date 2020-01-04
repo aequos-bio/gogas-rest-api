@@ -170,7 +170,6 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public List<OrderItemByProductDTO> getOrderItemsByProduct(String orderId, String productId) throws ItemNotFoundException {
         Order order = this.getRequiredWithType(orderId);
-        //TODO: check user permissions
 
         List<ByProductOrderItem> orderItems = orderItemService.getItemsByProduct(productId, orderId, !order.getStatus().isOpen());
         Set<String> orderItemsId = ListConverter.fromList(orderItems).extractIds(ByProductOrderItem::getUser);

@@ -79,8 +79,8 @@ public class NotificationPreferencesView {
 
     @Data
     public static class NotificationPreferencesViewPK implements Serializable {
-        private final String userId;
-        private final String orderTypeId;
+        private String userId;
+        private String orderTypeId;
     }
 }
 

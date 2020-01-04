@@ -2,6 +2,7 @@ package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.MenuDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.MenuService;
@@ -22,10 +23,12 @@ public class HomeController {
 
     private UserRepo userRepo;
     private MenuService menuService;
+    private PushNotificationSender pushNotificationSender;
 
-    public HomeController(UserRepo userRepo, MenuService menuService) {
+    public HomeController(UserRepo userRepo, MenuService menuService, PushNotificationSender pushNotificationSender) {
         this.userRepo = userRepo;
         this.menuService = menuService;
+        this.pushNotificationSender = pushNotificationSender;
     }
 
     @GetMapping(value = "balance", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -44,5 +47,11 @@ public class HomeController {
         return Arrays.stream(Order.OrderStatus.values())
                 .map(s -> new SelectItemDTO(Integer.toString(s.getStatusCode()), s.getDescription()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping(value = "notification/test")
+    public String sendPushNotification(@RequestParam String token) {
+        pushNotificationSender.sendTestNotification(token);
+        return "OK";
     }
 }

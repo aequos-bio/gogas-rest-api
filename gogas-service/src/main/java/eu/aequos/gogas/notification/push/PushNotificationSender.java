@@ -7,12 +7,15 @@ import eu.aequos.gogas.notification.push.client.PushNotificationClient;
 import eu.aequos.gogas.notification.push.client.PushNotificationRequest;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
+import eu.aequos.gogas.persistence.repository.NotificationPreferencesViewRepo;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
+import eu.aequos.gogas.service.ConfigurationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,21 +28,21 @@ public class PushNotificationSender {
     private String serviceAppId;
 
     private PushNotificationClient pushNotificationClient;
-    private NotificationPreferencesRepo notificationPreferencesRepo;
+    private NotificationPreferencesViewRepo notificationPreferencesViewRepo;
     private PushNotificationBuilderSelector pushNotificationBuilderSelector;
     private PushTokenRepo pushTokenRepo;
 
     public PushNotificationSender(@Value("${notification.push.apikey}") String serviceKey,
                                   @Value("${notification.push.appid}") String serviceAppId,
                                   PushNotificationClient pushNotificationClient,
-                                  NotificationPreferencesRepo notificationPreferencesRepo,
+                                  NotificationPreferencesViewRepo notificationPreferencesViewRepo,
                                   PushNotificationBuilderSelector pushNotificationBuilderSelector,
                                   PushTokenRepo pushTokenRepo) {
 
         this.serviceKey = serviceKey;
         this.serviceAppId = serviceAppId;
         this.pushNotificationClient = pushNotificationClient;
-        this.notificationPreferencesRepo = notificationPreferencesRepo;
+        this.notificationPreferencesViewRepo = notificationPreferencesViewRepo;
         this.pushNotificationBuilderSelector = pushNotificationBuilderSelector;
         this.pushTokenRepo = pushTokenRepo;
     }
@@ -47,15 +50,14 @@ public class PushNotificationSender {
     public void sendOrderNotification(Order order, OrderEvent event) {
         OrderPushNotificationBuilder pushNotificationBuilder = pushNotificationBuilderSelector.select(event);
         List<String> targetTokens = extractNotificationTokens(order, pushNotificationBuilder);
-        PushNotificationRequest request = buildRequest(order.getId(), event, pushNotificationBuilder, targetTokens);
+        PushNotificationRequest request = pushNotificationBuilder.buildRequest(order, targetTokens, serviceAppId);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
         log.info("Notification send, response: " + response);
     }
 
     private List<String> extractNotificationTokens(Order order, OrderPushNotificationBuilder orderPushNotification) {
-
         String orderTypeId = order.getOrderType().getId();
-        List<NotificationPreferencesView> notificationPrefs = notificationPreferencesRepo.findByOrderTypeId(orderTypeId);
+        List<NotificationPreferencesView> notificationPrefs = notificationPreferencesViewRepo.findByOrderTypeId(orderTypeId);
 
         Set<String> targetUsers = orderPushNotification.filterPreferences(order, notificationPrefs)
                 .map(NotificationPreferencesView::getUserId)
@@ -64,17 +66,16 @@ public class PushNotificationSender {
         return pushTokenRepo.findTokensByUserIdIn(targetUsers);
     }
 
-    private PushNotificationRequest buildRequest(String orderId, OrderEvent event,
-                                                 OrderPushNotificationBuilder orderPushNotification, List<String> targetTokens) {
+    public void sendTestNotification(String token) {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
-        request.setHeadings(orderPushNotification.getHeading());
-        request.setContents(orderPushNotification.getMessageTemplate());
-        request.setTargetTokens(targetTokens);
-        request.setOrderId(orderId);
-        request.setAndroidGroup("order_" + event.name());
-        request.setAndroidGroupMessage("$[notif_count] " + orderPushNotification.getMultipleNotificationsHeading());
+        request.setHeadings("test");
+        request.setContents("Questo è un test");
+        request.setTargetTokens(Collections.singletonList(token));
+        request.setOrderId("test");
+        request.setAndroidGroup("order_test");
+        request.setAndroidGroupMessage("$[notif_count] test");
 
-        return request;
+        pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
     }
 }
