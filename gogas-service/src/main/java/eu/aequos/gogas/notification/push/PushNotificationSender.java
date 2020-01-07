@@ -9,13 +9,12 @@ import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesViewRepo;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
-import eu.aequos.gogas.service.ConfigurationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,7 +48,11 @@ public class PushNotificationSender {
 
     public void sendOrderNotification(Order order, OrderEvent event) {
         OrderPushNotificationBuilder pushNotificationBuilder = pushNotificationBuilderSelector.select(event);
+
         List<String> targetTokens = extractNotificationTokens(order, pushNotificationBuilder);
+        if (targetTokens.isEmpty())
+            return;
+
         PushNotificationRequest request = pushNotificationBuilder.buildRequest(order, targetTokens, serviceAppId);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
         log.info("Notification send, response: " + response);
@@ -62,6 +65,9 @@ public class PushNotificationSender {
         Set<String> targetUsers = orderPushNotification.filterPreferences(order, notificationPrefs)
                 .map(NotificationPreferencesView::getUserId)
                 .collect(Collectors.toSet());
+
+        if (targetUsers.isEmpty())
+            return new ArrayList<>();
 
         return pushTokenRepo.findTokensByUserIdIn(targetUsers);
     }

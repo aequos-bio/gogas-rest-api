@@ -1,5 +1,7 @@
 package eu.aequos.gogas.schedule;
 
+import eu.aequos.gogas.multitenancy.TenantContext;
+import eu.aequos.gogas.multitenancy.TenantRegistry;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
@@ -19,10 +21,13 @@ import java.util.function.Function;
 @Component
 public class OrderNotificationTask {
 
+    private TenantRegistry tenantRegistry;
     private OrderRepo orderRepo;
     private PushNotificationSender pushNotificationSender;
 
-    public OrderNotificationTask(OrderRepo orderRepo, PushNotificationSender pushNotificationSender) {
+    public OrderNotificationTask(TenantRegistry tenantRegistry, OrderRepo orderRepo,
+                                 PushNotificationSender pushNotificationSender) {
+        this.tenantRegistry = tenantRegistry;
         this.orderRepo = orderRepo;
         this.pushNotificationSender = pushNotificationSender;
     }
@@ -30,8 +35,16 @@ public class OrderNotificationTask {
     @Scheduled(cron = "${notification.task.cron}")
     public void sendOrderNotifications() {
         log.info("Notification process started");
-        sendNotifications(OrderSpecs::dueDateFrom, OrderEvent.Expiration);
-        sendNotifications(OrderSpecs::deliveryDateFrom, OrderEvent.Delivery);
+
+        try {
+            for (Object tenantId : tenantRegistry.getDataSourceMap().keySet()) {
+                TenantContext.setTenantId((String) tenantId);
+                sendNotifications(OrderSpecs::dueDateFrom, OrderEvent.Expiration);
+                sendNotifications(OrderSpecs::deliveryDateFrom, OrderEvent.Delivery);
+            }
+        } finally {
+            TenantContext.clearTenantId();
+        }
     }
 
     private void sendNotifications(Function<Date, Specification<Order>> orderDateFilter, OrderEvent event) {
