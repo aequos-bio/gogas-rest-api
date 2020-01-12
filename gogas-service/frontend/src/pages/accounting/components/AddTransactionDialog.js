@@ -5,7 +5,7 @@ import NumPad from 'react-numpad';
 import _ from 'lodash';
 import moment from 'moment';
 import Select from 'react-select';
-import { getJson, postJson, apiPost } from '../../../utils/axios_utils';
+import { getJson, apiPost } from '../../../utils/axios_utils';
 
 const AddTransactionDialog = ({title, user, show, onClose, info}) => {
 	const sort = info['visualizzazione.utenti'] ? info['visualizzazione.utenti'].value : 'NC';
@@ -30,8 +30,8 @@ const AddTransactionDialog = ({title, user, show, onClose, info}) => {
   useEffect(() => {
 		if(!show) return;
 
-		setUser(user ? {value:user, label: userLabel(user)} : undefined);
-		setReason();
+		setUser(user ? {value:user, label: userLabel(user)} : null);
+		setReason(null);
 		setDate();
 		setDescription('');
 		setAmount(0);
@@ -66,21 +66,20 @@ const AddTransactionDialog = ({title, user, show, onClose, info}) => {
 			descrizione: description,
 			importo: amount
 		}).then(response => {
-			setRefreshNeeded(true);
-
 			if (contnue) {
+				setRefreshNeeded(true);
 				setUser(user ? {value:user, label: userLabel(user)} : undefined);
 				setAmount(0);		
 			} else {
-				close();
+				close(true);
 			}
 		});
-	}, [_user, reason, date, description, amount])
+	}, [_user, reason, date, description, amount, setRefreshNeeded])
 
-	const close = useCallback(() => {
-		onClose(refreshNeeded);
+	const close = useCallback((forcerefresh) => {
+		onClose(refreshNeeded || forcerefresh);
 	}, [refreshNeeded, onClose])
-
+console.log('reason', reason)
 	return (
 		<Modal show={show} onHide={close}>
 			<Modal.Header>
@@ -153,8 +152,8 @@ const AddTransactionDialog = ({title, user, show, onClose, info}) => {
 			<Modal.Footer>
 				{error ? error.errorMessage : ''}
 				<Button variant='outline-secondary' onClick={close}>Annulla</Button>
-				<Button variant='outline-primary' onClick={onClose} disabled={!canSave} onClick={() => save(true)}>Salva e continua</Button>
-				<Button variant='outline-primary' onClick={onClose} disabled={!canSave} onClick={save}>Salva</Button>
+				<Button variant='outline-primary' disabled={!canSave} onClick={() => save(true)}>Salva e continua</Button>
+				<Button variant='outline-primary' disabled={!canSave} onClick={() => save()}>Salva</Button>
 			</Modal.Footer>
 		</Modal>
 	);

@@ -89,7 +89,6 @@ function RestrictedMenu({ title, restrictedTo, items, jwt }) {
   let enable = false;
 
   if (jwt && jwt.sub && jwt.role) {
-    console.log('role', jwt.role)
     if (Array.isArray(restrictedTo)) {
       restrictedTo.forEach(r => {
         if (jwt.role === r)
