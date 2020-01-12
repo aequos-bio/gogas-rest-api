@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class AccountedNotificationBuilder implements OrderPushNotificationBuilder {
+public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
 
     private OrderItemService orderItemService;
     private AccountingService accountingService;
@@ -20,17 +20,22 @@ public class AccountedNotificationBuilder implements OrderPushNotificationBuilde
     }
 
     @Override
+    protected String getEventName() {
+        return "accounted";
+    }
+
+    @Override
     public String getHeading() {
         return "Contabilizzazione ordine";
     }
 
     @Override
-    public String getMultipleNotificationsHeading() {
-        return "E' stato contabilizzato l'ordine '{0}' consegnato il {1}";
+    public String getMessageTemplate() {
+        return "E' stato contabilizzato l'ordine '%s' consegnato il %s";
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getMultipleNotificationsHeading() {
         return "ordini contabilizzati";
     }
 

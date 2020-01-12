@@ -6,7 +6,12 @@ import eu.aequos.gogas.persistence.entity.Order;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class OpenedNotificationBuilder implements OrderPushNotificationBuilder {
+public class OpenedNotificationBuilder extends OrderPushNotificationBuilder {
+
+    @Override
+    protected String getEventName() {
+        return "opened";
+    }
 
     @Override
     public String getHeading() {
@@ -14,12 +19,12 @@ public class OpenedNotificationBuilder implements OrderPushNotificationBuilder {
     }
 
     @Override
-    public String getMultipleNotificationsHeading() {
-        return "E' stato aperto l'ordine '{0}' in consegna il {1}";
+    public String getMessageTemplate() {
+        return "E' stato aperto l'ordine '%s' in consegna il %s";
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getMultipleNotificationsHeading() {
         return "ordini aperti";
     }
 

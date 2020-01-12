@@ -11,11 +11,11 @@ import javax.servlet.http.HttpServletResponse;
 
 @Slf4j
 @Component
-public class TenantLoggingInterceptor implements HandlerInterceptor {
+public class TenantInterceptor implements HandlerInterceptor {
 
     private TenantRegistry tenantRegistry;
 
-    public TenantLoggingInterceptor(TenantRegistry tenantRegistry) {
+    public TenantInterceptor(TenantRegistry tenantRegistry) {
         this.tenantRegistry = tenantRegistry;
     }
 
@@ -29,7 +29,10 @@ public class TenantLoggingInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        TenantContext.setTenantId(tenantId);
+
         MDC.put("logFileName", tenantId);
+
         return true;
     }
 
@@ -38,6 +41,7 @@ public class TenantLoggingInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        TenantContext.clearTenantId();
         MDC.remove("logFileName");
     }
 }

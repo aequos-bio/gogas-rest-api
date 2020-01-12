@@ -6,7 +6,12 @@ import eu.aequos.gogas.persistence.entity.Order;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class ExpirationNotificationBuilder implements OrderPushNotificationBuilder {
+public class ExpirationNotificationBuilder extends OrderPushNotificationBuilder {
+
+    @Override
+    protected String getEventName() {
+        return "expiration";
+    }
 
     @Override
     public String getHeading() {
@@ -14,12 +19,12 @@ public class ExpirationNotificationBuilder implements OrderPushNotificationBuild
     }
 
     @Override
-    public String getMultipleNotificationsHeading() {
-        return "E' in scadenza l'ordine '{0}' in consegna il {1}";
+    public String getMessageTemplate() {
+        return "E' in scadenza l'ordine '%s' in consegna il %s";
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getMultipleNotificationsHeading() {
         return "ordini in scadenza";
     }
 

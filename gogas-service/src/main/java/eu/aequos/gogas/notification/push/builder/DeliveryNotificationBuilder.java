@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class DeliveryNotificationBuilder implements OrderPushNotificationBuilder {
+public class DeliveryNotificationBuilder extends OrderPushNotificationBuilder {
 
     private OrderItemService orderItemService;
 
@@ -17,17 +17,22 @@ public class DeliveryNotificationBuilder implements OrderPushNotificationBuilder
     }
 
     @Override
+    protected String getEventName() {
+        return "delivery";
+    }
+
+    @Override
     public String getHeading() {
         return "Consegna ordine";
     }
 
     @Override
-    public String getMultipleNotificationsHeading() {
-        return "Oggi è in consegna l'ordine '{0}' del {1}";
+    public String getMessageTemplate() {
+        return "Oggi è in consegna l'ordine '%s' del %s";
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getMultipleNotificationsHeading() {
         return "ordini in consegna";
     }
 

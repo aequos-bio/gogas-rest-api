@@ -6,7 +6,12 @@ import eu.aequos.gogas.persistence.entity.Order;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class QuantityUpdatedNotificationBuilder implements OrderPushNotificationBuilder {
+public class QuantityUpdatedNotificationBuilder extends OrderPushNotificationBuilder {
+
+    @Override
+    protected String getEventName() {
+        return "updatedquantity";
+    }
 
     @Override
     public String getHeading() {
@@ -14,12 +19,12 @@ public class QuantityUpdatedNotificationBuilder implements OrderPushNotification
     }
 
     @Override
-    public String getMultipleNotificationsHeading() {
-        return "Sono state aggiornate le quantità per l'ordine '{0}' consegnato il {1}";
+    public String getMessageTemplate() {
+        return "Sono state aggiornate le quantità per l'ordine '%s' consegnato il %s";
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getMultipleNotificationsHeading () {
         return "ordini con quantità aggiornate";
     }
 
