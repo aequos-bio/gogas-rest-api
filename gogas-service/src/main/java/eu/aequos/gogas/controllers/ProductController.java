@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
 import eu.aequos.gogas.dto.ProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
@@ -54,18 +55,21 @@ public class ProductController {
     }
 
     @PostMapping()
-    public String create(@RequestBody ProductDTO productDTO) {
-        return productService.create(productDTO).getId();
+    public BasicResponseDTO create(@RequestBody ProductDTO productDTO) {
+        String productId = productService.create(productDTO).getId();
+        return new BasicResponseDTO(productId);
     }
 
     @PutMapping(value = "{productId}")
-    public String update(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
-        return productService.update(productId, productDTO).getId();
+    public BasicResponseDTO update(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
+        String updatedProductId = productService.update(productId, productDTO).getId();
+        return new BasicResponseDTO(updatedProductId);
     }
 
     @DeleteMapping(value = "{productId}")
-    public void delete(@PathVariable String productId) {
+    public BasicResponseDTO delete(@PathVariable String productId) {
         productService.delete(productId);
+        return new BasicResponseDTO("OK");
     }
 
 

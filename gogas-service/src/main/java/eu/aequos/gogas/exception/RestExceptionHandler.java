@@ -33,6 +33,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
     }
 
+    @ExceptionHandler(ItemNotDeletableException.class)
+    protected ResponseEntity<Object> handleAccessDenied(ItemNotDeletableException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere eliminato", ex));
+    }
+
     @ExceptionHandler(GoGasException.class)
     protected ResponseEntity<Object> handleGoGasException(GoGasException ex) {
         return buildResponseEntity(new RestApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex));

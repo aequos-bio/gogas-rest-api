@@ -70,7 +70,7 @@ public class OrderManagerController {
 
     //TODO: check come fare per token
     @GetMapping(value = "{orderId}/export")
-    public void getUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException {
+    public void exportUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.getOutputStream().write(reportService.extractOrderDetails(orderId));
         response.getOutputStream().flush();
@@ -78,26 +78,29 @@ public class OrderManagerController {
 
     @PreAuthorize("@authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
-    public String create(@RequestBody OrderDTO orderDTO) throws GoGasException {
-        return orderManagerService.create(orderDTO).getId();
+    public BasicResponseDTO create(@RequestBody OrderDTO orderDTO) throws GoGasException {
+        String orderId = orderManagerService.create(orderDTO).getId();
+        return new BasicResponseDTO(orderId);
     }
 
     @PutMapping(value = "{orderId}")
-    public String update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
-        return orderManagerService.update(orderId, orderDTO).getId();
+    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
+        String updatedOrderId = orderManagerService.update(orderId, orderDTO).getId();
+        return new BasicResponseDTO(updatedOrderId);
     }
 
     @DeleteMapping(value = "{orderId}")
-    public void delete(@PathVariable String orderId) {
+    public BasicResponseDTO delete(@PathVariable String orderId) {
         orderManagerService.delete(orderId);
+        return new BasicResponseDTO("OK");
     }
 
     @PostMapping(value = "{orderId}/action/{actionCode}")
-    public String update(@PathVariable String orderId, @PathVariable String actionCode,
-                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
+    public BasicResponseDTO update(@PathVariable String orderId, @PathVariable String actionCode,
+                                   @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         orderManagerService.changeStatus(orderId, actionCode, roundType);
-        return "OK";
+        return new BasicResponseDTO("OK");
     }
 
     @IsOrderManager
@@ -136,8 +139,9 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/byUser/{userId}")
-    public String updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
-        return orderManagerService.updateUserCost(orderId, userId, cost);
+    public BasicResponseDTO updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+        String accountingEntryId = orderManagerService.updateUserCost(orderId, userId, cost);
+        return new BasicResponseDTO(accountingEntryId);
     }
 
     @DeleteMapping(value = "{orderId}/byUser/{userId}")

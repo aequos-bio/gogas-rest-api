@@ -75,14 +75,16 @@ public class OrderTypeController {
 
     @IsAdmin
     @PostMapping()
-    public String create(@RequestBody OrderTypeDTO orderTypeDTO) {
-        return orderTypeService.create(orderTypeDTO).getId();
+    public BasicResponseDTO create(@RequestBody OrderTypeDTO orderTypeDTO) {
+        String orderId = orderTypeService.create(orderTypeDTO).getId();
+        return new BasicResponseDTO(orderId);
     }
 
     @IsAdmin
     @PutMapping(value = "{orderTypeId}")
-    public String update(@PathVariable String orderTypeId, @RequestBody OrderTypeDTO orderTypeDTO) throws ItemNotFoundException {
-        return orderTypeService.update(orderTypeId, orderTypeDTO).getId();
+    public BasicResponseDTO update(@PathVariable String orderTypeId, @RequestBody OrderTypeDTO orderTypeDTO) throws ItemNotFoundException {
+        String updatedOrderId = orderTypeService.update(orderTypeId, orderTypeDTO).getId();
+        return new BasicResponseDTO(updatedOrderId);
     }
 
     @IsAdmin
@@ -125,17 +127,21 @@ public class OrderTypeController {
 
         Set<String> roles = userService.getAllUserRolesAsString(true, false);
 
+        if (managers.isEmpty())
+            return userService.getActiveUsersByRoles(roles);
+
         return userService.getActiveUsersForSelectByBlackListAndRoles(managers, roles);
     }
 
     @IsAdmin
     @PutMapping(value = "{orderTypeId}/manager/{userId}")
-    public String createManager(@PathVariable String orderTypeId, @PathVariable String userId) {
+    public BasicResponseDTO createManager(@PathVariable String orderTypeId, @PathVariable String userId) {
         OrderManager orderManager = new OrderManager();
         orderManager.setOrderType((orderTypeId));
         orderManager.setUser(userId);
 
-        return orderManagerRepo.save(orderManager).getId();
+        String orderManagerId = orderManagerRepo.save(orderManager).getId();
+        return new BasicResponseDTO(orderManagerId);
     }
 
     @IsAdmin

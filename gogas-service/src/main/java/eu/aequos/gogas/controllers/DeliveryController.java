@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
@@ -25,8 +26,8 @@ public class DeliveryController {
 
     @IsOrderManager
     @PostMapping(value = "{orderId}")
-    public String updateQuantityFromDelivered(@PathVariable String orderId, @RequestBody DeliveryOrderDTO deliveredOrder) throws GoGasException {
+    public BasicResponseDTO updateQuantityFromDelivered(@PathVariable String orderId, @RequestBody DeliveryOrderDTO deliveredOrder) throws GoGasException {
         deliveryService.updateQuantityFromDelivered(orderId, deliveredOrder);
-        return "OK";
+        return new BasicResponseDTO("OK");
     }
 }

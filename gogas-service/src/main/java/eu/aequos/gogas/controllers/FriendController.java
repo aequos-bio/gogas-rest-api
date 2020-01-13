@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
@@ -49,21 +50,26 @@ public class FriendController {
     }
 
     @PostMapping()
-    public String create(@RequestBody UserDTO userDTO) {
-        return userService.createFriend(userDTO, authorizationService.getCurrentUser().getId())
+    public BasicResponseDTO create(@RequestBody UserDTO userDTO) {
+        String userId = userService.createFriend(userDTO, authorizationService.getCurrentUser().getId())
                 .getId();
+
+        return new BasicResponseDTO(userId);
     }
 
     @IsCurrentUserFriend
     @PutMapping(value = "{userId}")
-    public String update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
-        return userService.update(userId, userDTO)
+    public BasicResponseDTO update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
+        String updatedUserId = userService.update(userId, userDTO)
                 .getId();
+
+        return new BasicResponseDTO(updatedUserId);
     }
 
     @IsCurrentUserFriend
     @DeleteMapping(value = "{userId}")
-    public void delete(@PathVariable String userId) {
+    public BasicResponseDTO delete(@PathVariable String userId) {
         userService.delete(userId);
+        return new BasicResponseDTO("OK");
     }
 }
