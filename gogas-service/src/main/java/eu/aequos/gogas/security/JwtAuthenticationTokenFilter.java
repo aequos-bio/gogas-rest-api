@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,7 +23,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     public static final String COOKIE_NAME = "jwt-token";
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
 
     @Autowired
     private TenantRegistry tenantRegistry;
@@ -45,11 +44,11 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         Cookie authCookie = findAuthCookie(request);
         if (authCookie!=null) {
-            userDetails = jwtTokenUtil.getUserDetails(authCookie.getValue());
+            userDetails = jwtTokenHandler.getUserDetails(authCookie.getValue());
         } else {
             String authToken = request.getHeader(TOKEN_HEADER);
             if (authToken != null && authToken.startsWith(TOKEN_PREFIX)) {
-                userDetails = jwtTokenUtil.getUserDetails(authToken.replace(TOKEN_PREFIX, ""));
+                userDetails = jwtTokenHandler.getUserDetails(authToken.replace(TOKEN_PREFIX, ""));
             }
         }
         // TODO: check jwt expiration

@@ -5,15 +5,18 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import eu.aequos.gogas.persistence.entity.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 @Component
-public class JwtTokenUtil implements Serializable {
+public class JwtTokenHandler implements Serializable {
 
     private static final long serialVersionUID = -3301605591108950415L;
 
@@ -27,18 +30,24 @@ public class JwtTokenUtil implements Serializable {
     private static final String CLAIM_KEY_MANAGER = "manager";
 
     private JWTVerifier verifier;
-    private Algorithm algorithm = Algorithm.HMAC256("cippirimerlo");
+    private Algorithm algorithm = Algorithm.HMAC256("4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:");
 
-    public JwtTokenUtil() {
+    @Value("${jwt.duration.minutes:60}")
+    private int tokenValidityInMinutes;
+
+    public JwtTokenHandler() {
         verifier = JWT.require(algorithm)
                 .withIssuer(ISSUER)
                 .build();
     }
 
     public String generateToken(GoGasUserDetails userDetails) {
+        Date now = new Date();
+
         return JWT.create()
                 .withIssuer(ISSUER)
                 .withIssuedAt(new Date())
+                .withExpiresAt(generateExpiringDate(now))
                 .withSubject(userDetails.getUsername())
                 .withClaim(CLAIM_KEY_TENANT, userDetails.getTenant())
                 .withClaim(CLAIM_KEY_USERID, userDetails.getId())
@@ -48,6 +57,13 @@ public class JwtTokenUtil implements Serializable {
                 .withClaim(CLAIM_KEY_ENABLED, userDetails.isEnabled())
                 .withClaim(CLAIM_KEY_MANAGER, userDetails.isManager())
                 .sign(algorithm);
+    }
+
+    private Date generateExpiringDate(Date now) {
+        Calendar calendar = GregorianCalendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(Calendar.MINUTE, tokenValidityInMinutes);
+        return calendar.getTime();
     }
 
     public GoGasUserDetails getUserDetails(String token) {
