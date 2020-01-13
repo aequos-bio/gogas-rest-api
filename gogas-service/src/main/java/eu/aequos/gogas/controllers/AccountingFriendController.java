@@ -13,7 +13,7 @@ import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -36,14 +36,14 @@ public class AccountingFriendController {
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
                                                          @RequestParam(required = false) String reasonCode,
                                                          @RequestParam(required = false) String description,
-                                                         @RequestParam(required = false) String dateFromParam,
-                                                         @RequestParam(required = false) String dateToParam) {
+                                                         @RequestParam(required = false) String dateFrom,
+                                                         @RequestParam(required = false) String dateTo) {
 
         String currentUserId = authorizationService.getCurrentUser().getId();
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, dateFrom, dateTo, currentUserId);
+        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, currentUserId);
     }
 
     @PostMapping(value = "entry")
@@ -87,13 +87,13 @@ public class AccountingFriendController {
     @IsCurrentUserFriend
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
-                                                @RequestParam(required = false) String dateFromParam,
-                                                @RequestParam(required = false) String dateToParam) {
+                                                @RequestParam(required = false) String dateFrom,
+                                                @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, dateFrom, dateTo);
+        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo);
     }
 
     private boolean isFriendAccountingEntry(@PathVariable String accountingEntryId) {

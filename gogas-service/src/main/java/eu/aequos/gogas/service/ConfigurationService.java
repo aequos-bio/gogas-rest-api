@@ -7,17 +7,15 @@ import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ConfigurationService {
 
-    private static final DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private static final String USER_SORTING_KEY = "visualizzazione.utenti";
     private static final String USER_SORTING_NAME_FIRST = "NC";
@@ -69,21 +67,20 @@ public class ConfigurationService {
         }
     }
 
-
-    public Date parseDate(String date) {
+    public LocalDate parseLocalDate(String date) {
         if (date == null || date.isEmpty())
             return null;
 
         try {
-            return format.parse(date);
-        } catch (ParseException e) {
+            return LocalDate.parse(date, formatter);
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public static DateFormat getDateFormat() {
-        return format;
+    public static String formatDate(LocalDate date) {
+        return formatter.format(date);
     }
 
     public List<ConfigurationItemDTO> getVisibleConfigurationItems() {

@@ -92,6 +92,10 @@ public class OrderUserService {
         Order order = orderManagerService.getRequiredWithType(orderId);
         User user = userService.getRequired(userId);
 
+        //TODO: change to have more OOP
+        if (order.getOrderType().isExternal())
+            return Collections.emptyList();
+
         boolean isOrderOpen = order.getStatus().isOpen();
         boolean showAllProductsOnPriceList = isOrderOpen && order.isEditable();
         boolean showGroupedOrderItems = showGroupedOrderItems(isOrderOpen, order.getOrderType(), user);

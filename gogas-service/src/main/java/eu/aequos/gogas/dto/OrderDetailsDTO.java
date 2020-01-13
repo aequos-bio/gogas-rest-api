@@ -6,7 +6,9 @@ import eu.aequos.gogas.persistence.entity.Order;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -26,7 +28,7 @@ public class OrderDetailsDTO {
 
     @JsonProperty("dataconsegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     @JsonProperty("idaequos")
     private Integer aequosId;
@@ -49,7 +51,7 @@ public class OrderDetailsDTO {
 
     @JsonProperty("datafattura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date invoiceDate;
+    private LocalDate invoiceDate;
 
     @JsonProperty("totalefattura")
     private BigDecimal invoiceAmount;
@@ -59,7 +61,7 @@ public class OrderDetailsDTO {
 
     @JsonProperty("datapagamento")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date paymentDate;
+    private LocalDate paymentDate;
 
     @JsonProperty("invioPesiRichiesto")
     private boolean sendWeightsRequired;
@@ -69,7 +71,7 @@ public class OrderDetailsDTO {
 
     @JsonProperty("pesiInviati")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date weightsSentDate;
+    private LocalDateTime weightsSentDate;
 
     private boolean hasAttachment;
 
@@ -81,7 +83,7 @@ public class OrderDetailsDTO {
 
     @JsonProperty("sincronizzato")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date syncDate;
+    private LocalDateTime syncDate;
 
     public OrderDetailsDTO fromModel(Order order) {
         this.id = order.getId();
@@ -110,8 +112,8 @@ public class OrderDetailsDTO {
         return this;
     }
 
-    private boolean sendWeightAllowed(Date deliveryDate) {
-        long diffInDays = (new Date().getTime() -  deliveryDate.getTime()) / DAYS_MILLIS;
+    private boolean sendWeightAllowed(LocalDate deliveryDate) {
+        long diffInDays = Period.between(LocalDate.now(), deliveryDate).getDays();
         return diffInDays >= 0 && diffInDays <= 4;
     }
 }

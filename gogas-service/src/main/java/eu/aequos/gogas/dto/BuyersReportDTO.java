@@ -49,7 +49,7 @@ public class BuyersReportDTO {
         }
 
         private String formatDeliveryDate(Order order) {
-            return ConfigurationService.getDateFormat().format(order.getDeliveryDate());
+            return ConfigurationService.formatDate(order.getDeliveryDate());
         }
 
         private int[][] generateReportBody() {

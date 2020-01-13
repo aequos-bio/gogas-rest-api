@@ -15,8 +15,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,8 +44,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public List<AccountingEntryDTO> getAccountingEntries(String userId, String reasonCode,
-                                                         String description, Date dateFrom,
-                                                         Date dateTo, String friendReferralId) {
+                                                         String description, LocalDate dateFrom,
+                                                         LocalDate dateTo, String friendReferralId) {
 
         Specification<AccountingEntry> filter = new SpecificationBuilder<AccountingEntry>()
                 .withBaseFilter(AccountingSpecs.notLinkedToOrder())
@@ -76,7 +76,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         entry.setOrderId(order.getId());
         entry.setDate(order.getDeliveryDate());
         entry.setReason(new AccountingEntryReason().withReasonCode("ORDINE"));
-        entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.getDateFormat().format(order.getDeliveryDate()));
+        entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
         entry.setConfirmed(false);
 
         if (user.getRoleEnum().isFriend() && user.getFriendReferral() != null) {
@@ -115,7 +115,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .collect(Collectors.toList());
     }
 
-    public UserBalanceSummaryDTO getUserBalance(String userId, Date dateFrom, Date dateTo) {
+    public UserBalanceSummaryDTO getUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo) {
         Specification<UserBalanceEntry> filter = new SpecificationBuilder<UserBalanceEntry>()
                 .withBaseFilter(UserBalanceSpecs.user(userId))
                 .and(UserBalanceSpecs::fromDate, dateFrom)

@@ -10,7 +10,7 @@ import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,18 +30,18 @@ public class OrderDTO implements ConvertibleDTO<Order> {
 
     @JsonProperty("dataapertura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date openingDate;
+    private LocalDate openingDate;
 
     @JsonProperty("datachiusura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date dueDate;
+    private LocalDate dueDate;
 
     @JsonProperty("orachiusura")
     private int dueHour;
 
     @JsonProperty("dataconsegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     @JsonProperty("codicestato")
     private int statusCode;
@@ -87,23 +87,36 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     public OrderDTO fromModel(Order order, OrderSummary totalAmount, List<String> actions) {
         fromModel(order);
 
-        this.totalAmount = totalAmount != null ? totalAmount.getTotalAmount() : BigDecimal.ZERO;
+        this.totalAmount = computeTotalAmount(totalAmount, order.getShippingCost());
         this.actions = String.join(",", actions);
 
         return this;
     }
 
-    public OrderDTO fromModel(Order order, UserOrderSummary totalAmount) {
+    private BigDecimal computeTotalAmount(OrderSummary totalAmount, BigDecimal shippingCost) {
+        if (totalAmount == null || totalAmount.getTotalAmount() == null)
+            return BigDecimal.ZERO;
+
+        if (shippingCost == null)
+            return totalAmount.getTotalAmount();
+
+        return totalAmount.getTotalAmount().add(shippingCost);
+    }
+
+    public OrderDTO fromModel(Order order, UserOrderSummary userOrderSummary) {
         fromModel(order);
 
-        if (totalAmount != null) {
-            this.itemsCount = totalAmount.getItemsCount();
-            this.hasFriends = totalAmount.getFriendCount() > 0;
-            this.accounted = totalAmount.getfriendAccounted() > 0;
+        BigDecimal shippingCost = null;
+
+        if (userOrderSummary != null) {
+            this.itemsCount = userOrderSummary.getItemsCount();
+            this.hasFriends = userOrderSummary.getFriendCount() > 0;
+            this.accounted = userOrderSummary.getfriendAccounted() > 0;
+            shippingCost = userOrderSummary.getShippingCost();
         }
 
         this.accountable = !order.getStatus().isOpen() && order.getOrderType().isSummaryRequired();
-        this.totalAmount = totalAmount != null ? totalAmount.getTotalAmount() : BigDecimal.ZERO;
+        this.totalAmount = computeTotalAmount(userOrderSummary, shippingCost);
 
         return this;
     }

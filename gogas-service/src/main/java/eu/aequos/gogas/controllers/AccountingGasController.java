@@ -9,7 +9,7 @@ import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -30,13 +30,13 @@ public class AccountingGasController {
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<AccountingGasEntryDTO> getGasEntries(@RequestParam(required = false) String reasonCode,
                                                                @RequestParam(required = false) String description,
-                                                               @RequestParam(required = false) String dateFromParam,
-                                                               @RequestParam(required = false) String dateToParam) {
+                                                               @RequestParam(required = false) String dateFrom,
+                                                               @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingGasService.getAccountingEntries(reasonCode, description, dateFrom, dateTo);
+        return accountingGasService.getAccountingEntries(reasonCode, description, parsedDateFrom, parsedDateTo);
     }
 
     @PostMapping(value = "entry")

@@ -5,7 +5,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -23,7 +23,7 @@ public class AccountingEntry {
     private User user;
 
     @Column(name = "datamovimento", nullable = false)
-    private Date date;
+    private LocalDate date;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "causale", nullable = false)

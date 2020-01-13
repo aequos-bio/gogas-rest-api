@@ -5,6 +5,7 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.integration.AequosIntegrationService;
+import eu.aequos.gogas.integration.api.AequosOpenOrder;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
@@ -153,7 +154,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     //TODO: cambiare spostando logica in un oggetto utente o referente
     private List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
         if (userRole.isAdmin())
-            return null;
+            return Collections.emptyList();
 
         return orderManagerRepo.findByUser(userId).stream()
                 .map(OrderManager::getOrderType)
@@ -390,18 +391,8 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), toList()));
 
         Stream<OrderDTO> aequosOpenOrders = aequosIntegrationService.getOpenOrders().stream()
-                .map(o -> {
-                    OrderType type = aequosOrderTypeMapping.get(o.getId());
-
-                    OrderDTO orderDTO = new OrderDTO();
-                    orderDTO.setOrderTypeId(type.getId());
-                    orderDTO.setOrderTypeName(type.getDescription());
-                    orderDTO.setOpeningDate(o.getOpeningDate());
-                    orderDTO.setDueDate(o.getDueDate());
-                    orderDTO.setDeliveryDate(o.getDeliveryDate());
-
-                    return orderDTO;
-                });
+                .map(o -> createOrderDTO(aequosOrderTypeMapping.get(o.getId()), o))
+                .filter(Objects::nonNull);
 
         List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
         if (managedOrderTypes != null)
@@ -410,6 +401,20 @@ public class OrderManagerService extends CrudService<Order, String> {
         return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
                 .collect(toList());
+    }
+
+    private OrderDTO createOrderDTO(OrderType type, AequosOpenOrder o) {
+        if (type == null)
+            return null;
+
+        OrderDTO orderDTO = new OrderDTO();
+        orderDTO.setOrderTypeId(type.getId());
+        orderDTO.setOrderTypeName(type.getDescription());
+        orderDTO.setOpeningDate(o.getOpeningDate());
+        orderDTO.setDueDate(o.getDueDate());
+        orderDTO.setDeliveryDate(o.getDeliveryDate());
+
+        return orderDTO;
     }
 
     public boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrder) {

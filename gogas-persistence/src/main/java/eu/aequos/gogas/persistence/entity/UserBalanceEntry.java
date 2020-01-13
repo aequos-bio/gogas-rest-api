@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -22,7 +22,7 @@ public class UserBalanceEntry {
     private String userId;
 
     @Column(name = "data", nullable = false)
-    private Date date;
+    private LocalDate date;
 
     @Column(name = "descrizione", nullable = false, length = 100)
     private String description;

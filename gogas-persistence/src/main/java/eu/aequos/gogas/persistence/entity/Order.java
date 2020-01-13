@@ -4,8 +4,12 @@ import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
-import java.util.*;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,16 +58,16 @@ public class Order {
     private int statusCode;
     
     @Column(name = "dataapertura", nullable = false)
-    private Date openingDate;
+    private LocalDate openingDate;
 
     @Column(name = "datachiusura", nullable = false)
-    private Date dueDate;
+    private LocalDate dueDate;
 
     @Column(name = "orachiusura", nullable = false)
     private int dueHour;
 
     @Column(name = "dataconsegna", nullable = false)
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idtipologiaordine", nullable = false)
@@ -76,7 +80,7 @@ public class Order {
     private boolean sent;
     
     @Column(name = "spesetrasporto", nullable = false)
-    private java.math.BigDecimal shippingCost;
+    private BigDecimal shippingCost;
     
     @Column(name = "externallink")
     private String externaLlink;
@@ -91,52 +95,52 @@ public class Order {
     private String attachmentType;
     
     @Column(name = "invoicedate")
-    private Date invoiceDate;
+    private LocalDate invoiceDate;
     
     @Column(name = "paid", nullable = false)
     private boolean paid;
     
     @Column(name = "paymentdate")
-    private Date paymentDate;
+    private LocalDate paymentDate;
     
     @Column(name = "lastsynchro")
-    private Date lastSynchro;
+    private LocalDateTime lastSynchro;
     
     @Column(name = "lastweightupdate")
-    private Date lastWeightUpdate;
+    private LocalDateTime lastWeightUpdate;
 
     public OrderStatus getStatus() {
         return orderStatusMap.get(this.statusCode);
     }
 
-    public Date getDueDateAndTime() {
-        return addHours(this.dueDate, this.dueHour);
+    public LocalDateTime getDueDateAndTime() {
+        return this.dueDate.atTime(this.dueHour, 0);
     }
 
     public boolean isEditable() {
-        Date now = new Date();
-        return now.after(openingDate) && now.before(this.getDueDateAndTime());
+        LocalDateTime now = LocalDateTime.now();
+        return now.isAfter(openingDate.atStartOfDay()) && now.isBefore(this.getDueDateAndTime());
     }
 
     public boolean isExpiring(int minutesBefore) {
         return isDateTimeWithinMinutesFromNow(getDueDateAndTime(), minutesBefore);
     }
 
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(getDueDateAndTime());
+    }
+
+    public boolean isNotYetOpened() {
+        return LocalDate.now().isBefore(openingDate);
+    }
+
     public boolean isInDelivery(int referenceHour, int minutesBefore) {
-        Date deliveryDateAndTime = addHours(this.deliveryDate, referenceHour);
+        LocalDateTime deliveryDateAndTime = this.deliveryDate.atTime(referenceHour, 0);
         return isDateTimeWithinMinutesFromNow(deliveryDateAndTime, minutesBefore);
     }
 
-    private boolean isDateTimeWithinMinutesFromNow(Date orderDate, int minutes) {
-        Date now = new Date();
-        long diffInMinutesFromNow = (orderDate.getTime() - now.getTime()) / 60000;
+    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes) {
+        long diffInMinutesFromNow = Duration.between(orderDate, LocalDateTime.now()).toMinutes();
         return Math.abs(diffInMinutesFromNow - minutes) < 2;
-    }
-
-    public Date addHours(Date originalDate, int hours) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(originalDate);
-        calendar.set(Calendar.HOUR_OF_DAY, hours);
-        return calendar.getTime();
     }
 }

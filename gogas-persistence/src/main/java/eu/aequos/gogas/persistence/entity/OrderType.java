@@ -4,7 +4,7 @@ import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -49,7 +49,7 @@ public class OrderType {
     private String externallink;
     
     @Column(name = "lastsynchro")
-    private Date lastsynchro;
+    private LocalDateTime lastsynchro;
 
     @Column(name = "idordineaequos")
     private Integer aequosOrderId;

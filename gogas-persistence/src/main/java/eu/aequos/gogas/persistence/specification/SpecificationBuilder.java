@@ -3,10 +3,8 @@ package eu.aequos.gogas.persistence.specification;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SpecificationBuilder<T> {
     Specification<T> filter;
@@ -17,19 +15,19 @@ public class SpecificationBuilder<T> {
     }
 
     public <U> SpecificationBuilder<T> and(Function<U, Specification<T>> func, U value) {
-        filter = applyFilterIfNotNull(filter, func, Specification::and, value);
+        filter = applyFilterIfNotEmpty(filter, func, Specification::and, value);
         return this;
     }
 
     public <U> SpecificationBuilder<T> or(Function<U, Specification<T>> func, U value) {
-        filter = applyFilterIfNotNull(filter, func, Specification::or, value);
+        filter = applyFilterIfNotEmpty(filter, func, Specification::or, value);
         return this;
     }
 
-    private <U> Specification<T> applyFilterIfNotNull(Specification<T> spec,
-                                                      Function<U, Specification<T>> func,
-                                                      BiFunction<Specification<T>, Specification<T>, Specification<T>> operator,
-                                                      U value) {
+    private <U> Specification<T> applyFilterIfNotEmpty(Specification<T> spec,
+                                                       Function<U, Specification<T>> func,
+                                                       BiFunction<Specification<T>, Specification<T>, Specification<T>> operator,
+                                                       U value) {
         if (isEmpty(value))
             return spec;
 

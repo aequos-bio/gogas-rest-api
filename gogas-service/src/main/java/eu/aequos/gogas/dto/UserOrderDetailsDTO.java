@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Order;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -22,11 +22,11 @@ public class UserOrderDetailsDTO {
 
     @JsonProperty("datachiusura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date dueDate;
+    private LocalDate dueDate;
 
     @JsonProperty("dataconsegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     @JsonProperty("aperto")
     private boolean open;

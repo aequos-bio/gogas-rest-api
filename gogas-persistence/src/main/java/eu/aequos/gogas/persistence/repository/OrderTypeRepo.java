@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderTypeRepo extends CrudRepository<OrderType, String> {
@@ -18,5 +18,5 @@ public interface OrderTypeRepo extends CrudRepository<OrderType, String> {
 
     @Modifying
     @Query("UPDATE OrderType t SET t.lastsynchro = ?2 WHERE t.id = ?1")
-    int setLastSynchroById(String id, Date lastSynchro);
+    int setLastSynchroById(String id, LocalDateTime lastSynchro);
 }

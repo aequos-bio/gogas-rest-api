@@ -5,6 +5,7 @@ import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -21,7 +22,7 @@ public abstract class OrderPushNotificationBuilder {
     public abstract Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences);
 
     private String formatOrderMessage(Order order) {
-        String formattedDeliveryDate = ConfigurationService.getDateFormat().format(order.getDeliveryDate());
+        String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
         String messageTemplate = getMessageTemplate();
 
         return String.format(messageTemplate, order.getOrderType().getDescription(), formattedDeliveryDate);

@@ -3,15 +3,15 @@ package eu.aequos.gogas.persistence.specification;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class AccountingGasSpecs {
 
-    public static Specification<AccountingGasEntry> fromDate(Date fromDate) {
+    public static Specification<AccountingGasEntry> fromDate(LocalDate fromDate) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get("date"), fromDate);
     }
 
-    public static Specification<AccountingGasEntry> toDate(Date toDate) {
+    public static Specification<AccountingGasEntry> toDate(LocalDate toDate) {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get("date"), toDate);
     }
 

@@ -1,20 +1,25 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.derived.*;
+import eu.aequos.gogas.persistence.entity.derived.OpenOrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificationExecutor<Order> {
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.id = ?1")
     Optional<Order> findByIdWithType(String orderId);
 
-    List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, Date dueDate, Date deliveryDate);
+    List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
 
     @Query("SELECT DISTINCT o.orderType.id FROM Order o")
     Set<String> findAllUsedOrderTypes();
@@ -47,9 +52,11 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
             "       ) " +
             "END as totalAmount, " +
             "(SELECT COUNT(*) FROM ordini o WHERE d.idDateOrdini = o.idDateOrdine AND o.riepilogoUtente = CAST(d.stato AS BIT) AND o.idUtente = ?1) as itemsCount, " +
-            "COALESCE(f.friendCount, 0) as friendCount, COALESCE(f.friendAccounted, 0) as friendAccounted " +
+            "COALESCE(f.friendCount, 0) as friendCount, COALESCE(f.friendAccounted, 0) as friendAccounted, " +
+            "s.importo AS shippingCost " +
             "FROM dateOrdini d " +
             "INNER JOIN tipologiaOrdine t ON d.idTipologiaOrdine = t.idTipologiaOrdine " +
+            "LEFT OUTER JOIN speseTrasporto s ON  d.idDateOrdini = s.idDateOrdini AND s.idUtente = ?1 " +
             "LEFT OUTER JOIN (" +
             "  SELECT o.idDateOrdine, COUNT(*) AS friendCount, " +
             "  CASE WHEN SUM(1 - o.contabilizzato) = 0 THEN 1 ELSE 0 END AS friendAccounted " +

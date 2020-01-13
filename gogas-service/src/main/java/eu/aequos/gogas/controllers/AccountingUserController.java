@@ -13,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,13 +40,13 @@ public class AccountingUserController {
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
                                                          @RequestParam(required = false) String reasonCode,
                                                          @RequestParam(required = false) String description,
-                                                         @RequestParam(required = false) String dateFromParam,
-                                                         @RequestParam(required = false) String dateToParam) {
+                                                         @RequestParam(required = false) String dateFrom,
+                                                         @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, dateFrom, dateTo, null);
+        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, null);
     }
 
     @PostMapping(value = "entry")
@@ -75,12 +75,12 @@ public class AccountingUserController {
     @CanViewBalance
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
-                                                @RequestParam(required = false) String dateFromParam,
-                                                @RequestParam(required = false) String dateToParam) {
+                                                @RequestParam(required = false) String dateFrom,
+                                                @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, dateFrom, dateTo);
+        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo);
     }
 }

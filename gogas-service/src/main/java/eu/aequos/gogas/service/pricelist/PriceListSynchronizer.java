@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,7 +36,7 @@ public class PriceListSynchronizer {
     }
 
     @Transactional
-    public Date syncPriceList(OrderType orderType, ExternalPriceList externalPriceList) {
+    public LocalDateTime syncPriceList(OrderType orderType, ExternalPriceList externalPriceList) {
         Map<String, Supplier> suppliersMap = externalPriceList.getProducts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> createOrUpdateSupplier(e.getKey(), e.getValue().get(0))));
 
@@ -113,8 +113,8 @@ public class PriceListSynchronizer {
         return productRepo.save(product).getId();
     }
 
-    private Date updateLastSynchroDate(OrderType orderType) {
-        Date lastSynchro = new Date();
+    private LocalDateTime updateLastSynchroDate(OrderType orderType) {
+        LocalDateTime lastSynchro = LocalDateTime.now();
         orderTypeRepo.setLastSynchroById(orderType.getId(), lastSynchro);
         return lastSynchro;
     }

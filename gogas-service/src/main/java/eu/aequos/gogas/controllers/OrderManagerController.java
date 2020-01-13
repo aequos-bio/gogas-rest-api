@@ -2,7 +2,9 @@ package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
-import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.exception.GoGasException;
+import eu.aequos.gogas.exception.InvalidOrderActionException;
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -219,8 +221,8 @@ public class OrderManagerController {
     @IsOrderTypeManager
     @GetMapping(value = "{productTypeId}/report/buyers")
     public BuyersReportDTO generateBuyersReport(@PathVariable String productTypeId, @RequestParam(required = false) String dateFrom, @RequestParam(required = false) String dateTo) {
-        Date dateFromParsed = configurationService.parseDate(dateFrom);
-        Date dateToParsed = configurationService.parseDate(dateTo);
-        return buyersReportService.generateBuyersReport(productTypeId, dateFromParsed, dateToParsed);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
+        return buyersReportService.generateBuyersReport(productTypeId, parsedDateFrom, parsedDateTo);
     }
 }

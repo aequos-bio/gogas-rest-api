@@ -2,11 +2,8 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.OrderType;
-import eu.aequos.gogas.persistence.entity.Product;
 import lombok.Data;
 
-import javax.persistence.Column;
-import java.util.Date;
 import java.util.Optional;
 
 @Data

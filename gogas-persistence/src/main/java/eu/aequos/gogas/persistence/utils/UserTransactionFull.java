@@ -1,15 +1,15 @@
 package eu.aequos.gogas.persistence.utils;
 
-import java.math.BigDecimal;
-import java.util.Date;
-
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class UserTransactionFull implements UserTransactionFullProjection {
   private String id;
   private String userId;
-  private Date date;
+  private LocalDate date;
   private String description;
   private BigDecimal amount;
 
@@ -46,11 +46,11 @@ public class UserTransactionFull implements UserTransactionFullProjection {
       this.userId = userId;
   }
 
-  public Date getDate() {
+  public LocalDate getDate() {
       return date;
   }
 
-  public void setDate(Date date) {
+  public void setDate(LocalDate date) {
       this.date = date;
   }
 

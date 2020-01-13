@@ -18,7 +18,7 @@ import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -86,7 +86,7 @@ public class ProductService extends CrudService<Product, String> {
                 .orElseThrow(() -> new GoGasException("Impossibile sincronizzare il listino: il tipo di ordine non è collegato ad Aequos"));
 
         AequosPriceList aequosPriceList = aequosIntegrationService.getPriceList(aequosOrderId);
-        Date lastSynchro = priceListSynchronizer.syncPriceList(orderType, aequosPriceList);
+        LocalDateTime lastSynchro = priceListSynchronizer.syncPriceList(orderType, aequosPriceList);
 
         return new OrderSynchroInfoDTO(lastSynchro)
                 .withAequosOrderId(aequosOrderId);
@@ -102,7 +102,7 @@ public class ProductService extends CrudService<Product, String> {
         }
 
         ExcelPriceList excelPriceList = new ExcelPriceList(response.getPriceListItems());
-        Date lastSynchro = priceListSynchronizer.syncPriceList(orderType, excelPriceList);
+        LocalDateTime lastSynchro = priceListSynchronizer.syncPriceList(orderType, excelPriceList);
 
         return new OrderSynchroInfoDTO(lastSynchro)
                 .withUpdatedProducts(response.getPriceListItems().size());

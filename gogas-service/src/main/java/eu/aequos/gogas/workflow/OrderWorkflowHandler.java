@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -105,18 +104,17 @@ public class OrderWorkflowHandler {
 
     private List<String> getOpenedActions(Order order) {
         List<String> result = new ArrayList<>();
-        Date now = new Date();
 
         result.add("modifica");
 
-        if (order.getOpeningDate().after(now))
+        if (order.isNotYetOpened())
             result.add("elimina");
         else {
             result.add("dettaglio");
             result.add("cancel");
         }
 
-        if (order.getDueDateAndTime().before(now))
+        if (order.isExpired())
             result.add("chiudi");
 
         return result;

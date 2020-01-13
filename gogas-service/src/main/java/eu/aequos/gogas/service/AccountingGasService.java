@@ -8,7 +8,7 @@ import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +23,7 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
     }
 
     public List<AccountingGasEntryDTO> getAccountingEntries(String reasonCode,
-                                                         String description, Date dateFrom, Date dateTo) {
+                                                            String description, LocalDate dateFrom, LocalDate dateTo) {
 
         Specification<AccountingGasEntry> filter = new SpecificationBuilder<AccountingGasEntry>()
                 .withBaseFilter(AccountingGasSpecs.select())

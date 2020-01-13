@@ -57,7 +57,7 @@ public class UserService extends CrudService<User, String> {
                 .sorted(getUserSorting());
 
         return ListConverter.fromStream(userStream)
-                .toSelectItems(this::getSelectItem, false, "Tutti");
+                .toSelectItems(this::getSelectItem, withAll, "Tutti");
     }
 
     public Map<String, String> getUsersFullNameMap(Set<String> userIds) {

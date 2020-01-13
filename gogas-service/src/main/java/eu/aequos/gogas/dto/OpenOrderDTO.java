@@ -8,7 +8,7 @@ import eu.aequos.gogas.persistence.entity.derived.OpenOrderSummary;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,14 +28,14 @@ public class OpenOrderDTO {
 
     @JsonProperty("datachiusura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date dueDate;
+    private LocalDate dueDate;
 
     @JsonProperty("orachiusura")
     private int dueHour;
 
     @JsonProperty("dataconsegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 
     private boolean external;
 

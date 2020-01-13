@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -23,11 +23,11 @@ public class OrderInvoiceDataDTO {
 
     @JsonProperty("dataFattura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    Date invoiceDate;
+    LocalDate invoiceDate;
 
     @JsonProperty("dataPagamento")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    Date paymentDate;
+    LocalDate paymentDate;
 
     @JsonProperty("pagato")
     boolean paid;
