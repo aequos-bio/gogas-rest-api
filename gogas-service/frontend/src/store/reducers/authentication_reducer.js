@@ -3,7 +3,7 @@ import { LOGIN_START, LOGIN_END, LOGIN_ERROR, LOGOUT_END, LOGOUT_ERROR } from '.
 const authentication_reducer = (state = [], action) => {
   switch (action.type) {
     case LOGIN_START:
-      return { ...state, running: true };
+      return { ...state, running: true, error_message: undefined };
     case LOGIN_END:
       return { ...state, running: false, jwtToken: action.payload }
     case LOGIN_ERROR:

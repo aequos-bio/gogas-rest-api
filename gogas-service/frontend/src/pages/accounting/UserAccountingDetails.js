@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { connect } from "react-redux";
 import { Container, Row, Col, Table, Alert, Button } from 'react-bootstrap';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
 import _ from 'lodash';
+import jwtDecode from 'jwt-decode';
 import { getJson } from '../../utils/axios_utils';
 import Excel from '../../excel-50.png';
 import AddTransactionDialog from "./components/AddTransactionDialog";
@@ -20,7 +21,7 @@ const styles = {
   }
 }
 
-function UserAccountingDetails({location}) {
+function UserAccountingDetails({authentication, location}) {
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
@@ -68,9 +69,23 @@ function UserAccountingDetails({location}) {
     window.open('/api/useraccounting/exportUserDetails?userId=' + user.idUtente, '_blank');
   }, [user, transactions])
 
+  const jwt = useMemo(() => {
+    if (authentication.jwtToken) {
+      const jwt = jwtDecode(authentication.jwtToken);
+      return jwt;
+    }
+    return null;
+  }, [authentication]);
+
   useEffect(() => {
     reload();
   }, []);
+
+  const dialogClosed = useCallback((refresh) => {
+    setShowDlg(false); 
+    if (refresh) 
+      reload();
+  }, [setShowDlg, reload]);
 
   return (
     <Container fluid>
@@ -81,8 +96,10 @@ function UserAccountingDetails({location}) {
         <Col>
           <h2>
             Dettaglio situazione contabile di {(user.nome || '') + ' ' + (user.cognome || '')}
-            <img class='pull-right' src={Excel} alt='excel' title='Esporta dati su file Excel' style={styles.excelbtn} onClick={downloadXls} />
-            <Button className='pull-right' size='sm' style={styles.button} variant='outline-primary' onClick={() => setShowDlg(true)}>Nuovo movimento</Button>
+            <img className='pull-right' src={Excel} alt='excel' title='Esporta dati su file Excel' style={styles.excelbtn} onClick={downloadXls} />
+            {jwt && jwt.sub && jwt.role==='A' ?
+              <Button className='pull-right' size='sm' style={styles.button} variant='outline-primary' onClick={() => setShowDlg(true)}>Nuovo movimento</Button>
+            : null}
           </h2>
           <Table striped bordered hover size="sm">
             <thead>
@@ -129,7 +146,7 @@ function UserAccountingDetails({location}) {
           </Table>
         </Col>
       </Row>
-      <AddTransactionDialog title='Nuovo movimento' user={user} show={showDlg} onClose={(refresh) => {setShowDlg(false); if (refresh) reload();}}/>
+      <AddTransactionDialog title='Nuovo movimento' user={user} show={showDlg} onClose={dialogClosed}/>
     </Container>
   );
 }

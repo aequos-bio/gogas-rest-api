@@ -25,7 +25,6 @@ public class AccountingReasonController {
         return accountingReasonService.getAccountingReasonsForSelect();
     }
 
-    @IsAdmin
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<AccountingEntryReason> getAccountingReasons() {
         return accountingReasonService.getAccountingReasons();
