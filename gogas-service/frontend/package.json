@@ -7,7 +7,6 @@
     "bootstrap": "^4.3.1",
     "cookies-js": "^1.0.4",
     "font-awesome": "^4.7.0",
-    "http-proxy-middleware": "^0.19.1",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.11",
     "moment-timezone": "^0.5.23",
@@ -30,19 +29,64 @@
     "redux-thunk": "^2.3.0",
     "sweetalert": "^2.1.2"
   },
+  "devDependencies": {
+    "@babel/plugin-proposal-optional-chaining": "^7.6.0",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.3.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.3.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-react": "^7.14.3",
+    "eslint-plugin-react-hooks": "^2.0.1",
+    "http-proxy-middleware": "^0.20.0",
+    "husky": "^3.0.9",
+    "lint-staged": "^9.4.2",
+    "post-merge-install": "^0.3.0",
+    "prettier": "^1.18.2"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build  && ./buildManager.sh",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "format": "prettier --write **/*.js",
+    "lint": "eslint --ignore-pattern src/serviceWorker.js src/**.js ",
+    "lint:fix": "eslint --ignore-pattern src/serviceWorker.js --fix src/**.js"
   },
   "eslintConfig": {
     "extends": "react-app"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not ie <= 11",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "lint-staged": {
+    "*.{json,css,md}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "post-merge": "post-merge-install",
+      "post-rebase": "post-merge-install"
+    }
+  }
 }
