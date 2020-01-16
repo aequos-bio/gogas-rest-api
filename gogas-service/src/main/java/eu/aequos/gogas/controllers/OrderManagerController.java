@@ -68,12 +68,12 @@ public class OrderManagerController {
     }
 
     @GetMapping(value = "{orderId}/export")
-    public void exportUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException {
+    public void exportUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException, GoGasException {
         AttachmentDTO excelAttachment = orderManagerService.extractExcelReport(orderId);
         excelAttachment.writeToHttpResponse(response);
     }
 
-    @PreAuthorize("@authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
+    @PreAuthorize("hasRole('A') OR @authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
     public BasicResponseDTO create(@RequestBody OrderDTO orderDTO) throws GoGasException {
         String orderId = orderManagerService.create(orderDTO).getId();

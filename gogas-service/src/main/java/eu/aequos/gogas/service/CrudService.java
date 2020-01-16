@@ -3,11 +3,13 @@ package eu.aequos.gogas.service;
 import eu.aequos.gogas.dto.ConvertibleDTO;
 import eu.aequos.gogas.exception.ItemNotDeletableException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 
+@Slf4j
 public abstract class CrudService<Model, ID> {
 
     CrudRepository<Model, ID> crudRepository;
@@ -33,8 +35,10 @@ public abstract class CrudService<Model, ID> {
 
     public void delete(ID id) {
         try {
+            log.info("deleting " + type + " with id " + id);
             crudRepository.deleteById(id);
         } catch (DataIntegrityViolationException ex) {
+            log.info("Cannot delete " + type + " with id " + id + "(" + ex.getMessage() + ")");
             throw new ItemNotDeletableException(type, id);
         }
     }

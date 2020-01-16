@@ -48,10 +48,4 @@ public class HomeController {
                 .map(s -> new SelectItemDTO(Integer.toString(s.getStatusCode()), s.getDescription()))
                 .collect(Collectors.toList());
     }
-
-    @GetMapping(value = "notification/test")
-    public String sendPushNotification(@RequestParam String token) {
-        pushNotificationSender.sendTestNotification(token);
-        return "OK";
-    }
 }

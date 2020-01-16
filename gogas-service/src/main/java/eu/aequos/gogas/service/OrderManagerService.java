@@ -19,6 +19,7 @@ import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.workflow.OrderWorkflowHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
 
@@ -110,17 +112,25 @@ public class OrderManagerService extends CrudService<Order, String> {
 
 
     public synchronized Order create(OrderDTO dto) throws GoGasException {
-        List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(dto.getOrderTypeId(), dto.getDueDate(), dto.getDeliveryDate());
+        log.info("Creating order for type {}", dto.getOrderTypeId());
+        OrderType orderType = orderTypeService.getRequired(dto.getOrderTypeId());
 
-        if (!duplicateOrders.isEmpty())
+        List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
+
+        if (!duplicateOrders.isEmpty()) {
+            log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
             throw new OrderAlreadyExistsException();
+        }
 
         Order createdOrder = super.create(dto);
+
+        //this is required to have order type description in push notification
+        createdOrder.getOrderType().setDescription(orderType.getDescription());
 
         pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
 
         if (dto.isUpdateProductList())
-            productService.syncPriceList(dto.getOrderTypeId());
+            productService.syncPriceList(orderType);
 
         return createdOrder;
     }
@@ -410,7 +420,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .filter(Objects::nonNull);
 
         List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
-        if (managedOrderTypes != null)
+        if (!managedOrderTypes.isEmpty())
             aequosOpenOrders = aequosOpenOrders.filter(managedOrderTypes::contains);
 
         return aequosOpenOrders
@@ -432,12 +442,12 @@ public class OrderManagerService extends CrudService<Order, String> {
         return orderDTO;
     }
 
-    public boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrder) {
-        return gogasOrder == null || gogasOrder.isEmpty();
+    private boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrders) {
+        if (gogasOrders == null || gogasOrders.isEmpty())
+            return true;
 
-        //TODO: filtrare per date non collidono
-        //return gogasOrder.getOpeningDate().before(aequosOpenOrder.getOpeningDate()) ||
-        //        gogasOrder.getOpeningDate().after(aequosOpenOrder.getDueDate());
+        return gogasOrders.stream()
+                .noneMatch(o -> o.getDeliveryDate().isEqual(aequosOpenOrder.getDeliveryDate()));
     }
 
     public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
@@ -452,7 +462,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         return buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
     }
 
-    public AttachmentDTO extractExcelReport(String orderId) {
+    public AttachmentDTO extractExcelReport(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
         byte[] excelReportContent = reportService.extractOrderDetails(order);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

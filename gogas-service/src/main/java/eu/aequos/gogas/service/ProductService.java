@@ -17,6 +17,7 @@ import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.specification.ProductSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ProductService extends CrudService<Product, String> {
 
@@ -89,9 +91,14 @@ public class ProductService extends CrudService<Product, String> {
 
     public OrderSynchroInfoDTO syncPriceList(String orderTypeId) throws GoGasException {
         OrderType orderType = orderTypeService.getRequired(orderTypeId);
+        return syncPriceList(orderType);
+    }
 
+    public OrderSynchroInfoDTO syncPriceList(OrderType orderType) throws GoGasException {
         Integer aequosOrderId = Optional.ofNullable(orderType.getAequosOrderId())
                 .orElseThrow(() -> new GoGasException("Impossibile sincronizzare il listino: il tipo di ordine non è collegato ad Aequos"));
+
+        log.info("Updating aequos price list for type {} (aequos id {})", orderType.getId(), aequosOrderId);
 
         AequosPriceList aequosPriceList = aequosIntegrationService.getPriceList(aequosOrderId);
         LocalDateTime lastSynchro = priceListSynchronizer.syncPriceList(orderType, aequosPriceList);
@@ -101,13 +108,12 @@ public class ProductService extends CrudService<Product, String> {
     }
 
     public OrderSynchroInfoDTO loadProductsFromExcel(String orderTypeId, byte[] excelFileStream, String extension) throws GoGasException {
+        log.info("Updating price list from excel file for type {}", orderTypeId);
         OrderType orderType = orderTypeService.getRequired(orderTypeId);
 
         ExtractProductsResponse response = excelServiceClient.extractProducts(excelFileStream, extension);
-
-        if (response.getError() != null) {
+        if (response.getError() != null)
             throw new GoGasException(response.getError().getCompleteMessage());
-        }
 
         ExcelPriceList excelPriceList = new ExcelPriceList(response.getPriceListItems());
         LocalDateTime lastSynchro = priceListSynchronizer.syncPriceList(orderType, excelPriceList);
@@ -116,7 +122,7 @@ public class ProductService extends CrudService<Product, String> {
                 .withUpdatedProducts(response.getPriceListItems().size());
     }
 
-    public AttachmentDTO generateExcelPriceList(String productType) {
+    public AttachmentDTO generateExcelPriceList(String productType) throws GoGasException {
         OrderType orderType = orderTypeService.getRequired(productType);
 
         byte[] excelContent = reportService.extractProductPriceList(productType);

@@ -73,7 +73,7 @@ public class ProductController {
 
     @IsOrderTypeManager
     @GetMapping(value = "list/{productType}/export")
-    public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException {
+    public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException, GoGasException {
         AttachmentDTO excelPriceListAttachment = productService.generateExcelPriceList(productType);
         excelPriceListAttachment.writeToHttpResponse(response);
     }

@@ -2,6 +2,7 @@ package eu.aequos.gogas.security;
 
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,6 +50,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            MDC.put("user", userDetails.getUsername());
         }
 
         chain.doFilter(request, response);
