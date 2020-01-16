@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -96,4 +97,9 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
             "AND d.idDateOrdini IN ?2 " +
             "GROUP BY d.idDateOrdini, t.\"external\", t.totaleCalcolato, o.idUtente", nativeQuery = true)
     List<OpenOrderSummary> findOpenOrderSummary(String userId, Set<String> orderIds);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Order o SET o.attachmentType = ?2 WHERE o.id = ?1")
+    int updateAttachmentType(String orderId, String contentType);
 }

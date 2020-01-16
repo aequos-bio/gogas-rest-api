@@ -67,7 +67,6 @@ public class JwtTokenHandler implements Serializable {
     }
 
     public GoGasUserDetails getUserDetails(String token) {
-
         if (token == null)
             return null;
 

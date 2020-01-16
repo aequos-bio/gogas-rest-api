@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
 import eu.aequos.gogas.dto.ProductDTO;
@@ -8,7 +9,6 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
-import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.ProductService;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -27,12 +27,10 @@ public class ProductController {
 
     private ProductRepo productRepo;
     private ProductService productService;
-    private ExcelGenerationService reportService;
 
-    public ProductController(ProductRepo productRepo, ProductService productService, ExcelGenerationService reportService) {
+    public ProductController(ProductRepo productRepo, ProductService productService) {
         this.productRepo = productRepo;
         this.productService = productService;
-        this.reportService = reportService;
     }
 
     @GetMapping(value = "list/{productType}/available", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -73,12 +71,11 @@ public class ProductController {
     }
 
 
-    //@IsOrderTypeManager TODO: find a way to authenticate for download
+    @IsOrderTypeManager
     @GetMapping(value = "list/{productType}/export")
     public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.getOutputStream().write(reportService.extractProductPriceList(productType));
-        response.getOutputStream().flush();
+        AttachmentDTO excelPriceListAttachment = productService.generateExcelPriceList(productType);
+        excelPriceListAttachment.writeToHttpResponse(response);
     }
 
     @IsOrderTypeManager

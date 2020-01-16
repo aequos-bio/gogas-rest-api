@@ -1,5 +1,7 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.attachments.AttachmentService;
+import eu.aequos.gogas.attachments.AttachmentType;
 import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
@@ -47,13 +49,16 @@ public class OrderManagerService extends CrudService<Order, String> {
     private AccountingService accountingService;
     private AequosIntegrationService aequosIntegrationService;
     private PushNotificationSender pushNotificationSender;
+    private AttachmentService attachmentService;
+    private ExcelGenerationService reportService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
-                               PushNotificationSender pushNotificationSender) {
+                               PushNotificationSender pushNotificationSender, AttachmentService attachmentService,
+                               ExcelGenerationService reportService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -68,6 +73,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.accountingService = accountingService;
         this.aequosIntegrationService = aequosIntegrationService;
         this.pushNotificationSender = pushNotificationSender;
+        this.attachmentService = attachmentService;
+        this.reportService = reportService;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -376,6 +383,14 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderRepo.save(order);
     }
 
+    public void saveInvoiceAttachment(String orderId, byte[] attachmentContent, String contentType) throws GoGasException {
+        attachmentService.storeAttachment(attachmentContent, AttachmentType.Invoice, orderId);
+        int rowsUpdated = orderRepo.updateAttachmentType(orderId, contentType);
+
+        if (rowsUpdated < 1)
+            throw new ItemNotFoundException("Order", orderId);
+    }
+
     public List<OrderDTO> getAequosAvailableOpenOrders(String userId, User.Role userRole) {
 
         Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
@@ -425,8 +440,29 @@ public class OrderManagerService extends CrudService<Order, String> {
         //        gogasOrder.getOpeningDate().after(aequosOpenOrder.getDueDate());
     }
 
-    public OrderDetailsDTO getOrderDetails(String orderId) {
+    public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
-        return new OrderDetailsDTO().fromModel(order);
+        boolean hasAttachment = attachmentService.hasAttachment(AttachmentType.Invoice, orderId);
+        return new OrderDetailsDTO().fromModel(order, hasAttachment);
+    }
+
+    public AttachmentDTO readInvoiceAttachment(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+        byte[] attachmentContent = attachmentService.retrieveAttachment(AttachmentType.Invoice, orderId);
+        return buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
+    }
+
+    public AttachmentDTO extractExcelReport(String orderId) {
+        Order order = getRequiredWithType(orderId);
+        byte[] excelReportContent = reportService.extractOrderDetails(order);
+        String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        return buildAttachmentDTO(order, excelReportContent, contentType);
+    }
+
+    private AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String contentType) {
+        String fileName = attachmentService.buildFileName(order.getOrderType().getDescription(),
+                order.getDeliveryDate(), contentType);
+
+        return new AttachmentDTO(attachmentContent, contentType, fileName);
     }
 }

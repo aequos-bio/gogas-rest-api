@@ -85,7 +85,7 @@ public class OrderDetailsDTO {
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDateTime syncDate;
 
-    public OrderDetailsDTO fromModel(Order order) {
+    public OrderDetailsDTO fromModel(Order order, boolean hasAttachment) {
         this.id = order.getId();
         this.orderTypeId = order.getOrderType().getId();
         this.orderTypeName = order.getOrderType().getDescription();
@@ -104,7 +104,7 @@ public class OrderDetailsDTO {
         this.sendWeightsRequired = AEQUOS_FRESCO_ORDER_ID.equals(order.getOrderType().getAequosOrderId());
         this.sendWeightsAllowed = sendWeightAllowed(order.getDeliveryDate());
         this.weightsSentDate = order.getLastWeightUpdate();
-        this.hasAttachment = false; //TODO: implementare check
+        this.hasAttachment = hasAttachment;
         this.sent = order.isSent();
         this.externalOrderId = order.getExternalOrderId();
         this.syncDate = order.getLastSynchro();

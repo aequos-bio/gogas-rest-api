@@ -1,5 +1,7 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.attachments.AttachmentService;
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
 import eu.aequos.gogas.dto.ProductDTO;
 import eu.aequos.gogas.excel.ExcelServiceClient;
@@ -18,6 +20,7 @@ import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +35,14 @@ public class ProductService extends CrudService<Product, String> {
     private PriceListSynchronizer priceListSynchronizer;
     private AequosIntegrationService aequosIntegrationService;
     private ExcelServiceClient excelServiceClient;
+    private ExcelGenerationService reportService;
+    private AttachmentService attachmentService;
 
     public ProductService(ProductRepo productRepo, OrderTypeService orderTypeService,
                           PriceListSynchronizer priceListSynchronizer,
                           AequosIntegrationService aequosIntegrationService,
-                          ExcelServiceClient excelServiceClient) {
+                          ExcelServiceClient excelServiceClient, ExcelGenerationService reportService,
+                          AttachmentService attachmentService) {
 
         super(productRepo, "product");
 
@@ -45,6 +51,8 @@ public class ProductService extends CrudService<Product, String> {
         this.priceListSynchronizer = priceListSynchronizer;
         this.aequosIntegrationService = aequosIntegrationService;
         this.excelServiceClient = excelServiceClient;
+        this.reportService = reportService;
+        this.attachmentService = attachmentService;
     }
 
     public List<Product> getProductsOnPriceList(String productType) {
@@ -106,5 +114,15 @@ public class ProductService extends CrudService<Product, String> {
 
         return new OrderSynchroInfoDTO(lastSynchro)
                 .withUpdatedProducts(response.getPriceListItems().size());
+    }
+
+    public AttachmentDTO generateExcelPriceList(String productType) {
+        OrderType orderType = orderTypeService.getRequired(productType);
+
+        byte[] excelContent = reportService.extractProductPriceList(productType);
+        String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        String fileName = attachmentService.buildFileName(orderType.getDescription(), LocalDate.now(), contentType);
+
+        return new AttachmentDTO(excelContent, contentType, fileName);
     }
 }

@@ -19,19 +19,17 @@ public class ExcelGenerationService {
     ExcelServiceClient excelServiceClient;
 
     UserRepo userRepo;
-    OrderRepo orderRepo;
     OrderItemRepo orderItemRepo;
     ProductRepo productRepo;
     SupplierOrderItemRepo supplierOrderItemRepo;
     UserService userService;
 
     public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
-                                  OrderRepo orderRepo, OrderItemRepo orderItemRepo,
-                                  ProductRepo productRepo, SupplierOrderItemRepo supplierOrderItemRepo) {
+                                  OrderItemRepo orderItemRepo, ProductRepo productRepo,
+                                  SupplierOrderItemRepo supplierOrderItemRepo) {
         this.excelServiceClient = excelServiceClient;
         this.userRepo = userRepo;
         this.userService = userService;
-        this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.productRepo = productRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
@@ -63,11 +61,8 @@ public class ExcelGenerationService {
         return exp;
     }
 
-    public byte[] extractOrderDetails(String orderId) throws ItemNotFoundException {
-        Order order = orderRepo.findByIdWithType(orderId)
-                .orElseThrow(() -> new ItemNotFoundException("Order", orderId));
-
-        List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
+    public byte[] extractOrderDetails(Order order) throws ItemNotFoundException {
+        List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true).stream()
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
 
@@ -80,7 +75,7 @@ public class ExcelGenerationService {
                 .map(this::convertProductForExport)
                 .collect(Collectors.toList());
 
-        List<SupplierOrderItemExport> supplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId).stream()
+        List<SupplierOrderItemExport> supplierOrderItems = supplierOrderItemRepo.findByOrderId(order.getId()).stream()
                 .map(this::getSupplierOrderItemsForExport)
                 .collect(Collectors.toList());
 

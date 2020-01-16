@@ -29,29 +29,22 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     private TenantRegistry tenantRegistry;
 
     private Cookie findAuthCookie(HttpServletRequest req) {
-        if (req.getCookies()!=null) {
-            for(Cookie ck : req.getCookies()) {
-                if (ck.getName().equals(COOKIE_NAME))
-                    return ck;
-            }
+        if (req.getCookies() == null)
+            return null;
+
+        for (Cookie ck : req.getCookies()) {
+            if (ck.getName().equals(COOKIE_NAME))
+                return ck;
         }
+
         return null;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        GoGasUserDetails userDetails = null;
+        String authToken = extractAuthTokenFromRequest(request);
+        GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-        Cookie authCookie = findAuthCookie(request);
-        if (authCookie!=null) {
-            userDetails = jwtTokenHandler.getUserDetails(authCookie.getValue());
-        } else {
-            String authToken = request.getHeader(TOKEN_HEADER);
-            if (authToken != null && authToken.startsWith(TOKEN_PREFIX)) {
-                userDetails = jwtTokenHandler.getUserDetails(authToken.replace(TOKEN_PREFIX, ""));
-            }
-        }
-        // TODO: check jwt expiration
         if (isValidUser(userDetails, request) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -61,9 +54,22 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
+    private String extractAuthTokenFromRequest(HttpServletRequest request) {
+        Cookie authTokenCookie = findAuthCookie(request);
+        if (authTokenCookie != null)
+            return authTokenCookie.getValue();
+
+        String authTokenHeader = request.getHeader(TOKEN_HEADER);
+        if (authTokenHeader != null && authTokenHeader.startsWith(TOKEN_PREFIX))
+            return authTokenHeader.replace(TOKEN_PREFIX, "");
+
+        return null;
+    }
+
     private boolean isValidUser(GoGasUserDetails userDetails, HttpServletRequest request) {
         if (userDetails == null)
             return false;
+
         String tenantId = tenantRegistry.extractFromHostName(request.getServerName());
         if (!tenantRegistry.isValidTenant(tenantId) || !tenantId.equals(userDetails.getTenant())) {
             log.warn("Missing or mismatching tenant id, user not authorized");
