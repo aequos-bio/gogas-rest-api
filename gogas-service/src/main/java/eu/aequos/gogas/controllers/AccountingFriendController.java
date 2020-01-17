@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
@@ -47,7 +48,7 @@ public class AccountingFriendController {
     }
 
     @PostMapping(value = "entry")
-    public BasicResponseDTO createAccountingEntry(@RequestBody AccountingEntryDTO accountingEntryDTO) throws UserNotAuthorizedException {
+    public BasicResponseDTO createAccountingEntry(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         if (!authorizationService.isFriend(accountingEntryDTO.getUserId()))
             throw new UserNotAuthorizedException();
 
@@ -59,7 +60,7 @@ public class AccountingFriendController {
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, UserNotAuthorizedException {
+    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         if (!isFriendAccountingEntry(accountingEntryId))
             throw new UserNotAuthorizedException();
 

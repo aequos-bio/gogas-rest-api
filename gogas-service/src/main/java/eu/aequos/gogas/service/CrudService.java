@@ -43,7 +43,7 @@ public abstract class CrudService<Model, ID> {
         }
     }
 
-    private Model createOrUpdate(Model existingModel, ConvertibleDTO<Model> dto) {
+    protected Model createOrUpdate(Model existingModel, ConvertibleDTO<Model> dto) {
         Model updatedModel = dto.toModel(Optional.ofNullable(existingModel));
         return crudRepository.save(updatedModel);
     }

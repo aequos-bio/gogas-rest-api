@@ -4,10 +4,13 @@ import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceEntryDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.exception.GoGasException;
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.AccountingRepo;
 import eu.aequos.gogas.persistence.repository.UserBalanceEntryRepo;
 import eu.aequos.gogas.persistence.repository.UserBalanceRepo;
+import eu.aequos.gogas.persistence.repository.YearRepo;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.persistence.specification.UserBalanceSpecs;
@@ -28,19 +31,38 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     private UserBalanceRepo userBalanceRepo;
     private UserBalanceEntryRepo userBalanceEntryRepo;
     private UserService userService;
+    private YearRepo yearRepo;
 
     public AccountingService(AccountingRepo accountingRepo, UserBalanceRepo userBalanceRepo,
-                             UserBalanceEntryRepo userBalanceEntryRepo, UserService userService) {
+                             UserBalanceEntryRepo userBalanceEntryRepo, UserService userService,
+                             YearRepo yearRepo) {
 
         super(accountingRepo, "accounting entry");
         this.accountingRepo = accountingRepo;
         this.userBalanceRepo = userBalanceRepo;
         this.userBalanceEntryRepo = userBalanceEntryRepo;
         this.userService = userService;
+        this.yearRepo = yearRepo;
     }
 
     public BigDecimal getBalance(String userId) {
         return userBalanceRepo.getBalance(userId);
+    }
+
+    public AccountingEntry create(AccountingEntryDTO dto) throws GoGasException {
+        if (isYearClosed(dto))
+            throw new GoGasException("Il movimento non può essere creato, l'anno contabile è chiuso");
+
+        return super.create(dto);
+    }
+
+    public AccountingEntry update(String entryId, AccountingEntryDTO dto) throws ItemNotFoundException, GoGasException {
+        AccountingEntry existingEntry = getRequired(entryId);
+
+        if (isYearClosed(existingEntry) || isYearClosed(dto))
+            throw new GoGasException("Il movimento non può essere modificato, l'anno contabile è chiuso");
+
+        return super.createOrUpdate(existingEntry, dto);
     }
 
     public List<AccountingEntryDTO> getAccountingEntries(String userId, String reasonCode,
@@ -129,5 +151,26 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         BigDecimal balance = userBalanceRepo.getBalance(userId);
 
         return new UserBalanceSummaryDTO(balance, entries);
+    }
+
+    private boolean isYearClosed(AccountingEntry accountingEntry) {
+        return isYearClosed(accountingEntry.getDate());
+    }
+
+    private boolean isYearClosed(AccountingEntryDTO accountingEntryDTO) {
+        return isYearClosed(accountingEntryDTO.getDate());
+    }
+
+    public boolean isYearClosed(LocalDate accountingDate) {
+        int year = accountingDate.getYear();
+        return yearRepo.existsYearByYearAndClosed(year, true);
+    }
+
+    public int setEntriesConfirmedByOrderId(String orderId, boolean confirmed) {
+        return accountingRepo.setConfirmedByOrderId(orderId, confirmed);
+    }
+
+    public long countEntriesByOrderId(String orderId) {
+        return accountingRepo.countByOrderId(orderId);
     }
 }

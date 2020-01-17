@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
@@ -50,13 +51,13 @@ public class AccountingUserController {
     }
 
     @PostMapping(value = "entry")
-    public BasicResponseDTO create(@RequestBody AccountingEntryDTO accountingEntryDTO) {
+    public BasicResponseDTO create(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         String entryId =  accountingService.create(accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         String entryId =  accountingService.update(accountingEntryId, accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
