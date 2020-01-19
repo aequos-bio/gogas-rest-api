@@ -65,7 +65,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     private boolean isValidUser(GoGasUserDetails userDetails, HttpServletRequest request) {
         if (userDetails == null)
             return false;
-        String tenantId = tenantRegistry.extractFromHostName(request.getServerName());
+        String tenantId = tenantRegistry.extractFromHostName(request);
         if (!tenantRegistry.isValidTenant(tenantId) || !tenantId.equals(userDetails.getTenant())) {
             log.warn("Missing or mismatching tenant id, user not authorized");
             return false;

@@ -8,6 +8,7 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtAuthenticationRequest;
 import eu.aequos.gogas.security.JwtTokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,10 +20,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 public class AuthenticationController {
 
@@ -45,8 +48,8 @@ public class AuthenticationController {
 
     @PostMapping(value = "authenticate")
     public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
-        
-        String tenantId = tenantRegistry.extractFromHostName(req.getServerName());
+
+        String tenantId = tenantRegistry.extractFromHostName(req);
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
