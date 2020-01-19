@@ -47,11 +47,14 @@ public class PushNotificationSender {
     }
 
     public void sendOrderNotification(Order order, OrderEvent event) {
+        log.info("Sending order push notifications for event {}", event.name());
         OrderPushNotificationBuilder pushNotificationBuilder = pushNotificationBuilderSelector.select(event);
 
         List<String> targetTokens = extractNotificationTokens(order, pushNotificationBuilder);
-        if (targetTokens.isEmpty())
+        if (targetTokens.isEmpty()) {
+            log.info("No target user found for push notifications");
             return;
+        }
 
         PushNotificationRequest request = pushNotificationBuilder.buildRequest(order, targetTokens, serviceAppId);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
@@ -70,18 +73,5 @@ public class PushNotificationSender {
             return new ArrayList<>();
 
         return pushTokenRepo.findTokensByUserIdIn(targetUsers);
-    }
-
-    public void sendTestNotification(String token) {
-        PushNotificationRequest request = new PushNotificationRequest();
-        request.setAppId(serviceAppId);
-        request.setHeadings("test");
-        request.setContents("Questo è un test");
-        request.setTargetTokens(Collections.singletonList(token));
-        request.setOrderId("test");
-        request.setAndroidGroup("order_test");
-        request.setAndroidGroupMessage("$[notif_count] test");
-
-        pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
     }
 }

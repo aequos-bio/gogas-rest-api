@@ -29,12 +29,13 @@ public class ProductCategoryController {
 
     @IsAdmin
     @PostMapping(value = "{orderTypeId}")
-    public String create(@PathVariable String orderTypeId, @RequestBody String category) {
+    public BasicResponseDTO create(@PathVariable String orderTypeId, @RequestBody String category) {
         ProductCategory productCategory = new ProductCategory();
         productCategory.setDescription(category);
         productCategory.setOrderTypeId(orderTypeId);
 
-        return productCategoryRepo.save(productCategory).getId();
+        String productCategoryId = productCategoryRepo.save(productCategory).getId();
+        return new BasicResponseDTO(productCategoryId);
     }
 
     @IsAdmin

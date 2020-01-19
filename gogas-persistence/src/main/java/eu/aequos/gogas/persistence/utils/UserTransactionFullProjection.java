@@ -1,12 +1,12 @@
 package eu.aequos.gogas.persistence.utils;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 public interface UserTransactionFullProjection {
   String getId();
   String getUserId();
-  Date getDate();
+  LocalDate getDate();
   String getDescription();
   BigDecimal getAmount();
   String getReason();

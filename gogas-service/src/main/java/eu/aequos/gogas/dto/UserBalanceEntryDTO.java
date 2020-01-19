@@ -7,7 +7,7 @@ import eu.aequos.gogas.persistence.entity.UserBalanceEntry;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -22,7 +22,7 @@ public class UserBalanceEntryDTO {
 
     @JsonProperty(value = "data")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date date;
+    private LocalDate date;
 
     @JsonProperty(value = "importo")
     private BigDecimal amount;

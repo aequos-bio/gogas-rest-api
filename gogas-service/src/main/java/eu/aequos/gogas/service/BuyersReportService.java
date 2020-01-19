@@ -10,6 +10,7 @@ import lombok.Data;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public class BuyersReportService {
         this.userService = userService;
     }
 
-    public BuyersReportDTO generateBuyersReport(String orderTypeId, Date dateFrom, Date dateTo) {
+    public BuyersReportDTO generateBuyersReport(String orderTypeId, LocalDate dateFrom, LocalDate dateTo) {
         List<Order> orderList = searchOrdersBetweenDates(orderTypeId, dateFrom, dateTo);
         List<Buyer> buyerList = extractBuyers(orderList);
 
@@ -47,7 +48,7 @@ public class BuyersReportService {
                 .collect(Collectors.toList());
     }
 
-    private List<Order> searchOrdersBetweenDates(String orderTypeId, Date dateFrom, Date dateTo) {
+    private List<Order> searchOrdersBetweenDates(String orderTypeId, LocalDate dateFrom, LocalDate dateTo) {
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
                 .and(OrderSpecs::type, orderTypeId)

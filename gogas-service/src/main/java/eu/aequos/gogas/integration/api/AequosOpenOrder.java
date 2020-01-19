@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -19,13 +19,13 @@ public class AequosOpenOrder {
 
     @JsonProperty("apertura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date openingDate;
+    private LocalDate openingDate;
 
     @JsonProperty("chiusura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date dueDate;
+    private LocalDate dueDate;
 
     @JsonProperty("consegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date deliveryDate;
+    private LocalDate deliveryDate;
 }

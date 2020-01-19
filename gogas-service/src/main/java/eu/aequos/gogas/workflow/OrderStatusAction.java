@@ -28,16 +28,17 @@ public abstract class OrderStatusAction {
     }
 
     public void performAction() throws InvalidOrderActionException {
-        if (!isActionValid())
-            throw new InvalidOrderActionException(""); //TODO: add message
+        ActionValidity validity = isActionValid();
+        if (!validity.isValid())
+            throw new InvalidOrderActionException(validity.getMessage());
 
         orderRepo.updateOrderStatus(order.getId(), targetStatus.getStatusCode());
 
         processOrder();
     }
 
-    protected abstract boolean isActionValid();
+    protected abstract ActionValidity isActionValid();
 
-    protected abstract void processOrder();
+    protected abstract void processOrder() throws InvalidOrderActionException;
 }
 

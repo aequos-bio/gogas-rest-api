@@ -1,5 +1,6 @@
 package eu.aequos.gogas.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+@Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -20,21 +22,30 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers,
                                                                   HttpStatus status, WebRequest request) {
         String error = "Malformed JSON request";
+        log.warn("Malformed JSON request - {}", request.getContextPath(), ex);
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, error, ex));
     }
 
     @ExceptionHandler(ItemNotFoundException.class)
     protected ResponseEntity<Object> handleItemNotFound(ItemNotFoundException ex) {
+        log.warn("Item of type {} with id {} not found", ex.getItemType(), ex.getItemId());
         return buildResponseEntity(new RestApiError(HttpStatus.NOT_FOUND, ex.getMessage(), ex));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
+    }
+
+    @ExceptionHandler(ItemNotDeletableException.class)
+    protected ResponseEntity<Object> handleItemNotDeletable(ItemNotDeletableException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere eliminato", ex));
     }
 
     @ExceptionHandler(GoGasException.class)
     protected ResponseEntity<Object> handleGoGasException(GoGasException ex) {
+        log.warn("An exception occurred while processing the request", ex);
         return buildResponseEntity(new RestApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex));
     }
 

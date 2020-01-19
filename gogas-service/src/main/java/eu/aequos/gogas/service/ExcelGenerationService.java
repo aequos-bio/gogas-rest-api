@@ -2,10 +2,12 @@ package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.excel.order.*;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.excel.products.ExcelPriceListItem;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -13,36 +15,40 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ExcelGenerationService {
 
     ExcelServiceClient excelServiceClient;
 
     UserRepo userRepo;
-    OrderRepo orderRepo;
     OrderItemRepo orderItemRepo;
     ProductRepo productRepo;
     SupplierOrderItemRepo supplierOrderItemRepo;
     UserService userService;
 
     public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
-                                  OrderRepo orderRepo, OrderItemRepo orderItemRepo,
-                                  ProductRepo productRepo, SupplierOrderItemRepo supplierOrderItemRepo) {
+                                  OrderItemRepo orderItemRepo, ProductRepo productRepo,
+                                  SupplierOrderItemRepo supplierOrderItemRepo) {
         this.excelServiceClient = excelServiceClient;
         this.userRepo = userRepo;
         this.userService = userService;
-        this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.productRepo = productRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
     }
 
-    public byte[] extractProductPriceList(String orderTypeId) {
+    public byte[] extractProductPriceList(String orderTypeId) throws GoGasException {
         List<ExcelPriceListItem> products = productRepo.findByType(orderTypeId).stream()
                 .map(this::convertProductForPriceListExport)
                 .collect(Collectors.toList());
 
-        return excelServiceClient.products(products);
+        try {
+            return excelServiceClient.products(products);
+        } catch(Exception ex) {
+            log.error("Error while calling excel service", ex);
+            throw new GoGasException("Error while generating excel file");
+        }
     }
 
     private ExcelPriceListItem convertProductForPriceListExport(Product p) {
@@ -63,11 +69,8 @@ public class ExcelGenerationService {
         return exp;
     }
 
-    public byte[] extractOrderDetails(String orderId) throws ItemNotFoundException {
-        Order order = orderRepo.findByIdWithType(orderId)
-                .orElseThrow(() -> new ItemNotFoundException("Order", orderId));
-
-        List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
+    public byte[] extractOrderDetails(Order order) throws ItemNotFoundException, GoGasException {
+        List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true).stream()
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
 
@@ -80,7 +83,7 @@ public class ExcelGenerationService {
                 .map(this::convertProductForExport)
                 .collect(Collectors.toList());
 
-        List<SupplierOrderItemExport> supplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId).stream()
+        List<SupplierOrderItemExport> supplierOrderItems = supplierOrderItemRepo.findByOrderId(order.getId()).stream()
                 .map(this::getSupplierOrderItemsForExport)
                 .collect(Collectors.toList());
 
@@ -91,7 +94,12 @@ public class ExcelGenerationService {
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
 
-        return excelServiceClient.order(orderExportRequest);
+        try {
+            return excelServiceClient.order(orderExportRequest);
+        } catch(Exception ex) {
+            log.error("Error while calling excel service", ex);
+            throw new GoGasException("Error while generating excel file");
+        }
     }
 
     private OrderItemExport getOrderItemsForExport(OrderItem item) {

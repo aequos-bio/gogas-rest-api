@@ -2,20 +2,24 @@ package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
-import eu.aequos.gogas.exception.*;
+import eu.aequos.gogas.exception.GoGasException;
+import eu.aequos.gogas.exception.InvalidOrderActionException;
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.*;
+import org.apache.commons.io.IOUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,18 +27,16 @@ import java.util.List;
 @IsOrderManager
 public class OrderManagerController {
 
-    private ExcelGenerationService reportService;
     private OrderManagerService orderManagerService;
     private OrderItemService orderItemService;
     private AuthorizationService authorizationService;
     private BuyersReportService buyersReportService;
     private ConfigurationService configurationService;
 
-    public OrderManagerController(ExcelGenerationService reportService, OrderManagerService orderManagerService,
+    public OrderManagerController(OrderManagerService orderManagerService,
                                   OrderItemService orderItemService, AuthorizationService authorizationService,
                                   BuyersReportService buyersReportService, ConfigurationService configurationService) {
 
-        this.reportService = reportService;
         this.orderManagerService = orderManagerService;
         this.orderItemService = orderItemService;
         this.authorizationService = authorizationService;
@@ -51,7 +53,7 @@ public class OrderManagerController {
     }
 
     @GetMapping(value = "{orderId}")
-    public OrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException {
+    public OrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException, GoGasException {
         return orderManagerService.getOrderDetails(orderId);
     }
 
@@ -65,37 +67,37 @@ public class OrderManagerController {
         return orderManagerService.getOrderItemsByProduct(orderId, productId);
     }
 
-
-    //TODO: check come fare per token
     @GetMapping(value = "{orderId}/export")
-    public void getUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException {
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.getOutputStream().write(reportService.extractOrderDetails(orderId));
-        response.getOutputStream().flush();
+    public void exportUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException, GoGasException {
+        AttachmentDTO excelAttachment = orderManagerService.extractExcelReport(orderId);
+        excelAttachment.writeToHttpResponse(response);
     }
 
-    @PreAuthorize("@authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
+    @PreAuthorize("hasRole('A') OR @authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
-    public String create(@RequestBody OrderDTO orderDTO) throws GoGasException {
-        return orderManagerService.create(orderDTO).getId();
+    public BasicResponseDTO create(@RequestBody OrderDTO orderDTO) throws GoGasException {
+        String orderId = orderManagerService.create(orderDTO).getId();
+        return new BasicResponseDTO(orderId);
     }
 
     @PutMapping(value = "{orderId}")
-    public String update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
-        return orderManagerService.update(orderId, orderDTO).getId();
+    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
+        String updatedOrderId = orderManagerService.update(orderId, orderDTO).getId();
+        return new BasicResponseDTO(updatedOrderId);
     }
 
     @DeleteMapping(value = "{orderId}")
-    public void delete(@PathVariable String orderId) {
+    public BasicResponseDTO delete(@PathVariable String orderId) {
         orderManagerService.delete(orderId);
+        return new BasicResponseDTO("OK");
     }
 
     @PostMapping(value = "{orderId}/action/{actionCode}")
-    public String update(@PathVariable String orderId, @PathVariable String actionCode,
-                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
+    public BasicResponseDTO update(@PathVariable String orderId, @PathVariable String actionCode,
+                                   @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         orderManagerService.changeStatus(orderId, actionCode, roundType);
-        return "OK";
+        return new BasicResponseDTO("OK");
     }
 
     @IsOrderManager
@@ -134,8 +136,9 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/byUser/{userId}")
-    public String updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
-        return orderManagerService.updateUserCost(orderId, userId, cost);
+    public BasicResponseDTO updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+        String accountingEntryId = orderManagerService.updateUserCost(orderId, userId, cost);
+        return new BasicResponseDTO(accountingEntryId);
     }
 
     @DeleteMapping(value = "{orderId}/byUser/{userId}")
@@ -150,10 +153,24 @@ public class OrderManagerController {
         return orderManagerService.updateShippingCost(orderId, cost);
     }
 
-    @PostMapping(value = "{orderId}/invoice")
+    @PostMapping(value = "{orderId}/invoice/data")
     public BasicResponseDTO updateInvoiceData(@PathVariable String orderId, @RequestBody OrderInvoiceDataDTO invoiceData) throws GoGasException {
         orderManagerService.updateInvoiceData(orderId, invoiceData);
         return new BasicResponseDTO("OK");
+    }
+
+    @PostMapping(value = "{orderId}/invoice/attachment")
+    public BasicResponseDTO uploadInvoiceAttachment(@PathVariable String orderId, @RequestParam("file") MultipartFile attachment) throws IOException, GoGasException {
+        //TODO: filter only allowed content types
+        byte[] invoiceFileContent = IOUtils.toByteArray(attachment.getInputStream());
+        orderManagerService.saveInvoiceAttachment(orderId, invoiceFileContent, attachment.getContentType());
+        return new BasicResponseDTO("OK");
+    }
+
+    @GetMapping(value = "{orderId}/invoice/attachment")
+    public void downloadInvoiceAttachment(HttpServletResponse response, @PathVariable String orderId) throws IOException, GoGasException {
+        AttachmentDTO invoiceAttachment = orderManagerService.readInvoiceAttachment(orderId);
+        invoiceAttachment.writeToHttpResponse(response);
     }
 
     @IsManager
@@ -219,8 +236,8 @@ public class OrderManagerController {
     @IsOrderTypeManager
     @GetMapping(value = "{productTypeId}/report/buyers")
     public BuyersReportDTO generateBuyersReport(@PathVariable String productTypeId, @RequestParam(required = false) String dateFrom, @RequestParam(required = false) String dateTo) {
-        Date dateFromParsed = configurationService.parseDate(dateFrom);
-        Date dateToParsed = configurationService.parseDate(dateTo);
-        return buyersReportService.generateBuyersReport(productTypeId, dateFromParsed, dateToParsed);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
+        return buyersReportService.generateBuyersReport(productTypeId, parsedDateFrom, parsedDateTo);
     }
 }

@@ -1,6 +1,5 @@
 package eu.aequos.gogas.persistence.repository;
 
-import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.Year;
 import org.springframework.data.repository.CrudRepository;
 
@@ -11,4 +10,6 @@ public interface YearRepo extends CrudRepository<Year, Integer> {
     List<Year> findAll();
 
     List<Year> findYearsByClosedFalseOrderByYearAsc();
+
+    boolean existsYearByYearAndClosed(int year, boolean closed);
 }

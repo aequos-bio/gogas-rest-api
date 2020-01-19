@@ -1,7 +1,6 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.multitenancy.TenantRegistry;
-import eu.aequos.gogas.multitenancy.TenantRoutingDataSource;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
@@ -9,6 +8,7 @@ import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtAuthenticationRequest;
 import eu.aequos.gogas.security.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
+import eu.aequos.gogas.security.JwtTokenHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,18 +30,18 @@ import java.util.Map;
 public class AuthenticationController {
 
     private AuthenticationManager authenticationManager;
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
     private AuthorizationService userDetailsService;
     private ConfigurationRepo configurationRepo;
     private TenantRegistry tenantRegistry;
 
     public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager,
-                                    JwtTokenUtil jwtTokenUtil, AuthorizationService userDetailsService,
+                                    JwtTokenHandler jwtTokenHandler, AuthorizationService userDetailsService,
                                     TenantRegistry tenantRegistry) {
 
         this.configurationRepo = configurationRepo;
         this.authenticationManager = authenticationManager;
-        this.jwtTokenUtil = jwtTokenUtil;
+        this.jwtTokenHandler = jwtTokenHandler;
         this.userDetailsService = userDetailsService;
         this.tenantRegistry = tenantRegistry;
     }
@@ -62,7 +62,7 @@ public class AuthenticationController {
         GoGasUserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername())
                 .withTenant(tenantId);
 
-        String token = jwtTokenUtil.generateToken(userDetails);
+        String token = jwtTokenHandler.generateToken(userDetails);
         resp.setHeader("Authentication", "bearer " + token);
         Cookie ck = new Cookie("jwt-token", token);
         resp.addCookie(ck);

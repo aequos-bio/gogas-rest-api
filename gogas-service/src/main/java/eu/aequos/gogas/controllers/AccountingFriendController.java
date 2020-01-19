@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
@@ -13,7 +14,7 @@ import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -36,18 +37,18 @@ public class AccountingFriendController {
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
                                                          @RequestParam(required = false) String reasonCode,
                                                          @RequestParam(required = false) String description,
-                                                         @RequestParam(required = false) String dateFromParam,
-                                                         @RequestParam(required = false) String dateToParam) {
+                                                         @RequestParam(required = false) String dateFrom,
+                                                         @RequestParam(required = false) String dateTo) {
 
         String currentUserId = authorizationService.getCurrentUser().getId();
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, dateFrom, dateTo, currentUserId);
+        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, currentUserId);
     }
 
     @PostMapping(value = "entry")
-    public BasicResponseDTO createAccountingEntry(@RequestBody AccountingEntryDTO accountingEntryDTO) throws UserNotAuthorizedException {
+    public BasicResponseDTO createAccountingEntry(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         if (!authorizationService.isFriend(accountingEntryDTO.getUserId()))
             throw new UserNotAuthorizedException();
 
@@ -59,7 +60,7 @@ public class AccountingFriendController {
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, UserNotAuthorizedException {
+    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         if (!isFriendAccountingEntry(accountingEntryId))
             throw new UserNotAuthorizedException();
 
@@ -87,13 +88,13 @@ public class AccountingFriendController {
     @IsCurrentUserFriend
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
-                                                @RequestParam(required = false) String dateFromParam,
-                                                @RequestParam(required = false) String dateToParam) {
+                                                @RequestParam(required = false) String dateFrom,
+                                                @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, dateFrom, dateTo);
+        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo);
     }
 
     private boolean isFriendAccountingEntry(@PathVariable String accountingEntryId) {

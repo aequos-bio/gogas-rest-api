@@ -3,16 +3,16 @@ package eu.aequos.gogas.persistence.specification;
 import eu.aequos.gogas.persistence.entity.Order;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class OrderSpecs {
 
-    public static Specification<Order> dueDateFrom(Date from) {
+    public static Specification<Order> dueDateFrom(LocalDate from) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get( "dueDate"), from);
     }
 
-    public static Specification<Order> dueDateTo(Date to) {
+    public static Specification<Order> dueDateTo(LocalDate to) {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get( "dueDate"), to);
     }
 
@@ -20,11 +20,11 @@ public class OrderSpecs {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get( "dueHour"), from);
     }
 
-    public static Specification<Order> deliveryDateFrom(Date from) {
+    public static Specification<Order> deliveryDateFrom(LocalDate from) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get( "deliveryDate"), from);
     }
 
-    public static Specification<Order> deliveryDateTo(Date to) {
+    public static Specification<Order> deliveryDateTo(LocalDate to) {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get( "deliveryDate"), to);
     }
 

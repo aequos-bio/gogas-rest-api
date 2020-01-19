@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
@@ -42,19 +43,22 @@ public class UserController {
 
     @PostMapping()
     @IsAdmin
-    public String create(@RequestBody UserDTO userDTO) {
-        return userService.create(userDTO).getId();
+    public BasicResponseDTO create(@RequestBody UserDTO userDTO) {
+        String userId = userService.create(userDTO).getId();
+        return new BasicResponseDTO(userId);
     }
 
     @PutMapping(value = "{userId}")
     @IsAdmin
-    public String update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
-        return userService.update(userId, userDTO).getId();
+    public BasicResponseDTO update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
+        String updatedUserId = userService.update(userId, userDTO).getId();
+        return new BasicResponseDTO(updatedUserId);
     }
 
     @DeleteMapping(value = "{userId}")
     @IsAdmin
-    public void delete(@PathVariable String userId) {
+    public BasicResponseDTO delete(@PathVariable String userId) {
         userService.delete(userId);
+        return new BasicResponseDTO("OK");
     }
 }

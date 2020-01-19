@@ -13,7 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
 
@@ -47,10 +47,10 @@ public class OrderNotificationTask {
         }
     }
 
-    private void sendNotifications(Function<Date, Specification<Order>> orderDateFilter, OrderEvent event) {
+    private void sendNotifications(Function<LocalDate, Specification<Order>> orderDateFilter, OrderEvent event) {
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
-                .and(orderDateFilter, new Date())
+                .and(orderDateFilter, LocalDate.now())
                 .build();
 
         List<Order> orderList = orderRepo.findAll(filter);

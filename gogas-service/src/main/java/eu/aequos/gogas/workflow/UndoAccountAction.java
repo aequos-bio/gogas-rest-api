@@ -1,31 +1,35 @@
 package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
-import eu.aequos.gogas.persistence.repository.AccountingRepo;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
+import eu.aequos.gogas.service.AccountingService;
 
-import java.util.ArrayList;
-import java.util.List;
+import static eu.aequos.gogas.workflow.ActionValidity.notValid;
+import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class UndoAccountAction extends OrderStatusAction {
 
-    private AccountingRepo accountingRepo;
+    private AccountingService accountingService;
 
     public UndoAccountAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                              SupplierOrderItemRepo supplierOrderItemRepo, Order order,
-                             AccountingRepo accountingRepo) {
+                             AccountingService accountingService) {
 
         super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Closed);
-        this.accountingRepo = accountingRepo;
+        this.accountingService = accountingService;
     }
 
     @Override
-    protected boolean isActionValid() {
-        return order.getStatus() == Order.OrderStatus.Accounted;
+    protected ActionValidity isActionValid() {
+        if (order.getStatus() != Order.OrderStatus.Accounted)
+            return notValid("Invalid order status");
+
+        if (accountingService.isYearClosed(order.getDeliveryDate()))
+            return notValid("L'ordine non può essere riaperto, l'anno contabile è chiuso");
+
+        return valid();
     }
 
     @Override
@@ -33,6 +37,6 @@ public class UndoAccountAction extends OrderStatusAction {
         if (order.getOrderType().isComputedAmount())
             orderItemRepo.setAccountedByOrderId(order.getId(), false);
         else
-            accountingRepo.setConfirmedByOrderId(order.getId(), false);
+            accountingService.setEntriesConfirmedByOrderId(order.getId(), false);
     }
 }

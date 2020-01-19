@@ -3,7 +3,7 @@ package eu.aequos.gogas.persistence.specification;
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class AccountingSpecs {
 
@@ -11,11 +11,11 @@ public class AccountingSpecs {
         return (entry, cq, cb) -> cb.equal(entry.join("user").get("id"), userId);
     }
 
-    public static Specification<AccountingEntry> fromDate(Date fromDate) {
+    public static Specification<AccountingEntry> fromDate(LocalDate fromDate) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get("date"), fromDate);
     }
 
-    public static Specification<AccountingEntry> toDate(Date toDate) {
+    public static Specification<AccountingEntry> toDate(LocalDate toDate) {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get("date"), toDate);
     }
 

@@ -7,7 +7,7 @@ import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
@@ -19,7 +19,7 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
 
     @JsonProperty(value = "data")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date date;
+    private LocalDate date;
 
     @JsonProperty(value = "codicecausale")
     private String reasonCode;

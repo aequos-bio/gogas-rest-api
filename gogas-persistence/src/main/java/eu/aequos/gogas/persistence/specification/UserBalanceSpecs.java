@@ -3,15 +3,15 @@ package eu.aequos.gogas.persistence.specification;
 import eu.aequos.gogas.persistence.entity.UserBalanceEntry;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class UserBalanceSpecs {
 
-    public static Specification<UserBalanceEntry> fromDate(Date fromDate) {
+    public static Specification<UserBalanceEntry> fromDate(LocalDate fromDate) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get("date"), fromDate);
     }
 
-    public static Specification<UserBalanceEntry> toDate(Date toDate) {
+    public static Specification<UserBalanceEntry> toDate(LocalDate toDate) {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get("date"), toDate);
     }
 

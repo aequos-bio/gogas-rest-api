@@ -2,13 +2,13 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
+import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.User;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
@@ -20,7 +20,7 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
 
     @JsonProperty(value = "data")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    private Date date;
+    private LocalDate date;
 
     @JsonProperty(value = "idutente")
     private String userId;

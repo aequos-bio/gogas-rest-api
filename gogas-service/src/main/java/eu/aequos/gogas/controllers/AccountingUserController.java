@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
@@ -13,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,23 +41,23 @@ public class AccountingUserController {
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
                                                          @RequestParam(required = false) String reasonCode,
                                                          @RequestParam(required = false) String description,
-                                                         @RequestParam(required = false) String dateFromParam,
-                                                         @RequestParam(required = false) String dateToParam) {
+                                                         @RequestParam(required = false) String dateFrom,
+                                                         @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, dateFrom, dateTo, null);
+        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, null);
     }
 
     @PostMapping(value = "entry")
-    public BasicResponseDTO create(@RequestBody AccountingEntryDTO accountingEntryDTO) {
+    public BasicResponseDTO create(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         String entryId =  accountingService.create(accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         String entryId =  accountingService.update(accountingEntryId, accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
@@ -75,12 +76,12 @@ public class AccountingUserController {
     @CanViewBalance
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
-                                                @RequestParam(required = false) String dateFromParam,
-                                                @RequestParam(required = false) String dateToParam) {
+                                                @RequestParam(required = false) String dateFrom,
+                                                @RequestParam(required = false) String dateTo) {
 
-        Date dateFrom = configurationService.parseDate(dateFromParam);
-        Date dateTo = configurationService.parseDate(dateToParam);
+        LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
+        LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, dateFrom, dateTo);
+        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo);
     }
 }

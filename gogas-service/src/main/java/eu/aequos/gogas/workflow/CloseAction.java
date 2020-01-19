@@ -14,6 +14,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static eu.aequos.gogas.workflow.ActionValidity.notValid;
+import static eu.aequos.gogas.workflow.ActionValidity.valid;
+
 public class CloseAction extends OrderStatusAction {
 
     private ConfigurationService.RoundingMode roundingMode;
@@ -35,8 +38,11 @@ public class CloseAction extends OrderStatusAction {
     }
 
     @Override
-    protected boolean isActionValid() {
-        return order.getStatus().isOpen();
+    protected ActionValidity isActionValid() {
+        if (!order.getStatus().isOpen())
+            return notValid("Invalid order status");
+
+        return valid();
     }
 
     @Override

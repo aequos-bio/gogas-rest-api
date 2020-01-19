@@ -177,7 +177,7 @@ public class ExcelExport {
             Row row = sheet.createRow(rowNum++);
             Cell cell0 = row.createCell(0);
             cell0.setCellStyle(dateStyle);
-            cell0.setCellValue(t.getDate());
+            cell0.setCellValue(java.sql.Date.valueOf(t.getDate()));
 
             row.createCell(1).setCellValue(t.getDescription());
 

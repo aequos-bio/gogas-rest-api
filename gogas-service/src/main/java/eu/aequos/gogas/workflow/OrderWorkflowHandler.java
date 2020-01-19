@@ -5,6 +5,7 @@ import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.*;
+import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ConfigurationService.RoundingMode;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -22,13 +22,13 @@ public class OrderWorkflowHandler {
     private OrderItemRepo orderItemRepo;
     private OrderRepo orderRepo;
     private SupplierOrderItemRepo supplierOrderItemRepo;
-    private AccountingRepo accountingRepo;
+    private AccountingService accountingService;
     private ProductRepo productRepo;
     private ConfigurationService configurationService;
     private PushNotificationSender pushNotificationSender;
 
     public OrderWorkflowHandler(OrderManagerRepo orderManagerRepo, OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                                SupplierOrderItemRepo supplierOrderItemRepo, AccountingRepo accountingRepo,
+                                SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService,
                                 ProductRepo productRepo, ConfigurationService configurationService,
                                 PushNotificationSender pushNotificationSender) {
 
@@ -36,7 +36,7 @@ public class OrderWorkflowHandler {
         this.orderItemRepo = orderItemRepo;
         this.orderRepo = orderRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
-        this.accountingRepo = accountingRepo;
+        this.accountingService = accountingService;
         this.productRepo = productRepo;
         this.configurationService = configurationService;
         this.pushNotificationSender = pushNotificationSender;
@@ -58,10 +58,10 @@ public class OrderWorkflowHandler {
                 return new ReopenAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
 
             case "contabilizza":
-                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingRepo, pushNotificationSender);
+                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, pushNotificationSender, accountingService);
 
             case "tornachiuso":
-                return new UndoAccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingRepo);
+                return new UndoAccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingService);
 
             case "cancel":
                 return new CancelAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
@@ -105,18 +105,17 @@ public class OrderWorkflowHandler {
 
     private List<String> getOpenedActions(Order order) {
         List<String> result = new ArrayList<>();
-        Date now = new Date();
 
         result.add("modifica");
 
-        if (order.getOpeningDate().after(now))
+        if (order.isNotYetOpened())
             result.add("elimina");
         else {
             result.add("dettaglio");
             result.add("cancel");
         }
 
-        if (order.getDueDateAndTime().before(now))
+        if (order.isExpired())
             result.add("chiudi");
 
         return result;

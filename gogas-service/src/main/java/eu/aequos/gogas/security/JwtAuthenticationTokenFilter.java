@@ -2,10 +2,10 @@ package eu.aequos.gogas.security;
 
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,42 +24,49 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     public static final String COOKIE_NAME = "jwt-token";
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
 
     @Autowired
     private TenantRegistry tenantRegistry;
 
     private Cookie findAuthCookie(HttpServletRequest req) {
-        if (req.getCookies()!=null) {
-            for(Cookie ck : req.getCookies()) {
-                if (ck.getName().equals(COOKIE_NAME))
-                    return ck;
-            }
+        if (req.getCookies() == null)
+            return null;
+
+        for (Cookie ck : req.getCookies()) {
+            if (ck.getName().equals(COOKIE_NAME))
+                return ck;
         }
+
         return null;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        GoGasUserDetails userDetails = null;
+        String authToken = extractAuthTokenFromRequest(request);
+        GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-        Cookie authCookie = findAuthCookie(request);
-        if (authCookie!=null) {
-            userDetails = jwtTokenUtil.getUserDetails(authCookie.getValue());
-        } else {
-            String authToken = request.getHeader(TOKEN_HEADER);
-            if (authToken != null && authToken.startsWith(TOKEN_PREFIX)) {
-                userDetails = jwtTokenUtil.getUserDetails(authToken.replace(TOKEN_PREFIX, ""));
-            }
-        }
-        // TODO: check jwt expiration
         if (isValidUser(userDetails, request) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            MDC.put("user", userDetails.getUsername());
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String extractAuthTokenFromRequest(HttpServletRequest request) {
+        Cookie authTokenCookie = findAuthCookie(request);
+        if (authTokenCookie != null)
+            return authTokenCookie.getValue();
+
+        String authTokenHeader = request.getHeader(TOKEN_HEADER);
+        if (authTokenHeader != null && authTokenHeader.startsWith(TOKEN_PREFIX))
+            return authTokenHeader.replace(TOKEN_PREFIX, "");
+
+        return null;
     }
 
     private boolean isValidUser(GoGasUserDetails userDetails, HttpServletRequest request) {
