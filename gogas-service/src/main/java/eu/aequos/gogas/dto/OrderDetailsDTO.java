@@ -113,7 +113,7 @@ public class OrderDetailsDTO {
     }
 
     private boolean sendWeightAllowed(LocalDate deliveryDate) {
-        long diffInDays = Period.between(LocalDate.now(), deliveryDate).getDays();
+        long diffInDays = Period.between(deliveryDate, LocalDate.now()).getDays();
         return diffInDays >= 0 && diffInDays <= 4;
     }
 }

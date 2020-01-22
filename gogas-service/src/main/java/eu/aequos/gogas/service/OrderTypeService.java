@@ -4,6 +4,7 @@ import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.dto.OrderTypeSelectItemDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
@@ -31,14 +32,17 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     private OrderTypeRepo orderTypeRepo;
     private OrderRepo orderRepo;
     private OrderManagerRepo orderManagerRepo;
+    private AequosIntegrationService aequosIntegrationService;
 
     public OrderTypeService(OrderTypeRepo orderTypeRepo, OrderRepo orderRepo,
-                            OrderManagerRepo orderManagerRepo) {
+                            OrderManagerRepo orderManagerRepo,
+                            AequosIntegrationService aequosIntegrationService) {
         super(orderTypeRepo, "order type");
 
         this.orderTypeRepo = orderTypeRepo;
         this.orderRepo = orderRepo;
         this.orderManagerRepo = orderManagerRepo;
+        this.aequosIntegrationService = aequosIntegrationService;
     }
 
     public List<OrderTypeDTO> getAll() {
@@ -60,8 +64,10 @@ public class OrderTypeService extends CrudService<OrderType, String> {
                 .collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
     }
 
-    public void createAll(List<OrderType> orderTypesToBeCreated) {
-        orderTypeRepo.saveAll(orderTypesToBeCreated);
+    public void synchronizeAequosOrderTypes() {
+        Set<Integer> existingAequosOrderTypes = getAequosOrderTypes();
+        List<OrderType> newAequosOrderTypes = aequosIntegrationService.synchronizeOrderTypes(existingAequosOrderTypes);
+        orderTypeRepo.saveAll(newAequosOrderTypes);
     }
 
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {

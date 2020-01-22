@@ -5,7 +5,7 @@ import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
-import eu.aequos.gogas.security.JwtAuthenticationRequest;
+import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,7 +43,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "authenticate")
-    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
+    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
         
         String tenantId = tenantRegistry.extractFromHostName(req.getServerName());
 

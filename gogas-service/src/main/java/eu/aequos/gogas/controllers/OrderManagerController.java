@@ -181,6 +181,23 @@ public class OrderManagerController {
         return orderManagerService.getAequosAvailableOpenOrders(userId, userRole);
     }
 
+    @PostMapping(value = "{orderId}/aequos/order/send")
+    public BasicResponseDTO sendOrderToAequos(@PathVariable String orderId) throws GoGasException {
+        String aequosOrderId = orderManagerService.sendOrderToAequos(orderId);
+        return new BasicResponseDTO(aequosOrderId);
+    }
+
+    @PostMapping(value = "{orderId}/aequos/order/synch")
+    public BasicResponseDTO synchOrderFromAequos(@PathVariable String orderId) throws GoGasException {
+        orderManagerService.synchOrderWithAequos(orderId);
+        return new BasicResponseDTO("OK");
+    }
+
+    @PostMapping(value = "{orderId}/aequos/order/weights")
+    public BasicResponseDTO sendWeigthsToAequos(@PathVariable String orderId) throws GoGasException {
+        int updatedItems = orderManagerService.sendWeightsToAequos(orderId);
+        return new BasicResponseDTO(updatedItems);
+    }
     /********************************/
 
     @PutMapping(value = "{orderId}/product/{productId}/supplier")

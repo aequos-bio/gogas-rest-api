@@ -131,4 +131,8 @@ public class ProductService extends CrudService<Product, String> {
 
         return new AttachmentDTO(excelContent, contentType, fileName);
     }
+
+    public Optional<Product> getByExternalId(String productType, String externalId) {
+        return productRepo.findByTypeAndExternalId(productType, externalId);
+    }
 }

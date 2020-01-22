@@ -23,6 +23,9 @@ public class SupplierOrderItem {
     @Column(name = "idprodotto", nullable = false)
     private String productId;
 
+    @Column(name = "externalcode")
+    private String productExternalCode;
+
     @Column(name = "numerocolli", nullable = false)
     private BigDecimal boxesCount;
 

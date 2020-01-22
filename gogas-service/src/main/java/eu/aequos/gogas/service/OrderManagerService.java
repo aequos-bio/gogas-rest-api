@@ -8,6 +8,8 @@ import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.*;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.integration.api.AequosOpenOrder;
+import eu.aequos.gogas.integration.api.OrderSynchItem;
+import eu.aequos.gogas.integration.api.OrderSynchResponse;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -474,5 +477,121 @@ public class OrderManagerService extends CrudService<Order, String> {
                 order.getDeliveryDate(), contentType);
 
         return new AttachmentDTO(attachmentContent, contentType, fileName);
+    }
+
+    public String sendOrderToAequos(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+
+        Integer aequosOrderType = order.getOrderType().getAequosOrderId();
+        if (aequosOrderType == null)
+            throw new GoGasException("Order type is not linked to Aequos");
+
+        List<SupplierOrderBoxes> supplierOrderBoxes = supplierOrderItemRepo.findBoxesCountByOrderId(order.getId());
+        String aequosOrderId = aequosIntegrationService.createOrUpdateOrder(aequosOrderType, order.getExternalOrderId(), supplierOrderBoxes);
+        orderRepo.updateOrderExternalId(orderId, aequosOrderId, true);
+
+        return aequosOrderId;
+    }
+
+    @Transactional
+    public int sendWeightsToAequos(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+
+        if (order.getOrderType().getAequosOrderId() == null)
+            throw new GoGasException("Order type is not linked to Aequos");
+
+        if (order.getExternalOrderId() == null)
+            throw new GoGasException("Missing Aequos order id");
+
+        List<SupplierOrderBoxes> supplierOrderBoxes = supplierOrderItemRepo.findBoxesCountByOrderId(order.getId());
+        List<String> updatedItems = aequosIntegrationService.sendUpdatedWeights(order.getExternalOrderId(), supplierOrderBoxes);
+
+        supplierOrderItemRepo.updateItemsAsWeightSentByOrderAndProduct(orderId, updatedItems);
+        orderRepo.updateWeightSentDate(orderId, LocalDateTime.now());
+
+        return updatedItems.size();
+    }
+
+    @Transactional
+    public void synchOrderWithAequos(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+
+        if (order.getOrderType().getAequosOrderId() == null)
+            throw new GoGasException("Order type is not linked to Aequos");
+
+        if (order.getExternalOrderId() == null)
+            throw new GoGasException("Missing Aequos order id");
+
+        log.info("Synchronizing with Aequos order with id {} (Aequos id {}) ", orderId, order.getExternalOrderId());
+
+        OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
+        updateSupplierOrderItems(orderId, order.getOrderType().getId(), orderSynchResponse.getOrderItems());
+        orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), LocalDateTime.now());
+
+        log.info("Synchronization completed successfully");
+    }
+
+    private void updateSupplierOrderItems(String orderId, String orderTypeId, List<OrderSynchItem> aequosOrderItems) {
+        Map<String, OrderSynchItem> aequosItemsMap = ListConverter.fromList(aequosOrderItems)
+                .toMap(OrderSynchItem::getId);
+
+        List<SupplierOrderItem> existingSupplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId);
+        for (SupplierOrderItem supplierOrderItem : existingSupplierOrderItems) {
+            OrderSynchItem aequosOrderItem = aequosItemsMap.get(supplierOrderItem.getProductExternalCode());
+
+            if (updateSupplierOrderItem(orderId, supplierOrderItem, aequosOrderItem))
+                aequosItemsMap.remove(supplierOrderItem.getProductExternalCode());
+        }
+
+        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap.values().stream()
+                .map(aequosItem -> createSupplierOrderItem(orderId, orderTypeId, aequosItem))
+                .collect(toList());
+
+        existingSupplierOrderItems.addAll(newSupplierOrderItems);
+
+        supplierOrderItemRepo.saveAll(existingSupplierOrderItems);
+    }
+
+    private boolean updateSupplierOrderItem(String orderId, SupplierOrderItem supplierOrderItem, OrderSynchItem aequosOrderItem) {
+        if (aequosOrderItem == null) {
+            log.info("Missing Aequos order item, supplier order item is cancelled for product with id {} ({})",
+                    supplierOrderItem.getProductId(), supplierOrderItem.getProductExternalCode());
+
+            supplierOrderItem.setTotalQuantity(BigDecimal.ZERO);
+            supplierOrderItem.setBoxesCount(BigDecimal.ZERO);
+            return false;
+        }
+
+        supplierOrderItem.setTotalQuantity(aequosOrderItem.getQuantity());
+        supplierOrderItem.setBoxesCount(aequosOrderItem.getQuantity().divide(supplierOrderItem.getBoxWeight(), RoundingMode.HALF_UP));
+
+        //if price has been changed by Aequos, the price must be changed in user orders as well
+        if (!supplierOrderItem.getUnitPrice().equals(aequosOrderItem.getPrice())) {
+            log.info("Price has changed for product with id {} ({}) from {} to {}, updating user orders",
+                    supplierOrderItem.getProductId(), supplierOrderItem.getProductExternalCode(),
+                    supplierOrderItem.getUnitPrice().doubleValue(), aequosOrderItem.getPrice().doubleValue());
+
+            orderItemService.updatePriceByOrderIdAndProductId(orderId, supplierOrderItem.getProductId(), aequosOrderItem.getPrice());
+        }
+
+        supplierOrderItem.setUnitPrice(aequosOrderItem.getPrice());
+        return true;
+    }
+
+    private SupplierOrderItem createSupplierOrderItem(String orderId, String orderTypeId, OrderSynchItem aequosOrderItem) {
+        Optional<Product> product = productService.getByExternalId(orderTypeId, aequosOrderItem.getId());
+
+        log.info("Creating new supplier order item for product with id {} ({})", product.get().getId(), aequosOrderItem.getId());
+
+        SupplierOrderItem item = new SupplierOrderItem();
+        item.setOrderId(orderId);
+        item.setProductId(product.get().getId());
+        item.setProductExternalCode(aequosOrderItem.getId());
+        item.setBoxesCount(aequosOrderItem.getQuantity().divide(product.get().getBoxWeight(), RoundingMode.HALF_UP));
+        item.setTotalQuantity(aequosOrderItem.getQuantity());
+        item.setUnitPrice(aequosOrderItem.getPrice());
+        item.setBoxWeight(product.get().getBoxWeight());
+
+        return item;
     }
 }
