@@ -121,11 +121,12 @@ public class TenantRegistry {
 
         log.warn("seraching tenandId in hostName=" + hostName);
 
-        if (hostName.indexOf(":")>0)
-            hostName = hostName.substring(0, hostName.indexOf(":"));
-        return hostName
+        hostName = hostName
             .replace("http://", "")
             .replace("https://", "")
             .split("\\.")[0];
+        if (hostName.indexOf(":")>0)
+            hostName = hostName.substring(0, hostName.indexOf(":"));
+        return hostName;
     }
 }

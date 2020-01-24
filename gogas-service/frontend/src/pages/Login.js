@@ -15,17 +15,17 @@ import "../style/login.scss";
 import { login } from "../store/actions";
 import Logo from "../logo_aequos.png";
 
-function Login({ authentication, location, history, info }) {
+function Login({ authentication, location, history, info, ...props }) {
   const dologin = useCallback(
     e => {
       e.preventDefault();
       const username = e.target.username.value;
       const password = e.target.password.value;
-      login(username, password);
+      props.login(username, password);
       history.push("/");
       return false;
     },
-    [history]
+    [props, history]
   );
 
   return authentication && authentication.jwtToken ? (
@@ -131,6 +131,8 @@ const mapStateToProps = state => {
   };
 };
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  login
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);
