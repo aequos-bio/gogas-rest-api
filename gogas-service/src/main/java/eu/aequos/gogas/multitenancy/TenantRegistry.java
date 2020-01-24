@@ -119,6 +119,7 @@ public class TenantRegistry {
                 .replace("http://", "");
         } else {
             URI uri = URI.create(header);
+            log.warn("Finding gas name in uri: " + uri.toString() + " (host=" + uri.getHost() +")");
             hostName = uri.getHost();
         }
 
