@@ -119,8 +119,6 @@ public class TenantRegistry {
         if (hostName == null)
             return null;
 
-        log.warn("seraching tenandId in hostName=" + hostName);
-
         hostName = hostName
             .replace("http://", "")
             .replace("https://", "")
