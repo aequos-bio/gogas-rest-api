@@ -1,9 +1,9 @@
-package eu.aequos.gogas.security;
+package eu.aequos.gogas.dto;
 
 import lombok.Data;
 
 @Data
-public class JwtAuthenticationRequest {
+public class CredentialsDTO {
     private String username;
     private String password;
 }

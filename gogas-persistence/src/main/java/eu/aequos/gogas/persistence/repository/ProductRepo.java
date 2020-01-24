@@ -23,7 +23,7 @@ public interface ProductRepo extends CrudRepository<Product, String>, JpaSpecifi
 
     List<Product> findByIdIn(Set<String> productIds);
 
-    Optional<Product> findByExternalId(String externalId);
+    Optional<Product> findByTypeAndExternalId(String productType, String externalId);
 
     @Modifying
     @Query("UPDATE Product p SET p.available = false WHERE p.type = ?1 AND p.id NOT IN (?2)")

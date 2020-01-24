@@ -29,17 +29,14 @@ public class OrderTypeController {
     private OrderTypeService orderTypeService;
     private OrderManagerRepo orderManagerRepo;
     private UserService userService;
-    private AequosIntegrationService aequosIntegrationService;
     private AuthorizationService authorizationService;
 
     public OrderTypeController(OrderTypeService orderTypeService, OrderManagerRepo orderManagerRepo,
-                               UserService userService, AequosIntegrationService aequosIntegrationService,
-                               AuthorizationService authorizationService) {
+                               UserService userService, AuthorizationService authorizationService) {
 
         this.orderTypeService = orderTypeService;
         this.orderManagerRepo = orderManagerRepo;
         this.userService = userService;
-        this.aequosIntegrationService = aequosIntegrationService;
         this.authorizationService = authorizationService;
     }
 
@@ -69,7 +66,7 @@ public class OrderTypeController {
     @IsAdmin
     @PutMapping(value = "aequos/sync")
     public BasicResponseDTO synchronizeWithAequos() {
-        aequosIntegrationService.synchronizeOrderTypes();
+        orderTypeService.synchronizeAequosOrderTypes();
         return new BasicResponseDTO("OK");
     }
 

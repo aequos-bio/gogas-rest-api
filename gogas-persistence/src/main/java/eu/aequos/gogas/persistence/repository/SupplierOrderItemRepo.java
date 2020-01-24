@@ -1,6 +1,7 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
+import eu.aequos.gogas.persistence.entity.derived.SupplierOrderBoxes;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -27,4 +28,11 @@ public interface SupplierOrderItemRepo extends CrudRepository<SupplierOrderItem,
 
     @Modifying
     int deleteByOrderId(String orderId);
+
+    @Query("SELECT s.productExternalCode as supplierCode, s.boxesCount as boxesCount FROM SupplierOrderItem s WHERE s.orderId = ?1")
+    List<SupplierOrderBoxes> findBoxesCountByOrderId(String orderId);
+
+    @Modifying
+    @Query("UPDATE SupplierOrderItem s SET s.weightUpdated = true WHERE s.orderId = ?1 AND productExternalCode IN ?2")
+    int updateItemsAsWeightSentByOrderAndProduct(String orderId, List<String> updatedProducts);
 }

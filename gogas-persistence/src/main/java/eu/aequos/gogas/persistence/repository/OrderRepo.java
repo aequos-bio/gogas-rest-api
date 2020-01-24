@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,7 +73,6 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("UPDATE Order o SET o.statusCode = ?2 WHERE o.id = ?1")
     int updateOrderStatus(String orderId, int status);
 
-
     @Query("SELECT o FROM Order o WHERE o.statusCode = 0 AND o.openingDate <= CURRENT_TIMESTAMP AND function('DateAdd', hh, o.dueHour, o.dueDate) >= CURRENT_TIMESTAMP")
     List<Order> getOpenOrders();
 
@@ -102,4 +103,17 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Transactional
     @Query("UPDATE Order o SET o.attachmentType = ?2 WHERE o.id = ?1")
     int updateAttachmentType(String orderId, String contentType);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Order o SET o.externalOrderId = ?2, o.sent = ?3 WHERE o.id = ?1")
+    int updateOrderExternalId(String orderId, String externalOrderId, boolean sent);
+
+    @Modifying
+    @Query("UPDATE Order o SET o.invoiceNumber = ?2, o.invoiceAmount = ?3, o.lastSynchro = ?4 WHERE o.id = ?1")
+    int updateInvoiceDataAndSynchDate(String orderId, String invoiceNumber, BigDecimal orderTotalAmount, LocalDateTime lastSynchroDate);
+
+    @Modifying
+    @Query("UPDATE Order o SET o.lastWeightUpdate = ?2 WHERE o.id = ?1")
+    int updateWeightSentDate(String orderId, LocalDateTime weightSentDate);
 }

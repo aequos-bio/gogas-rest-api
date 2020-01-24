@@ -150,6 +150,7 @@ public class CloseAction extends OrderStatusAction {
         SupplierOrderItem supplierOrderItem = new SupplierOrderItem();
         supplierOrderItem.setOrderId(order.getId());
         supplierOrderItem.setProductId(product.getId());
+        supplierOrderItem.setProductExternalCode(product.getExternalId());
         supplierOrderItem.setUnitPrice(product.getPrice());
         supplierOrderItem.setBoxWeight(product.getBoxWeight());
         supplierOrderItem.setBoxesCount(boxesCount);

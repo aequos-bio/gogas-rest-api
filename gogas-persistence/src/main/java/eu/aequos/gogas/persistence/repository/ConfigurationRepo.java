@@ -14,7 +14,8 @@ public interface ConfigurationRepo extends CrudRepository<Configuration, String>
   @Override
   List<Configuration> findAll();
 
-  Optional<Configuration> findByKey(String key);
+  @Query("SELECT c.value FROM Configuration c WHERE c.key = ?1")
+  Optional<String> findValueByKey(String key);
 
   List<Configuration> findByVisibleOrderByKey(boolean visible);
 

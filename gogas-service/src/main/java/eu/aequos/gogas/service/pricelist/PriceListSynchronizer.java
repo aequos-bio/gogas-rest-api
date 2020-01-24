@@ -91,7 +91,7 @@ public class PriceListSynchronizer {
     private String createOrUpdateProduct(ExternalPriceListItem externalProduct, Supplier supplier,
                                          Map<String, ProductCategory> categoriesMap, String orderTypeId) {
 
-        Product product = productRepo.findByExternalId(externalProduct.getExternalId())
+        Product product = productRepo.findByTypeAndExternalId(orderTypeId, externalProduct.getExternalId())
                 .orElse(new Product());
 
         product.setExternalId(externalProduct.getExternalId());

@@ -8,6 +8,7 @@ import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtAuthenticationRequest;
 import eu.aequos.gogas.security.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
+import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,7 +48,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "authenticate")
-    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException, IOException {
+    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
 
         String tenantId = tenantRegistry.extractFromHostName(req);
 

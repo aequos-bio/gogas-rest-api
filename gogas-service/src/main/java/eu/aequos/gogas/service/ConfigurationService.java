@@ -1,6 +1,7 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.ConfigurationItemDTO;
+import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,8 +49,7 @@ public class ConfigurationService {
     }
 
     public UserSorting getUserSorting() {
-        String sortingConf = configurationRepo.findById(USER_SORTING_KEY)
-                .map(Configuration::getValue)
+        String sortingConf = configurationRepo.findValueByKey(USER_SORTING_KEY)
                 .orElse(USER_SORTING_NAME_FIRST)
                 .toUpperCase();
 
@@ -57,14 +58,26 @@ public class ConfigurationService {
 
     public BigDecimal getBoxRoundingThreshold() {
         try {
-            String boxRoundingThreshold = configurationRepo.findById(BOX_ROUNDING_THRESOLD_KEY)
-                    .map(Configuration::getValue)
+            String boxRoundingThreshold = configurationRepo.findValueByKey(BOX_ROUNDING_THRESOLD_KEY)
                     .orElse("0.5");
 
             return new BigDecimal(boxRoundingThreshold);
         } catch (Exception ex) {
             return BOX_ROUNDING_THRESOLD_DEFAULT;
         }
+    }
+
+    public CredentialsDTO getAequosCredentials() throws GoGasException {
+        Optional<String> usernameConf = configurationRepo.findValueByKey("aequos.username");
+        Optional<String> passwordConf = configurationRepo.findValueByKey("aequos.password");
+
+        if (!usernameConf.isPresent() || !passwordConf.isPresent())
+            throw new GoGasException("Credenziali per Aequos non trovate, controllare la configurazione");
+
+        CredentialsDTO credentials = new CredentialsDTO();
+        credentials.setUsername(usernameConf.get());
+        credentials.setPassword(passwordConf.get());
+        return credentials;
     }
 
     public LocalDate parseLocalDate(String date) {
