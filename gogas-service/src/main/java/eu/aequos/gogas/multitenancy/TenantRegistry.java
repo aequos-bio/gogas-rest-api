@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -107,16 +108,20 @@ public class TenantRegistry {
      * @return the tenant id
      */
     public String extractFromHostName(HttpServletRequest req) {
-        String hostName = req.getHeader("origin"); // fix to work behind nginx reverse proxy
-        if (hostName==null || hostName.isEmpty())
-            hostName = req.getServerName();
+        String hostName;
+        String header = req.getHeader("origin");
+        if (header==null || header.isEmpty()) {
+            if (req.getServerName() == null)
+                return null;
 
-        if (hostName == null)
-            return null;
-
-        return hostName
+            hostName = req.getServerName()
                 .replace("https://", "")
-                .replace("http://", "")
-                .split("\\.")[0];
+                .replace("http://", "");
+        } else {
+            URI uri = URI.create(header);
+            hostName = uri.getHost();
+        }
+
+        return hostName.split("\\.")[0];
     }
 }

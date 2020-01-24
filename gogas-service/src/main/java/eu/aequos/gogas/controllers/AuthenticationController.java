@@ -5,8 +5,6 @@ import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
-import eu.aequos.gogas.security.JwtAuthenticationRequest;
-import eu.aequos.gogas.security.JwtTokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.security.JwtTokenHandler;
