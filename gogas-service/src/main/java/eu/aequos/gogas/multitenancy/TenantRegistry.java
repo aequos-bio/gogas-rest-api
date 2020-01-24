@@ -111,18 +111,21 @@ public class TenantRegistry {
         String hostName;
         String header = req.getHeader("origin");
         if (header==null || header.isEmpty()) {
-            if (req.getServerName() == null)
-                return null;
-
-            hostName = req.getServerName()
-                .replace("https://", "")
-                .replace("http://", "");
+            hostName = req.getServerName();
         } else {
-            URI uri = URI.create(header);
-            log.warn("Finding gas name in uri: " + uri.toString() + " (host=" + uri.getHost() +")");
-            hostName = uri.getHost();
+            hostName = header;
         }
 
-        return hostName.split("\\.")[0];
+        if (hostName == null)
+            return null;
+
+        log.warn("seraching tenandId in hostName=" + hostName);
+
+        if (hostName.indexOf(":")>0)
+            hostName = hostName.substring(0, hostName.indexOf(":"));
+        return hostName
+            .replace("http://", "")
+            .replace("https://", "")
+            .split("\\.")[0];
     }
 }
