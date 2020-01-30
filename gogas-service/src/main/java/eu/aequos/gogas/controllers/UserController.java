@@ -1,9 +1,10 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.SelectItemDTO;
-import eu.aequos.gogas.dto.UserDTO;
+import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.security.AuthorizationService;
+import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.UserService;
@@ -17,9 +18,11 @@ import java.util.List;
 public class UserController {
 
     private UserService userService;
+    private AuthorizationService authorizationService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AuthorizationService authorizationService) {
         this.userService = userService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping(value = "select", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -59,6 +62,26 @@ public class UserController {
     @IsAdmin
     public BasicResponseDTO delete(@PathVariable String userId) {
         userService.delete(userId);
+        return new BasicResponseDTO("OK");
+    }
+
+    @PutMapping(value = "{userId}/password/reset")
+    @IsAdmin
+    public BasicResponseDTO resetPassword(@PathVariable String userId) throws GoGasException {
+        userService.resetPassword(userId);
+        return new BasicResponseDTO("OK");
+    }
+
+    @PutMapping(value = "password/reset")
+    public BasicResponseDTO resetPassword(@RequestBody PasswordResetDTO passwordResetDTO) throws GoGasException {
+        userService.resetPassword(passwordResetDTO);
+        return new BasicResponseDTO("OK");
+    }
+
+    @PutMapping(value = "password/change")
+    public BasicResponseDTO changePassword(@RequestBody PasswordChangeDTO passwordChangeDTO) throws GoGasException {
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        userService.changePassword(currentUser.getId(), passwordChangeDTO);
         return new BasicResponseDTO("OK");
     }
 }

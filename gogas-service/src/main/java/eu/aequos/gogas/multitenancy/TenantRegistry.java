@@ -8,13 +8,14 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -23,6 +24,8 @@ public class TenantRegistry {
     private static final String SQLSERVER_DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final String TENANTS_QUERY = "SELECT tenant_id, username, password, url FROM tenants";
     private static final String FLYWAY_BASELINE_VERSION = "20191210_001";
+
+    private static final Pattern BASE_URL_PATTERN = Pattern.compile("http[s]*://([A-Za-z0-9\\.\\-]+)(:\\d+)*");
 
     private DriverManagerDataSource masterDataSource;
     private Map<Object, Object> tenantDataSourceMap;
@@ -108,23 +111,19 @@ public class TenantRegistry {
      * @return the tenant id
      */
     public String extractFromHostName(HttpServletRequest req) {
-        String hostName;
-        String header = req.getHeader("origin");
-        if (header==null || header.isEmpty()) {
-            hostName = req.getServerName();
-        } else {
-            hostName = header;
-        }
+        String hostName = extractHostNameFromOrigin(req.getHeader("origin"));
 
         if (hostName == null)
+            hostName = req.getServerName();
+
+        return hostName;
+    }
+
+    private String extractHostNameFromOrigin(String originHeader) {
+        if (originHeader == null || originHeader.isEmpty())
             return null;
 
-        hostName = hostName
-            .replace("http://", "")
-            .replace("https://", "")
-            .split("\\.")[0];
-        if (hostName.indexOf(":")>0)
-            hostName = hostName.substring(0, hostName.indexOf(":"));
-        return hostName;
+        Matcher matcher = BASE_URL_PATTERN.matcher(originHeader);
+        return matcher.matches() ? matcher.group(1) : null;
     }
 }

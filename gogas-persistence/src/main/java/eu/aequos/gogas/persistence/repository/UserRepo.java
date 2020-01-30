@@ -40,10 +40,12 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
 
-    @Modifying
-    @Query(value = "UPDATE utenti SET nome = :name WHERE idutente = :id", nativeQuery = true)
-    int updateFirstName(@Param("id") String id, @Param("name") String name);
-
     @Procedure(name = "UserExport.balance")
     BigDecimal getBalance(@Param("idUtente") String userId);
+
+    @Modifying
+    @Query(value = "UPDATE User u SET u.password = ?2 WHERE id = ?1")
+    int updatePassword(String userId, String encodedPassword);
+
+    User findByUsernameAndEmail(String username, String email);
 }
