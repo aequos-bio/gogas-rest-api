@@ -85,7 +85,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     }
 
     private boolean isValidTenant(String userTenantId, HttpServletRequest request) throws UserNotAuthorizedException {
-        String hostTenantId = tenantRegistry.extractFromHostName(request.getServerName());
+        String hostTenantId = tenantRegistry.extractFromHostName(request);
         return tenantRegistry.isValidTenant(hostTenantId) && hostTenantId.equals(userTenantId);
     }
 }

@@ -46,7 +46,7 @@ public class AuthenticationController {
     @PostMapping(value = "authenticate")
     public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
         
-        String tenantId = tenantRegistry.extractFromHostName(req.getServerName());
+        String tenantId = tenantRegistry.extractFromHostName(req);
 
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
