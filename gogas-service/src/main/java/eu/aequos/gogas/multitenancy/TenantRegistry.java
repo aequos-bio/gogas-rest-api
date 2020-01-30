@@ -6,7 +6,9 @@ import org.flywaydb.core.Flyway;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.sql.DataSource;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -102,13 +104,27 @@ public class TenantRegistry {
     /**
      * Extract tenantID from the host name by taking the most internal subdomain
      * Example: gasname.aequos.eu -> gasname
-     * @param hostName the host name in the request
+     * @param req the http request
      * @return the tenant id
      */
-    public String extractFromHostName(String hostName) {
+    public String extractFromHostName(HttpServletRequest req) {
+        String hostName;
+        String header = req.getHeader("origin");
+        if (header==null || header.isEmpty()) {
+            hostName = req.getServerName();
+        } else {
+            hostName = header;
+        }
+
         if (hostName == null)
             return null;
 
-        return hostName.split("\\.")[0];
+        hostName = hostName
+            .replace("http://", "")
+            .replace("https://", "")
+            .split("\\.")[0];
+        if (hostName.indexOf(":")>0)
+            hostName = hostName.substring(0, hostName.indexOf(":"));
+        return hostName;
     }
 }

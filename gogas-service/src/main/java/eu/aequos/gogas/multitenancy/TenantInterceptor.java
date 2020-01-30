@@ -21,7 +21,7 @@ public class TenantInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String tenantId = tenantRegistry.extractFromHostName(request.getServerName());
+        String tenantId = tenantRegistry.extractFromHostName(request);
 
         if (!tenantRegistry.isValidTenant(tenantId)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Not a valid tenant: " + tenantId);
