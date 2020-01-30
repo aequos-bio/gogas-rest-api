@@ -1,5 +1,6 @@
 package eu.aequos.gogas.exception;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -36,6 +37,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
         log.warn("Access denied: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
+    }
+
+    @ExceptionHandler(JWTVerificationException.class)
+    protected ResponseEntity<Object> handleJWTVerificationError(JWTVerificationException ex) {
+        log.warn("JWT Token expired: {} ", ex.getMessage());
+        return buildResponseEntity(new RestApiError(HttpStatus.UNAUTHORIZED, "Token non valido o scaduto", ex));
     }
 
     @ExceptionHandler(ItemNotDeletableException.class)

@@ -1,11 +1,12 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
-import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,7 +44,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "authenticate")
-    public String createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
+    public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
         
         String tenantId = tenantRegistry.extractFromHostName(req.getServerName());
 
@@ -62,7 +63,8 @@ public class AuthenticationController {
         resp.setHeader("Authentication", "bearer " + token);
         Cookie ck = new Cookie("jwt-token", token);
         resp.addCookie(ck);
-        return token;
+
+        return new BasicResponseDTO(token);
     }
 
     @GetMapping(value = "info")

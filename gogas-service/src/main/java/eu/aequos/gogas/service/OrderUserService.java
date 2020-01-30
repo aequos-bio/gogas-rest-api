@@ -143,6 +143,9 @@ public class OrderUserService {
                 .map(OpenOrderItem::getProduct)
                 .collect(Collectors.toSet());
 
+        if (orderedProductIds.isEmpty())
+            return Collections.emptyList();
+
         return productService.getProducts(orderedProductIds);
     }
 

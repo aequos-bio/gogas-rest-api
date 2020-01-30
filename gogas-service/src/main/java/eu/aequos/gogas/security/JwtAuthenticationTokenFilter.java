@@ -1,9 +1,12 @@
 package eu.aequos.gogas.security;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -43,18 +46,30 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        String authToken = extractAuthTokenFromRequest(request);
-        GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
+        try {
+            String authToken = extractAuthTokenFromRequest(request);
+            GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-        if (isValidUser(userDetails, request) && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
+                log.warn("Missing or mismatching tenant id, user not authorized");
+                throw new UserNotAuthorizedException();
+            }
 
-            MDC.put("user", userDetails.getUsername());
+            if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                MDC.put("user", userDetails.getUsername());
+            }
+
+            chain.doFilter(request, response);
+
+        } catch (JWTVerificationException ex) {
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token non valido o scaduto");
+        } catch (UserNotAuthorizedException ex) {
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Utente o tenant non valido");
         }
-
-        chain.doFilter(request, response);
     }
 
     private String extractAuthTokenFromRequest(HttpServletRequest request) {
@@ -69,16 +84,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean isValidUser(GoGasUserDetails userDetails, HttpServletRequest request) {
-        if (userDetails == null)
-            return false;
-
-        String tenantId = tenantRegistry.extractFromHostName(request.getServerName());
-        if (!tenantRegistry.isValidTenant(tenantId) || !tenantId.equals(userDetails.getTenant())) {
-            log.warn("Missing or mismatching tenant id, user not authorized");
-            return false;
-        }
-
-        return true; //TODO: check user on DB
+    private boolean isValidTenant(String userTenantId, HttpServletRequest request) throws UserNotAuthorizedException {
+        String hostTenantId = tenantRegistry.extractFromHostName(request.getServerName());
+        return tenantRegistry.isValidTenant(hostTenantId) && hostTenantId.equals(userTenantId);
     }
 }
