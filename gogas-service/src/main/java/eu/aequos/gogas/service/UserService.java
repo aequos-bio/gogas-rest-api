@@ -1,17 +1,26 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
+import eu.aequos.gogas.dto.PasswordChangeDTO;
+import eu.aequos.gogas.dto.PasswordResetDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserDTO;
+import eu.aequos.gogas.exception.GoGasException;
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import eu.aequos.gogas.security.RandomPassword;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @Service
 public class UserService extends CrudService<User, String> {
 
@@ -19,14 +28,17 @@ public class UserService extends CrudService<User, String> {
 
     private ConfigurationService configurationService;
     private UserRepo userRepo;
+    private PasswordEncoder passwordEncoder;
 
     //TODO: cache users
 
-    public UserService(ConfigurationService configurationService, UserRepo userRepo) {
+    public UserService(ConfigurationService configurationService, UserRepo userRepo,
+                       PasswordEncoder passwordEncoder) {
         super(userRepo, "user");
 
         this.configurationService = configurationService;
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<SelectItemDTO> getUsersForSelect(String role, boolean withAll) {
@@ -127,5 +139,50 @@ public class UserService extends CrudService<User, String> {
     public User createFriend(UserDTO userDTO, String friendReferral) {
         userDTO.setFriendReferralId(friendReferral);
         return super.create(userDTO);
+    }
+
+    @Transactional
+    public void resetPassword(PasswordResetDTO passwordResetDTO) throws GoGasException {
+        User user = userRepo.findByUsernameAndEmail(passwordResetDTO.getUsername(), passwordResetDTO.getEmail());
+
+        if (user == null)
+            throw new ItemNotFoundException("user", passwordResetDTO.getUsername());
+
+        resetPassword(user);
+    }
+
+    @Transactional
+    public void resetPassword(String userId) throws GoGasException {
+        User user = getRequired(userId);
+        resetPassword(user);
+    }
+
+    private void resetPassword(User user) throws GoGasException {
+        if (user.getEmail() == null)
+            throw new GoGasException("L'utente non ha l'indirizzo email configurato");
+
+        String randomPassword = RandomPassword.generate();
+        String encodedPassword = passwordEncoder.encode(randomPassword);
+        userRepo.updatePassword(user.getId(), encodedPassword);
+
+        log.info("New password is {}", randomPassword);
+        //TODO: send email
+    }
+
+    @Transactional
+    public void changePassword(String userId, PasswordChangeDTO passwordChangeDTO) throws GoGasException {
+        if (passwordChangeDTO.getNewPassword() == null || passwordChangeDTO.getOldPassword() == null)
+            throw new GoGasException("Invalid password");
+
+        User user = getRequired(userId);
+
+        String encodedOldPassword = passwordEncoder.encode(passwordChangeDTO.getOldPassword());
+        if (!user.getPassword().equalsIgnoreCase(encodedOldPassword))
+            throw new GoGasException("Wrong password");
+
+        String encodedPassword = passwordEncoder.encode(passwordChangeDTO.getNewPassword());
+        userRepo.updatePassword(user.getId(), encodedPassword);
+
+        log.info("New password is {}", passwordChangeDTO.getNewPassword());
     }
 }
