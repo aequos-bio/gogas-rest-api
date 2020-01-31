@@ -14,10 +14,8 @@ import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.AccountingReasonRepo;
 import eu.aequos.gogas.persistence.repository.AccountingRepo;
-import eu.aequos.gogas.persistence.repository.UserAccountingRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
-import eu.aequos.gogas.persistence.utils.UserTransactionFullProjection;
 
 //TODO: check if we can merge with other services
 @Service

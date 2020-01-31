@@ -17,7 +17,6 @@ import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.utils.UserTotal;
 import eu.aequos.gogas.persistence.utils.UserTotalProjection;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
-import eu.aequos.gogas.persistence.utils.UserTransactionFullProjection;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.UserAccountingService;
@@ -81,9 +80,9 @@ public class UserAccountingController {
     @IsAdminOrCurrentUser
     @GetMapping("/userTransactions")
     public @ResponseBody
-    RestResponse<List<UserTransactionFullProjection>> getUserTransactions(@RequestParam(name = "userId", required = true) String userId) {
+    RestResponse<List<UserTransactionFull>> getUserTransactions(@RequestParam(name = "userId", required = true) String userId) {
         List<UserTransactionFull> movimenti = userAccountingSrv.getUserTransactions(userId);
-        List<UserTransactionFullProjection> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
+        List<UserTransactionFull> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
         ordini.addAll(movimenti);
         return new RestResponse<>(ordini);
     }

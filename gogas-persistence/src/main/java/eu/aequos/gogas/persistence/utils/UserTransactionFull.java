@@ -2,11 +2,15 @@ package eu.aequos.gogas.persistence.utils;
 
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
+import org.springframework.data.jpa.repository.Query;
 
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class UserTransactionFull implements UserTransactionFullProjection {
+@Entity
+public class UserTransactionFull {
+  @Id
   private String id;
   private String userId;
   private LocalDate date;
@@ -17,6 +21,20 @@ public class UserTransactionFull implements UserTransactionFullProjection {
   private String sign;
   private boolean recorded;
   private String friend;
+
+  public UserTransactionFull(String id, String userId, LocalDate date, String description, BigDecimal amount, String reason, String sign, boolean recorded) {
+    this.id = id;
+    this.userId = id;
+    this.date = date;
+    this.description = description;
+    this.amount = amount;
+    this.reason = reason;
+    this.sign = sign;
+    this.recorded = recorded;
+  }
+
+  public UserTransactionFull() {
+  }
 
   public UserTransactionFull(AccountingEntry transaction, AccountingEntryReason reason) {
       this.setId(transaction.getId());

@@ -5,7 +5,6 @@ import eu.aequos.gogas.persistence.repository.UserAccountingRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.utils.UserTotal;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
-import eu.aequos.gogas.persistence.utils.UserTransactionFullProjection;
 import eu.aequos.gogas.service.UserAccountingService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -151,12 +150,12 @@ public class ExcelExport {
         h5.setCellValue("Saldo");
         h5.setCellStyle(headerCellStyle);
 
-        List<UserTransactionFullProjection> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
+        List<UserTransactionFull> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
         List<UserTransactionFull> movimenti = userAccountingSrv.getUserTransactions(userId);
         ordini.addAll(movimenti);
-        Collections.sort(ordini, new Comparator<UserTransactionFullProjection>() {
+        Collections.sort(ordini, new Comparator<UserTransactionFull>() {
             @Override
-            public int compare(UserTransactionFullProjection o1, UserTransactionFullProjection o2) {
+            public int compare(UserTransactionFull o1, UserTransactionFull o2) {
                 int c = 0;
                 c = o1.getDate().compareTo(o2.getDate()) * -1;
                 if (c==0)
@@ -173,11 +172,11 @@ public class ExcelExport {
 
         int rowNum = 1;
 
-        for(UserTransactionFullProjection t : ordini) {
+        for(UserTransactionFull t : ordini) {
             Row row = sheet.createRow(rowNum++);
             Cell cell0 = row.createCell(0);
             cell0.setCellStyle(dateStyle);
-            cell0.setCellValue(java.sql.Date.valueOf(t.getDate()));
+            cell0.setCellValue(java.sql.Date.valueOf(t.getDate().toString()));
 
             row.createCell(1).setCellValue(t.getDescription());
 

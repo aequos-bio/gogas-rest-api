@@ -48,11 +48,11 @@ const styles = {
   },
 };
 
-function PageHeader({ authentication, info, logout, history }) {
+function PageHeader({ authentication, info, history, ...props }) {
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
-      const jwt = jwtDecode(authentication.jwtToken);
-      return jwt;
+      const j = jwtDecode(authentication.jwtToken);
+      return j;
     }
     return null;
   }, [authentication]);
@@ -66,18 +66,36 @@ function PageHeader({ authentication, info, logout, history }) {
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse>
         <Nav className="mr-auto">
-          <RestrictedMenu title='Contabilità' restrictedTo='A' items={[{ title: 'Situazione utenti', href: '/useraccounting' }]} jwt={jwt} />
-          <RestrictedMenu title='Gestione' restrictedTo='A' items={[{ title: 'Utenti', href: '/users' }]} jwt={jwt} />
+          
+          <RestrictedMenu 
+            title='Contabilità' 
+            restrictedTo='A' 
+            items={[
+              { title: 'Anni contabili', href: '/years' },
+              { title: 'Situazione utenti', href: '/useraccounting' }
+            ]} 
+            jwt={jwt} 
+          />
+          
+          <RestrictedMenu 
+            title='Gestione' 
+            restrictedTo='A' 
+            items={[
+              { title: 'Utenti', href: '/users' }
+            ]} 
+            jwt={jwt} 
+          />
+
         </Nav>
 
         <Navbar.Text>
-          <NavDropdown alignRight={true} title={<span style={{ marginLeft: '-16px' }}><span className='fa fa-user-circle-o' /> {jwt ? jwt.firstname + ' ' + jwt.lastname : ''}</span>}>
+          <NavDropdown alignRight title={<span style={{ marginLeft: '-16px' }}><span className='fa fa-user-circle-o' /> {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}</span>}>
             {jwt ?
-              <LinkContainer to={'/useraccountingdetails?userId=' + jwt.id} style={{ color: 'var(--gray)' }} >
+              <LinkContainer to={`/useraccountingdetails?userId=${jwt.id}`} style={{ color: 'var(--gray)' }} >
                 <NavDropdown.Item>Saldo</NavDropdown.Item>
               </LinkContainer>
             : []}
-            <NavDropdown.Item href='#' style={{ color: 'var(--gray)' }} onClick={() => {logout(); history.push('/login')}}>Disconnetti</NavDropdown.Item>
+            <NavDropdown.Item href='#' style={{ color: 'var(--gray)' }} onClick={() => {props.logout(); history.push('/login')}}>Disconnetti</NavDropdown.Item>
           </NavDropdown>
         </Navbar.Text>
       </Navbar.Collapse>
@@ -103,7 +121,8 @@ function RestrictedMenu({ title, restrictedTo, items, jwt }) {
     enable ?
       <NavDropdown title={title}>
         {items ? items.map((item, i) => (
-          <LinkContainer to={item.href} key={'menuitem-' + title + '-' + i} >
+          // eslint-disable-next-line react/no-array-index-key
+          <LinkContainer to={item.href} key={`menuitem-${title}-${i}`} >
             <NavDropdown.Item >{item.title}</NavDropdown.Item>
           </LinkContainer>
         )) : null}

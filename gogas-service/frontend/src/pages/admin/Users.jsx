@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { Container, Row, Col, Table, Alert } from "react-bootstrap";
 import _ from "lodash";
-import { getJson } from "../utils/axios_utils";
+import { getJson } from "../../utils/axios_utils";
 
 function Users({ info }) {
   const [users, setUsers] = useState([]);

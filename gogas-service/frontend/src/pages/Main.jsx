@@ -1,24 +1,24 @@
-import React, { Fragment, useEffect } from "react";
+import React, { useEffect } from "react";
+import { connect } from "react-redux";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Home from "./Home";
 import Login from "./Login";
-import Users from "./Users";
+import Users from "./admin/Users";
 import UserAccounting from "./accounting/UserAccounting";
 import UserAccountingDetails from "./accounting/UserAccountingDetails";
-import { connect } from "react-redux";
+import Years from './accounting/Years';
 import { init } from "../store/actions";
 import PageHeader from "../components/PageHeader";
 import PrivateRoute from '../components/PrivateRoute';
 
-function Main({info, authentication, init}) {
+function Main({authentication, ...props}) {
 	useEffect(() => {
-		init();
-	}, [init]);
+		props.init();
+	}, [props]);
 
 	return (
 		<Router basename="/">
-
-			<Fragment>
+			<>
 				<Switch>
 					<Route exact path={["/login"]} component={null} />
 					<Route path={["/"]} component={PageHeader} />
@@ -31,36 +31,33 @@ function Main({info, authentication, init}) {
 						path="/"
 						component={Home}
 						jwtToken={authentication.jwtToken}
-						onLogoutDone={() => { }}
-						info={info}
 					/>
 					<PrivateRoute
 						exact
 						path="/users"
 						component={Users}
 						jwtToken={authentication.jwtToken}
-						onLogoutDone={() => { }}
-						info={info}
 					/>
 					<PrivateRoute
 						exact
 						path="/useraccounting"
 						component={UserAccounting}
 						jwtToken={authentication.jwtToken}
-						onLogoutDone={() => { }}
-						info={info}
 					/>
 					<PrivateRoute
 						exact
 						path="/useraccountingdetails"
 						component={UserAccountingDetails}
 						jwtToken={authentication.jwtToken}
-						onLogoutDone={() => { }}
-						info={info}
+					/>
+					<PrivateRoute
+						exact
+						path="/years"
+						component={Years}
+						jwtToken={authentication.jwtToken}
 					/>
 				</Switch>
-			</Fragment>
-
+			</>
 		</Router>
 	);
 }
