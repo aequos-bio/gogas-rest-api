@@ -30,8 +30,8 @@ public class JwtTokenHandler implements Serializable {
     private static final String CLAIM_KEY_MANAGER = "manager";
 
     private JWTVerifier verifier;
-    private Algorithm algorithm = Algorithm.HMAC256("4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:");
-
+    private String key = "4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:";
+    private Algorithm algorithm = Algorithm.HMAC256(key);
     @Value("${jwt.duration.minutes:60}")
     private int tokenValidityInMinutes;
 

@@ -4,7 +4,7 @@ import { Container, Row, Col, Table, Alert, Button } from "react-bootstrap";
 import queryString from "query-string";
 import moment from "moment-timezone";
 import _ from "lodash";
-import jwtDecode from "jwt-decode";
+import Jwt from "jsonwebtoken";
 import { getJson } from "../../utils/axios_utils";
 import Excel from "../../excel-50.png";
 import AddTransactionDialog from "./components/AddTransactionDialog";
@@ -72,7 +72,7 @@ function UserAccountingDetails({ authentication, location }) {
 
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
-      const j = jwtDecode(authentication.jwtToken);
+      const j = Jwt.decode(authentication.jwtToken);
       return j;
     }
     return null;

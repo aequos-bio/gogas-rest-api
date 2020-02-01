@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Navbar, Image, Nav, NavDropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import jwtDecode from 'jwt-decode';
+import Jwt from 'jsonwebtoken';
 import { LinkContainer } from 'react-router-bootstrap';
 import { logout } from '../store/actions';
 import Logo from '../logo_aequos.png';
@@ -51,7 +51,7 @@ const styles = {
 function PageHeader({ authentication, info, history, ...props }) {
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
-      const j = jwtDecode(authentication.jwtToken);
+      const j = Jwt.decode(authentication.jwtToken);
       return j;
     }
     return null;
