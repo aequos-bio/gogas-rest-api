@@ -116,7 +116,6 @@ public class TenantRegistry {
             address = req.getServerName();
         }
         String tenantName = extractTenantName(address);
-        log.info("Looking for tenant name in address " + address + ", found: " + tenantName);
         return tenantName;
     }
 
