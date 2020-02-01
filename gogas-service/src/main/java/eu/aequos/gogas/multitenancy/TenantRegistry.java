@@ -25,7 +25,7 @@ public class TenantRegistry {
     private static final String TENANTS_QUERY = "SELECT tenant_id, username, password, url FROM tenants";
     private static final String FLYWAY_BASELINE_VERSION = "20191210_001";
 
-    private static final Pattern BASE_URL_PATTERN = Pattern.compile("http[s]*://([A-Za-z0-9\\.\\-]+)(:\\d+)*");
+    private static final Pattern BASE_URL_PATTERN = Pattern.compile("(http[s]?:\\/\\/)?([A-Za-z0-9\\.\\-]+)(:\\d+)?");
 
     private DriverManagerDataSource masterDataSource;
     private Map<Object, Object> tenantDataSourceMap;
@@ -111,19 +111,24 @@ public class TenantRegistry {
      * @return the tenant id
      */
     public String extractFromHostName(HttpServletRequest req) {
-        String hostName = extractHostNameFromOrigin(req.getHeader("origin"));
-
-        if (hostName == null)
-            hostName = req.getServerName();
-
-        return hostName;
+        String address = req.getHeader("origin");
+        if (address == null) {
+            address = req.getServerName();
+        }
+        String tenantName = extractTenantName(address);
+        log.info("Looking for tenant name in address " + address + ", found: " + tenantName);
+        return tenantName;
     }
 
-    private String extractHostNameFromOrigin(String originHeader) {
-        if (originHeader == null || originHeader.isEmpty())
+    private String extractTenantName(String address) {
+        if (address == null || address.isEmpty())
             return null;
 
-        Matcher matcher = BASE_URL_PATTERN.matcher(originHeader);
-        return matcher.matches() ? matcher.group(1) : null;
+        Matcher matcher = BASE_URL_PATTERN.matcher(address);
+        if (matcher.find()) {
+            String hostName = matcher.group(2);
+            return hostName == null ? null : hostName.split("[.]")[0];
+        }
+        return null;
     }
 }
