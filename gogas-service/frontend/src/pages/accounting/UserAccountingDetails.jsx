@@ -8,11 +8,12 @@ import queryString from "query-string";
 import moment from "moment-timezone";
 import _ from "lodash";
 import Jwt from "jsonwebtoken";
+import {createUseStyles} from 'react-jss'
 import { getJson } from "../../utils/axios_utils";
 import Excel from "../../excel-50.png";
 import AddTransactionDialog from "./components/AddTransactionDialog";
 
-const styles = {
+const useStyles = createUseStyles(() => ({
   excelbtn: {
     width: "35px",
     height: "35px",
@@ -21,10 +22,25 @@ const styles = {
   button: {
     marginRight: "15px",
     marginTop: "2px"
+  },
+  tdDate: {
+    textAlign: 'center',
+    width: '120px',
+  },
+  tdAmount: {
+    textAlign: "right",
+    width: "90px",
+  },
+  tdCenter: {
+    textAlign: 'center',
+  },
+  tdRight: {
+    textAlign: 'right',
   }
-};
+}));
 
 function UserAccountingDetails({ authentication, location }) {
+  const classes = useStyles();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
@@ -97,7 +113,7 @@ function UserAccountingDetails({ authentication, location }) {
   );
 
   const rows = useMemo(() => {
-    if (!transactions) return [];
+    if (!transactions || !transactions.length) return [];
     const rr = [];
     let lastYear = '';
     let lastYearPlus;
@@ -110,16 +126,11 @@ function UserAccountingDetails({ authentication, location }) {
         if (lastYearPlus!==undefined || lastYearMinus!==undefined) {
           rr.push(
             <tr key={`initialamt-${lastYear}`}>
-              <td style={{textAlign:'center'}}>01/01/{lastYear}</td>
-          <td>Saldo iniziale {lastYear}</td>
+              <td className={classes.tdDate}>01/01/{lastYear}</td>
+              <td>Saldo iniziale {lastYear}</td>
               <td/>
               <td/>
-              <td
-            style={{
-              textAlign: "right",
-              width: "90px",
-              color: t.saldo < 0 ? "red" : "inherited"
-            }}
+              <td className={classes.tdAmount} style={{color: t.saldo < 0 ? "red" : "inherited"}}
           >
             {t.saldo >= 0 ? "+ " : ""}
             {t.saldo.toFixed(2)}
@@ -129,13 +140,13 @@ function UserAccountingDetails({ authentication, location }) {
 
           rr.push(
             <tr key={`totals-${lastYear}`}>
-              <td colSpan='2' style={{textAlign: 'right'}}>
+              <td colSpan='2' className={classes.tdRight}>
                 <strong>Totale anno {lastYear}</strong>
               </td>
-              <td style={{textAlign:'right'}}>
+              <td className={classes.tdAmount} >
                 <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
               </td>
-              <td style={{textAlign:'right'}}>
+              <td className={classes.tdAmount} >
                 <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
               </td>
               <td/>
@@ -159,7 +170,7 @@ function UserAccountingDetails({ authentication, location }) {
       rr.push(
         // eslint-disable-next-line react/no-array-index-key
         <tr key={`transaction-${i}`}>
-          <td style={{ textAlign: "center", width: "120px" }}>
+          <td className={classes.tdDate}>
             {moment(t.date).format("DD/MM/YYYY")}
           </td>
           <td>
@@ -167,23 +178,17 @@ function UserAccountingDetails({ authentication, location }) {
             {t.friend ? `(${t.friend}) ` : ""}
             {t.description}
           </td>
-          <td style={{ textAlign: "right", width: "90px" }}>
+          <td className={classes.tdAmount} >
             {t.sign === "+" || t.amount < 0
               ? Math.abs(t.amount).toFixed(2)
               : ""}
           </td>
-          <td style={{ textAlign: "right", width: "90px" }}>
+          <td className={classes.tdAmount} >
             {t.sign === "-" && t.amount >= 0
               ? Math.abs(t.amount).toFixed(2)
               : ""}
           </td>
-          <td
-            style={{
-              textAlign: "right",
-              width: "90px",
-              color: t.saldo < 0 ? "red" : "inherited"
-            }}
-          >
+          <td className={classes.tdAmount} style={{color: t.saldo < 0 ? "red" : "inherited"}}>
             {t.saldo >= 0 ? "+ " : ""}
             {t.saldo.toFixed(2)}
           </td>
@@ -193,11 +198,11 @@ function UserAccountingDetails({ authentication, location }) {
     
     rr.push(
       <tr key={`initialamt-${lastYear}`}>
-        <td style={{textAlign:'center'}}>01/01/{lastYear}</td>
+        <td className={classes.tdDate}>01/01/{lastYear}</td>
         <td>Saldo iniziale {lastYear}</td>
         <td/>
         <td/>
-        <td style={{textAlign: "right"}}>
+        <td className={classes.tdAmount}>
           0.00
         </td>
       </tr>
@@ -205,13 +210,13 @@ function UserAccountingDetails({ authentication, location }) {
 
     rr.push(
       <tr key={`totals-${lastYear}`}>
-        <td colSpan='2' style={{textAlign: 'right'}}>
+        <td colSpan='2' className={classes.tdRight}>
           <strong>Totale anno {lastYear}</strong>
         </td>
-        <td style={{textAlign:'right'}}>
+        <td className={classes.tdAmount}>
           <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
         </td>
-        <td style={{textAlign:'right'}}>
+        <td className={classes.tdAmount}>
           <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
         </td>
         <td/>
@@ -219,7 +224,7 @@ function UserAccountingDetails({ authentication, location }) {
     )
 
     return rr;
-  }, [transactions]);
+  }, [transactions, classes]);
 
   return (
     <Container fluid>
@@ -230,18 +235,16 @@ function UserAccountingDetails({ authentication, location }) {
             Dettaglio situazione contabile di{" "}
             {`${user.nome || ""} ${user.cognome || ""}`}
             <img
-              className="pull-right"
+              className={`${classes.excelbtn} pull-right`}
               src={Excel}
               alt="excel"
               title="Esporta dati su file Excel"
-              style={styles.excelbtn}
               onClick={downloadXls}
             />
             {jwt && jwt.sub && jwt.role === "A" ? (
               <Button
-                className="pull-right"
+                className={`${classes.button} pull-right`}
                 size="sm"
-                style={styles.button}
                 variant="outline-primary"
                 onClick={() => setShowDlg(true)}
               >
@@ -254,9 +257,9 @@ function UserAccountingDetails({ authentication, location }) {
               <tr>
                 <th>Data</th>
                 <th>Descrizione</th>
-                <th style={{ textAlign: "center" }}>Accrediti</th>
-                <th style={{ textAlign: "center" }}>Addebiti</th>
-                <th style={{ textAlign: "center" }}>Saldo</th>
+                <th className={classes.tdCenter}>Accrediti</th>
+                <th className={classes.tdCenter}>Addebiti</th>
+                <th className={classes.tdCenter}>Saldo</th>
               </tr>
             </thead>
 
@@ -268,11 +271,11 @@ function UserAccountingDetails({ authentication, location }) {
               <tr>
                 <th />
                 <th>TOTALE</th>
-                <th style={{ textAlign: "right" }}>
-                  {totals.accrediti.toFixed(2)}
+                <th className={classes.tdAmount}>
+                  {totals && !Number.isNaN(totals.accrediti) ? totals.accrediti.toFixed(2) : ''}
                 </th>
-                <th style={{ textAlign: "right" }}>
-                  {totals.addebiti.toFixed(2)}
+                <th className={classes.tdAmount}>
+                  {totals && !Number.isNaN(totals.addebiti) ? totals.addebiti.toFixed(2) : ''}
                 </th>
                 <th />
               </tr>

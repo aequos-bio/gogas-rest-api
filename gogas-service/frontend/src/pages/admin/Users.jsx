@@ -1,10 +1,31 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useCallback, useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { Container, Row, Col, Table, Alert } from "react-bootstrap";
 import _ from "lodash";
+import {createUseStyles} from 'react-jss'
+import swal from "sweetalert";
 import { getJson } from "../../utils/axios_utils";
 
+const useStyles = createUseStyles(() => ({
+  iconbtn: {
+    cursor: "pointer"
+  },
+  tdIcon: {
+    color: "red", 
+    textAlign: "center",
+    width: '30px',
+  },
+  tdButtons: {
+    fontSize: '130%', 
+    textAlign: 'center',
+  }
+}));
+
 function Users({ info }) {
+  const classes = useStyles();
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(undefined);
   const sort = info["visualizzazione.utenti"]
@@ -58,22 +79,32 @@ function Users({ info }) {
     [users, sort]
   );
 
+  const editUser = useCallback((id) => {
+    console.warn(`Edit user ${id}`);
+    swal('Sorry', 'Non implementato')
+  }, []);
+  
+  const deleteUser = useCallback((id) => {
+    console.warn(`Delete user ${id}`);
+    swal('Sorry', 'Non implementato')
+  }, []);
+
   return (
-    <Container fluid style={{ backgroundColor: "white" }}>
+    <Container fluid>
       {error ? <Alert variant="danger">{error}</Alert> : []}
       <Row>
         <Col>
           <Table striped bordered hover size="sm">
             <thead>
               <tr>
+                <th className={classes.tdLink}/>
                 <th>{sort === "NC" ? "Nome" : "Cognome"}</th>
                 <th>{sort === "NC" ? "Cognome" : "Nome"}</th>
                 <th>Username</th>
                 <th>Email</th>
                 <th>Ruolo</th>
                 <th>Ref amico</th>
-                <th style={{ width: "50px" }}>Inattivo</th>
-                {/*                <th style={{ width: '70px' }} /> */}
+                <th/>
               </tr>
             </thead>
 
@@ -81,28 +112,24 @@ function Users({ info }) {
               {users
                 ? users.map(u => (
                     <tr key={`user-${u.idUtente}`}>
+                      <td className={classes.tdIcon}>
+                        {u.attivo ? (
+                          ""
+                        ) : (
+                          <span className="fa fa-ban"/>
+                        )}
+                      </td>
                       <td>{sort === "NC" ? u.nome : u.cognome}</td>
                       <td>{sort === "NC" ? u.cognome : u.nome}</td>
                       <td>{u.username}</td>
                       <td>{u.email}</td>
                       <td>{mapRoles(u)}</td>
                       <td>{mapRef(u.idReferente)}</td>
-                      <td style={{ textAlign: "center" }}>
-                        {/* <Switch disabled={true} checked={u.active} /> */}
-                        {u.attivo ? (
-                          ""
-                        ) : (
-                          <span
-                            className="fa fa-ban"
-                            style={{ color: "red" }}
-                          />
-                        )}
+                      <td className={classes.tdButtons}>
+                        <span className={`${classes.iconbtn} fa fa-edit`} onClick={() => { editUser(u.idUtente) }} />
+                        {'   '}
+                        <span className={`${classes.iconbtn} fa fa-remove`} onClick={() => { deleteUser(u.idUtente) }}/>
                       </td>
-                      {/* <td style={{ fontSize: '130%', textAlign: 'center' }}>
-                    <span className='fa fa-edit' onClick={() => { console.log('Edit user ' + u.id) }} style={styles.iconbtn} />
-                    {'   '}
-                    <span className='fa fa-remove' onClick={() => { console.log('Delete user ' + u.id) }} style={styles.iconbtn} />
-                  </td> */}
                     </tr>
                   ))
                 : []}

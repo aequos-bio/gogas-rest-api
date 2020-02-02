@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { connect } from "react-redux";
@@ -33,7 +34,7 @@ const Years = () => {
           {y.closed ? "Chiuso" : "Aperto"}
         </td>
         <td style={{textAlign:'center'}}>
-          {y.closed || i===0 ? null : 
+          {y.closed || i===0 ? (i===0 ? <i>in corso</i> : null) : 
             <Button size="sm" variant="outline-primary">
               Chiudi
             </Button>
