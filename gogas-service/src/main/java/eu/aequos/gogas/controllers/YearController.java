@@ -19,7 +19,7 @@ public class YearController {
 
     @GetMapping("/current")
     public @ResponseBody Year getOpenYear() {
-        List<Year> openyears = repo.findYearsByClosedFalseOrderByYearAsc();
+        List<Year> openyears = repo.findYearsByClosedFalseOrderByYearDesc();
         return openyears==null || openyears.isEmpty() ? null : openyears.get(0);
     }
 

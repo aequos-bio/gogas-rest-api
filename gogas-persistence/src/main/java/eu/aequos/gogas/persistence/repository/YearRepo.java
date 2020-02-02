@@ -9,7 +9,7 @@ public interface YearRepo extends CrudRepository<Year, Integer> {
     @Override
     List<Year> findAll();
 
-    List<Year> findYearsByClosedFalseOrderByYearAsc();
+    List<Year> findYearsByClosedFalseOrderByYearDesc();
 
     boolean existsYearByYearAndClosed(int year, boolean closed);
 }
