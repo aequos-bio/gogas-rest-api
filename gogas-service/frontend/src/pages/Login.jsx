@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   Container,
   Row,
@@ -9,6 +9,8 @@ import {
   Button,
   Alert
 } from "react-bootstrap";
+import moment from 'moment-timezone';
+import Jwt from 'jsonwebtoken';
 import { Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import "../style/login.scss";
@@ -28,7 +30,19 @@ function Login({ authentication, location, history, info, ...props }) {
     [props, history]
   );
 
-  return authentication && authentication.jwtToken ? (
+  const validJwt = useMemo(() => {
+    if (authentication && authentication.jwtToken) {
+      const jwt = Jwt.decode(authentication.jwtToken);
+			if (moment(jwt.exp * 1000).isBefore(moment())) {
+				return false;
+			}
+			return true;
+    } 
+    return false;
+
+  }, [authentication])
+
+  return validJwt ? (
     <Redirect to={location.state ? location.state.from : "/"} />
   ) : (
     <Container>

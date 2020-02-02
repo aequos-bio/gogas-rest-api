@@ -89,7 +89,7 @@ function PageHeader({ authentication, info, history, ...props }) {
         </Nav>
 
         <Navbar.Text>
-          <NavDropdown alignRight title={<span style={{ marginLeft: '-16px' }}><span className='fa fa-user-circle-o' /> {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}</span>}>
+          <NavDropdown alignRight title={<span style={{ marginLeft: '-16px' }}>{jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}</span>}>
             {jwt ?
               <LinkContainer to={`/useraccountingdetails?userId=${jwt.id}`} style={{ color: 'var(--gray)' }} >
                 <NavDropdown.Item>Saldo</NavDropdown.Item>

@@ -11,7 +11,7 @@ import { init } from "../store/actions";
 import PageHeader from "../components/PageHeader";
 import PrivateRoute from '../components/PrivateRoute';
 
-function Main({authentication, ...props}) {
+function Routes({authentication, ...props}) {
 	useEffect(() => {
 		props.init();
 	}, [props]);
@@ -75,4 +75,4 @@ const mapDispatchToProps = {
 export default connect(
 	mapStateToProps,
 	mapDispatchToProps
-)(Main);
+)(Routes);

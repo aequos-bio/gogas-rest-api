@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { connect } from "react-redux";
 import { Container, Row, Col, Table, Alert, Button } from "react-bootstrap";
@@ -54,8 +57,11 @@ function UserAccountingDetails({ authentication, location }) {
             const m = tt[f].amount * (tt[f].sign === "-" ? -1 : 1);
             tt[f].saldo = saldo + m;
             saldo = tt[f].saldo;
-            if (m < 0) addebiti += -1 * m;
-            else accrediti += m;
+            if (m < 0) {
+              addebiti += -1 * m;
+            } else {
+              accrediti += m;
+            }
           }
         setTransactions(tt);
         setTotals({ accrediti, addebiti });
@@ -89,6 +95,131 @@ function UserAccountingDetails({ authentication, location }) {
     },
     [setShowDlg, reload]
   );
+
+  const rows = useMemo(() => {
+    if (!transactions) return [];
+    const rr = [];
+    let lastYear = '';
+    let lastYearPlus;
+    let lastYearMinus;
+
+    transactions.forEach((t, i) => {
+      const year = moment(t.date).format("YYYY");
+      if (year!==lastYear) {
+
+        if (lastYearPlus!==undefined || lastYearMinus!==undefined) {
+          rr.push(
+            <tr key={`initialamt-${lastYear}`}>
+              <td style={{textAlign:'center'}}>01/01/{lastYear}</td>
+          <td>Saldo iniziale {lastYear}</td>
+              <td/>
+              <td/>
+              <td
+            style={{
+              textAlign: "right",
+              width: "90px",
+              color: t.saldo < 0 ? "red" : "inherited"
+            }}
+          >
+            {t.saldo >= 0 ? "+ " : ""}
+            {t.saldo.toFixed(2)}
+          </td>
+            </tr>    
+          );
+
+          rr.push(
+            <tr key={`totals-${lastYear}`}>
+              <td colSpan='2' style={{textAlign: 'right'}}>
+                <strong>Totale anno {lastYear}</strong>
+              </td>
+              <td style={{textAlign:'right'}}>
+                <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
+              </td>
+              <td style={{textAlign:'right'}}>
+                <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
+              </td>
+              <td/>
+            </tr>
+          )
+        }
+          rr.push(
+            <tr key={`year-${year}`}>
+              <td colSpan='5'>
+                <strong>Anno {year}</strong>
+              </td>
+            </tr>
+          );
+        lastYearPlus = 0;
+        lastYearMinus = 0;  
+        lastYear = year;
+      }
+      lastYearPlus += (t.sign === "+" ? Math.abs(t.amount) : 0);
+      lastYearMinus += (t.sign === "-" ? Math.abs(t.amount) : 0);
+
+      rr.push(
+        // eslint-disable-next-line react/no-array-index-key
+        <tr key={`transaction-${i}`}>
+          <td style={{ textAlign: "center", width: "120px" }}>
+            {moment(t.date).format("DD/MM/YYYY")}
+          </td>
+          <td>
+            {t.reason ? `${t.reason} - ` : ""}
+            {t.friend ? `(${t.friend}) ` : ""}
+            {t.description}
+          </td>
+          <td style={{ textAlign: "right", width: "90px" }}>
+            {t.sign === "+" || t.amount < 0
+              ? Math.abs(t.amount).toFixed(2)
+              : ""}
+          </td>
+          <td style={{ textAlign: "right", width: "90px" }}>
+            {t.sign === "-" && t.amount >= 0
+              ? Math.abs(t.amount).toFixed(2)
+              : ""}
+          </td>
+          <td
+            style={{
+              textAlign: "right",
+              width: "90px",
+              color: t.saldo < 0 ? "red" : "inherited"
+            }}
+          >
+            {t.saldo >= 0 ? "+ " : ""}
+            {t.saldo.toFixed(2)}
+          </td>
+        </tr>
+      );
+    });
+    
+    rr.push(
+      <tr key={`initialamt-${lastYear}`}>
+        <td style={{textAlign:'center'}}>01/01/{lastYear}</td>
+        <td>Saldo iniziale {lastYear}</td>
+        <td/>
+        <td/>
+        <td style={{textAlign: "right"}}>
+          0.00
+        </td>
+      </tr>
+    );
+
+    rr.push(
+      <tr key={`totals-${lastYear}`}>
+        <td colSpan='2' style={{textAlign: 'right'}}>
+          <strong>Totale anno {lastYear}</strong>
+        </td>
+        <td style={{textAlign:'right'}}>
+          <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
+        </td>
+        <td style={{textAlign:'right'}}>
+          <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
+        </td>
+        <td/>
+      </tr>
+    )
+
+    return rr;
+  }, [transactions]);
 
   return (
     <Container fluid>
@@ -130,41 +261,7 @@ function UserAccountingDetails({ authentication, location }) {
             </thead>
 
             <tbody>
-              {transactions
-                ? transactions.map((t, i) => (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <tr key={`transaction-${i}`}>
-                      <td style={{ textAlign: "center", width: "120px" }}>
-                        {moment(t.date).format("DD/MM/YYYY")}
-                      </td>
-                      <td>
-                        {t.reason ? `${t.reason} - ` : ""}
-                        {t.friend ? `(${t.friend}) ` : ""}
-                        {t.description}
-                      </td>
-                      <td style={{ textAlign: "right", width: "90px" }}>
-                        {t.sign === "+" || t.amount < 0
-                          ? Math.abs(t.amount).toFixed(2)
-                          : ""}
-                      </td>
-                      <td style={{ textAlign: "right", width: "90px" }}>
-                        {t.sign === "-" && t.amount >= 0
-                          ? Math.abs(t.amount).toFixed(2)
-                          : ""}
-                      </td>
-                      <td
-                        style={{
-                          textAlign: "right",
-                          width: "90px",
-                          color: t.saldo < 0 ? "red" : "inherited"
-                        }}
-                      >
-                        {t.saldo >= 0 ? "+ " : ""}
-                        {t.saldo.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))
-                : []}
+              {rows}
             </tbody>
 
             <tfoot>

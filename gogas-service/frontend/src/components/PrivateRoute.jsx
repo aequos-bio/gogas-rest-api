@@ -1,13 +1,29 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from "react";
+import React, {useMemo} from "react";
 import { Route, Redirect } from "react-router-dom";
+import Jwt from 'jsonwebtoken';
+import moment from 'moment-timezone';
+import Cookies from "cookies-js";
 
 const PrivateRoute = ({ component: Component, ...rest }) => {
+	const validJwt = useMemo(() => {
+		if (rest.jwtToken) {
+			const jwt = Jwt.decode(rest.jwtToken);
+			if (moment(jwt.exp * 1000).isBefore(moment())) {
+				Cookies.expire("jwt-token");
+				return false;
+			}
+			return true;
+		} 
+
+		return false;
+	}, [rest.jwtToken]);
+
 	return (
 		<Route
 			{...rest}
 			render={props => {
-				if (rest.jwtToken) {
+				if (validJwt) {
 					return (
 						<Component
 							{...props}
@@ -15,7 +31,6 @@ const PrivateRoute = ({ component: Component, ...rest }) => {
 					);
 				}
 
-				console.warn("redirecting from %s to login", rest.path, rest.jwtToken)
 				return (
 					<Redirect
 						to={{
