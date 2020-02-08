@@ -178,7 +178,7 @@ public class ExcelExport {
             cell0.setCellStyle(dateStyle);
             cell0.setCellValue(java.sql.Date.valueOf(t.getDate().toString()));
 
-            row.createCell(1).setCellValue(t.getDescription());
+            row.createCell(1).setCellValue((t.getReason()==null || t.getReason().isEmpty() ? "" : t.getReason() + " - ") + t.getDescription());
 
             double amount = t.getAmount().doubleValue() * (t.getSign().equals("-") ? -1 : 1);
 
