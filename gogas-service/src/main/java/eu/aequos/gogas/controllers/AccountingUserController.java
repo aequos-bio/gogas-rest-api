@@ -30,6 +30,7 @@ public class AccountingUserController {
         this.configurationService = configurationService;
     }
 
+    @CanViewBalance
     @GetMapping(value = "{userId}/balance", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public BigDecimal getBalance(@PathVariable String userId) {
         return accountingService.getBalance(userId);

@@ -48,7 +48,8 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center'
   },
   balance: {
-    fontSize: '80%'
+    fontSize: '80%',
+    color: theme.palette.secondary.main
   },
   balanceRed: {
     color: theme.palette.warning.main
@@ -80,11 +81,15 @@ const NavBar = ({authentication, info, history, enqueueSnackbar, ...props}) => {
 
   useEffect(() => {
     if (!jwt || !jwt.id) return;
-    getJson(`/api/accounting/user/balance/${jwt.id}`)
-      .then(response => {
-        setBalance(response);
+    getJson(`/api/accounting/user/${jwt.id}/balance`)
+      .then(b => {
+        if (b.error) {
+          enqueueSnackbar(`Caricamento del saldo: ${b.errorMessage}`,{variant:'error'})
+        } else {
+          setBalance(b);
+        }
       }).catch(err => {
-        enqueueSnackbar(err,{variant:'error'});
+        enqueueSnackbar(`Caricamento del saldo: ${err.debugMessage || err.errorMessage}`,{variant:'error'})
       });
   }, [jwt, enqueueSnackbar]);
   
@@ -119,11 +124,11 @@ const NavBar = ({authentication, info, history, enqueueSnackbar, ...props}) => {
               <AccountCircleIcon />
             </IconButton>
             <div className={classes.username}>
-              <span onClick={handleMenu}>
+              <span>
                 {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}
               </span>
-              <span className={`${classes.balance} ${balance && balance.totale<0 ? classes.balanceRed : null}`} onClick={openBalanceDetail}>
-                Saldo { balance && balance.totale ? balance.totale : '0.00'} €
+              <span className={`${classes.balance} ${balance && balance<0 ? classes.balanceRed : null}`} onClick={openBalanceDetail}>
+                Saldo { balance ? balance.totale : '0.00'} €
               </span>
             </div>
 
