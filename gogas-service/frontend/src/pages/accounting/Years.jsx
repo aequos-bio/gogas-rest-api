@@ -2,76 +2,82 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { connect } from "react-redux";
-import { Container, Row, Col, Table, Alert, Button } from "react-bootstrap";
+import { 
+  Container, 
+  Button, 
+  TableContainer, 
+  Table, 
+  TableHead, 
+  TableRow, 
+  TableCell, 
+  TableBody, 
+} from '@material-ui/core';
+import { withSnackbar } from 'notistack';
 import _ from "lodash";
 import { getJson } from "../../utils/axios_utils";
+import PageTitle from '../../components/PageTitle';
 
-const Years = () => {
-  const [error, setError] = useState(undefined);
+const Years = ({enqueueSnackbar}) => {
   const [years, setYears] = useState([]);
   
   const reload = useCallback(() => {
     getJson("/api/year/all", {}).then(yy => {
       if (yy.error) {
-        setError(yy.errorMessage);
+        enqueueSnackbar(yy.errorMessage,{variant:'error'})
       } else {
         setYears(_.orderBy(yy.data, 'year', 'desc'));
       }
     });
-  }, []);
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
     reload();
   }, [reload]);
 
+  const closeYear = useCallback((y) => {
+    console.warn('closing year', y);
+    enqueueSnackbar('Funzione non implementata!',{variant:'error'})
+  }, [enqueueSnackbar])
+
   const rows = useMemo(() => {
     return years.map((y,i) => (
-      <tr>
-        <td>
+      <TableRow key={`year-${y.year}`}>
+        <TableCell>
           {y.year}
-        </td>
-        <td style={{color:y.closed?'red':'black'}}>
-          {y.closed ? "Chiuso" : "Aperto"}
-        </td>
-        <td style={{textAlign:'center'}}>
-          {y.closed || i===0 ? (i===0 ? <i>in corso</i> : null) : 
-            <Button size="sm" variant="outline-primary">
+        </TableCell>
+        <TableCell style={{color:y.closed?'red':'black'}}>
+          {y.closed ? "Chiuso" : `Aperto${i===0 ? ', in corso' : ''}`}
+        </TableCell>
+        <TableCell align='right'>
+          {y.closed || i===0 ? null : 
+            <Button variant="outlined" size="small" color="secondary" onClick={() => closeYear(y)}>
               Chiudi
             </Button>
           }
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     ));
-  }, [years]);
+  }, [years,closeYear]);
 
   return (
-    <Container fluid>
-      {error ? <Alert variant="danger">{error}</Alert> : []}
-      <Row>
-        <Col>
-          <h2>
-            Anni contabili
-          </h2>
-        </Col>
-      </Row>
+    <Container maxWidth='xl' >
+      <PageTitle title='Anni contabili'/>
 
-      <Row>
-        <Col lg={6} md={6} sm={12}>
-          <Table striped bordered hover size="sm">
-            <thead>
-              <tr>
-                <th>Anno</th>
-                <th>Stato</th>
-                <th style={{width:'30%'}}/>
-              </tr>
-            </thead>
+      <TableContainer>
+      <Table >
+          <TableHead>
+            <TableRow>
+              <TableCell>Anno</TableCell>
+              <TableCell>Stato</TableCell>
+              <TableCell style={{width:'30%'}}/>
+            </TableRow>
+          </TableHead>
 
-            <tbody>
-              {rows}
-            </tbody>
-          </Table>
-        </Col>
-      </Row>
+          <TableBody>
+            {rows}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Container>
   );
 }
@@ -87,4 +93,4 @@ const mapDispatchToProps = {};
 export default connect(
   mapStateToProps, 
   mapDispatchToProps
-)(Years);
+)(withSnackbar(Years));

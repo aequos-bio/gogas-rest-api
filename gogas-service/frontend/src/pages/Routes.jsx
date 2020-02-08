@@ -2,13 +2,13 @@ import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Home from "./Home";
+import NavBar from "../components/NavBar";
 import Login from "./Login";
 import Users from "./admin/Users";
 import UserAccounting from "./accounting/UserAccounting";
 import UserAccountingDetails from "./accounting/UserAccountingDetails";
 import Years from './accounting/Years';
 import { init } from "../store/actions";
-import PageHeader from "../components/PageHeader";
 import PrivateRoute from '../components/PrivateRoute';
 
 function Routes({authentication, ...props}) {
@@ -21,7 +21,7 @@ function Routes({authentication, ...props}) {
 			<>
 				<Switch>
 					<Route exact path={["/login"]} component={null} />
-					<Route path={["/"]} component={PageHeader} />
+					<Route path={["/"]} component={NavBar} />
 				</Switch>
 
 				<Switch>

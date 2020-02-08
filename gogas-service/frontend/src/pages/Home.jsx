@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Typography } from '@material-ui/core';
 import { getJson } from '../utils/axios_utils';
 
 function Home() {
@@ -11,12 +11,10 @@ function Home() {
 	}, []);
 
 	return (
-		<Container fluid style={{backgroundColor: 'white'}}>
-			<Row>
-				<Col>
-					<h2>Home {year ? year.year : null}</h2>
-				</Col>
-			</Row>
+		<Container>
+			<Typography variant='h4' component='h4'>
+				Home {year ? year.year : null}
+			</Typography>
 		</Container>
 	);
 }

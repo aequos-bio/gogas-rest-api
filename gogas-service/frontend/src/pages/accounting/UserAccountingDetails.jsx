@@ -1,57 +1,60 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { connect } from "react-redux";
-import { Container, Row, Col, Table, Alert, Button } from "react-bootstrap";
+import {
+  Container,
+  Fab,
+  Button,
+  TableContainer,
+  Table,
+  TableHead,
+  TableFooter,
+  TableRow,
+  TableCell,
+  TableBody,
+} from '@material-ui/core';
+import { 
+  AddSharp as PlusIcon,
+  SaveAltSharp as SaveIcon 
+} from '@material-ui/icons';
+import { makeStyles } from '@material-ui/core/styles';
+import { withSnackbar } from 'notistack';
 import queryString from "query-string";
 import moment from "moment-timezone";
 import _ from "lodash";
 import Jwt from "jsonwebtoken";
-import {createUseStyles} from 'react-jss'
 import { getJson } from "../../utils/axios_utils";
-import Excel from "../../excel-50.png";
-import AddTransactionDialog from "./components/AddTransactionDialog";
+import NewTransactionDialog from "./components/NewTransactionDialog";
+import PageTitle from '../../components/PageTitle';
 
-const useStyles = createUseStyles(() => ({
-  excelbtn: {
-    width: "35px",
-    height: "35px",
-    cursor: "pointer"
-  },
-  button: {
-    marginRight: "15px",
-    marginTop: "2px"
-  },
-  tdDate: {
-    textAlign: 'center',
-    width: '120px',
+const useStyles = makeStyles((theme) => ({
+  fab: {
+    position:'fixed',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
   },
   tdAmount: {
     textAlign: "right",
     width: "90px",
   },
-  tdCenter: {
-    textAlign: 'center',
-  },
-  tdRight: {
-    textAlign: 'right',
+  footercell: {
+    '& td': {
+      fontSize: '.875rem'
+    }
   }
 }));
 
-function UserAccountingDetails({ authentication, location }) {
+function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   const classes = useStyles();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
   const [totals, setTotals] = useState({ accrediti: 0, addebiti: 0 });
-  const [error, setError] = useState(undefined);
   const [showDlg, setShowDlg] = useState(false);
 
   const reload = useCallback(() => {
     getJson(`/api/user/${search.userId}`, {}).then(u => {
       if (u.error) {
-        setError(u.errorMessage);
+        enqueueSnackbar(u.errorMessage, { variant: 'error' })
       } else setUser(u);
     });
 
@@ -60,7 +63,7 @@ function UserAccountingDetails({ authentication, location }) {
       {}
     ).then(t => {
       if (t.error) {
-        setError(user.errorMessage);
+        enqueueSnackbar(t.errorMessage, { variant: 'error' })
         setTransactions([]);
         setTotals({ accrediti: 0, addebiti: 0 });
       } else {
@@ -83,7 +86,7 @@ function UserAccountingDetails({ authentication, location }) {
         setTotals({ accrediti, addebiti });
       }
     });
-  }, [search.userId, user.errorMessage]);
+  }, [search.userId, enqueueSnackbar]);
 
   const downloadXls = useCallback(() => {
     window.open(
@@ -121,47 +124,47 @@ function UserAccountingDetails({ authentication, location }) {
 
     transactions.forEach((t, i) => {
       const year = moment(t.date).format("YYYY");
-      if (year!==lastYear) {
+      if (year !== lastYear) {
 
-        if (lastYearPlus!==undefined || lastYearMinus!==undefined) {
+        if (lastYearPlus !== undefined || lastYearMinus !== undefined) {
           rr.push(
-            <tr key={`initialamt-${lastYear}`}>
-              <td className={classes.tdDate}>01/01/{lastYear}</td>
-              <td>Saldo iniziale {lastYear}</td>
-              <td/>
-              <td/>
-              <td className={classes.tdAmount} style={{color: t.saldo < 0 ? "red" : "inherited"}}
-          >
-            {t.saldo >= 0 ? "+ " : ""}
-            {t.saldo.toFixed(2)}
-          </td>
-            </tr>    
+            <TableRow key={`initialamt-${lastYear}`}>
+              <TableCell align='center'>01/01/{lastYear}</TableCell>
+              <TableCell>Saldo iniziale {lastYear}</TableCell>
+              <TableCell />
+              <TableCell />
+              <TableCell className={classes.tdAmount} style={{ color: t.saldo < 0 ? "red" : "inherited" }}
+              >
+                {t.saldo >= 0 ? "+ " : ""}
+                {t.saldo.toFixed(2)}
+              </TableCell>
+            </TableRow>
           );
 
           rr.push(
-            <tr key={`totals-${lastYear}`}>
-              <td colSpan='2' className={classes.tdRight}>
+            <TableRow key={`totals-${lastYear}`}>
+              <TableCell colSpan='2' align='right'>
                 <strong>Totale anno {lastYear}</strong>
-              </td>
-              <td className={classes.tdAmount} >
+              </TableCell>
+              <TableCell className={classes.tdAmount} >
                 <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
-              </td>
-              <td className={classes.tdAmount} >
+              </TableCell>
+              <TableCell className={classes.tdAmount} >
                 <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
-              </td>
-              <td/>
-            </tr>
+              </TableCell>
+              <TableCell />
+            </TableRow>
           )
         }
-          rr.push(
-            <tr key={`year-${year}`}>
-              <td colSpan='5'>
-                <strong>Anno {year}</strong>
-              </td>
-            </tr>
-          );
+        rr.push(
+          <TableRow key={`year-${year}`}>
+            <TableCell colSpan='5'>
+              <strong>Anno {year}</strong>
+            </TableCell>
+          </TableRow>
+        );
         lastYearPlus = 0;
-        lastYearMinus = 0;  
+        lastYearMinus = 0;
         lastYear = year;
       }
       lastYearPlus += (t.sign === "+" ? Math.abs(t.amount) : 0);
@@ -169,126 +172,110 @@ function UserAccountingDetails({ authentication, location }) {
 
       rr.push(
         // eslint-disable-next-line react/no-array-index-key
-        <tr key={`transaction-${i}`}>
-          <td className={classes.tdDate}>
+        <TableRow key={`transaction-${i}`}>
+          <TableCell align='center'>
             {moment(t.date).format("DD/MM/YYYY")}
-          </td>
-          <td>
+          </TableCell>
+          <TableCell>
             {t.reason ? `${t.reason} - ` : ""}
             {t.friend ? `(${t.friend}) ` : ""}
             {t.description}
-          </td>
-          <td className={classes.tdAmount} >
+          </TableCell>
+          <TableCell className={classes.tdAmount} >
             {t.sign === "+" || t.amount < 0
               ? Math.abs(t.amount).toFixed(2)
               : ""}
-          </td>
-          <td className={classes.tdAmount} >
+          </TableCell>
+          <TableCell className={classes.tdAmount} >
             {t.sign === "-" && t.amount >= 0
               ? Math.abs(t.amount).toFixed(2)
               : ""}
-          </td>
-          <td className={classes.tdAmount} style={{color: t.saldo < 0 ? "red" : "inherited"}}>
+          </TableCell>
+          <TableCell className={classes.tdAmount} style={{ color: t.saldo < 0 ? "red" : "inherited" }}>
             {t.saldo >= 0 ? "+ " : ""}
             {t.saldo.toFixed(2)}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
       );
     });
-    
+
     rr.push(
-      <tr key={`initialamt-${lastYear}`}>
-        <td className={classes.tdDate}>01/01/{lastYear}</td>
-        <td>Saldo iniziale {lastYear}</td>
-        <td/>
-        <td/>
-        <td className={classes.tdAmount}>
+      <TableRow key={`initialamt-${lastYear}`}>
+        <TableCell align='center'>01/01/{lastYear}</TableCell>
+        <TableCell>Saldo iniziale {lastYear}</TableCell>
+        <TableCell />
+        <TableCell />
+        <TableCell className={classes.tdAmount}>
           0.00
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     );
 
     rr.push(
-      <tr key={`totals-${lastYear}`}>
-        <td colSpan='2' className={classes.tdRight}>
+      <TableRow key={`totals-${lastYear}`}>
+        <TableCell colSpan='2' align='right'>
           <strong>Totale anno {lastYear}</strong>
-        </td>
-        <td className={classes.tdAmount}>
+        </TableCell>
+        <TableCell className={classes.tdAmount}>
           <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
-        </td>
-        <td className={classes.tdAmount}>
+        </TableCell>
+        <TableCell className={classes.tdAmount}>
           <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
-        </td>
-        <td/>
-      </tr>
+        </TableCell>
+        <TableCell />
+      </TableRow>
     )
 
     return rr;
   }, [transactions, classes]);
 
   return (
-    <Container fluid>
-      {error ? <Alert variant="danger">{error}</Alert> : []}
-      <Row>
-        <Col>
-          <h2>
-            Dettaglio situazione contabile di{" "}
-            {`${user.nome || ""} ${user.cognome || ""}`}
-            <img
-              className={`${classes.excelbtn} pull-right`}
-              src={Excel}
-              alt="excel"
-              title="Esporta dati su file Excel"
-              onClick={downloadXls}
-            />
-            {jwt && jwt.sub && jwt.role === "A" ? (
-              <Button
-                className={`${classes.button} pull-right`}
-                size="sm"
-                variant="outline-primary"
-                onClick={() => setShowDlg(true)}
-              >
-                Nuovo movimento
-              </Button>
-            ) : null}
-          </h2>
-          <Table striped bordered hover size="sm">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Descrizione</th>
-                <th className={classes.tdCenter}>Accrediti</th>
-                <th className={classes.tdCenter}>Addebiti</th>
-                <th className={classes.tdCenter}>Saldo</th>
-              </tr>
-            </thead>
+    <Container maxWidth='xl'>
+      <PageTitle title={`Dettaglio situazione contabile di ${user.nome || ""} ${user.cognome || ""}`}>
+        <Button onClick={downloadXls} startIcon={<SaveIcon/>}>
+          Esporta XLS
+        </Button>
+      </PageTitle>
 
-            <tbody>
-              {rows}
-            </tbody>
+      {jwt && jwt.sub && jwt.role === "A" ? (
+        <Fab className={classes.fab} color='secondary' onClick={() => setShowDlg(true)}>
+          <PlusIcon />
+        </Fab>
+      ) : null}
 
-            <tfoot>
-              <tr>
-                <th />
-                <th>TOTALE</th>
-                <th className={classes.tdAmount}>
-                  {totals && !Number.isNaN(totals.accrediti) ? totals.accrediti.toFixed(2) : ''}
-                </th>
-                <th className={classes.tdAmount}>
-                  {totals && !Number.isNaN(totals.addebiti) ? totals.addebiti.toFixed(2) : ''}
-                </th>
-                <th />
-              </tr>
-            </tfoot>
-          </Table>
-        </Col>
-      </Row>
-      <AddTransactionDialog
-        title="Nuovo movimento"
-        user={user}
-        show={showDlg}
-        onClose={dialogClosed}
-      />
+      <TableContainer>
+        <Table size='small'>
+          <TableHead>
+            <TableRow>
+              <TableCell>Data</TableCell>
+              <TableCell>Descrizione</TableCell>
+              <TableCell align='center'>Accrediti</TableCell>
+              <TableCell align='center'>Addebiti</TableCell>
+              <TableCell align='center'>Saldo</TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {rows}
+          </TableBody>
+
+          <TableFooter className={classes.footercell}>
+            <TableRow>
+              <TableCell />
+              <TableCell><strong>TOTALE</strong></TableCell>
+              <TableCell className={classes.tdAmount}>
+                <strong>{totals && !Number.isNaN(totals.accrediti) ? totals.accrediti.toFixed(2) : ''}</strong>
+              </TableCell>
+              <TableCell className={classes.tdAmount}>
+                <strong>{totals && !Number.isNaN(totals.addebiti) ? totals.addebiti.toFixed(2) : ''}</strong>
+              </TableCell>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </TableContainer>
+
+      <NewTransactionDialog user={user} open={showDlg} onClose={dialogClosed} />
     </Container>
   );
 }
@@ -304,4 +291,4 @@ const mapDispatchToProps = {};
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(UserAccountingDetails);
+)(withSnackbar(UserAccountingDetails));
