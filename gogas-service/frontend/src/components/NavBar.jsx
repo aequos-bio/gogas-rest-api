@@ -128,7 +128,7 @@ const NavBar = ({authentication, info, history, enqueueSnackbar, ...props}) => {
                 {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}
               </span>
               <span className={`${classes.balance} ${balance && balance<0 ? classes.balanceRed : null}`} onClick={openBalanceDetail}>
-                Saldo { balance ? balance.totale : '0.00'} €
+                Saldo { balance ? balance : '0.00'} €
               </span>
             </div>
 
