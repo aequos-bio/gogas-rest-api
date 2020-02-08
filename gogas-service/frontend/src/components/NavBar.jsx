@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   AppBar, 
@@ -16,6 +16,8 @@ import {
 } from '@material-ui/icons';
 import { connect } from 'react-redux';
 import Jwt from 'jsonwebtoken';
+import { withSnackbar } from 'notistack';
+import { getJson } from "../utils/axios_utils";
 import { logout } from '../store/actions';
 import NavigationMenu from './NavigationMenu';
 
@@ -34,18 +36,31 @@ const useStyles = makeStyles(theme => ({
   },
   title: {
     flexGrow: 1,
-    cursor: 'pointer',
+  },
+  userbutton: {
+    display: 'flex',
+    flexDirection:'row'
   },
   username: {
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center'
   },
+  balance: {
+    fontSize: '80%'
+  },
+  balanceRed: {
+    color: theme.palette.warning.main
+  }
 }));
 
-const NavBar = ({authentication, info, history, ...props}) => {
+const NavBar = ({authentication, info, history, enqueueSnackbar, ...props}) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const open = Boolean(anchorEl);
+  const [balance, setBalance] = useState(0);
   
   const handleMenu = event => {
     setAnchorEl(event.currentTarget);
@@ -54,7 +69,7 @@ const NavBar = ({authentication, info, history, ...props}) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
+
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
       const j = Jwt.decode(authentication.jwtToken);
@@ -63,10 +78,24 @@ const NavBar = ({authentication, info, history, ...props}) => {
     return null;
   }, [authentication]);
 
+  useEffect(() => {
+    if (!jwt || !jwt.id) return;
+    getJson(`/api/accounting/user/balance/${jwt.id}`)
+      .then(response => {
+        setBalance(response);
+      }).catch(err => {
+        enqueueSnackbar(err,{variant:'error'});
+      });
+  }, [jwt, enqueueSnackbar]);
+  
   const disconnect = useCallback(() => {
     props.logout(); 
     history.push('/login?disconnect');
-  }, [props, history])
+  }, [props, history]);
+
+  const openBalanceDetail = useCallback(() => {
+    history.push(`/userAccountingDetails?userId=${jwt.id}`);
+  }, [history, jwt]);
 
   return (
     <>
@@ -75,11 +104,11 @@ const NavBar = ({authentication, info, history, ...props}) => {
         <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu" onClick={() => setMenuOpen(true)}>
           <MenuIcon />
         </IconButton>
-        <Typography variant="h5" className={classes.title} onClick={() => {history.push('/')}}>
+        <Typography variant="h5" className={classes.title}>
           {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
         </Typography>
         {authentication && (
-          <div>
+          <div className={classes.userbutton}>
             <IconButton
               aria-label="account of current user"
               aria-controls="menu-appbar"
@@ -89,9 +118,15 @@ const NavBar = ({authentication, info, history, ...props}) => {
             >
               <AccountCircleIcon />
             </IconButton>
-            <span className={classes.username} onClick={handleMenu}>
-              {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}
-            </span>
+            <div className={classes.username}>
+              <span onClick={handleMenu}>
+                {jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}
+              </span>
+              <span className={`${classes.balance} ${balance && balance.totale<0 ? classes.balanceRed : null}`} onClick={openBalanceDetail}>
+                Saldo { balance && balance.totale ? balance.totale : '0.00'} €
+              </span>
+            </div>
+
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -134,4 +169,4 @@ const mapDispatchToProps = {
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(NavBar);
+)(withSnackbar(NavBar));

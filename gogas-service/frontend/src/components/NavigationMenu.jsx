@@ -12,6 +12,7 @@ import {
   ListItemText
 } from '@material-ui/core';
 import {
+  HomeSharp as HomeIcon,
   EventSharp as EventIcon,
   EuroSharp as EuroIcon,
   GroupSharp as GroupIcon
@@ -66,27 +67,33 @@ const useStyles = makeStyles(theme => ({
 
 const menuItems = [
   {
+    items: [
+      {label: 'Home', url:'/', icon:0}
+    ]
+  },
+  {
     label: 'Contabilità',
     items: [
-      {label: 'Anni contabili', url:'/years', restrictions:['A'], icon:0},
-      {label: 'Situazione utenti', url:'/useraccounting', restrictions:['A'], icon:1},
+      {label: 'Anni contabili', url:'/years', restrictions:['A'], icon:1},
+      {label: 'Situazione utenti', url:'/useraccounting', restrictions:['A'], icon:2},
     ]
   },
   {
     label: 'Gestione',
     items: [
-      {label:'Utenti', url:'/users', restrictions:['A'], icon:2}
+      {label:'Utenti', url:'/users', restrictions:['A'], icon:3}
     ]
   },
   {
     label: 'Utente',
     items: [
-      {label:'Situazione contabile', url:`/useraccountingdetails?userId=:userId`, icon:1}
+      {label:'Situazione contabile', url:`/useraccountingdetails?userId=:userId`, icon:2}
     ]
   }
 ]
 
 const icons = [
+  <HomeIcon/>,
   <EventIcon/>,
   <EuroIcon/>,
   <GroupIcon/>
@@ -105,7 +112,6 @@ const NavigationMenu = ({authentication, open, onClose}) => {
   }, [authentication]);
 
   const menuClick = useCallback((menu) => {
-    console.log('menu click', menu);
     const url = menu.url.replace(':userId', jwt.id);
     history.push(url);
     onClose();
@@ -128,9 +134,11 @@ const NavigationMenu = ({authentication, open, onClose}) => {
       if (menus && menus.length) {
         mm.push(
           <div key={`menuchapter-${i}`} className={classes.menuContainer}>
-            <Typography variant="overline" display="block" gutterBottom color='textSecondary' className={classes.menuChapter}>
-              {menuChapter.label}
-            </Typography>
+            {menuChapter.label ? 
+              <Typography variant="overline" display="block" gutterBottom color='textSecondary' className={classes.menuChapter}>
+                {menuChapter.label}
+              </Typography>
+            : null}
             <List>
               {menus.map((m,j)=> (
                 <ListItem button key={`menu-${i}-${j}`} onClick={() => menuClick(m)}> 
