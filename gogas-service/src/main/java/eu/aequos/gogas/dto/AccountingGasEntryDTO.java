@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
+import eu.aequos.gogas.persistence.entity.Order;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -54,5 +55,21 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         model.setAmount(amount);
 
         return model;
+    }
+
+    public AccountingGasEntryDTO fromOrderInvoice(Order order) {
+        date = order.getInvoiceDate();
+        description = order.getOrderType().getDescription();
+        reasonDescription = "Fattura ordine";
+        amount = order.getInvoiceAmount();
+        return this;
+    }
+
+    public AccountingGasEntryDTO fromOrderPayment(Order order) {
+        date = order.getPaymentDate();
+        description = order.getOrderType().getDescription();
+        reasonDescription = "Pagamento ordine";
+        amount = order.getInvoiceAmount().negate();
+        return this;
     }
 }

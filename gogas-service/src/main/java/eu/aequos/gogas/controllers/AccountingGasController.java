@@ -7,9 +7,11 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.AccountingGasService;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.ExcelGenerationService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,12 +22,15 @@ public class AccountingGasController {
 
     private AccountingGasService accountingGasService;
     private ConfigurationService configurationService;
+    private ExcelGenerationService excelGenerationService;
 
     public AccountingGasController(AccountingGasService accountingGasService,
-                                   ConfigurationService configurationService) {
+                                   ConfigurationService configurationService,
+                                   ExcelGenerationService excelGenerationService) {
 
         this.accountingGasService = accountingGasService;
         this.configurationService = configurationService;
+        this.excelGenerationService = excelGenerationService;
     }
 
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -37,7 +42,7 @@ public class AccountingGasController {
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingGasService.getAccountingEntries(reasonCode, description, parsedDateFrom, parsedDateTo);
+        return accountingGasService.getManualAccountingEntries(reasonCode, description, parsedDateFrom, parsedDateTo);
     }
 
     @PostMapping(value = "entry")
@@ -56,5 +61,21 @@ public class AccountingGasController {
     public BasicResponseDTO deleteGasAccountingEntry(@PathVariable String accountingGasEntryId) {
         accountingGasService.delete(accountingGasEntryId);
         return new BasicResponseDTO("OK");
+    }
+    
+    @GetMapping(value = "report/{year}")
+    public List<AccountingGasEntryDTO> allAccountingEntriesByYear(@PathVariable int year) {
+        return accountingGasService.getAccountingEntriesInYear(year);
+    }
+
+
+    @GetMapping(value = "report/{year}/export", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody
+    byte[] exportGasDetails(HttpServletResponse response,
+                            @PathVariable int year) throws Exception {
+
+        List<AccountingGasEntryDTO> entriesInYear = accountingGasService.getAccountingEntriesInYear(year);
+        return excelGenerationService.exportGasEntries(entriesInYear);
+
     }
 }

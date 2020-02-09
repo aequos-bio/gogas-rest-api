@@ -123,7 +123,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public List<UserBalanceDTO> getUserBalanceList() {
-        return toUserBalanceDTO(userBalanceRepo.findAll());
+        return toUserBalanceDTO(userBalanceRepo.findAllByRole(User.Role.U.name()));
     }
 
     public List<UserBalanceDTO> getFriendBalanceList(String referralId) {
