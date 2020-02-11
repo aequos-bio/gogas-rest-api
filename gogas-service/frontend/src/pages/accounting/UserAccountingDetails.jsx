@@ -12,9 +12,9 @@ import {
   TableCell,
   TableBody,
 } from '@material-ui/core';
-import { 
+import {
   AddSharp as PlusIcon,
-  SaveAltSharp as SaveIcon 
+  SaveAltSharp as SaveIcon
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
@@ -28,7 +28,7 @@ import PageTitle from '../../components/PageTitle';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
-    position:'fixed',
+    position: 'fixed',
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
@@ -230,9 +230,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   }, [transactions, classes]);
 
   return (
-    <Container maxWidth='xl'>
+    <Container maxWidth={false}>
       <PageTitle title={`Dettaglio situazione contabile di ${user.nome || ""} ${user.cognome || ""}`}>
-        <Button onClick={downloadXls} startIcon={<SaveIcon/>}>
+        <Button onClick={downloadXls} startIcon={<SaveIcon />}>
           Esporta XLS
         </Button>
       </PageTitle>

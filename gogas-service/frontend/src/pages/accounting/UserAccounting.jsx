@@ -5,13 +5,13 @@ import {
   Fab,
   Button,
   IconButton,
-  TableContainer, 
-  Table, 
-  TableHead, 
+  TableContainer,
+  Table,
+  TableHead,
   TableFooter,
-  TableRow, 
-  TableCell, 
-  TableBody, 
+  TableRow,
+  TableCell,
+  TableBody,
 } from '@material-ui/core';
 import {
   ArrowForwardIosSharp as EditIcon,
@@ -63,7 +63,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
   const reload = useCallback(() => {
     getJson("/api/useraccounting/userTotals", {}).then(tt => {
       if (tt.error) {
-        enqueueSnackbar(tt.errorMessage,{variant:'error'})
+        enqueueSnackbar(tt.errorMessage, { variant: 'error' })
       } else {
         let tot = 0;
         tt.data.forEach(t => {
@@ -77,14 +77,14 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
   const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
-    
+
     if (type === "simple")
       window.open("/api/useraccounting/exportUserTotals", "_blank");
     else if (type === "full")
       window.open(
         "/api/useraccounting/exportUserTotals?includeUsers=true",
         "_blank"
-    );
+      );
   }, []);
 
   const onCloseTransactionDlg = useCallback((refresh) => {
@@ -110,7 +110,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
     return tt.map(t => (
       <TableRow key={`user-${t.user.id}`} hover>
         <TableCell className={classes.tdIcon}>
-          {t.user.enabled ? [] : <BlockIcon fontSize='small'/> }
+          {t.user.enabled ? [] : <BlockIcon fontSize='small' />}
         </TableCell>
         <TableCell>{`${t.user.firstName} ${t.user.lastName}`}</TableCell>
         <TableCell className={classes.tdAmount}
@@ -120,7 +120,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
         </TableCell>
         <TableCell className={classes.tdLink}>
           <IconButton onClick={() => history.push(`/useraccountingdetails?userId=${t.user.id}`)} size='small'>
-            <EditIcon fontSize='small'/>
+            <EditIcon fontSize='small' />
           </IconButton>
         </TableCell>
       </TableRow>
@@ -128,15 +128,15 @@ function UserAccounting({ history, enqueueSnackbar }) {
   }, [totals, history, classes]);
 
   return (
-    <Container maxWidth='xl'>
+    <Container maxWidth={false}>
       <PageTitle title='Situazione contabile utenti'>
-        <Button onClick={() => setExportDlgOpen(true)} startIcon={<SaveIcon/>}>
+        <Button onClick={() => setExportDlgOpen(true)} startIcon={<SaveIcon />}>
           Esporta XLS
         </Button>
       </PageTitle>
 
       <Fab className={classes.fab} color='secondary' onClick={() => setShowDlg(true)}>
-        <PlusIcon/>
+        <PlusIcon />
       </Fab>
 
       <TableContainer >
@@ -167,8 +167,8 @@ function UserAccounting({ history, enqueueSnackbar }) {
         </Table>
       </TableContainer>
 
-      <ExportTypeSelectionDialog open={exportDlgOpen} onCancel={() => setExportDlgOpen(false)} onExport={exportXls}/>
-      <NewTransactionDialog open={showDlg} onClose={onCloseTransactionDlg}/>
+      <ExportTypeSelectionDialog open={exportDlgOpen} onCancel={() => setExportDlgOpen(false)} onExport={exportXls} />
+      <NewTransactionDialog open={showDlg} onClose={onCloseTransactionDlg} />
     </Container>
   );
 }

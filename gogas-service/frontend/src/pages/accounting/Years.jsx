@@ -2,28 +2,28 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { connect } from "react-redux";
-import { 
-  Container, 
-  Button, 
-  TableContainer, 
-  Table, 
-  TableHead, 
-  TableRow, 
-  TableCell, 
-  TableBody, 
+import {
+  Container,
+  Button,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from '@material-ui/core';
 import { withSnackbar } from 'notistack';
 import _ from "lodash";
 import { getJson } from "../../utils/axios_utils";
 import PageTitle from '../../components/PageTitle';
 
-const Years = ({enqueueSnackbar}) => {
+const Years = ({ enqueueSnackbar }) => {
   const [years, setYears] = useState([]);
-  
+
   const reload = useCallback(() => {
     getJson("/api/year/all", {}).then(yy => {
       if (yy.error) {
-        enqueueSnackbar(yy.errorMessage,{variant:'error'})
+        enqueueSnackbar(yy.errorMessage, { variant: 'error' })
       } else {
         setYears(_.orderBy(yy.data, 'year', 'desc'));
       }
@@ -36,20 +36,20 @@ const Years = ({enqueueSnackbar}) => {
 
   const closeYear = useCallback((y) => {
     console.warn('closing year', y);
-    enqueueSnackbar('Funzione non implementata!',{variant:'error'})
+    enqueueSnackbar('Funzione non implementata!', { variant: 'error' })
   }, [enqueueSnackbar])
 
   const rows = useMemo(() => {
-    return years.map((y,i) => (
+    return years.map((y, i) => (
       <TableRow key={`year-${y.year}`}>
         <TableCell>
           {y.year}
         </TableCell>
-        <TableCell style={{color:y.closed?'red':'black'}}>
-          {y.closed ? "Chiuso" : `Aperto${i===0 ? ', in corso' : ''}`}
+        <TableCell style={{ color: y.closed ? 'red' : 'black' }}>
+          {y.closed ? "Chiuso" : `Aperto${i === 0 ? ', in corso' : ''}`}
         </TableCell>
         <TableCell align='right'>
-          {y.closed || i===0 ? null : 
+          {y.closed || i === 0 ? null :
             <Button variant="outlined" size="small" color="secondary" onClick={() => closeYear(y)}>
               Chiudi
             </Button>
@@ -57,19 +57,19 @@ const Years = ({enqueueSnackbar}) => {
         </TableCell>
       </TableRow>
     ));
-  }, [years,closeYear]);
+  }, [years, closeYear]);
 
   return (
-    <Container maxWidth='xl' >
-      <PageTitle title='Anni contabili'/>
+    <Container maxWidth={false}>
+      <PageTitle title='Anni contabili' />
 
       <TableContainer>
-      <Table >
+        <Table >
           <TableHead>
             <TableRow>
               <TableCell>Anno</TableCell>
               <TableCell>Stato</TableCell>
-              <TableCell style={{width:'30%'}}/>
+              <TableCell style={{ width: '30%' }} />
             </TableRow>
           </TableHead>
 
@@ -91,6 +91,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = {};
 
 export default connect(
-  mapStateToProps, 
+  mapStateToProps,
   mapDispatchToProps
 )(withSnackbar(Years));

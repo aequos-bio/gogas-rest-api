@@ -4,14 +4,14 @@ import { Container, Typography } from '@material-ui/core';
 import { getJson } from '../utils/axios_utils';
 
 function Home() {
-	const [year, setYear ] = useState();
+	const [year, setYear] = useState();
 
 	useEffect(() => {
 		getJson('/api/year/current', {}).then(y => setYear(y));
 	}, []);
 
 	return (
-		<Container>
+		<Container maxWidth={false}>
 			<Typography variant='h4' component='h4'>
 				Home {year ? year.year : null}
 			</Typography>

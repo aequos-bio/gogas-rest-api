@@ -3,16 +3,16 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { 
+import {
   Container,
   Fab,
   IconButton,
-  TableContainer, 
-  Table, 
-  TableHead, 
-  TableRow, 
-  TableCell, 
-  TableBody, 
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
 } from '@material-ui/core';
 import {
   EditSharp as EditIcon,
@@ -33,12 +33,12 @@ const useStyles = makeStyles(theme => ({
     right: theme.spacing(2),
   },
   tdIcon: {
-    color: "red", 
+    color: "red",
     textAlign: "center",
     width: '30px',
   },
   tdButtons: {
-    fontSize: '130%', 
+    fontSize: '130%',
     textAlign: 'center',
   }
 }));
@@ -53,7 +53,7 @@ function Users({ info, enqueueSnackbar }) {
   const reload = useCallback(() => {
     getJson("/api/user/list", {}).then(uu => {
       if (uu.error) {
-        enqueueSnackbar(uu.errorMessage,{variant:'error'})
+        enqueueSnackbar(uu.errorMessage, { variant: 'error' })
       } else {
         setUsers(
           _.orderBy(
@@ -98,16 +98,16 @@ function Users({ info, enqueueSnackbar }) {
   );
 
   const newUser = useCallback(() => {
-    enqueueSnackbar('Funzione non implementata!',{variant:'error'})
+    enqueueSnackbar('Funzione non implementata!', { variant: 'error' })
   }, [enqueueSnackbar])
 
   const editUser = useCallback((id) => {
-    enqueueSnackbar('Funzione non implementata!',{variant:'error'})
+    enqueueSnackbar('Funzione non implementata!', { variant: 'error' })
     console.warn(`Edit user ${id}`);
   }, [enqueueSnackbar]);
-  
+
   const deleteUser = useCallback((id) => {
-    enqueueSnackbar('Funzione non implementata!',{variant:'error'})
+    enqueueSnackbar('Funzione non implementata!', { variant: 'error' })
     console.warn(`Delete user ${id}`);
   }, [enqueueSnackbar]);
 
@@ -119,8 +119,8 @@ function Users({ info, enqueueSnackbar }) {
             {u.attivo ? (
               ""
             ) : (
-              <BlockIcon fontSize='small'/>
-            )}
+                <BlockIcon fontSize='small' />
+              )}
           </TableCell>
           <TableCell>{sort === "NC" ? u.nome : u.cognome}</TableCell>
           <TableCell>{sort === "NC" ? u.cognome : u.nome}</TableCell>
@@ -130,10 +130,10 @@ function Users({ info, enqueueSnackbar }) {
           <TableCell>{mapRef(u.idReferente)}</TableCell>
           <TableCell className={classes.tdButtons}>
             <IconButton onClick={() => { editUser(u.idUtente) }}>
-              <EditIcon/>
+              <EditIcon />
             </IconButton>
             <IconButton onClick={() => { deleteUser(u.idUtente) }}>
-              <DeleteIcon/>
+              <DeleteIcon />
             </IconButton>
           </TableCell>
         </TableRow>
@@ -143,25 +143,25 @@ function Users({ info, enqueueSnackbar }) {
   }, [users, classes, deleteUser, editUser, mapRef, mapRoles, sort]);
 
   return (
-    <Container maxWidth='xl' >
-      <PageTitle title='Gestione utenti'/>
+    <Container maxWidth={false}>
+      <PageTitle title='Gestione utenti' />
 
       <Fab className={classes.fab} color='secondary' onClick={newUser}>
-        <PlusIcon/>
+        <PlusIcon />
       </Fab>
 
       <TableContainer >
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell className={classes.tdIcon}/>
+              <TableCell className={classes.tdIcon} />
               <TableCell>{sort === "NC" ? "Nome" : "Cognome"}</TableCell>
               <TableCell>{sort === "NC" ? "Cognome" : "Nome"}</TableCell>
               <TableCell>Username</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Ruolo</TableCell>
               <TableCell>Ref amico</TableCell>
-              <TableCell/>
+              <TableCell />
             </TableRow>
           </TableHead>
 
