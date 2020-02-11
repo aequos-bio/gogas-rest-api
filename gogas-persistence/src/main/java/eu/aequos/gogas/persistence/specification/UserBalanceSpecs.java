@@ -15,10 +15,13 @@ public class UserBalanceSpecs {
         return (entry, cq, cb) -> cb.lessThanOrEqualTo(entry.get("date"), toDate);
     }
 
-    public static Specification<UserBalanceEntry> user(String userId) {
+    public static Specification<UserBalanceEntry> user(String userId, boolean dateAscending) {
         return (entry, cq, cb) -> {
             //setting order by
-            cq.orderBy(cb.desc(entry.get("date")));
+            if (dateAscending)
+                cq.orderBy(cb.asc(entry.get("date")));
+            else
+                cq.orderBy(cb.desc(entry.get("date")));
 
             return cb.equal(entry.get("userId"), userId);
         };

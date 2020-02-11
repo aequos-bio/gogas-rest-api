@@ -137,9 +137,9 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .collect(Collectors.toList());
     }
 
-    public UserBalanceSummaryDTO getUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo) {
+    public UserBalanceSummaryDTO getUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo, boolean dateAscending) {
         Specification<UserBalanceEntry> filter = new SpecificationBuilder<UserBalanceEntry>()
-                .withBaseFilter(UserBalanceSpecs.user(userId))
+                .withBaseFilter(UserBalanceSpecs.user(userId, dateAscending))
                 .and(UserBalanceSpecs::fromDate, dateFrom)
                 .and(UserBalanceSpecs::toDate, dateTo)
                 .build();

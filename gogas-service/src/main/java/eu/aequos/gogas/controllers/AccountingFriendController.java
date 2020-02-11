@@ -94,7 +94,7 @@ public class AccountingFriendController {
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo);
+        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo, false);
     }
 
     private boolean isFriendAccountingEntry(@PathVariable String accountingEntryId) {

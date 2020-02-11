@@ -1,24 +1,21 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.AccountingGasEntryDTO;
+import eu.aequos.gogas.dto.UserBalanceDTO;
+import eu.aequos.gogas.dto.UserBalanceEntryDTO;
+import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
 import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.excel.generic.ColumnDefinition;
-import eu.aequos.gogas.excel.generic.GenericExcelGenerator;
+import eu.aequos.gogas.excel.generic.ExcelDocumentBuilder;
 import eu.aequos.gogas.excel.order.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.excel.products.ExcelPriceListItem;
-import eu.aequos.gogas.persistence.utils.UserTotal;
-import eu.aequos.gogas.persistence.utils.UserTransactionFull;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.util.*;
@@ -30,23 +27,26 @@ import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 @Service
 public class ExcelGenerationService {
 
-    ExcelServiceClient excelServiceClient;
+    private ExcelServiceClient excelServiceClient;
 
-    UserRepo userRepo;
-    OrderItemRepo orderItemRepo;
-    ProductRepo productRepo;
-    SupplierOrderItemRepo supplierOrderItemRepo;
-    UserService userService;
+    private UserRepo userRepo;
+    private OrderItemRepo orderItemRepo;
+    private ProductRepo productRepo;
+    private SupplierOrderItemRepo supplierOrderItemRepo;
+    private UserService userService;
+    private AccountingService accountingService;
 
     public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
                                   OrderItemRepo orderItemRepo, ProductRepo productRepo,
-                                  SupplierOrderItemRepo supplierOrderItemRepo) {
+                                  SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService) {
+
         this.excelServiceClient = excelServiceClient;
         this.userRepo = userRepo;
         this.userService = userService;
         this.orderItemRepo = orderItemRepo;
         this.productRepo = productRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
+        this.accountingService = accountingService;
     }
 
     public byte[] extractProductPriceList(String orderTypeId) throws GoGasException {
@@ -174,51 +174,74 @@ public class ExcelGenerationService {
         return s;
     }
 
-    public byte[] exportUserTotals(List<UserTotal> userTotals, boolean includeUsers) throws IOException {
+    public byte[] exportUserTotals(boolean includeUserDetails) throws IOException {
 
-        List<ColumnDefinition<UserTotal>> columnDefinitions = Arrays.asList(
-                new ColumnDefinition<UserTotal>("Disab.", TextCenter)
-                        .withExtract(u -> u.getUser().isEnabled() ? "" : "x"),
+        List<UserBalanceDTO> userTotals = accountingService.getUserBalanceList()
+                .stream()
+                .sorted(Comparator.comparing(UserBalanceDTO::isEnabled).reversed()
+                        .thenComparing(UserBalanceDTO::getFullName))
+                .collect(Collectors.toList());
 
-                new ColumnDefinition<UserTotal>("Utente", Text)
-                        .withExtract(u -> u.getUser().getFirstName() + " " + u.getUser().getLastName()),
+        List<ColumnDefinition<UserBalanceDTO>> columnDefinitions = Arrays.asList(
+                new ColumnDefinition<UserBalanceDTO>("Disab.", TextCenter)
+                        .withExtract(u -> u.isEnabled() ? "" : "x"),
 
-                new ColumnDefinition<UserTotal>("Saldo", Currency)
-                        .withExtract(u -> u.getTotal().doubleValue())
+                new ColumnDefinition<UserBalanceDTO>("Utente", Text)
+                        .withExtract(UserBalanceDTO::getFullName),
+
+                new ColumnDefinition<UserBalanceDTO>("Saldo", Currency)
+                        .withExtract(u -> u.getBalance().doubleValue())
                         .withShowTotal()
         );
 
         String title = "Situazione contabile utenti";
 
-        GenericExcelGenerator<UserTotal> userTotalGenericExcelGenerator = new GenericExcelGenerator<>(title, columnDefinitions);
-        return userTotalGenericExcelGenerator.generate(userTotals);
+        ExcelDocumentBuilder excelDocumentBuilder = new ExcelDocumentBuilder()
+                .addSheet(title, columnDefinitions, userTotals);
+
+        if (includeUserDetails) {
+            for (UserBalanceDTO userTotal : userTotals)
+                addUserEntries(excelDocumentBuilder, userTotal.getUserId(), userTotal.getFullName());
+        }
+
+        return excelDocumentBuilder.generate();
     }
 
-    //TODO: handle multiple sheets
-    public byte[] exportUserEntries(List<UserTransactionFull> userEntries) throws IOException {
+    public byte[] exportUserEntries(String userId) throws IOException {
+        User user = userService.getRequired(userId);
 
-        List<ColumnDefinition<UserTransactionFull>> columnDefinitions = Arrays.asList(
-                new ColumnDefinition<UserTransactionFull>("Data", Date)
+        ExcelDocumentBuilder documentBuilder = new ExcelDocumentBuilder();
+        addUserEntries(documentBuilder, user.getId(), userService.getUserDisplayName(user));
+        return documentBuilder.generate();
+    }
+
+    private void addUserEntries(ExcelDocumentBuilder excelDocumentBuilder, String userId, String userFullName) {
+
+        List<ColumnDefinition<UserBalanceEntryDTO>> columnDefinitions = Arrays.asList(
+                new ColumnDefinition<UserBalanceEntryDTO>("Data", Date)
                         .withExtract(t -> java.util.Date.from(t.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant())),
 
-                new ColumnDefinition<UserTransactionFull>("Descrizione", Text)
-                        .withExtract(UserTransactionFull::getDescription),
+                new ColumnDefinition<UserBalanceEntryDTO>("Descrizione", Text)
+                        .withExtract(UserBalanceEntryDTO::getDescription),
 
-                new ColumnDefinition<UserTransactionFull>("Accrediti", Currency)
+                new ColumnDefinition<UserBalanceEntryDTO>("Accrediti", Currency)
                         .withExtract(t -> t.getAmount().signum() >= 0 ? t.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
-                new ColumnDefinition<UserTransactionFull>("Addebiti", Currency)
+                new ColumnDefinition<UserBalanceEntryDTO>("Addebiti", Currency)
                         .withExtract(t -> t.getAmount().signum() < 0 ? t.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
                 new ColumnDefinition<>("Saldo", SubTotal)
         );
 
-        String title = "Situazione contabile gas";
+        UserBalanceSummaryDTO userBalance = accountingService.getUserBalance(userId, null, null, true);
 
-        GenericExcelGenerator<UserTransactionFull> excelGenerator = new GenericExcelGenerator<>(title, columnDefinitions);
-        return excelGenerator.generate(userEntries);
+        List<UserBalanceEntryDTO> entries = userBalance.getEntries().stream()
+                .sorted(Comparator.comparing(UserBalanceEntryDTO::getDate))
+                .collect(Collectors.toList());
+
+        excelDocumentBuilder.addSheet(userFullName, columnDefinitions, entries);
     }
 
     public byte[] exportGasEntries(List<AccountingGasEntryDTO> gasEntries) throws IOException {
@@ -243,124 +266,8 @@ public class ExcelGenerationService {
 
         String title = "Situazione contabile gas";
 
-        GenericExcelGenerator<AccountingGasEntryDTO> excelGenerator = new GenericExcelGenerator<>(title, columnDefinitions);
-        return excelGenerator.generate(gasEntries);
+        return new ExcelDocumentBuilder()
+                .addSheet(title, columnDefinitions, gasEntries)
+                .generate();
     }
-
-    /*public byte[] exportUserDetails(String userId) throws IOException {
-        Optional<User> ouser = userRepo.findById(userId);
-        if (!ouser.isPresent()) {
-            return null;
-        }
-        User user = ouser.get();
-        Workbook wb = new XSSFWorkbook();
-        Sheet sheet = wb.createSheet(user.getFirstName() + " " + user.getLastName());
-
-        _exportUserDetails(wb, sheet, userId);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        wb.write(baos);
-        baos.flush();
-        return baos.toByteArray();
-
-
-    }
-
-    private void _exportUserDetails(Workbook wb, Sheet sheet, String userId) throws IOException {
-
-        Font headerFont = wb.createFont();
-        headerFont.setBold(true);
-        CellStyle headerCellStyle = wb.createCellStyle();
-        headerCellStyle.setFont(headerFont);
-
-        Row headerRow = sheet.createRow(0);
-        Cell h1 = headerRow.createCell(0);
-        h1.setCellValue("Data");
-        h1.setCellStyle(headerCellStyle);
-        Cell h2 = headerRow.createCell(1);
-        h2.setCellValue("Descrizione");
-        h2.setCellStyle(headerCellStyle);
-        Cell h3 = headerRow.createCell(2);
-        h3.setCellValue("Accrediti");
-        h3.setCellStyle(headerCellStyle);
-        Cell h4 = headerRow.createCell(3);
-        h4.setCellValue("Addebiti");
-        h4.setCellStyle(headerCellStyle);
-        Cell h5 = headerRow.createCell(4);
-        h5.setCellValue("Saldo");
-        h5.setCellStyle(headerCellStyle);
-
-        List<UserTransactionFull> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
-        List<UserTransactionFull> movimenti = userAccountingSrv.getUserTransactions(userId);
-        ordini.addAll(movimenti);
-        Collections.sort(ordini, new Comparator<UserTransactionFull>() {
-            @Override
-            public int compare(UserTransactionFull o1, UserTransactionFull o2) {
-                int c = 0;
-                c = o1.getDate().compareTo(o2.getDate()) * -1;
-                if (c==0)
-                    c = o1.getDescription().compareTo(o2.getDescription()) * -1;
-                return c;
-            }
-        });
-
-        CreationHelper createHelper = wb.getCreationHelper();
-        CellStyle dateStyle = wb.createCellStyle();
-        dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/mm/yyyy"));
-        CellStyle amountStyle = wb.createCellStyle();
-        amountStyle.setDataFormat((short) BuiltinFormats.getBuiltinFormat("0.00"));
-
-        int rowNum = 1;
-
-        for(UserTransactionFull t : ordini) {
-            Row row = sheet.createRow(rowNum++);
-            Cell cell0 = row.createCell(0);
-            cell0.setCellStyle(dateStyle);
-            cell0.setCellValue(java.sql.Date.valueOf(t.getDate().toString()));
-
-            row.createCell(1).setCellValue((t.getReason()==null || t.getReason().isEmpty() ? "" : t.getReason() + " - ") + t.getDescription());
-
-            double amount = t.getAmount().doubleValue() * (t.getSign().equals("-") ? -1 : 1);
-
-            Cell cell2 = row.createCell(2);
-            cell2.setCellStyle(amountStyle);
-            if (amount>0 || (amount==0 && t.getSign().equals("+")))
-                cell2.setCellValue(amount);
-
-            Cell cell3 = row.createCell(3);
-            cell3.setCellStyle(amountStyle);
-            if (amount<0 || (amount==0 && t.getSign().equals("-")))
-                cell3.setCellValue(amount * -1);
-
-            Cell cell4 = row.createCell(4);
-            cell4.setCellStyle(amountStyle);
-            cell4.setCellFormula("E" + (rowNum+1) + "+C" + rowNum + "-D" + rowNum);
-        }
-
-        CellStyle amountStyleBold = wb.createCellStyle();
-        amountStyleBold.setDataFormat((short) BuiltinFormats.getBuiltinFormat("0.00"));
-        amountStyleBold.setFont(headerFont);
-
-        Row row = sheet.createRow(rowNum);
-        Cell cell0 = row.createCell(0);
-        cell0.setCellValue("");
-
-        Cell cell1 = row.createCell(1);
-        cell1.setCellStyle(headerCellStyle);
-        cell1.setCellValue("TOTALE");
-
-        Cell cell2 = row.createCell(2);
-        cell2.setCellStyle(amountStyleBold);
-        if (rowNum>1)
-            cell2.setCellFormula("SUM(C2:C" + rowNum + ")");
-
-        Cell cell3 = row.createCell(3);
-        cell3.setCellStyle(amountStyleBold);
-        if (rowNum>1)
-            cell3.setCellFormula("SUM(D2:D" + rowNum + ")");
-
-        for(int f=0; f<=4; f++)
-            sheet.autoSizeColumn(f);
-
-    }*/
 }

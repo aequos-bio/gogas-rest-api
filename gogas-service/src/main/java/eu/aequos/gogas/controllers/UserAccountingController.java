@@ -3,6 +3,7 @@ package eu.aequos.gogas.controllers;
 import java.math.BigDecimal;
 import java.util.*;
 
+import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.utils.ExcelExport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,9 @@ public class UserAccountingController {
     private UserAccountingService userAccountingSrv;
     @Autowired
     private ExcelExport excelExport;
+
+    @Autowired
+    private ExcelGenerationService excelGenerationService;
 
     @IsAdmin
     @GetMapping("/userTotals")
@@ -106,12 +110,31 @@ public class UserAccountingController {
 
     }
 
+    @GetMapping(value = "/exportUserTotals2", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody
+    byte[] exportUserTotals2(HttpServletResponse response,
+                            @RequestParam(name = "includeUsers", required = false) boolean includeUsers) throws Exception {
+
+        return excelGenerationService.exportUserTotals(includeUsers);
+    }
+
     //@IsAdminOrCurrentUser
     @GetMapping(value = "/exportUserDetails", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     public @ResponseBody
     byte[] exportUserDetails(HttpServletResponse response,
                              @RequestParam(name = "userId", required = true) String userId) throws Exception {
         byte[] bytes = excelExport.exportUserDetails(userId);
+        if (bytes == null)
+            response.sendError(406);
+        return bytes;
+    }
+
+    //@IsAdminOrCurrentUser
+    @GetMapping(value = "/exportUserDetails2", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody
+    byte[] exportUserDetails2(HttpServletResponse response,
+                             @RequestParam(name = "userId") String userId) throws Exception {
+        byte[] bytes = excelGenerationService.exportUserEntries(userId);
         if (bytes == null)
             response.sendError(406);
         return bytes;
