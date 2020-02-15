@@ -59,6 +59,9 @@ public class AccountingEntryReason {
     @Column(name = "descrizione", nullable = false)
     private String description;
 
+    @Column(name = "codicecontabile", nullable = true)
+    private String accountingCode;
+
     public AccountingEntryReason withReasonCode(String reasonCode) {
         this.reasonCode = reasonCode;
         return this;
