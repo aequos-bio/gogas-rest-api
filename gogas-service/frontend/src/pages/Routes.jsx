@@ -5,13 +5,14 @@ import Home from "./Home";
 import NavBar from "../components/NavBar";
 import Login from "./Login";
 import Users from "./admin/Users";
+import Reasons from "./admin/Reasons";
 import UserAccounting from "./accounting/UserAccounting";
 import UserAccountingDetails from "./accounting/UserAccountingDetails";
 import Years from './accounting/Years';
 import { init } from "../store/actions";
 import PrivateRoute from '../components/PrivateRoute';
 
-function Routes({authentication, ...props}) {
+function Routes({ authentication, ...props }) {
 	useEffect(() => {
 		props.init();
 	}, [props]);
@@ -32,10 +33,11 @@ function Routes({authentication, ...props}) {
 						component={Home}
 						jwtToken={authentication.jwtToken}
 					/>
+
 					<PrivateRoute
 						exact
-						path="/users"
-						component={Users}
+						path="/years"
+						component={Years}
 						jwtToken={authentication.jwtToken}
 					/>
 					<PrivateRoute
@@ -50,12 +52,20 @@ function Routes({authentication, ...props}) {
 						component={UserAccountingDetails}
 						jwtToken={authentication.jwtToken}
 					/>
+
 					<PrivateRoute
 						exact
-						path="/years"
-						component={Years}
+						path="/users"
+						component={Users}
 						jwtToken={authentication.jwtToken}
 					/>
+					<PrivateRoute
+						exact
+						path="/reasons"
+						component={Reasons}
+						jwtToken={authentication.jwtToken}
+					/>
+
 				</Switch>
 			</>
 		</Router>

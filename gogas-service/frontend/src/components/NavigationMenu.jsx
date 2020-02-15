@@ -15,7 +15,8 @@ import {
   HomeSharp as HomeIcon,
   EventSharp as EventIcon,
   EuroSharp as EuroIcon,
-  GroupSharp as GroupIcon
+  GroupSharp as GroupIcon,
+  Settings as SettingsIcon,
 } from '@material-ui/icons';
 import { useHistory} from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -65,39 +66,41 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+const icons = [
+  <HomeIcon/>,
+  <EventIcon/>,
+  <EuroIcon/>,
+  <GroupIcon/>,
+  <SettingsIcon/>
+]
+
 const menuItems = [
   {
     items: [
       {label: 'Home', url:'/', icon:0}
-    ]
-  },
+    ]  
+  },  
   {
     label: 'Contabilità',
     items: [
       {label: 'Anni contabili', url:'/years', restrictions:['A'], icon:1},
       {label: 'Situazione utenti', url:'/useraccounting', restrictions:['A'], icon:2},
-    ]
-  },
+    ]  
+  },  
   {
     label: 'Gestione',
     items: [
-      {label:'Utenti', url:'/users', restrictions:['A'], icon:3}
-    ]
-  },
+      {label:'Utenti', url:'/users', restrictions:['A'], icon:3},
+      {label:'Causali', url:'/reasons', restrictions:['A'], icon:4}
+    ]  
+  },  
   {
     label: 'Utente',
     items: [
       {label:'Situazione contabile', url:`/useraccountingdetails?userId=:userId`, icon:2}
-    ]
-  }
-]
-
-const icons = [
-  <HomeIcon/>,
-  <EventIcon/>,
-  <EuroIcon/>,
-  <GroupIcon/>
-]
+    ]  
+  }  
+]  
 
 const NavigationMenu = ({authentication, open, onClose}) => {
   const classes = useStyles();

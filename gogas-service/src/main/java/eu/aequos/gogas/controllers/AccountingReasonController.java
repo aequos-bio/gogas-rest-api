@@ -25,6 +25,11 @@ public class AccountingReasonController {
         return accountingReasonService.getAccountingReasonsForSelect();
     }
 
+    @GetMapping(value = "{reasonCode}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public AccountingEntryReason getAccountingReason(@PathVariable String reasonCode) {
+        return accountingReasonService.getRequired(reasonCode);
+    }
+
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<AccountingEntryReason> getAccountingReasons() {
         return accountingReasonService.getAccountingReasons();

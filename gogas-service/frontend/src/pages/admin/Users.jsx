@@ -130,10 +130,10 @@ function Users({ info, enqueueSnackbar }) {
           <TableCell>{mapRef(u.idReferente)}</TableCell>
           <TableCell className={classes.tdButtons}>
             <IconButton onClick={() => { editUser(u.idUtente) }}>
-              <EditIcon />
+              <EditIcon fontSize='small' />
             </IconButton>
             <IconButton onClick={() => { deleteUser(u.idUtente) }}>
-              <DeleteIcon />
+              <DeleteIcon fontSize='small' />
             </IconButton>
           </TableCell>
         </TableRow>

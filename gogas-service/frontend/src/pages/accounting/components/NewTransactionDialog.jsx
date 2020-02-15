@@ -118,6 +118,7 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
       descrizione: description,
       importo: amount
     }).then(() => {
+      enqueueSnackbar('Movimento salvato',{variant:'success'});
       if (contnue) {
         setRefreshNeeded(true);
         setUser(user ? { value: user, label: userLabel(user) } : null);
@@ -126,7 +127,7 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
         close(true);
       }
     }).catch(err => {
-      enqueueSnackbar(err,{variant:'error'})
+      enqueueSnackbar(err.response?.statusText || 'Errore nel salvataggio del movimento contabile',{variant:'error'})
     });
   }, [
     _user,
