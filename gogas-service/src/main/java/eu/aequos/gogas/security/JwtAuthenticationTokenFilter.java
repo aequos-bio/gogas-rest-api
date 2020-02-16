@@ -47,24 +47,27 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         try {
-            String authToken = extractAuthTokenFromRequest(request);
-            GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
+            if (request.getServletPath().equals("/authenticate")) {
+                chain.doFilter(request, response);
+            } else {
+                String authToken = extractAuthTokenFromRequest(request);
+                GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-            if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
-                log.warn("Missing or mismatching tenant id, user not authorized");
-                throw new UserNotAuthorizedException();
+                if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
+                    log.warn("Missing or mismatching tenant id, user not authorized");
+                    throw new UserNotAuthorizedException();
+                }
+
+                if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    MDC.put("user", userDetails.getUsername());
+                }
+
+                chain.doFilter(request, response);
             }
-
-            if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                MDC.put("user", userDetails.getUsername());
-            }
-
-            chain.doFilter(request, response);
-
         } catch (JWTVerificationException ex) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token non valido o scaduto");
         } catch (UserNotAuthorizedException ex) {
