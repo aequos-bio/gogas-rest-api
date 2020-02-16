@@ -56,6 +56,11 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         return super.create(dto);
     }
 
+    public AccountingEntryDTO get(String entryId) {
+        AccountingEntry existingEntry = getRequired(entryId);
+        return new AccountingEntryDTO().fromModel2(existingEntry);
+    }
+
     public AccountingEntry update(String entryId, AccountingEntryDTO dto) throws ItemNotFoundException, GoGasException {
         AccountingEntry existingEntry = getRequired(entryId);
 

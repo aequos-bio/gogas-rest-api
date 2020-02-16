@@ -54,7 +54,7 @@ const EditReasonDialog = ({mode, onClose, reasonCode, enqueueSnackbar}) => {
       setDescription('');
       setSign('+');
       setAccountingCode('');
-}
+    }
   }, [reasonCode, enqueueSnackbar]);
 
   const save = useCallback(() => {

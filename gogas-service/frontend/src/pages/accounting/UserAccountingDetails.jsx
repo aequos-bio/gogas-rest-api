@@ -17,7 +17,8 @@ import {
   EditSharp as EditIcon,
   DeleteSharp as DeleteIcon,
   AddSharp as PlusIcon,
-  SaveAltSharp as SaveIcon
+  SaveAltSharp as SaveIcon,
+  LockSharp as CloedIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
@@ -26,7 +27,7 @@ import moment from "moment-timezone";
 import _ from "lodash";
 import Jwt from "jsonwebtoken";
 import { getJson, calldelete } from "../../utils/axios_utils";
-import NewTransactionDialog from "./components/NewTransactionDialog";
+import EditTransactionDialog from "./components/EditTransactionDialog";
 import ActionDialog from '../../components/ActionDialog';
 import PageTitle from '../../components/PageTitle';
 
@@ -44,6 +45,10 @@ const useStyles = makeStyles((theme) => ({
     minWidth: '90px',
     width: '90px',
   },
+  lockicon:{
+    fontSize:'.875rem',
+    marginLeft:theme.spacing(.5)
+  },
   footercell: {
     '& td': {
       fontSize: '.875rem'
@@ -60,6 +65,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   const [showDlg, setShowDlg] = useState(false);
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
   const [selectedId, setSelectedId] = useState();
+  const [years, setYears] = useState({});  
 
   const reload = useCallback(() => {
     getJson(`/api/user/${search.userId}`, {}).then(u => {
@@ -114,8 +120,19 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   }, [authentication]);
 
   useEffect(() => {
+
+    getJson("/api/year/all", {}).then(yy => {
+      if (yy.error) {
+        enqueueSnackbar(yy.errorMessage, { variant: 'error' })
+      } else {
+        const _years = {};
+        yy.data.forEach(y => {_years[y.year] = y.closed});
+        setYears(_years);
+      }
+    });
+
     reload();
-  }, [reload]);
+  }, [reload, enqueueSnackbar]);
 
   const dialogClosed = useCallback(
     refresh => {
@@ -125,9 +142,14 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
     [setShowDlg, reload]
   );
 
+  const newTransaction = useCallback(() => {
+    setSelectedId();
+    setShowDlg(true);
+  }, [])
+  
   const editTransaction = useCallback((id) => {
     setSelectedId(id);
-
+    setShowDlg(true);
   }, []);
 
   const deleteTransaction = useCallback((id) => {
@@ -197,6 +219,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
           <TableRow key={`year-${year}`}>
             <TableCell colSpan={jwt.role==='A' ? '6' : '5'}>
               <strong>Anno {year}</strong>
+              {years[year] ?  
+                <CloedIcon className={classes.lockicon}/>
+              : null }
             </TableCell>
           </TableRow>
         );
@@ -232,7 +257,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
             {t.saldo >= 0 ? "+ " : ""}
             {t.saldo.toFixed(2)}
           </TableCell>
-          {jwt.role==='A' ? 
+          {jwt.role==='A' && !years[year] ? 
             <TableCell>
               {t.type==='M' ? 
                 <IconButton onClick={() => { editTransaction(t.id) }}>
@@ -285,7 +310,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
     )
 
     return rr;
-  }, [transactions, classes]);
+  }, [transactions, classes, deleteTransaction, editTransaction, jwt, years]);
 
   return (
     <Container maxWidth={false}>
@@ -296,7 +321,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
       </PageTitle>
 
       {jwt && jwt.sub && jwt.role === "A" ? (
-        <Fab className={classes.fab} color='secondary' onClick={() => setShowDlg(true)}>
+        <Fab className={classes.fab} color='secondary' onClick={newTransaction}>
           <PlusIcon />
         </Fab>
       ) : null}
@@ -339,7 +364,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
         </Table>
       </TableContainer>
 
-      <NewTransactionDialog user={user} open={showDlg} onClose={dialogClosed} />
+      <EditTransactionDialog user={user} open={showDlg} onClose={dialogClosed} transactionId={selectedId}/>
       <ActionDialog open={deleteDlgOpen} onCancel={() => setDeleteDlgOpen(false)} actions={['Ok']} 
         onAction={doDeleteTransaction} title='Conferma eliminazione' message='Sei sicuro di voler eliminare il movimento selezionato?'/>
     </Container>

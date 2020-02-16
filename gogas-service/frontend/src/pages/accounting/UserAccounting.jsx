@@ -23,7 +23,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
 import _ from "lodash";
 import { getJson } from "../../utils/axios_utils";
-import NewTransactionDialog from "./components/NewTransactionDialog";
+import EditTransactionDialog from "./components/EditTransactionDialog";
 import PageTitle from '../../components/PageTitle';
 import ExportTypeSelectionDialog from './components/ExportTypeSelectionDialog';
 
@@ -168,7 +168,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
       </TableContainer>
 
       <ExportTypeSelectionDialog open={exportDlgOpen} onCancel={() => setExportDlgOpen(false)} onExport={exportXls} />
-      <NewTransactionDialog open={showDlg} onClose={onCloseTransactionDlg} />
+      <EditTransactionDialog open={showDlg} onClose={onCloseTransactionDlg} />
     </Container>
   );
 }

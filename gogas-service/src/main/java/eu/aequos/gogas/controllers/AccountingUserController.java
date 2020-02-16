@@ -38,6 +38,11 @@ public class AccountingUserController {
 
 
 
+    @GetMapping(value = "entry/{accountingEntryId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public AccountingEntryDTO getAccountingEntry(@PathVariable String accountingEntryId) {
+        return accountingService.get(accountingEntryId);
+    }
+
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
                                                          @RequestParam(required = false) String reasonCode,

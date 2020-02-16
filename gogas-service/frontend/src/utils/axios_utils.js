@@ -5,6 +5,7 @@ const baseUrl = "";
 const apiGet = url => axios.get(baseUrl + url);
 
 export const apiPost = (url, data) => axios.post(baseUrl + url, data);
+export const apiPut = (url, data) => axios.put(baseUrl + url, data);
 export const json = response => {
   return response ? response.data : undefined;
 };
