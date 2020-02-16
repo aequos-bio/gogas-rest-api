@@ -36,12 +36,21 @@ const useStyles = makeStyles(theme => ({
   },
   menuContainer: {
     width: drawerWidth,
-    padding: theme.spacing(2,0),
+    padding: theme.spacing(1,0),
     display: 'flex',
     flexDirection: 'column'
   },
   menuChapter: {
     paddingLeft: theme.spacing(2),
+  },
+  menuItemList: {
+    padding: 0,
+  },
+  menuItem: {
+    padding: theme.spacing(.5,2),
+  },
+  menuItemIcon: {
+    minWidth: theme.spacing(6),
   },
   link: {
     display: 'flex',
@@ -142,10 +151,10 @@ const NavigationMenu = ({authentication, open, onClose}) => {
                 {menuChapter.label}
               </Typography>
             : null}
-            <List>
+            <List className={classes.menuItemList}>
               {menus.map((m,j)=> (
-                <ListItem button key={`menu-${i}-${j}`} onClick={() => menuClick(m)}> 
-                  <ListItemIcon>{icons[m.icon]}</ListItemIcon>
+                <ListItem className={classes.menuItem} button key={`menu-${i}-${j}`} onClick={() => menuClick(m)}> 
+                  <ListItemIcon className={classes.menuItemIcon}>{icons[m.icon]}</ListItemIcon>
                   <ListItemText>{m.label}</ListItemText>
                 </ListItem>
               ))}
