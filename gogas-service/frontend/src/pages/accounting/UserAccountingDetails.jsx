@@ -4,6 +4,7 @@ import {
   Container,
   Fab,
   Button,
+  IconButton,
   TableContainer,
   Table,
   TableHead,
@@ -13,6 +14,8 @@ import {
   TableBody,
 } from '@material-ui/core';
 import {
+  EditSharp as EditIcon,
+  DeleteSharp as DeleteIcon,
   AddSharp as PlusIcon,
   SaveAltSharp as SaveIcon
 } from '@material-ui/icons';
@@ -22,8 +25,9 @@ import queryString from "query-string";
 import moment from "moment-timezone";
 import _ from "lodash";
 import Jwt from "jsonwebtoken";
-import { getJson } from "../../utils/axios_utils";
+import { getJson, calldelete } from "../../utils/axios_utils";
 import NewTransactionDialog from "./components/NewTransactionDialog";
+import ActionDialog from '../../components/ActionDialog';
 import PageTitle from '../../components/PageTitle';
 
 const useStyles = makeStyles((theme) => ({
@@ -35,6 +39,10 @@ const useStyles = makeStyles((theme) => ({
   tdAmount: {
     textAlign: "right",
     width: "90px",
+  },
+  tdButtons: {
+    minWidth: '90px',
+    width: '90px',
   },
   footercell: {
     '& td': {
@@ -50,6 +58,8 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   const [transactions, setTransactions] = useState([]);
   const [totals, setTotals] = useState({ accrediti: 0, addebiti: 0 });
   const [showDlg, setShowDlg] = useState(false);
+  const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState();
 
   const reload = useCallback(() => {
     getJson(`/api/user/${search.userId}`, {}).then(u => {
@@ -115,6 +125,27 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
     [setShowDlg, reload]
   );
 
+  const editTransaction = useCallback((id) => {
+    setSelectedId(id);
+
+  }, []);
+
+  const deleteTransaction = useCallback((id) => {
+    setSelectedId(id);
+    setDeleteDlgOpen(true);
+  }, []);
+  
+  const doDeleteTransaction = useCallback(() => {
+    calldelete(`/api/accounting/user/entry/${selectedId}`).then(() => {
+      setDeleteDlgOpen(false);
+      reload();
+      enqueueSnackbar('Movimento eliminato',{variant:'success'});
+    }).catch(err => {
+      enqueueSnackbar(err.response?.statusText || 'Errore nell\'eliminazione del movimento',{variant:'error'})
+    });
+
+  }, [enqueueSnackbar, reload, selectedId])
+
   const rows = useMemo(() => {
     if (!transactions || !transactions.length) return [];
     const rr = [];
@@ -138,6 +169,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
                 {t.saldo >= 0 ? "+ " : ""}
                 {t.saldo.toFixed(2)}
               </TableCell>
+              {jwt.role==='A' ? 
+                <TableCell/>
+              : null}
             </TableRow>
           );
 
@@ -153,12 +187,15 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
                 <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
               </TableCell>
               <TableCell />
+              {jwt.role==='A' ? 
+                <TableCell />
+              : null}
             </TableRow>
           )
         }
         rr.push(
           <TableRow key={`year-${year}`}>
-            <TableCell colSpan='5'>
+            <TableCell colSpan={jwt.role==='A' ? '6' : '5'}>
               <strong>Anno {year}</strong>
             </TableCell>
           </TableRow>
@@ -195,6 +232,21 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
             {t.saldo >= 0 ? "+ " : ""}
             {t.saldo.toFixed(2)}
           </TableCell>
+          {jwt.role==='A' ? 
+            <TableCell>
+              {t.type==='M' ? 
+                <IconButton onClick={() => { editTransaction(t.id) }}>
+                  <EditIcon fontSize='small'/>
+                </IconButton>
+              : null}
+
+              {t.type==='M' ? 
+                <IconButton onClick={() => { deleteTransaction(t.id) }}>
+                  <DeleteIcon fontSize='small' />
+                </IconButton>
+              : null}
+            </TableCell>
+          : null}
         </TableRow>
       );
     });
@@ -208,6 +260,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
         <TableCell className={classes.tdAmount}>
           0.00
         </TableCell>
+        {jwt.role==='A' ? 
+          <TableCell/>
+        : null}
       </TableRow>
     );
 
@@ -223,6 +278,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
           <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
         </TableCell>
         <TableCell />
+        {jwt.role==='A' ? 
+          <TableCell />
+        : null}
       </TableRow>
     )
 
@@ -252,6 +310,9 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
               <TableCell align='center'>Accrediti</TableCell>
               <TableCell align='center'>Addebiti</TableCell>
               <TableCell align='center'>Saldo</TableCell>
+              {jwt.role==='A' ? 
+                <TableCell className={classes.tdButtons}/>
+              : null}
             </TableRow>
           </TableHead>
 
@@ -270,12 +331,17 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
                 <strong>{totals && !Number.isNaN(totals.addebiti) ? totals.addebiti.toFixed(2) : ''}</strong>
               </TableCell>
               <TableCell />
+              {jwt.role==='A' ? 
+                <TableCell />
+              : null}
             </TableRow>
           </TableFooter>
         </Table>
       </TableContainer>
 
       <NewTransactionDialog user={user} open={showDlg} onClose={dialogClosed} />
+      <ActionDialog open={deleteDlgOpen} onCancel={() => setDeleteDlgOpen(false)} actions={['Ok']} 
+        onAction={doDeleteTransaction} title='Conferma eliminazione' message='Sei sicuro di voler eliminare il movimento selezionato?'/>
     </Container>
   );
 }

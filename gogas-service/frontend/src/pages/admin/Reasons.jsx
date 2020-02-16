@@ -112,7 +112,7 @@ const Reasons = ({ enqueueSnackbar }) => {
       reload();
       enqueueSnackbar('Causale eliminata',{variant:'success'});
     }).catch(err => {
-      enqueueSnackbar(err.response?.statusText || 'Errore nel salvataggio della causale',{variant:'error'})
+      enqueueSnackbar(err.response?.statusText || 'Errore nell\'eliminazione della causale',{variant:'error'})
     });
 
   }, [enqueueSnackbar, selectedCode, reload]);

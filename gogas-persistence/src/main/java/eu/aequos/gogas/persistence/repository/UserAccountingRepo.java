@@ -48,6 +48,7 @@ public interface UserAccountingRepo extends JpaRepository<UserTransactionFull, S
         "'' AS reason, " +
         "'-' AS sign, " +
         "o.contabilizzato AS recorded, " +
+        "'O' AS type, " +
         "NULL as friend " +
         "FROM dateOrdini AS d " +
         "INNER JOIN tipologiaOrdine AS t ON d.idTipologiaOrdine = t.idTipologiaOrdine " +
