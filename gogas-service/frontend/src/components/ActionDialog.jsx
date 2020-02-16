@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 import React from 'react';
 import {
   Dialog,
@@ -7,7 +8,7 @@ import {
   Button
 } from '@material-ui/core';
 
-const ConfirmationDialog = ({title, message, open, onCancel, onConfirm}) => {
+const ActionDialog = ({title, message, open, onCancel, onAction, actions}) => {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth='xs' fullWidth>
       <DialogTitle>{title}</DialogTitle>
@@ -18,13 +19,15 @@ const ConfirmationDialog = ({title, message, open, onCancel, onConfirm}) => {
       <Button onClick={onCancel} autoFocus>
           Annulla
         </Button>
-        <Button onClick={onConfirm} color='secondary'>
-          Ok
-        </Button>
+        {actions.map((action,i) => (
+          <Button key={`action-${i}`}  onClick={() => onAction(i)}>
+            {action}
+          </Button>
+        ))}
 
       </DialogActions>
     </Dialog>
   );
 }
 
-export default ConfirmationDialog
+export default ActionDialog;

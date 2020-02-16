@@ -22,7 +22,7 @@ import { withSnackbar } from 'notistack';
 import { getJson, calldelete } from "../../utils/axios_utils";
 import PageTitle from '../../components/PageTitle';
 import EditReasonDialog from './components/EditReasonDialog';
-import ConfirmationDialog from '../../components/ConfirmationDialog';
+import ActionDialog from '../../components/ActionDialog';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -144,7 +144,7 @@ const Reasons = ({ enqueueSnackbar }) => {
       </TableContainer>
 
       <EditReasonDialog mode={dialogMode} onClose={dialogClosed} reasonCode={selectedCode}/>
-      <ConfirmationDialog open={deleteDlgOpen} onCancel={() => setDeleteDlgOpen(false)} onConfirm={doDeleteReason} title='Conferma eliminazione' message='Sei sicuro di voler eliminare la causale selezionata?'/>
+      <ActionDialog open={deleteDlgOpen} onCancel={() => setDeleteDlgOpen(false)} actions={['Ok']} onAction={doDeleteReason} title='Conferma eliminazione' message='Sei sicuro di voler eliminare la causale selezionata?'/>
     </Container>
   );
 }

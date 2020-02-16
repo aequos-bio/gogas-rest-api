@@ -146,7 +146,7 @@ const EditReasonDialog = ({mode, onClose, reasonCode, enqueueSnackbar}) => {
         <Button onClick={onClose} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => save(false)} color='secondary' disabled={!canSave}>
+        <Button onClick={() => save(false)} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>

@@ -240,10 +240,10 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
         <Button onClick={close} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => save(true)} color='secondary' disabled={!canSave}>
+        <Button onClick={() => save(true)} disabled={!canSave}>
           Salva e continua
         </Button>
-        <Button onClick={() => save(false)} color='secondary' disabled={!canSave}>
+        <Button onClick={() => save(false)} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>

@@ -17,6 +17,7 @@ import {
 import { connect } from 'react-redux';
 import Jwt from 'jsonwebtoken';
 import { withSnackbar } from 'notistack';
+import moment from 'moment-timezone';
 import { getJson } from "../utils/axios_utils";
 import { logout } from '../store/actions';
 import NavigationMenu from './NavigationMenu';
@@ -74,13 +75,16 @@ const NavBar = ({authentication, info, history, enqueueSnackbar, ...props}) => {
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
       const j = Jwt.decode(authentication.jwtToken);
+			if (moment(j.exp * 1000).isBefore(moment())) {
+        j.expired = true;
+      }
       return j;
     }
     return null;
   }, [authentication]);
 
   useEffect(() => {
-    if (!jwt || !jwt.id) return;
+    if (!jwt || !jwt.id || jwt.expired) return;
     getJson(`/api/accounting/user/${jwt.id}/balance`)
       .then(b => {
         if (b.error) {

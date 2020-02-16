@@ -42,7 +42,7 @@ public class UserAccountingService {
               UserTransactionFull utf = new UserTransactionFull(t, reasonDict.get(t.getReason().getReasonCode()));
               if (!utf.getUserId().equals(userId)) {
                   Optional<User> friend = userRepo.findById(utf.getUserId());
-                  utf.setFriend(friend.get().toString());
+                  utf.setFriend(friend.get().getUsername());
               }
               result.add(utf);
           }
