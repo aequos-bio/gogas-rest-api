@@ -32,6 +32,44 @@ const useStyles = makeStyles(theme => ({
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
+  tableHead: {
+    '@media screen and (max-width: 768px)': {
+      display: 'none'
+    }
+  },
+  tableBody: {
+    '@media screen and (max-width: 768px)': {
+      display: 'block',
+    }
+  },
+  tableRow: {
+    '@media screen and (max-width: 768px)': {
+      display: 'block',
+      border: '1px solid #e0e0e0',
+      borderRadius: '5px',
+      marginBottom: theme.spacing(2)
+    }
+  },
+  tableCell: {
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
+
+    '@media screen and (max-width: 768px)': {
+      backgroundColor: 'white',
+      display: 'block',
+      verticalAlign: 'middle',
+      textAlign: 'right',
+      borderWidth: 0,
+      minHeight: '20px',
+
+      '&:before': {
+        content: 'attr(data-title)',
+        float: 'left',
+        fontSize: 'inherit',
+        fontWeight: 'bold',
+      }
+    },
+  },
   tdIcon: {
     color: "red",
     textAlign: "center",
@@ -40,6 +78,7 @@ const useStyles = makeStyles(theme => ({
   tdButtons: {
     fontSize: '130%',
     textAlign: 'center',
+    minWidth: '88px'
   }
 }));
 
@@ -114,21 +153,33 @@ function Users({ info, enqueueSnackbar }) {
   const rows = useMemo(() => {
     if (users) {
       return users.map(u => (
-        <TableRow key={`user-${u.idUtente}`} hover>
-          <TableCell className={classes.tdIcon}>
+        <TableRow key={`user-${u.idUtente}`} hover className={classes.tableRow}>
+          <TableCell className={`${classes.tdIcon} ${classes.tableCell}`}>
             {u.attivo ? (
               ""
             ) : (
                 <BlockIcon fontSize='small' />
               )}
           </TableCell>
-          <TableCell>{sort === "NC" ? u.nome : u.cognome}</TableCell>
-          <TableCell>{sort === "NC" ? u.cognome : u.nome}</TableCell>
-          <TableCell>{u.username}</TableCell>
-          <TableCell>{u.email}</TableCell>
-          <TableCell>{mapRoles(u)}</TableCell>
-          <TableCell>{mapRef(u.idReferente)}</TableCell>
-          <TableCell className={classes.tdButtons}>
+          <TableCell className={classes.tableCell} data-title={sort === "NC" ? 'Nome' : 'Cognome'}>
+            {sort === "NC" ? u.nome : u.cognome}
+          </TableCell>
+          <TableCell className={classes.tableCell} data-title={sort === "NC" ? 'Cognome' : 'Nome'}>
+            {sort === "NC" ? u.cognome : u.nome}
+          </TableCell>
+          <TableCell className={classes.tableCell} data-title='Username'>
+            {u.username}
+          </TableCell>
+          <TableCell className={classes.tableCell} data-title='Email'>
+            {u.email}
+          </TableCell>
+          <TableCell className={classes.tableCell} data-title='Ruolo'>
+            {mapRoles(u)}
+          </TableCell>
+          <TableCell className={classes.tableCell} data-title='Ref. amico'>
+            {mapRef(u.idReferente)}
+          </TableCell>
+          <TableCell className={`${classes.tdButtons} ${classes.tableCell}`}>
             <IconButton onClick={() => { editUser(u.idUtente) }}>
               <EditIcon fontSize='small' />
             </IconButton>
@@ -152,7 +203,7 @@ function Users({ info, enqueueSnackbar }) {
 
       <TableContainer >
         <Table size='small'>
-          <TableHead>
+          <TableHead className={classes.tableHead}>
             <TableRow>
               <TableCell className={classes.tdIcon} />
               <TableCell>{sort === "NC" ? "Nome" : "Cognome"}</TableCell>
@@ -165,7 +216,7 @@ function Users({ info, enqueueSnackbar }) {
             </TableRow>
           </TableHead>
 
-          <TableBody>
+          <TableBody className={classes.tableBody}>
             {rows}
           </TableBody>
         </Table>
