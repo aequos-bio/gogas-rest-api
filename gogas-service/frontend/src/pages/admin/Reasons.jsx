@@ -119,7 +119,7 @@ const Reasons = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title='Gestione causali' />
+      <PageTitle title='Causali' />
 
       <Fab className={classes.fab} color='secondary' onClick={newReason}>
         <PlusIcon />

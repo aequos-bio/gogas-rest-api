@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
@@ -8,81 +9,62 @@ import Users from "./admin/Users";
 import Reasons from "./admin/Reasons";
 import UserAccounting from "./accounting/UserAccounting";
 import UserAccountingDetails from "./accounting/UserAccountingDetails";
-import Years from './accounting/Years';
+import Years from "./accounting/Years";
+import OrderTypes from "./admin/OrderTypes";
+import Managers from "./admin/Managers";
 import { init } from "../store/actions";
-import PrivateRoute from '../components/PrivateRoute';
+import PrivateRoute from "../components/PrivateRoute";
+
+const privateRoutes = [
+  { path: "/", component: Home },
+  { path: "/years", component: Years },
+  { path: "/useraccounting", component: UserAccounting },
+  { path: "/useraccountingdetails", component: UserAccountingDetails },
+  { path: "/users", component: Users },
+  { path: "/reasons", component: Reasons },
+  { path: "/ordertypes", component: OrderTypes },
+  { path: "/managers", component: Managers }
+];
 
 function Routes({ authentication, ...props }) {
-	useEffect(() => {
-		props.init();
-	}, [props]);
+  useEffect(() => {
+    props.init();
+  }, [props]);
 
-	return (
-		<Router basename="/">
-			<>
-				<Switch>
-					<Route exact path={["/login"]} component={null} />
-					<Route path={["/"]} component={NavBar} />
-				</Switch>
+  return (
+    <Router basename="/">
+      <>
+        <Switch>
+          <Route exact path={["/login"]} component={null} />
+          <Route path={["/"]} component={NavBar} />
+        </Switch>
 
-				<Switch>
-					<Route path="/login" component={Login} />
-					<PrivateRoute
-						exact
-						path="/"
-						component={Home}
-						jwtToken={authentication.jwtToken}
-					/>
+        <Switch>
+          <Route path="/login" component={Login} />
 
-					<PrivateRoute
-						exact
-						path="/years"
-						component={Years}
-						jwtToken={authentication.jwtToken}
-					/>
-					<PrivateRoute
-						exact
-						path="/useraccounting"
-						component={UserAccounting}
-						jwtToken={authentication.jwtToken}
-					/>
-					<PrivateRoute
-						exact
-						path="/useraccountingdetails"
-						component={UserAccountingDetails}
-						jwtToken={authentication.jwtToken}
-					/>
-
-					<PrivateRoute
-						exact
-						path="/users"
-						component={Users}
-						jwtToken={authentication.jwtToken}
-					/>
-					<PrivateRoute
-						exact
-						path="/reasons"
-						component={Reasons}
-						jwtToken={authentication.jwtToken}
-					/>
-
-				</Switch>
-			</>
-		</Router>
-	);
+          {privateRoutes.map((pr, i) => (
+            <PrivateRoute
+              key={`route-${i}`}
+              exact
+              path={pr.path}
+              component={pr.component}
+              jwtToken={authentication.jwtToken}
+            />
+          ))}
+        </Switch>
+      </>
+    </Router>
+  );
 }
 
 const mapStateToProps = state => {
-	return {
-		authentication: state.authentication
-	};
+  return {
+    authentication: state.authentication
+  };
 };
 
 const mapDispatchToProps = {
-	init
+  init
 };
 
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(Routes);
+export default connect(mapStateToProps, mapDispatchToProps)(Routes);

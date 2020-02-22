@@ -11,59 +11,63 @@ import {
   TableFooter,
   TableRow,
   TableCell,
-  TableBody,
-} from '@material-ui/core';
+  TableBody
+} from "@material-ui/core";
 import {
   ArrowForwardIosSharp as EditIcon,
   BlockSharp as BlockIcon,
   AddSharp as PlusIcon,
-  SaveAltSharp as SaveIcon,
-} from '@material-ui/icons';
-import { makeStyles } from '@material-ui/core/styles';
-import { withSnackbar } from 'notistack';
+  SaveAltSharp as SaveIcon
+} from "@material-ui/icons";
+import { makeStyles } from "@material-ui/core/styles";
+import { withSnackbar } from "notistack";
 import _ from "lodash";
 import { getJson } from "../../utils/axios_utils";
 import EditTransactionDialog from "./components/EditTransactionDialog";
-import PageTitle from '../../components/PageTitle';
-import ExportTypeSelectionDialog from './components/ExportTypeSelectionDialog';
+import PageTitle from "../../components/PageTitle";
+import LoadingRow from "../../components/LoadingRow";
+import ExportTypeSelectionDialog from "./components/ExportTypeSelectionDialog";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   fab: {
-    position: 'fixed',
+    position: "fixed",
     bottom: theme.spacing(2),
-    right: theme.spacing(2),
+    right: theme.spacing(2)
   },
   tdIcon: {
     color: "red",
     textAlign: "center",
-    width: '30px',
+    width: "30px"
   },
   tdAmount: {
     textAlign: "right",
-    width: "90px",
+    width: "90px"
   },
   tdLink: {
     textAlign: "center",
     width: "70px"
   },
   footercell: {
-    '& td': {
-      fontSize: '.875rem'
+    "& td": {
+      fontSize: ".875rem"
     }
   }
 }));
 
 function UserAccounting({ history, enqueueSnackbar }) {
   const classes = useStyles();
+  const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [totals, setTotals] = useState([]);
   const [showDlg, setShowDlg] = useState(false);
   const [exportDlgOpen, setExportDlgOpen] = useState(false);
 
   const reload = useCallback(() => {
+    setLoading(true);
     getJson("/api/useraccounting/userTotals", {}).then(tt => {
+      setLoading(false);
       if (tt.error) {
-        enqueueSnackbar(tt.errorMessage, { variant: 'error' })
+        enqueueSnackbar(tt.errorMessage, { variant: "error" });
       } else {
         let tot = 0;
         tt.data.forEach(t => {
@@ -75,7 +79,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
     });
   }, [enqueueSnackbar]);
 
-  const exportXls = useCallback((type) => {
+  const exportXls = useCallback(type => {
     setExportDlgOpen(false);
 
     if (type === "simple")
@@ -87,19 +91,25 @@ function UserAccounting({ history, enqueueSnackbar }) {
       );
   }, []);
 
-  const onCloseTransactionDlg = useCallback((refresh) => {
-    setShowDlg(false);
-    if (refresh) {
-      reload();
-    }
-
-  }, [reload]);
+  const onCloseTransactionDlg = useCallback(
+    refresh => {
+      setShowDlg(false);
+      if (refresh) {
+        reload();
+      }
+    },
+    [reload]
+  );
 
   useEffect(() => {
     reload();
   }, [reload]);
 
   const rows = useMemo(() => {
+    if (loading) {
+      return <LoadingRow colSpan={4} />;
+    }
+
     if (!totals) return null;
 
     const tt = _.orderBy(
@@ -110,37 +120,47 @@ function UserAccounting({ history, enqueueSnackbar }) {
     return tt.map(t => (
       <TableRow key={`user-${t.user.id}`} hover>
         <TableCell className={classes.tdIcon}>
-          {t.user.enabled ? [] : <BlockIcon fontSize='small' />}
+          {t.user.enabled ? [] : <BlockIcon fontSize="small" />}
         </TableCell>
         <TableCell>{`${t.user.firstName} ${t.user.lastName}`}</TableCell>
-        <TableCell className={classes.tdAmount}
+        <TableCell
+          className={classes.tdAmount}
           style={{ color: t.total < 0 ? "red" : "inheried" }}
         >
           {t.total.toFixed(2)}
         </TableCell>
         <TableCell className={classes.tdLink}>
-          <IconButton onClick={() => history.push(`/useraccountingdetails?userId=${t.user.id}`)} size='small'>
-            <EditIcon fontSize='small' />
+          <IconButton
+            onClick={() =>
+              history.push(`/useraccountingdetails?userId=${t.user.id}`)
+            }
+            size="small"
+          >
+            <EditIcon fontSize="small" />
           </IconButton>
         </TableCell>
       </TableRow>
     ));
-  }, [totals, history, classes]);
+  }, [totals, history, classes, loading]);
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title='Situazione contabile utenti'>
+      <PageTitle title="Situazione contabile utenti">
         <Button onClick={() => setExportDlgOpen(true)} startIcon={<SaveIcon />}>
           Esporta XLS
         </Button>
       </PageTitle>
 
-      <Fab className={classes.fab} color='secondary' onClick={() => setShowDlg(true)}>
+      <Fab
+        className={classes.fab}
+        color="secondary"
+        onClick={() => setShowDlg(true)}
+      >
         <PlusIcon />
       </Fab>
 
-      <TableContainer >
-        <Table size='small'>
+      <TableContainer>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell className={classes.tdIcon} />
@@ -150,15 +170,18 @@ function UserAccounting({ history, enqueueSnackbar }) {
             </TableRow>
           </TableHead>
 
-          <TableBody>
-            {rows}
-          </TableBody>
+          <TableBody>{rows}</TableBody>
 
           <TableFooter className={classes.footercell}>
             <TableRow>
               <TableCell />
-              <TableCell><strong>TOTALE</strong></TableCell>
-              <TableCell className={classes.tdAmount} style={{ color: total < 0 ? "red" : "inherited" }}>
+              <TableCell>
+                <strong>TOTALE</strong>
+              </TableCell>
+              <TableCell
+                className={classes.tdAmount}
+                style={{ color: total < 0 ? "red" : "inherited" }}
+              >
                 <strong>{total.toFixed(2)}</strong>
               </TableCell>
               <TableCell />
@@ -167,7 +190,11 @@ function UserAccounting({ history, enqueueSnackbar }) {
         </Table>
       </TableContainer>
 
-      <ExportTypeSelectionDialog open={exportDlgOpen} onCancel={() => setExportDlgOpen(false)} onExport={exportXls} />
+      <ExportTypeSelectionDialog
+        open={exportDlgOpen}
+        onCancel={() => setExportDlgOpen(false)}
+        onExport={exportXls}
+      />
       <EditTransactionDialog open={showDlg} onClose={onCloseTransactionDlg} />
     </Container>
   );
@@ -181,4 +208,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = {};
 
-export default connect(mapStateToProps, mapDispatchToProps)(withSnackbar(UserAccounting));
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withSnackbar(UserAccounting));

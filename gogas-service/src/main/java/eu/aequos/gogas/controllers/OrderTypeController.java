@@ -1,11 +1,7 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
-import eu.aequos.gogas.dto.OrderTypeDTO;
-import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.ItemNotFoundException;
-import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
@@ -17,10 +13,9 @@ import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("api/ordertype")
@@ -113,6 +108,28 @@ public class OrderTypeController {
         return orderManagerList.stream()
                 .map(c -> new SelectItemDTO(c.getId(), usersMap.get(c.getUser())))
                 .collect(Collectors.toList());
+    }
+
+    @IsAdmin
+    @GetMapping(value = "manager/list")
+    public List<ManagerDTO> listManagers() {
+        Iterable<OrderManager> orderManagerIterable = orderManagerRepo.findAll();
+        List<OrderManager> orderManagerList = StreamSupport.stream(orderManagerIterable.spliterator(), false)
+                .collect(Collectors.toList());
+        Map<String, String> usersMap = userService.getUsersFullNameMap(orderManagerList.stream()
+            .map(OrderManager::getUser)
+            .collect(Collectors.toSet()));
+
+        Map<String, OrderType> orderTypesMap = orderTypeService.getAllOrderTypesMapping();
+
+        List<ManagerDTO> managers = new ArrayList<>();
+        for(OrderManager orderManager : orderManagerList) {
+            ManagerDTO manager = ManagerDTO.fromOrderManager(orderManager);
+            manager.setUserName(usersMap.get(orderManager.getUser()));
+            manager.setOrderTypeName(orderTypesMap.get(orderManager.getOrderType()).getDescription());
+            managers.add(manager);
+        }
+        return managers;
     }
 
     @IsAdmin

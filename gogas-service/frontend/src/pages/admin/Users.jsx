@@ -33,17 +33,17 @@ const useStyles = makeStyles(theme => ({
     right: theme.spacing(2),
   },
   tableHead: {
-    '@media screen and (max-width: 768px)': {
+    '@media screen and (max-width: 960px)': {
       display: 'none'
     }
   },
   tableBody: {
-    '@media screen and (max-width: 768px)': {
+    '@media screen and (max-width: 960px)': {
       display: 'block',
     }
   },
   tableRow: {
-    '@media screen and (max-width: 768px)': {
+    '@media screen and (max-width: 960px)': {
       display: 'block',
       border: '1px solid #e0e0e0',
       borderRadius: '5px',
@@ -54,7 +54,7 @@ const useStyles = makeStyles(theme => ({
     paddingLeft: theme.spacing(1),
     paddingRight: theme.spacing(1),
 
-    '@media screen and (max-width: 768px)': {
+    '@media screen and (max-width: 960px)': {
       backgroundColor: 'white',
       display: 'block',
       verticalAlign: 'middle',
@@ -195,7 +195,7 @@ function Users({ info, enqueueSnackbar }) {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title='Gestione utenti' />
+      <PageTitle title='Utenti' />
 
       <Fab className={classes.fab} color='secondary' onClick={newUser}>
         <PlusIcon />
