@@ -59,6 +59,12 @@ public class OrderTypeController {
     }
 
     @IsAdmin
+    @GetMapping(value = "{orderTypeId}")
+    public OrderTypeDTO getOrderType(@PathVariable String orderTypeId) {
+        return new OrderTypeDTO().fromModel(orderTypeService.getRequired(orderTypeId));
+    }
+
+    @IsAdmin
     @PutMapping(value = "aequos/sync")
     public BasicResponseDTO synchronizeWithAequos() {
         orderTypeService.synchronizeAequosOrderTypes();

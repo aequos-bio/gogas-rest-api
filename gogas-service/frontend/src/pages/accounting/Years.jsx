@@ -16,12 +16,16 @@ import { withSnackbar } from "notistack";
 import _ from "lodash";
 import { getJson } from "../../utils/axios_utils";
 import PageTitle from "../../components/PageTitle";
+import LoadingRow from "../../components/LoadingRow";
 
 const Years = ({ enqueueSnackbar }) => {
   const [years, setYears] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const reload = useCallback(() => {
+    setLoading(true);
     getJson("/api/year/all", {}).then(yy => {
+      setLoading(false);
       if (yy.error) {
         enqueueSnackbar(yy.errorMessage, { variant: "error" });
       } else {
@@ -43,27 +47,31 @@ const Years = ({ enqueueSnackbar }) => {
   );
 
   const rows = useMemo(() => {
-    return years.map((y, i) => (
-      <TableRow key={`year-${y.year}`} hover>
-        <TableCell>{y.year}</TableCell>
-        <TableCell style={{ color: y.closed ? "red" : "black" }}>
-          {y.closed ? "Chiuso" : `Aperto${i === 0 ? ", in corso" : ""}`}
-        </TableCell>
-        <TableCell align="right">
-          {y.closed || i === 0 ? null : (
-            <Button
-              variant="outlined"
-              size="small"
-              color="secondary"
-              onClick={() => closeYear(y)}
-            >
-              Chiudi
-            </Button>
-          )}
-        </TableCell>
-      </TableRow>
-    ));
-  }, [years, closeYear]);
+    return loading ? (
+      <LoadingRow colSpan={3} />
+    ) : (
+      years.map((y, i) => (
+        <TableRow key={`year-${y.year}`} hover>
+          <TableCell>{y.year}</TableCell>
+          <TableCell style={{ color: y.closed ? "red" : "black" }}>
+            {y.closed ? "Chiuso" : `Aperto${i === 0 ? ", in corso" : ""}`}
+          </TableCell>
+          <TableCell align="right">
+            {y.closed || i === 0 ? null : (
+              <Button
+                variant="outlined"
+                size="small"
+                color="secondary"
+                onClick={() => closeYear(y)}
+              >
+                Chiudi
+              </Button>
+            )}
+          </TableCell>
+        </TableRow>
+      ))
+    );
+  }, [years, closeYear, loading]);
 
   return (
     <Container maxWidth={false}>

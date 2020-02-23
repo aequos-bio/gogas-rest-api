@@ -21,9 +21,11 @@ import {
 import { withSnackbar } from "notistack";
 import { connect } from "react-redux";
 import { makeStyles } from "@material-ui/core/styles";
-import { getJson, apiPut } from "../../utils/axios_utils";
+import { getJson, apiPut, calldelete } from "../../utils/axios_utils";
 import PageTitle from "../../components/PageTitle";
+import ActionDialog from "../../components/ActionDialog";
 import LoadingRow from "../../components/LoadingRow";
+import EditOrderTypeDialog from "./components/EditOrderTypeDialog";
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -63,6 +65,9 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
   const [orderTypes, setOrderTypes] = useState([]);
+  const [dialogMode, setDialogMode] = useState(false);
+  const [selectedId, setSelectedId] = useState();
+  const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -81,16 +86,45 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   }, [reload]);
 
   const newOrderType = useCallback(() => {
-    enqueueSnackbar("Funzione non implementata!", { variant: "error" });
-  }, [enqueueSnackbar]);
+    setSelectedId();
+    setDialogMode("new");
+  }, []);
 
-  const editOrderType = useCallback(() => {
-    enqueueSnackbar("Funzione non implementata!", { variant: "error" });
-  }, [enqueueSnackbar]);
+  const editOrderType = useCallback(id => {
+    setSelectedId(id);
+    setDialogMode("edit");
+  }, []);
 
-  const deleteOrderType = useCallback(() => {
-    enqueueSnackbar("Funzione non implementata!", { variant: "error" });
-  }, [enqueueSnackbar]);
+  const deleteOrderType = useCallback(id => {
+    setSelectedId(id);
+    setDeleteDlgOpen(true);
+  }, []);
+
+  const doDeleteOrderType = useCallback(() => {
+    calldelete(`/api/ordertype/${selectedId}`)
+      .then(() => {
+        setDeleteDlgOpen(false);
+        reload();
+        enqueueSnackbar("Tipo ordine eliminato", { variant: "success" });
+      })
+      .catch(err => {
+        enqueueSnackbar(
+          err.response?.statusText ||
+            "Errore nell'eliminazione del tipo ordine",
+          { variant: "error" }
+        );
+      });
+  }, [enqueueSnackbar, selectedId, reload]);
+
+  const dialogClosed = useCallback(
+    needrefresh => {
+      setDialogMode(false);
+      if (needrefresh) {
+        reload();
+      }
+    },
+    [reload]
+  );
 
   const syncWithAequos = useCallback(() => {
     apiPut("/api/ordertype/aequos/sync")
@@ -121,9 +155,6 @@ const OrderTypes = ({ enqueueSnackbar }) => {
             {o.totalecalcolato ? <CheckIcon /> : null}
           </TableCell>
           <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.external ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
             {o.turni ? <CheckIcon /> : null}
           </TableCell>
           <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
@@ -131,6 +162,9 @@ const OrderTypes = ({ enqueueSnackbar }) => {
           </TableCell>
           <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
             {o.completamentocolli ? <CheckIcon /> : null}
+          </TableCell>
+          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
+            {o.external ? <CheckIcon /> : null}
           </TableCell>
           <TableCell className={classes.tableCell}>
             <IconButton
@@ -183,11 +217,6 @@ const OrderTypes = ({ enqueueSnackbar }) => {
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Ordine esterno
-              </TableCell>
-              <TableCell
-                className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
-              >
                 Prevede turni
               </TableCell>
               <TableCell
@@ -200,6 +229,11 @@ const OrderTypes = ({ enqueueSnackbar }) => {
               >
                 Mostra compl. colli
               </TableCell>
+              <TableCell
+                className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
+              >
+                Ordine esterno
+              </TableCell>
               <TableCell className={classes.tdButtons} />
             </TableRow>
           </TableHead>
@@ -207,6 +241,21 @@ const OrderTypes = ({ enqueueSnackbar }) => {
           <TableBody className={classes.tableBody}>{rows}</TableBody>
         </Table>
       </TableContainer>
+
+      <EditOrderTypeDialog
+        mode={dialogMode}
+        onClose={dialogClosed}
+        orderTypeId={selectedId}
+      />
+
+      <ActionDialog
+        open={deleteDlgOpen}
+        onCancel={() => setDeleteDlgOpen(false)}
+        actions={["Ok"]}
+        onAction={doDeleteOrderType}
+        title="Conferma eliminazione"
+        message="Sei sicuro di voler eliminare il tipo ordine selezionato?"
+      />
     </Container>
   );
 };
