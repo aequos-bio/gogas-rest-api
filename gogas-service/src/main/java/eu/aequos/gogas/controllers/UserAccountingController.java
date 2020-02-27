@@ -1,17 +1,5 @@
 package eu.aequos.gogas.controllers;
 
-import java.math.BigDecimal;
-import java.util.*;
-
-import eu.aequos.gogas.service.ExcelGenerationService;
-import eu.aequos.gogas.utils.ExcelExport;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.UserAccountingRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
@@ -20,10 +8,18 @@ import eu.aequos.gogas.persistence.utils.UserTotalProjection;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
+import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.UserAccountingService;
 import eu.aequos.gogas.utils.RestResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 //TODO: check if we can merge with other controllers
 @RestController
@@ -36,20 +32,14 @@ public class UserAccountingController {
     private UserAccountingRepo userAccountingRepo;
     @Autowired
     private UserAccountingService userAccountingSrv;
-    @Autowired
-    private ExcelExport excelExport;
 
     @Autowired
     private ExcelGenerationService excelGenerationService;
 
+    //TODO: use database aggregation
     @IsAdmin
     @GetMapping("/userTotals")
-    public @ResponseBody
-    RestResponse<List<UserTotal>> getUserTotals() {
-        return new RestResponse<>(_getUserTotals());
-    }
-
-    public List<UserTotal> _getUserTotals() {
+    public RestResponse<List<UserTotal>> getUserTotals() {
         List<UserTotalProjection> order = userAccountingRepo.findOrderTotals();
         List<UserTotalProjection> transaction = userAccountingRepo.findTransactionTotals();
 
@@ -78,62 +68,30 @@ public class UserAccountingController {
             if (u.getFriendReferral() == null)
                 ttt.add(totals.get(u.getId()));
 
-        return ttt;
+        return new RestResponse<>(ttt);
     }
 
     @IsAdminOrCurrentUser
     @GetMapping("/userTransactions")
-    public @ResponseBody
-    RestResponse<List<UserTransactionFull>> getUserTransactions(@RequestParam(name = "userId", required = true) String userId) {
+    public RestResponse<List<UserTransactionFull>> getUserTransactions(@RequestParam(name = "userId") String userId) {
         List<UserTransactionFull> movimenti = userAccountingSrv.getUserTransactions(userId);
         List<UserTransactionFull> ordini = userAccountingRepo.getUserRecordedOrders(userId, userId);
         ordini.addAll(movimenti);
         return new RestResponse<>(ordini);
     }
 
-    //@IsAdmin
+    @IsAdmin
     @GetMapping(value = "/exportUserTotals", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public @ResponseBody
-    byte[] exportUserTotals(HttpServletResponse response,
-                            @RequestParam(name = "includeUsers", required = false) Boolean includeUsers) throws Exception {
-
-        List<UserTotal> userTotals = _getUserTotals();
-        Collections.sort(userTotals, new Comparator<UserTotal>() {
-            @Override
-            public int compare(UserTotal o1, UserTotal o2) {
-                int a1 = o1.getUser().isEnabled() ? 1 : 0;
-                int a2 = o2.getUser().isEnabled() ? 1 : 0;
-                return a2 - a1;
-            }
-        });
-        return excelExport.exportUserTotals(userTotals, includeUsers == null ? false : includeUsers.booleanValue());
-
-    }
-
-    @GetMapping(value = "/exportUserTotals2", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public @ResponseBody
-    byte[] exportUserTotals2(HttpServletResponse response,
+    public @ResponseBody byte[] exportUserTotals(HttpServletResponse response,
                             @RequestParam(name = "includeUsers", required = false) boolean includeUsers) throws Exception {
 
         return excelGenerationService.exportUserTotals(includeUsers);
     }
 
-    //@IsAdminOrCurrentUser
-    @GetMapping(value = "/exportUserDetails", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public @ResponseBody
-    byte[] exportUserDetails(HttpServletResponse response,
-                             @RequestParam(name = "userId", required = true) String userId) throws Exception {
-        byte[] bytes = excelExport.exportUserDetails(userId);
-        if (bytes == null)
-            response.sendError(406);
-        return bytes;
-    }
 
-    //@IsAdminOrCurrentUser
-    @GetMapping(value = "/exportUserDetails2", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    public @ResponseBody
-    byte[] exportUserDetails2(HttpServletResponse response,
-                             @RequestParam(name = "userId") String userId) throws Exception {
+    @IsAdminOrCurrentUser
+    @GetMapping(value = "/exportUserDetails", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody byte[] exportUserDetails(HttpServletResponse response, @RequestParam(name = "userId") String userId) throws Exception {
         byte[] bytes = excelGenerationService.exportUserEntries(userId);
         if (bytes == null)
             response.sendError(406);
