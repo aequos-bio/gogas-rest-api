@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Home from "./Home";
 import NavBar from "../components/NavBar";
 import Login from "./Login";
-import Users from "./admin/Users";
+import Users from "./admin/Users2";
 import Reasons from "./admin/Reasons";
 import UserAccounting from "./accounting/UserAccounting";
 import UserAccountingDetails from "./accounting/UserAccountingDetails";
