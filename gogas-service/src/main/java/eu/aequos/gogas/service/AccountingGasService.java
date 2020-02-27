@@ -4,7 +4,7 @@ import eu.aequos.gogas.dto.AccountingGasEntryDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.dto.OrderAccountingInfoDTO;
 import eu.aequos.gogas.persistence.repository.AccountingGasRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.AccountingGasSpecs;
@@ -13,9 +13,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,16 +80,20 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
     }
 
     private List<AccountingGasEntryDTO> getOrderAccontingEntries(LocalDate dateFrom, LocalDate dateTo) {
-        List<Order> orderList = orderRepo.findAccountedByInvoiceDateBetween(dateFrom, dateTo);
+        //getting unique by invoice key (accountingCode, invoiceNumber, invoiceDate) to avoid duplicating aequos invoices for multiple orders
+        Collection<OrderAccountingInfoDTO> orderList = orderRepo.findAccountedByInvoiceDateBetween(dateFrom, dateTo).stream()
+                .map(o -> new OrderAccountingInfoDTO().fromOrder(o))
+                .collect(Collectors.toMap(OrderAccountingInfoDTO::getInvoiceKey, Function.identity(), OrderAccountingInfoDTO::mergeByInvoiceKey))
+                .values();
 
-        List<AccountingGasEntryDTO> accountingGasEntryDTOS = new ArrayList<>();
-        for (Order order : orderList) {
-            accountingGasEntryDTOS.add(new AccountingGasEntryDTO().fromOrderInvoice(order));
+        List<AccountingGasEntryDTO> accountingGasEntryDTOs = new ArrayList<>();
+        for (OrderAccountingInfoDTO order : orderList) {
+            accountingGasEntryDTOs.add(new AccountingGasEntryDTO().fromOrderInvoice(order));
 
             if (order.isPaid() && order.getPaymentDate() != null)
-                accountingGasEntryDTOS.add(new AccountingGasEntryDTO().fromOrderPayment(order));
+                accountingGasEntryDTOs.add(new AccountingGasEntryDTO().fromOrderPayment(order));
         }
 
-        return accountingGasEntryDTOS;
+        return accountingGasEntryDTOs;
     }
 }

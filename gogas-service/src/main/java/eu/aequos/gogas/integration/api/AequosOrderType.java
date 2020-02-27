@@ -11,4 +11,11 @@ public class AequosOrderType {
 
     @JsonProperty("descrizione")
     private String description;
+
+    @JsonProperty("fatturato_da_aequos")
+    private int billedByAequos;
+
+    public boolean isBilledByAequos() {
+        return billedByAequos > 0;
+    }
 }

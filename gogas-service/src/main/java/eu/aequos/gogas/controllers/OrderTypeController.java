@@ -1,9 +1,6 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
-import eu.aequos.gogas.dto.OrderTypeDTO;
-import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
@@ -145,6 +142,19 @@ public class OrderTypeController {
     @DeleteMapping(value = "manager/{orderManagerId}")
     public BasicResponseDTO deleteManager(@PathVariable String orderManagerId) {
         orderManagerRepo.deleteById(orderManagerId);
+        return new BasicResponseDTO("OK");
+    }
+
+    @IsAdmin
+    @GetMapping(value = "accounting")
+    public List<OrderTypeAccountingDTO> getOrderTypesForAccounting() {
+        return orderTypeService.getForAccounting();
+    }
+
+    @IsAdmin
+    @PutMapping(value = "{orderTypeId}/accounting")
+    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody String accountingCode) {
+        orderTypeService.updateAccountingCode(orderTypeId, accountingCode);
         return new BasicResponseDTO("OK");
     }
 }

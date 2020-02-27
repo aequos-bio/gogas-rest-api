@@ -117,6 +117,6 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("UPDATE Order o SET o.lastWeightUpdate = ?2 WHERE o.id = ?1")
     int updateWeightSentDate(String orderId, LocalDateTime weightSentDate);
 
-    @Query("SELECT o FROM Order o WHERE o.statusCode = 2 AND o.invoiceDate BETWEEN ?1 AND ?2")
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND o.invoiceDate BETWEEN ?1 AND ?2")
     List<Order> findAccountedByInvoiceDateBetween(LocalDate invoiceDateFrom, LocalDate invoiceDateTo);
 }
