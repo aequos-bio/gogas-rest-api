@@ -21,6 +21,7 @@ public class UserTransactionFull {
   private String sign;
   private boolean recorded;
   private String friend;
+  private String type = "O"; // O - ordine, M - movimento contabile
 
   public UserTransactionFull(String id, String userId, LocalDate date, String description, BigDecimal amount, String reason, String sign, boolean recorded) {
     this.id = id;
@@ -46,6 +47,7 @@ public class UserTransactionFull {
       this.setReason(reason.getDescription());
       this.setSign(reason.getSign());
       this.recorded = true;
+      this.type = "M";
   }
 
   public String getId() {
@@ -118,5 +120,13 @@ public class UserTransactionFull {
 
   public void setFriend(String friend) {
       this.friend = friend;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
   }
 }

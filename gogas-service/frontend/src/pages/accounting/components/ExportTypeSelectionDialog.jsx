@@ -25,10 +25,10 @@ const ExportTypeSelectionDialog = ({open, onCancel, onExport}) => {
         <Button onClick={onCancel} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => onExport('simple')} color='secondary'>
+        <Button onClick={() => onExport('simple')}>
           Situaz. contabile
         </Button>
-        <Button onClick={() => onExport('full')} color='secondary'>
+        <Button onClick={() => onExport('full')}>
           Situaz. contab. + dettaglio
         </Button>
       </DialogActions>

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.toList;
 
@@ -49,6 +50,13 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         return orderTypeRepo.findAllByOrderByDescription().stream()
                 .map(type -> new OrderTypeDTO().fromModel(type, usedOrderTypes.contains(type.getId())))
                 .collect(Collectors.toList());
+    }
+
+    public Map<String, OrderType> getAllOrderTypesMapping() {
+        List<OrderType> list = StreamSupport.stream(orderTypeRepo.findAll().spliterator(), false)
+            .collect(Collectors.toList());
+        return list.stream()
+            .collect(Collectors.toMap(OrderType::getId, Function.identity()));
     }
 
     public Set<Integer> getAequosOrderTypes() {

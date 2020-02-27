@@ -19,7 +19,7 @@ import moment from "moment-timezone";
 import { makeStyles } from '@material-ui/core/styles';
 import Select from "react-select";
 import { withSnackbar } from 'notistack';
-import { getJson, apiPost } from "../../../utils/axios_utils";
+import { getJson, apiPost, apiPut } from "../../../utils/axios_utils";
 
 const useStyles = makeStyles((theme) => ({
   field: {
@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) => {
+const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enqueueSnackbar }) => {
   const classes = useStyles();
   const sort = info["visualizzazione.utenti"]
     ? info["visualizzazione.utenti"].value
@@ -56,7 +56,6 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
   const [reason, setReason] = useState();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState(0);
-
   const [users, setUsers] = useState([]);
   const [reasons, setReasons] = useState([]);
   const [refreshNeeded, setRefreshNeeded] = useState(false);
@@ -64,11 +63,28 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
   useEffect(() => {
     if (!open) return;
 
-    setUser(user ? { value: user, label: userLabel(user) } : null);
-    setReason(null);
-    setDate();
-    setDescription("");
-    setAmount(0);
+    if (transactionId) {
+      getJson(`/api/accounting/user/entry/${transactionId}`, {}).then(t => {
+        if (t.error) {
+          enqueueSnackbar(t.errorMessage, { variant: 'error' })
+        } else {
+          setUser(user ? { value: user, label: userLabel(user) } : null);
+          setReason({value:{reasonCode:t.codicecausale, description:t.nomecausale}, label:t.nomecausale});
+          setDate(moment(t.data, "DD/MM/YYYY").format("YYYY-MM-DD"));
+          setDescription(t.descrizione);
+          setAmount(t.importo);
+        }
+      }).catch(err => {
+        enqueueSnackbar(err.response?.statusText || 'Errore nel caricamento del movimento', { variant: 'error' })
+      });
+
+    } else {
+      setUser(user ? { value: user, label: userLabel(user) } : null);
+      setReason(null);
+      setDate();
+      setDescription("");
+      setAmount(0);
+    }
 
     getJson("/api/user/list", {}).then(uu => {
       if (uu.error) {
@@ -95,7 +111,8 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
         setReasons(rr);
       }
     });
-  }, [info, open, sort, user, userLabel, enqueueSnackbar]);
+
+  }, [info, open, sort, user, userLabel, transactionId, enqueueSnackbar]);
 
   const canSave = useMemo(() => {
     return _user && reason && date && description.length && amount;
@@ -109,7 +126,7 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
   );
 
   const save = useCallback(contnue => {
-    apiPost("/api/accounting/user/entry", {
+    const params = {
       data: moment(date, "YYYY-MM-DD").format("DD/MM/YYYY"),
       idutente: _user.value.idUtente,
       nomeutente: `${_user.value.nome} ${_user.value.cognome}`,
@@ -117,7 +134,9 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
       nomecausale: reason.value.description,
       descrizione: description,
       importo: amount
-    }).then(() => {
+    }
+    const thenFn = () => {
+      enqueueSnackbar('Movimento salvato',{variant:'success'});
       if (contnue) {
         setRefreshNeeded(true);
         setUser(user ? { value: user, label: userLabel(user) } : null);
@@ -125,10 +144,21 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
       } else {
         close(true);
       }
-    }).catch(err => {
-      enqueueSnackbar(err,{variant:'error'})
-    });
-  }, [
+    }
+    const catchFn = err => {
+      enqueueSnackbar(err.response?.statusText || 'Errore nel salvataggio del movimento contabile',{variant:'error'})
+    }
+
+    if (transactionId) {
+      apiPut(`/api/accounting/user/entry/${transactionId}`, params)
+      .then(thenFn)
+      .catch(catchFn);
+    } else {
+      apiPost("/api/accounting/user/entry", params)
+      .then(thenFn)
+      .catch(catchFn);
+    }
+  }, [transactionId,
     _user,
     reason,
     date,
@@ -239,10 +269,12 @@ const NewTransactionDialog = ({ open, onClose, info, user, enqueueSnackbar }) =>
         <Button onClick={close} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => save(true)} color='secondary' disabled={!canSave}>
-          Salva e continua
-        </Button>
-        <Button onClick={() => save(false)} color='secondary' disabled={!canSave}>
+        {transactionId ? null : 
+          <Button onClick={() => save(true)} disabled={!canSave}>
+            Salva e continua
+          </Button>
+        }
+        <Button onClick={() => save(false)} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>
@@ -261,4 +293,4 @@ const mapDispatchToProps = {};
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(withSnackbar(NewTransactionDialog));
+)(withSnackbar(EditTransactionDialog));

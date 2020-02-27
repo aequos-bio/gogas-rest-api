@@ -55,6 +55,18 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         return this;
     }
 
+    public AccountingEntryDTO fromModel2(AccountingEntry model) {
+        id = model.getId();
+        date = model.getDate();
+        userId = model.getUser().getId();
+        userName = model.getUser().getFirstName() + " " + model.getUser().getLastName();
+        description = model.getDescription();
+        reasonCode = model.getReason().getReasonCode();
+        reasonDescription = model.getReason().getDescription();
+        amount = model.getAmount();
+        return this;
+    }
+
     @Override
     public AccountingEntry toModel(Optional<AccountingEntry> existingModel) {
         AccountingEntry model = existingModel.orElse(new AccountingEntry());
