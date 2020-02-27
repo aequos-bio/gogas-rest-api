@@ -15,7 +15,7 @@ import { MoreVert as MoreVertIcon } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles(theme => ({
-  field: {
+  fieldName: {
     marginRight: theme.spacing(1),
   },
   fieldValue: {
@@ -36,6 +36,11 @@ const useStyles = makeStyles(theme => ({
     borderRadius: '3px',
     color: theme.palette.getContrastText(theme.palette.error.main),
     backgroundColor: theme.palette.error.main,
+  },
+  secondLine: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    overflowX: 'hidden',
   },
 }));
 
@@ -80,6 +85,28 @@ const UserItem = ({
     setAnchorEl(null);
   }, []);
 
+  const getField = (label, value) => {
+    return (
+      <div className={classes.field}>
+        <Typography
+          className={classes.fieldName}
+          component="span"
+          variant="body2"
+        >
+          {label}:
+        </Typography>
+        <Typography
+          className={classes.fieldValue}
+          component="span"
+          variant="body2"
+          color="textPrimary"
+        >
+          {value}
+        </Typography>
+      </div>
+    );
+  };
+
   return (
     <>
       <ListItem alignItems="flex-start" disableGutters>
@@ -106,55 +133,14 @@ const UserItem = ({
           }
           secondary={
             <>
-              <Typography
-                className={classes.field}
-                component="span"
-                variant="body2"
-              >
-                Username:
-              </Typography>
-              <Typography
-                className={classes.fieldValue}
-                component="span"
-                variant="body2"
-                color="textPrimary"
-              >
-                {user.username}
-              </Typography>
-
-              <Typography
-                className={classes.field}
-                component="span"
-                variant="body2"
-              >
-                email:
-              </Typography>
-              <Typography
-                className={classes.fieldValue}
-                component="span"
-                variant="body2"
-                color="textPrimary"
-              >
-                {user.email}
-              </Typography>
-
-              <Typography
-                className={classes.field}
-                component="span"
-                variant="body2"
-              >
-                Ruolo
-              </Typography>
-              <Typography
-                className={classes.fieldValue}
-                component="span"
-                variant="body2"
-                color="textPrimary"
-              >
-                {user.ruololabel}
-              </Typography>
+              {getField('Username', user.username)}
+              {getField('Email', user.email)}
+              {getField('Ruolo', user.ruololabel)}
             </>
           }
+          secondaryTypographyProps={{
+            className: classes.secondLine,
+          }}
         />
         <ListItemSecondaryAction>
           <IconButton edge="end" onClick={handleClick}>
