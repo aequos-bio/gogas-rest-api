@@ -178,7 +178,7 @@ const UserItem = ({
         </ListItemSecondaryAction>
       </ListItem>
 
-      <Divider variant="inset" component="li" />
+      <Divider variant="middle" component="li" />
     </>
   );
 };
