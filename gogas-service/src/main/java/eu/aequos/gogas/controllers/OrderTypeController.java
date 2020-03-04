@@ -170,4 +170,17 @@ public class OrderTypeController {
         orderManagerRepo.deleteById(orderManagerId);
         return new BasicResponseDTO("OK");
     }
+
+    @IsAdmin
+    @GetMapping(value = "accounting")
+    public List<OrderTypeAccountingDTO> getOrderTypesForAccounting() {
+        return orderTypeService.getForAccounting();
+    }
+
+    @IsAdmin
+    @PutMapping(value = "{orderTypeId}/accounting")
+    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody String accountingCode) {
+        orderTypeService.updateAccountingCode(orderTypeId, accountingCode);
+        return new BasicResponseDTO("OK");
+    }
 }
