@@ -4,4 +4,4 @@ ALTER TABLE tipologiaOrdine
 GO
 
 UPDATE tipologiaOrdine SET fatturatoDaAequos = 1
-WHERE idOrdineAequos IS NOT NULL AND idOrdineAequos NOT IN (3, 14, 15, 21, 22, 24, 25, 26);
+WHERE idOrdineAequos IS NOT NULL AND idOrdineAequos NOT IN (3, 14, 15, 21, 22, 24, 25);
