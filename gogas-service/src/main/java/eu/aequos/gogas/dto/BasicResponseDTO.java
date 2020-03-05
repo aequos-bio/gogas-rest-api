@@ -4,5 +4,12 @@ import lombok.Data;
 
 @Data
 public class BasicResponseDTO {
-    private final Object data;
+    private Object data;
+
+    public BasicResponseDTO() {
+    }
+
+    public BasicResponseDTO(Object data) {
+        this.data = data;
+    }
 }

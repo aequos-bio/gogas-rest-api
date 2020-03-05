@@ -1,10 +1,7 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.PasswordChangeDTO;
-import eu.aequos.gogas.dto.PasswordResetDTO;
-import eu.aequos.gogas.dto.SelectItemDTO;
-import eu.aequos.gogas.dto.UserDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.User;
@@ -43,6 +40,13 @@ public class UserService extends CrudService<User, String> {
 
     public List<SelectItemDTO> getUsersForSelect(String role, boolean withAll) {
         return toSelectItems(userRepo.findByRole(role, UserCoreInfo.class), withAll);
+    }
+
+    public User create(UserDTO dto) throws GoGasException {
+        if (userRepo.findByUsername(dto.getUsername()).isPresent())
+            throw new GoGasException("Esiste già un utente con la username specificata");
+
+        return super.create(dto);
     }
 
     public List<SelectItemDTO> getFriendsForSelect(String referralUserId, boolean withAll, boolean includeReferral) {
