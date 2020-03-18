@@ -89,6 +89,10 @@ public class UserService extends CrudService<User, String> {
         return getUserDisplayName(user.getFirstName(), user.getLastName());
     }
 
+    public String getUserDisplayName(User user) {
+        return getUserDisplayName(user.getFirstName(), user.getLastName());
+    }
+
     public String getUserDisplayName(String firstName, String lastName) {
         if (configurationService.getUserSorting() == ConfigurationService.UserSorting.SurnameFirst)
             return lastName + " " + firstName;

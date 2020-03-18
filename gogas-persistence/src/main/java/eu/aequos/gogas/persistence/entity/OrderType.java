@@ -54,6 +54,12 @@ public class OrderType {
     @Column(name = "idordineaequos")
     private Integer aequosOrderId;
 
+    @Column(name = "codicecontabile")
+    private String accountingCode;
+
+    @Column(name = "fatturatodaaequos")
+    private boolean billedByAequos;
+
     @OneToMany(mappedBy = "orderType")
     private List<OrderManager> managers;
 }

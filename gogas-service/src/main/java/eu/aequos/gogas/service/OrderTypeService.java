@@ -1,9 +1,8 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.OrderTypeDTO;
-import eu.aequos.gogas.dto.OrderTypeSelectItemDTO;
-import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
@@ -12,10 +11,9 @@ import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -99,5 +97,30 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         Function<OrderType, SelectItemDTO> conversionFunc = extended ? SELECT_ITEM_EXTENDED_CONVERSION : SELECT_ITEM_CONVERSION;
         return ListConverter.fromList(orderTypeStream)
                 .toSelectItems(conversionFunc, firstEmpty, EMPTY_SELECTION_LABEL);
+    }
+
+    public List<OrderTypeAccountingDTO> getForAccounting() {
+        String aequosUniqueAccountingCode = orderTypeRepo.findAequosAccountingCode();
+        OrderTypeAccountingDTO aequosOrderType = new OrderTypeAccountingDTO("aequos", "Ordini Aequos", aequosUniqueAccountingCode);
+
+        List<OrderTypeAccountingDTO> result = orderTypeRepo.findOrderTypesNotBilledByAequos().stream()
+                .map(t -> new OrderTypeAccountingDTO(t.getId(), t.getDescription(), t.getAccountingCode()))
+                .collect(toList());
+
+        result.add(aequosOrderType);
+
+        return result;
+    }
+
+    @Transactional
+    public void updateAccountingCode(String orderTypeId, String accountingCode) {
+        if (orderTypeId.equalsIgnoreCase("aequos")) {
+            orderTypeRepo.updateAequosAccountingCode(accountingCode);
+            return;
+        }
+
+        int updatedRows = orderTypeRepo.updateAccountingCode(orderTypeId, accountingCode);
+        if (updatedRows < 1)
+            throw new ItemNotFoundException("orderType", orderTypeId);
     }
 }

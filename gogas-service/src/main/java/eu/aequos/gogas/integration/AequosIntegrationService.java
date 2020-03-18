@@ -41,6 +41,7 @@ public class AequosIntegrationService {
         OrderType orderType = new OrderType();
         orderType.setAequosOrderId(aequosOrderType.getId());
         orderType.setDescription(aequosOrderType.getDescription());
+        orderType.setBilledByAequos(aequosOrderType.isBilledByAequos());
         orderType.setHasTurns(false);
         orderType.setSummaryRequired(true);
         orderType.setComputedAmount(true);

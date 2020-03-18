@@ -27,6 +27,9 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
     @JsonProperty(value = "nomecausale")
     private String reasonDescription;
 
+    @JsonProperty(value = "codicecontabile")
+    private String accountingCode;
+
     @JsonProperty(value = "descrizione")
     private String description;
 
@@ -38,9 +41,13 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         id = model.getId();
         date = model.getDate();
         description = model.getDescription();
-        reasonCode = model.getReason().getReasonCode();
-        reasonDescription = model.getReason().getDescription() + " (" + model.getReason().getSign() + ")";
         amount = model.getAmount();
+
+        AccountingEntryReason reason = model.getReason();
+        reasonCode = reason.getReasonCode();
+        reasonDescription = reason.getDescription() + " (" + reason.getSign() + ")";
+        accountingCode = reason.getAccountingCode();
+
         return this;
     }
 
@@ -54,5 +61,23 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         model.setAmount(amount);
 
         return model;
+    }
+
+    public AccountingGasEntryDTO fromOrderInvoice(OrderAccountingInfoDTO order) {
+        date = order.getInvoiceDate();
+        description = order.getDescription() + " - Fattura N. " + order.getInvoiceNumber().trim();
+        reasonDescription = "Fattura ordine";
+        accountingCode = order.getAccountingCode();
+        amount = order.getInvoiceAmount();
+        return this;
+    }
+
+    public AccountingGasEntryDTO fromOrderPayment(OrderAccountingInfoDTO order) {
+        date = order.getPaymentDate();
+        description = order.getDescription() + " - Fattura N. " + order.getInvoiceNumber().trim();
+        reasonDescription = "Pagamento ordine";
+        accountingCode = order.getAccountingCode();
+        amount = order.getInvoiceAmount().negate();
+        return this;
     }
 }

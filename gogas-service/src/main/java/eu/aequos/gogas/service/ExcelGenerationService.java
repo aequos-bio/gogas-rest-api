@@ -1,6 +1,12 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.dto.AccountingGasEntryDTO;
+import eu.aequos.gogas.dto.UserBalanceDTO;
+import eu.aequos.gogas.dto.UserBalanceEntryDTO;
+import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
 import eu.aequos.gogas.excel.ExcelServiceClient;
+import eu.aequos.gogas.excel.generic.ColumnDefinition;
+import eu.aequos.gogas.excel.generic.ExcelDocumentBuilder;
 import eu.aequos.gogas.excel.order.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
@@ -10,32 +16,37 @@ import eu.aequos.gogas.excel.products.ExcelPriceListItem;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 
 @Slf4j
 @Service
 public class ExcelGenerationService {
 
-    ExcelServiceClient excelServiceClient;
+    private ExcelServiceClient excelServiceClient;
 
-    UserRepo userRepo;
-    OrderItemRepo orderItemRepo;
-    ProductRepo productRepo;
-    SupplierOrderItemRepo supplierOrderItemRepo;
-    UserService userService;
+    private UserRepo userRepo;
+    private OrderItemRepo orderItemRepo;
+    private ProductRepo productRepo;
+    private SupplierOrderItemRepo supplierOrderItemRepo;
+    private UserService userService;
+    private AccountingService accountingService;
 
     public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
                                   OrderItemRepo orderItemRepo, ProductRepo productRepo,
-                                  SupplierOrderItemRepo supplierOrderItemRepo) {
+                                  SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService) {
+
         this.excelServiceClient = excelServiceClient;
         this.userRepo = userRepo;
         this.userService = userService;
         this.orderItemRepo = orderItemRepo;
         this.productRepo = productRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
+        this.accountingService = accountingService;
     }
 
     public byte[] extractProductPriceList(String orderTypeId) throws GoGasException {
@@ -163,4 +174,100 @@ public class ExcelGenerationService {
         return s;
     }
 
+    public byte[] exportUserTotals(boolean includeUserDetails) throws IOException {
+
+        List<UserBalanceDTO> userTotals = accountingService.getUserBalanceList()
+                .stream()
+                .sorted(Comparator.comparing(UserBalanceDTO::isEnabled).reversed()
+                        .thenComparing(UserBalanceDTO::getFullName))
+                .collect(Collectors.toList());
+
+        List<ColumnDefinition<UserBalanceDTO>> columnDefinitions = Arrays.asList(
+                new ColumnDefinition<UserBalanceDTO>("Disab.", TextCenter)
+                        .withExtract(u -> u.isEnabled() ? "" : "x"),
+
+                new ColumnDefinition<UserBalanceDTO>("Utente", Text)
+                        .withExtract(UserBalanceDTO::getFullName),
+
+                new ColumnDefinition<UserBalanceDTO>("Saldo", Currency)
+                        .withExtract(u -> u.getBalance().doubleValue())
+                        .withShowTotal()
+        );
+
+        String title = "Situazione contabile utenti";
+
+        ExcelDocumentBuilder excelDocumentBuilder = new ExcelDocumentBuilder()
+                .addSheet(title, columnDefinitions, userTotals);
+
+        if (includeUserDetails) {
+            for (UserBalanceDTO userTotal : userTotals)
+                addUserEntries(excelDocumentBuilder, userTotal.getUserId(), userTotal.getFullName());
+        }
+
+        return excelDocumentBuilder.generate();
+    }
+
+    public byte[] exportUserEntries(String userId) throws IOException {
+        User user = userService.getRequired(userId);
+
+        ExcelDocumentBuilder documentBuilder = new ExcelDocumentBuilder();
+        addUserEntries(documentBuilder, user.getId(), userService.getUserDisplayName(user));
+        return documentBuilder.generate();
+    }
+
+    private void addUserEntries(ExcelDocumentBuilder excelDocumentBuilder, String userId, String userFullName) {
+
+        List<ColumnDefinition<UserBalanceEntryDTO>> columnDefinitions = Arrays.asList(
+                new ColumnDefinition<UserBalanceEntryDTO>("Data", Date)
+                        .withExtract(t -> java.util.Date.from(t.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant())),
+
+                new ColumnDefinition<UserBalanceEntryDTO>("Descrizione", Text)
+                        .withExtract(UserBalanceEntryDTO::getDescription),
+
+                new ColumnDefinition<UserBalanceEntryDTO>("Accrediti", Currency)
+                        .withExtract(t -> t.getAmount().signum() >= 0 ? t.getAmount().abs().doubleValue() : null)
+                        .withShowTotal(),
+
+                new ColumnDefinition<UserBalanceEntryDTO>("Addebiti", Currency)
+                        .withExtract(t -> t.getAmount().signum() < 0 ? t.getAmount().abs().doubleValue() : null)
+                        .withShowTotal(),
+
+                new ColumnDefinition<>("Saldo", SubTotal)
+        );
+
+        UserBalanceSummaryDTO userBalance = accountingService.getUserBalance(userId, null, null, true);
+
+        List<UserBalanceEntryDTO> entries = userBalance.getEntries().stream()
+                .sorted(Comparator.comparing(UserBalanceEntryDTO::getDate))
+                .collect(Collectors.toList());
+
+        excelDocumentBuilder.addSheet(userFullName, columnDefinitions, entries);
+    }
+
+    public byte[] exportGasEntries(List<AccountingGasEntryDTO> gasEntries) throws IOException {
+
+        List<ColumnDefinition<AccountingGasEntryDTO>> columnDefinitions = Arrays.asList(
+                new ColumnDefinition<AccountingGasEntryDTO>("Data", Date)
+                        .withExtract(e -> java.util.Date.from(e.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant())),
+
+                new ColumnDefinition<AccountingGasEntryDTO>("Descrizione", Text)
+                        .withExtract(AccountingGasEntryDTO::getDescription),
+
+                new ColumnDefinition<AccountingGasEntryDTO>("Accrediti", Currency)
+                        .withExtract(e -> e.getAmount().signum() >= 0 ? e.getAmount().abs().doubleValue() : null)
+                        .withShowTotal(),
+
+                new ColumnDefinition<AccountingGasEntryDTO>("Addebiti", Currency)
+                        .withExtract(e -> e.getAmount().signum() < 0 ? e.getAmount().abs().doubleValue() : null)
+                        .withShowTotal(),
+
+                new ColumnDefinition<>("Saldo", SubTotal)
+        );
+
+        String title = "Situazione contabile gas";
+
+        return new ExcelDocumentBuilder()
+                .addSheet(title, columnDefinitions, gasEntries)
+                .generate();
+    }
 }

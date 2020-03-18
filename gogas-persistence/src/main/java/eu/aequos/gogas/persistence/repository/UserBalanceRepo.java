@@ -13,8 +13,7 @@ public interface UserBalanceRepo extends CrudRepository<UserBalance, String> {
     @Procedure(name = "User.balance")
     BigDecimal getBalance(@Param("idUtente") String userId);
 
-    @Override
-    List<UserBalance> findAll();
+    List<UserBalance> findAllByRole(String role);
 
     List<UserBalance> findByReferralId(String referralId);
 }
