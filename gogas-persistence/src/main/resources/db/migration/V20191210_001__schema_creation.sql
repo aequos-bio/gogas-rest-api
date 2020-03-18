@@ -289,6 +289,10 @@ CREATE TABLE [ordini](
 GO
 SET ANSI_PADDING OFF
 GO
+
+CREATE INDEX [IX_ordini_1] ON [ordini] ([idDateOrdine], [idUtente], [idProdotto])
+
+GO
 /****** Object:  Table [ordiniFornitore]    Script Date: 11/12/2019 22:43:56 ******/
 SET ANSI_NULLS ON
 GO
