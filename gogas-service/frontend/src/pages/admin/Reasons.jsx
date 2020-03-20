@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Container,
   Fab,
@@ -8,38 +8,38 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody
-} from "@material-ui/core";
+  TableBody,
+} from '@material-ui/core';
 import {
   EditSharp as EditIcon,
   DeleteSharp as DeleteIcon,
   AddSharp as PlusIcon,
-  RemoveSharp as RemoveIcon
-} from "@material-ui/icons";
-import _ from "lodash";
-import { makeStyles } from "@material-ui/core/styles";
-import { withSnackbar } from "notistack";
-import { getJson, calldelete } from "../../utils/axios_utils";
-import PageTitle from "../../components/PageTitle";
-import EditReasonDialog from "./components/EditReasonDialog";
-import ActionDialog from "../../components/ActionDialog";
-import Loadingrow from "../../components/LoadingRow";
+  RemoveSharp as RemoveIcon,
+} from '@material-ui/icons';
+import _ from 'lodash';
+import { makeStyles } from '@material-ui/core/styles';
+import { withSnackbar } from 'notistack';
+import { apiGetJson, apiDelete } from '../../utils/axios_utils';
+import PageTitle from '../../components/PageTitle';
+import EditReasonDialog from './components/EditReasonDialog';
+import ActionDialog from '../../components/ActionDialog';
+import Loadingrow from '../../components/LoadingRow';
 
 const useStyles = makeStyles(theme => ({
   fab: {
-    position: "fixed",
+    position: 'fixed',
     bottom: theme.spacing(2),
-    right: theme.spacing(2)
+    right: theme.spacing(2),
   },
   tdIcon: {
-    color: "red",
-    textAlign: "center",
-    width: "30px"
+    color: 'red',
+    textAlign: 'center',
+    width: '30px',
   },
   tdButtons: {
-    fontSize: "130%",
-    textAlign: "center"
-  }
+    fontSize: '130%',
+    textAlign: 'center',
+  },
 }));
 
 const Reasons = ({ enqueueSnackbar }) => {
@@ -52,19 +52,19 @@ const Reasons = ({ enqueueSnackbar }) => {
 
   const reload = useCallback(() => {
     setLoading(true);
-    getJson("/api/accounting/reason/list", {})
+    apiGetJson('/api/accounting/reason/list', {})
       .then(rr => {
         setLoading(false);
         if (rr.error) {
-          enqueueSnackbar(rr.errorMessage, { variant: "error" });
+          enqueueSnackbar(rr.errorMessage, { variant: 'error' });
         } else {
-          setReasons(_.orderBy(rr, ["reasonCode"], ["asc"]));
+          setReasons(_.orderBy(rr, ['reasonCode'], ['asc']));
         }
       })
       .catch(err => {
         enqueueSnackbar(
-          err.response?.statusText || "Errore nel caricamento delle causali",
-          { variant: "error" }
+          err.response?.statusText || 'Errore nel caricamento delle causali',
+          { variant: 'error' }
         );
       });
   }, [enqueueSnackbar]);
@@ -75,12 +75,12 @@ const Reasons = ({ enqueueSnackbar }) => {
 
   const newReason = useCallback(() => {
     setSelectedCode();
-    setDialogMode("new");
+    setDialogMode('new');
   }, []);
 
   const editReason = useCallback(reasonCode => {
     setSelectedCode(reasonCode);
-    setDialogMode("edit");
+    setDialogMode('edit');
   }, []);
 
   const deleteReason = useCallback(reasonCode => {
@@ -97,7 +97,7 @@ const Reasons = ({ enqueueSnackbar }) => {
         <TableCell>{r.reasonCode}</TableCell>
         <TableCell>{r.description}</TableCell>
         <TableCell>
-          {r.sign === "+" ? (
+          {r.sign === '+' ? (
             <PlusIcon size="small" />
           ) : (
             <RemoveIcon size="small" />
@@ -130,16 +130,16 @@ const Reasons = ({ enqueueSnackbar }) => {
   }, [reload]);
 
   const doDeleteReason = useCallback(() => {
-    calldelete(`/api/accounting/reason/${selectedCode}`)
+    apiDelete(`/api/accounting/reason/${selectedCode}`)
       .then(() => {
         setDeleteDlgOpen(false);
         reload();
-        enqueueSnackbar("Causale eliminata", { variant: "success" });
+        enqueueSnackbar('Causale eliminata', { variant: 'success' });
       })
       .catch(err => {
         enqueueSnackbar(
           err.response?.statusText || "Errore nell'eliminazione della causale",
-          { variant: "error" }
+          { variant: 'error' }
         );
       });
   }, [enqueueSnackbar, selectedCode, reload]);
@@ -176,7 +176,7 @@ const Reasons = ({ enqueueSnackbar }) => {
       <ActionDialog
         open={deleteDlgOpen}
         onCancel={() => setDeleteDlgOpen(false)}
-        actions={["Ok"]}
+        actions={['Ok']}
         onAction={doDeleteReason}
         title="Conferma eliminazione"
         message="Sei sicuro di voler eliminare la causale selezionata?"

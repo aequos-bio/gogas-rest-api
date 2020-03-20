@@ -8,7 +8,7 @@ import { AddSharp as PlusIcon } from '@material-ui/icons';
 import _ from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
-import { getJson } from '../../utils/axios_utils';
+import { apiGetJson } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import UserItem from './components/UserItem';
 import LoadingListItem from '../../components/LoadingListItem';
@@ -35,7 +35,7 @@ function Users({ info, enqueueSnackbar }) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    getJson('/api/user/list', {}).then(uu => {
+    apiGetJson('/api/user/list', {}).then(uu => {
       setLoading(false);
       if (uu.error) {
         enqueueSnackbar(uu.errorMessage, { variant: 'error' });

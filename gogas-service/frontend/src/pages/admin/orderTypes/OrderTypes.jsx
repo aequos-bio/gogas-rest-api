@@ -1,64 +1,58 @@
-import React, { useEffect, useCallback, useState, useMemo } from "react";
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import {
   Container,
   Fab,
   Button,
-  IconButton,
   TableContainer,
   Table,
   TableHead,
   TableRow,
   TableCell,
-  TableBody
-} from "@material-ui/core";
+  TableBody,
+} from '@material-ui/core';
 import {
   AddSharp as PlusIcon,
-  CheckSharp as CheckIcon,
-  EditSharp as EditIcon,
-  DeleteSharp as DeleteIcon,
-  SyncSharp as SyncIcon
-} from "@material-ui/icons";
-import { withSnackbar } from "notistack";
-import { connect } from "react-redux";
-import { makeStyles } from "@material-ui/core/styles";
-import { getJson, apiPut, calldelete } from "../../utils/axios_utils";
-import PageTitle from "../../components/PageTitle";
-import ActionDialog from "../../components/ActionDialog";
-import LoadingRow from "../../components/LoadingRow";
-import EditOrderTypeDialog from "./components/EditOrderTypeDialog";
+  SyncSharp as SyncIcon,
+} from '@material-ui/icons';
+import { withSnackbar } from 'notistack';
+import { connect } from 'react-redux';
+import { makeStyles } from '@material-ui/core/styles';
+import { apiGetJson, apiPut, apiDelete } from '../../../utils/axios_utils';
+import PageTitle from '../../../components/PageTitle';
+import ActionDialog from '../../../components/ActionDialog';
+import LoadingRow from '../../../components/LoadingRow';
+import EditOrderTypeDialog from './EditOrderTypeDialog';
+import OrderTypeItem from './OrderTypeItem';
+import CategoriesDialog from './CategoriesDialog';
 
 const useStyles = makeStyles(theme => ({
   fab: {
-    position: "fixed",
+    position: 'fixed',
     bottom: theme.spacing(2),
-    right: theme.spacing(2)
-  },
-  tableCell: {
-    paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1)
-  },
-  tdFlag: {
-    textAlign: "center",
-    maxWidth: "60px",
-    width: "60px",
-    color: theme.palette.grey[700]
+    right: theme.spacing(2),
   },
   tdButtons: {
-    fontSize: "130%",
-    textAlign: "center",
-    minWidth: "88px",
-    width: "88px"
+    fontSize: '130%',
+    textAlign: 'center',
+    minWidth: '44px',
+    width: '44px',
   },
   cellHeader: {
     paddingLeft: theme.spacing(1),
     paddingRight: theme.spacing(1),
-    verticalAlign: "bottom"
+    verticalAlign: 'bottom',
   },
   cellHeaderFlag: {
-    maxWidth: "60px",
-    width: "60px",
-    textAlign: "center"
-  }
+    maxWidth: '60px',
+    width: '60px',
+    textAlign: 'center',
+    height: '90px',
+    whiteSpace: 'nowrap',
+    '& > div': {
+      transform: 'translate(15px,-5px) rotate(270deg)',
+      width: '30px',
+    },
+  },
 }));
 
 const OrderTypes = ({ enqueueSnackbar }) => {
@@ -68,13 +62,15 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   const [dialogMode, setDialogMode] = useState(false);
   const [selectedId, setSelectedId] = useState();
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
+  const [categoriesDlgOpen, setCategoriesDlgOpen] = useState(false);
+  const [managersDlgOpen, setManagersDlgOpen] = useState(false);
 
   const reload = useCallback(() => {
     setLoading(true);
-    getJson("/api/ordertype/list", {}).then(oo => {
+    apiGetJson('/api/ordertype/list', {}).then(oo => {
       setLoading(false);
       if (oo.error) {
-        enqueueSnackbar(oo.errorMessage, { variant: "error" });
+        enqueueSnackbar(oo.errorMessage, { variant: 'error' });
       } else {
         setOrderTypes(oo);
       }
@@ -87,12 +83,12 @@ const OrderTypes = ({ enqueueSnackbar }) => {
 
   const newOrderType = useCallback(() => {
     setSelectedId();
-    setDialogMode("new");
+    setDialogMode('new');
   }, []);
 
   const editOrderType = useCallback(id => {
     setSelectedId(id);
-    setDialogMode("edit");
+    setDialogMode('edit');
   }, []);
 
   const deleteOrderType = useCallback(id => {
@@ -100,18 +96,32 @@ const OrderTypes = ({ enqueueSnackbar }) => {
     setDeleteDlgOpen(true);
   }, []);
 
+  const editCategories = useCallback(id => {
+    setSelectedId(id);
+    setCategoriesDlgOpen(true);
+  }, []);
+
+  const editManagers = useCallback(
+    id => {
+      setSelectedId(id);
+      setManagersDlgOpen(true);
+      enqueueSnackbar('Non implementato!', { variant: 'error' });
+    },
+    [enqueueSnackbar]
+  );
+
   const doDeleteOrderType = useCallback(() => {
-    calldelete(`/api/ordertype/${selectedId}`)
+    apiDelete(`/api/ordertype/${selectedId}`)
       .then(() => {
         setDeleteDlgOpen(false);
         reload();
-        enqueueSnackbar("Tipo ordine eliminato", { variant: "success" });
+        enqueueSnackbar('Tipo ordine eliminato', { variant: 'success' });
       })
       .catch(err => {
         enqueueSnackbar(
           err.response?.statusText ||
             "Errore nell'eliminazione del tipo ordine",
-          { variant: "error" }
+          { variant: 'error' }
         );
       });
   }, [enqueueSnackbar, selectedId, reload]);
@@ -127,16 +137,16 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   );
 
   const syncWithAequos = useCallback(() => {
-    apiPut("/api/ordertype/aequos/sync")
+    apiPut('/api/ordertype/aequos/sync')
       .then(() => {
-        enqueueSnackbar("Sincronizzazione completata con successo", {
-          variant: "success"
+        enqueueSnackbar('Sincronizzazione completata con successo', {
+          variant: 'success',
         });
         reload();
       })
       .catch(err => {
         enqueueSnackbar(`Errore nella sincronizzazione: ${err}`, {
-          variant: "error"
+          variant: 'error',
         });
       });
   }, [reload, enqueueSnackbar]);
@@ -146,46 +156,24 @@ const OrderTypes = ({ enqueueSnackbar }) => {
       <LoadingRow colSpan={8} />
     ) : (
       orderTypes.map(o => (
-        <TableRow key={`ordertype-${o.id}`} hover>
-          <TableCell className={classes.tableCell}>{o.descrizione}</TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.riepilogo ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.totalecalcolato ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.turni ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.preventivo ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.completamentocolli ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
-            {o.external ? <CheckIcon /> : null}
-          </TableCell>
-          <TableCell className={classes.tableCell}>
-            <IconButton
-              onClick={() => {
-                editOrderType(o.id);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              onClick={() => {
-                deleteOrderType(o.id);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </TableCell>
-        </TableRow>
+        <OrderTypeItem
+          key={`ordertype-${o.id}`}
+          orderType={o}
+          onEdit={editOrderType}
+          onDelete={deleteOrderType}
+          onEditCategories={editCategories}
+          onEditManagers={editManagers}
+        />
       ))
     );
-  }, [orderTypes, classes, editOrderType, deleteOrderType, loading]);
+  }, [
+    orderTypes,
+    loading,
+    editOrderType,
+    deleteOrderType,
+    editCategories,
+    editManagers,
+  ]);
 
   return (
     <Container maxWidth={false}>
@@ -204,35 +192,36 @@ const OrderTypes = ({ enqueueSnackbar }) => {
           <TableHead>
             <TableRow>
               <TableCell className={classes.cellHeader}>Descrizione</TableCell>
+              <TableCell className={classes.cellHeader}>Cod. contab.</TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Raggruppam. amici
+                <div>Raggr. amici</div>
               </TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Totale calcolato
+                <div>Tot. calcolato</div>
               </TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Prevede turni
+                <div>Prevede turni</div>
               </TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Mostra preventivo
+                <div>Mostra prev.</div>
               </TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Mostra compl. colli
+                <div>Mostra c. colli</div>
               </TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >
-                Ordine esterno
+                <div>Ord. esterno</div>
               </TableCell>
               <TableCell className={classes.tdButtons} />
             </TableRow>
@@ -251,10 +240,16 @@ const OrderTypes = ({ enqueueSnackbar }) => {
       <ActionDialog
         open={deleteDlgOpen}
         onCancel={() => setDeleteDlgOpen(false)}
-        actions={["Ok"]}
+        actions={['Ok']}
         onAction={doDeleteOrderType}
         title="Conferma eliminazione"
         message="Sei sicuro di voler eliminare il tipo ordine selezionato?"
+      />
+
+      <CategoriesDialog
+        orderTypeId={selectedId}
+        open={categoriesDlgOpen}
+        onClose={() => setCategoriesDlgOpen(false)}
       />
     </Container>
   );
@@ -263,7 +258,7 @@ const OrderTypes = ({ enqueueSnackbar }) => {
 const mapStateToProps = state => {
   return {
     authentication: state.authentication,
-    info: state.info
+    info: state.info,
   };
 };
 

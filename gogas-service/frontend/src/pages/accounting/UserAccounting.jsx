@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { connect } from "react-redux";
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { connect } from 'react-redux';
 import {
   Container,
   Fab,
@@ -11,47 +11,47 @@ import {
   TableFooter,
   TableRow,
   TableCell,
-  TableBody
-} from "@material-ui/core";
+  TableBody,
+} from '@material-ui/core';
 import {
   ArrowForwardIosSharp as EditIcon,
   BlockSharp as BlockIcon,
   AddSharp as PlusIcon,
-  SaveAltSharp as SaveIcon
-} from "@material-ui/icons";
-import { makeStyles } from "@material-ui/core/styles";
-import { withSnackbar } from "notistack";
-import _ from "lodash";
-import { getJson } from "../../utils/axios_utils";
-import EditTransactionDialog from "./components/EditTransactionDialog";
-import PageTitle from "../../components/PageTitle";
-import LoadingRow from "../../components/LoadingRow";
-import ExportTypeSelectionDialog from "./components/ExportTypeSelectionDialog";
+  SaveAltSharp as SaveIcon,
+} from '@material-ui/icons';
+import { makeStyles } from '@material-ui/core/styles';
+import { withSnackbar } from 'notistack';
+import _ from 'lodash';
+import { apiGetJson } from '../../utils/axios_utils';
+import EditTransactionDialog from './components/EditTransactionDialog';
+import PageTitle from '../../components/PageTitle';
+import LoadingRow from '../../components/LoadingRow';
+import ExportTypeSelectionDialog from './components/ExportTypeSelectionDialog';
 
 const useStyles = makeStyles(theme => ({
   fab: {
-    position: "fixed",
+    position: 'fixed',
     bottom: theme.spacing(2),
-    right: theme.spacing(2)
+    right: theme.spacing(2),
   },
   tdIcon: {
-    color: "red",
-    textAlign: "center",
-    width: "30px"
+    color: 'red',
+    textAlign: 'center',
+    width: '30px',
   },
   tdAmount: {
-    textAlign: "right",
-    width: "90px"
+    textAlign: 'right',
+    width: '90px',
   },
   tdLink: {
-    textAlign: "center",
-    width: "70px"
+    textAlign: 'center',
+    width: '70px',
   },
   footercell: {
-    "& td": {
-      fontSize: ".875rem"
-    }
-  }
+    '& td': {
+      fontSize: '.875rem',
+    },
+  },
 }));
 
 function UserAccounting({ history, enqueueSnackbar }) {
@@ -64,10 +64,10 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    getJson("/api/useraccounting/userTotals", {}).then(tt => {
+    apiGetJson('/api/useraccounting/userTotals', {}).then(tt => {
       setLoading(false);
       if (tt.error) {
-        enqueueSnackbar(tt.errorMessage, { variant: "error" });
+        enqueueSnackbar(tt.errorMessage, { variant: 'error' });
       } else {
         let tot = 0;
         tt.data.forEach(t => {
@@ -82,12 +82,12 @@ function UserAccounting({ history, enqueueSnackbar }) {
   const exportXls = useCallback(type => {
     setExportDlgOpen(false);
 
-    if (type === "simple")
-      window.open("/api/useraccounting/exportUserTotals", "_blank");
-    else if (type === "full")
+    if (type === 'simple')
+      window.open('/api/useraccounting/exportUserTotals', '_blank');
+    else if (type === 'full')
       window.open(
-        "/api/useraccounting/exportUserTotals?includeUsers=true",
-        "_blank"
+        '/api/useraccounting/exportUserTotals?includeUsers=true',
+        '_blank'
       );
   }, []);
 
@@ -114,8 +114,8 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
     const tt = _.orderBy(
       totals,
-      ["user.enabled", "user.firstName", "user.lastName"],
-      ["desc", "asc", "asc"]
+      ['user.enabled', 'user.firstName', 'user.lastName'],
+      ['desc', 'asc', 'asc']
     );
     return tt.map(t => (
       <TableRow key={`user-${t.user.id}`} hover>
@@ -125,7 +125,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
         <TableCell>{`${t.user.firstName} ${t.user.lastName}`}</TableCell>
         <TableCell
           className={classes.tdAmount}
-          style={{ color: t.total < 0 ? "red" : "inheried" }}
+          style={{ color: t.total < 0 ? 'red' : 'inheried' }}
         >
           {t.total.toFixed(2)}
         </TableCell>
@@ -180,7 +180,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
               </TableCell>
               <TableCell
                 className={classes.tdAmount}
-                style={{ color: total < 0 ? "red" : "inherited" }}
+                style={{ color: total < 0 ? 'red' : 'inherited' }}
               >
                 <strong>{total.toFixed(2)}</strong>
               </TableCell>
@@ -202,7 +202,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
 const mapStateToProps = state => {
   return {
-    authentication: state.authentication
+    authentication: state.authentication,
   };
 };
 

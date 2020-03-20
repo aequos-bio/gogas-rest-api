@@ -43,6 +43,10 @@ public class OrderTypeDTO implements ConvertibleDTO<OrderType> {
 
     private String externalLink;
 
+    private boolean billedByAequos;
+
+    private String accountingCode;
+
     public OrderTypeDTO fromModel(OrderType orderType, boolean used) {
         this.used = used;
         return fromModel(orderType);
@@ -62,6 +66,8 @@ public class OrderTypeDTO implements ConvertibleDTO<OrderType> {
         this.externalLink = orderType.getExternallink();
         this.excelAllUsers = orderType.isExcelAllUsers();
         this.excelAllProducts = orderType.isExcelAllProducts();
+        this.billedByAequos = orderType.isBilledByAequos();
+        this.accountingCode = orderType.getAccountingCode();
 
         return this;
     }
@@ -79,6 +85,7 @@ public class OrderTypeDTO implements ConvertibleDTO<OrderType> {
         model.setExcelAllUsers(this.excelAllUsers);
         model.setExternal(this.external);
         model.setExternallink(this.externalLink);
+        model.setAccountingCode(this.accountingCode);
 
         return model;
     }

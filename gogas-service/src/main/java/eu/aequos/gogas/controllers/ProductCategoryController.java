@@ -39,6 +39,18 @@ public class ProductCategoryController {
     }
 
     @IsAdmin
+    @PutMapping(value = "{orderTypeId}")
+    public BasicResponseDTO update(@PathVariable String orderTypeId, @RequestBody SelectItemDTO category) {
+        ProductCategory productCategory = new ProductCategory();
+        productCategory.setId(category.getId());
+        productCategory.setDescription(category.getDescription());
+        productCategory.setOrderTypeId(orderTypeId);
+
+        String productCategoryId = productCategoryRepo.save(productCategory).getId();
+        return new BasicResponseDTO(productCategoryId);
+    }
+
+    @IsAdmin
     @DeleteMapping(value = "{categoryId}")
     public BasicResponseDTO delete(@PathVariable String categoryId) {
         productCategoryRepo.deleteById(categoryId);

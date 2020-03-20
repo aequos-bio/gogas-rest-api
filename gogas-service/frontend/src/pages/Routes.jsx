@@ -1,29 +1,29 @@
 /* eslint-disable react/no-array-index-key */
-import React, { useEffect } from "react";
-import { connect } from "react-redux";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import Home from "./Home";
-import NavBar from "../components/NavBar";
-import Login from "./Login";
-import Users from "./admin/Users2";
-import Reasons from "./admin/Reasons";
-import UserAccounting from "./accounting/UserAccounting";
-import UserAccountingDetails from "./accounting/UserAccountingDetails";
-import Years from "./accounting/Years";
-import OrderTypes from "./admin/OrderTypes";
-import Managers from "./admin/Managers";
-import { init } from "../store/actions";
-import PrivateRoute from "../components/PrivateRoute";
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Home from './Home';
+import NavBar from '../components/NavBar';
+import Login from './Login';
+import Users from './admin/Users2';
+import Reasons from './admin/Reasons';
+import UserAccounting from './accounting/UserAccounting';
+import UserAccountingDetails from './accounting/UserAccountingDetails';
+import Years from './accounting/Years';
+import OrderTypes from './admin/orderTypes/OrderTypes';
+import Managers from './admin/Managers';
+import { init } from '../store/actions';
+import PrivateRoute from '../components/PrivateRoute';
 
 const privateRoutes = [
-  { path: "/", component: Home },
-  { path: "/years", component: Years },
-  { path: "/useraccounting", component: UserAccounting },
-  { path: "/useraccountingdetails", component: UserAccountingDetails },
-  { path: "/users", component: Users },
-  { path: "/reasons", component: Reasons },
-  { path: "/ordertypes", component: OrderTypes },
-  { path: "/managers", component: Managers }
+  { path: '/', component: Home },
+  { path: '/years', component: Years },
+  { path: '/useraccounting', component: UserAccounting },
+  { path: '/useraccountingdetails', component: UserAccountingDetails },
+  { path: '/users', component: Users },
+  { path: '/reasons', component: Reasons },
+  { path: '/ordertypes', component: OrderTypes },
+  { path: '/managers', component: Managers },
 ];
 
 function Routes({ authentication, ...props }) {
@@ -35,8 +35,8 @@ function Routes({ authentication, ...props }) {
     <Router basename="/">
       <>
         <Switch>
-          <Route exact path={["/login"]} component={null} />
-          <Route path={["/"]} component={NavBar} />
+          <Route exact path={['/login']} component={null} />
+          <Route path={['/']} component={NavBar} />
         </Switch>
 
         <Switch>
@@ -59,12 +59,12 @@ function Routes({ authentication, ...props }) {
 
 const mapStateToProps = state => {
   return {
-    authentication: state.authentication
+    authentication: state.authentication,
   };
 };
 
 const mapDispatchToProps = {
-  init
+  init,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Routes);

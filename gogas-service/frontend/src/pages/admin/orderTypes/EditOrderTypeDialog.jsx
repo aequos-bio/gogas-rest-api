@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Button,
   Dialog,
@@ -7,37 +7,37 @@ import {
   DialogActions,
   TextField,
   Checkbox,
-  FormControlLabel
-} from "@material-ui/core";
-import { withSnackbar } from "notistack";
-import { makeStyles } from "@material-ui/core/styles";
-import { getJson, postRawJson, apiPut } from "../../../utils/axios_utils";
+  FormControlLabel,
+} from '@material-ui/core';
+import { withSnackbar } from 'notistack';
+import { makeStyles } from '@material-ui/core/styles';
+import { apiGetJson, apiPost, apiPut } from '../../../utils/axios_utils';
 
 const useStyles = makeStyles(theme => ({
   content: {
-    display: "flex",
-    flexDirection: "column"
+    display: 'flex',
+    flexDirection: 'column',
   },
   field: {
     marginBottom: theme.spacing(1),
-    marginTop: theme.spacing(1)
+    marginTop: theme.spacing(1),
   },
   radiogrp: {
-    flexDirection: "row"
+    flexDirection: 'row',
   },
   icon: {
-    color: theme.palette.grey[500]
-  }
+    color: theme.palette.grey[500],
+  },
 }));
 
 const EditOrderTypeDialog = ({
   mode,
   onClose,
   orderTypeId,
-  enqueueSnackbar
+  enqueueSnackbar,
 }) => {
   const classes = useStyles();
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState('');
   const [groupFriends, setGroupFriends] = useState(false);
   const [calculateTotal, setCalculateTotal] = useState(false);
   const [externalOrder, setExternalOrder] = useState(false);
@@ -46,10 +46,14 @@ const EditOrderTypeDialog = ({
   const [showCompleteness, setShowCompleteness] = useState(false);
   const [exportAllUsers, setExportAllUsers] = useState(false);
   const [exportAllProducts, setExportAllProducts] = useState(false);
-  const [externalLink, setExternalLink] = useState("");
+  const [externalLink, setExternalLink] = useState('');
+  const [accountingCode, setAccountingCode] = useState();
+  const [orderToAequos, setOrderToAequos] = useState(false);
+  const [billedByAequos, setBilledByAequos] = useState(false);
 
   useEffect(() => {
-    setDescription("");
+    if (!mode) return;
+    setDescription('');
     setGroupFriends(false);
     setCalculateTotal(false);
     setExternalOrder(false);
@@ -58,15 +62,18 @@ const EditOrderTypeDialog = ({
     setShowCompleteness(false);
     setExportAllUsers(false);
     setExportAllProducts(false);
-    setExternalLink("");
+    setExternalLink('');
+    setAccountingCode('');
+    setOrderToAequos(false);
+    setBilledByAequos(false);
 
     if (orderTypeId) {
-      getJson(`/api/ordertype/${orderTypeId}`, {})
+      apiGetJson(`/api/ordertype/${orderTypeId}`, {})
         .then(ot => {
           if (ot.error) {
-            enqueueSnackbar(ot.errorMessage, { variant: "error" });
+            enqueueSnackbar(ot.errorMessage, { variant: 'error' });
           } else {
-            setDescription(ot.descrizione || "");
+            setDescription(ot.descrizione || '');
             setGroupFriends(ot.riepilogo || false);
             setCalculateTotal(ot.totalecalcolato || false);
             setExternalOrder(ot.external || false);
@@ -75,21 +82,24 @@ const EditOrderTypeDialog = ({
             setShowCompleteness(ot.completamentocolli || false);
             setExportAllUsers(ot.exportAllUsers || false);
             setExportAllProducts(ot.exportAllProducts || false);
-            setExternalLink(ot.externalLink || "");
+            setExternalLink(ot.externalLink || '');
+            setAccountingCode(ot.accountingCode || '');
+            setOrderToAequos(ot.idordineaequos !== undefined);
+            setBilledByAequos(ot.billedByAequos);
           }
         })
         .catch(err => {
           enqueueSnackbar(
             err.response?.statusText ||
-              "Errore nel caricamento del tipo di ordine",
-            { variant: "error" }
+              'Errore nel caricamento del tipo di ordine',
+            { variant: 'error' }
           );
         });
     }
-  }, [orderTypeId, enqueueSnackbar]);
+  }, [mode, orderTypeId, enqueueSnackbar]);
 
   const canSave = useMemo(() => {
-    return description !== undefined && description !== "";
+    return description !== undefined && description !== '';
   }, [description]);
 
   const save = useCallback(() => {
@@ -103,26 +113,27 @@ const EditOrderTypeDialog = ({
       completamentocolli: showCompleteness,
       exportAllUsers,
       exportAllProducts,
-      externalLink
+      externalLink,
+      accountingCode,
     };
 
     const thenFn = () => {
       enqueueSnackbar(
-        `Tipo ordine ${mode === "new" ? "salvato" : "modificato"}`,
-        { variant: "success" }
+        `Tipo ordine ${mode === 'new' ? 'salvato' : 'modificato'}`,
+        { variant: 'success' }
       );
       onClose(true);
     };
 
     const catchFn = err => {
       enqueueSnackbar(
-        err.response?.statusText || "Errore nel salvataggio della causale",
-        { variant: "error" }
+        err.response?.statusText || 'Errore nel salvataggio della causale',
+        { variant: 'error' }
       );
     };
 
-    if (mode === "new") {
-      postRawJson("/api/ordertype", params)
+    if (mode === 'new') {
+      apiPost('/api/ordertype', params)
         .then(thenFn)
         .catch(catchFn);
     } else {
@@ -142,9 +153,10 @@ const EditOrderTypeDialog = ({
     exportAllUsers,
     exportAllProducts,
     externalLink,
+    accountingCode,
     mode,
     enqueueSnackbar,
-    onClose
+    onClose,
   ]);
 
   return (
@@ -155,7 +167,7 @@ const EditOrderTypeDialog = ({
       fullWidth
     >
       <DialogTitle>
-        {mode === "new" ? "Nuovo" : "Modifica"} tipo di ordine
+        {mode === 'new' ? 'Nuovo' : 'Modifica'} tipo di ordine
       </DialogTitle>
 
       <DialogContent className={classes.content}>
@@ -166,13 +178,39 @@ const EditOrderTypeDialog = ({
           variant="outlined"
           size="small"
           InputLabelProps={{
-            shrink: true
+            shrink: true,
           }}
           onChange={evt => {
             setDescription(evt.target.value);
           }}
           fullWidth
         />
+
+        <TextField
+          className={classes.field}
+          label="Codice contabile"
+          value={accountingCode}
+          variant="outlined"
+          size="small"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          onChange={evt => {
+            setAccountingCode(evt.target.value);
+          }}
+          fullWidth
+        />
+
+        <FormControlLabel
+          control={<Checkbox checked={orderToAequos} disabled />}
+          label="Ordine Aequos"
+        />
+        <FormControlLabel
+          control={<Checkbox checked={billedByAequos} disabled />}
+          label="Fatt. da Aequos"
+        />
+
+        <hr style={{ width: '100%' }} />
 
         <FormControlLabel
           control={
@@ -224,7 +262,7 @@ const EditOrderTypeDialog = ({
           label="Mostra completamento colli"
         />
 
-        <hr style={{ width: "100%" }} />
+        <hr style={{ width: '100%' }} />
 
         <strong>Generazione file excel degli ordini</strong>
 
@@ -248,7 +286,7 @@ const EditOrderTypeDialog = ({
           label="Esporta tutti i prodotti"
         />
 
-        <hr style={{ width: "100%" }} />
+        <hr style={{ width: '100%' }} />
 
         <FormControlLabel
           control={
@@ -267,10 +305,10 @@ const EditOrderTypeDialog = ({
           variant="outlined"
           size="small"
           InputLabelProps={{
-            shrink: true
+            shrink: true,
           }}
           InputProps={{
-            readOnly: externalOrder === false
+            readOnly: externalOrder === false,
           }}
           onChange={evt => {
             setExternalLink(evt.target.value);

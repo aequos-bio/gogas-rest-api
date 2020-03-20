@@ -1,13 +1,13 @@
-import Cookies from "cookies-js";
-import { getJson, apiPost } from "../utils/axios_utils";
+import Cookies from 'cookies-js';
+import { apiGetJson, apiPost } from '../utils/axios_utils';
 
-export const INIT = "INIT";
-export const SET_AUTH = "SET_AUTH";
-export const LOGIN_START = "LOGIN_START";
-export const LOGIN_END = "LOGIN_END";
-export const LOGIN_ERROR = "LOGIN_ERROR";
-export const LOGOUT_END = "LOGOUT_END";
-export const LOGOUT_ERROR = "LOGOUT_ERROR";
+export const INIT = 'INIT';
+export const SET_AUTH = 'SET_AUTH';
+export const LOGIN_START = 'LOGIN_START';
+export const LOGIN_END = 'LOGIN_END';
+export const LOGIN_ERROR = 'LOGIN_ERROR';
+export const LOGOUT_END = 'LOGOUT_END';
+export const LOGOUT_ERROR = 'LOGOUT_ERROR';
 
 // ////////////
 // INFO
@@ -15,18 +15,18 @@ export const LOGOUT_ERROR = "LOGOUT_ERROR";
 function setInfo(info) {
   return {
     type: INIT,
-    payload: info
+    payload: info,
   };
 }
 
 export const init = () => {
   return dispatch => {
-    return getJson("/info")
+    return apiGetJson('/info')
       .then(infoJson => {
         dispatch(setInfo(infoJson));
       })
       .catch(err => {
-        console.error("errore", err);
+        console.error('errore', err);
         dispatch(setInfo());
       });
   };
@@ -37,21 +37,21 @@ export const init = () => {
 // ////////////
 function loginStart() {
   return {
-    type: LOGIN_START
+    type: LOGIN_START,
   };
 }
 
 function loginEnd(response) {
   return {
     type: LOGIN_END,
-    payload: response
+    payload: response,
   };
 }
 
 function loginError(message) {
   return {
     type: LOGIN_ERROR,
-    payload: message
+    payload: message,
   };
 }
 
@@ -60,9 +60,9 @@ export const login = (username, password) => {
     dispatch(loginStart());
 
     try {
-      const auth = await apiPost("/authenticate", { username, password });
-      if (auth.redirected && auth.url.endsWith("error")) {
-        dispatch(loginError("Errore di autenticazione"));
+      const auth = await apiPost('/authenticate', { username, password });
+      if (auth.redirected && auth.url.endsWith('error')) {
+        dispatch(loginError('Errore di autenticazione'));
       } else {
         dispatch(loginEnd(auth.data.data));
       }
@@ -78,9 +78,9 @@ export const login = (username, password) => {
 
 export const logout = () => {
   return dispatch => {
-    Cookies.expire("jwt-token");
+    Cookies.expire('jwt-token');
     dispatch({
-      type: LOGOUT_END
+      type: LOGOUT_END,
     });
   };
 };

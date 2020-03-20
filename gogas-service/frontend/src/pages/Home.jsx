@@ -1,34 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { connect } from "react-redux";
+import React, { useState, useEffect } from 'react';
+import { connect } from 'react-redux';
 import { Container, Typography } from '@material-ui/core';
-import { getJson } from '../utils/axios_utils';
+import { apiGetJson } from '../utils/axios_utils';
 
 function Home() {
-	const [year, setYear] = useState();
+  const [year, setYear] = useState();
 
-	useEffect(() => {
-		getJson('/api/year/current', {}).then(y => setYear(y));
-	}, []);
+  useEffect(() => {
+    apiGetJson('/api/year/current', {}).then(y => setYear(y));
+  }, []);
 
-	return (
-		<Container maxWidth={false}>
-			<Typography variant='h4' component='h4'>
-				Home {year ? year.year : null}
-			</Typography>
-		</Container>
-	);
+  return (
+    <Container maxWidth={false}>
+      <Typography variant="h4" component="h4">
+        Home {year ? year.year : null}
+      </Typography>
+    </Container>
+  );
 }
 
 const mapStateToProps = state => {
-	return {
-		authentication: state.authentication
-	};
+  return {
+    authentication: state.authentication,
+  };
 };
 
-const mapDispatchToProps = {
-};
+const mapDispatchToProps = {};
 
-export default connect(
-	mapStateToProps,
-	mapDispatchToProps
-)(Home);
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

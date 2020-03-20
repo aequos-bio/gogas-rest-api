@@ -6,55 +6,65 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  InputAdornment
+  InputAdornment,
 } from '@material-ui/core';
 import {
   EuroSharp as EuroIcon,
-  EventSharp as CalendarIcon
+  EventSharp as CalendarIcon,
 } from '@material-ui/icons';
-import { connect } from "react-redux";
-import NumPad from "react-numpad";
-import _ from "lodash";
-import moment from "moment-timezone";
+import { connect } from 'react-redux';
+import NumPad from 'react-numpad';
+import _ from 'lodash';
+import moment from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
-import Select from "react-select";
+import Select from 'react-select';
 import { withSnackbar } from 'notistack';
-import { getJson, apiPost, apiPut } from "../../../utils/axios_utils";
+import { apiGetJson, apiPost, apiPut } from '../../../utils/axios_utils';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   field: {
     marginBottom: theme.spacing(2),
   },
   icon: {
-    color: theme.palette.grey[500]
-  }
+    color: theme.palette.grey[500],
+  },
 }));
 
-const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enqueueSnackbar }) => {
+const EditTransactionDialog = ({
+  open,
+  onClose,
+  info,
+  user,
+  transactionId,
+  enqueueSnackbar,
+}) => {
   const classes = useStyles();
-  const sort = info["visualizzazione.utenti"]
-    ? info["visualizzazione.utenti"].value
-    : "NC";
-  const userLabel = useCallback(u => {
-    const name =
-      sort === "NC" ? `${u.nome} ${u.cognome}` : `${u.cognome} ${u.nome}`;
-    const disa = u.attivo ? null : (
-      <span className="fa fa-ban" style={{ color: "red" }} />
-    );
+  const sort = info['visualizzazione.utenti']
+    ? info['visualizzazione.utenti'].value
+    : 'NC';
+  const userLabel = useCallback(
+    u => {
+      const name =
+        sort === 'NC' ? `${u.nome} ${u.cognome}` : `${u.cognome} ${u.nome}`;
+      const disa = u.attivo ? null : (
+        <span className="fa fa-ban" style={{ color: 'red' }} />
+      );
 
-    return (
-      <span>
-        {disa} {name}
-      </span>
-    );
-  }, [sort]);
+      return (
+        <span>
+          {disa} {name}
+        </span>
+      );
+    },
+    [sort]
+  );
 
   const [_user, setUser] = useState(
     user ? { value: user, label: userLabel(user) } : undefined
   );
   const [date, setDate] = useState();
   const [reason, setReason] = useState();
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
   const [users, setUsers] = useState([]);
   const [reasons, setReasons] = useState([]);
@@ -64,54 +74,63 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
     if (!open) return;
 
     if (transactionId) {
-      getJson(`/api/accounting/user/entry/${transactionId}`, {}).then(t => {
-        if (t.error) {
-          enqueueSnackbar(t.errorMessage, { variant: 'error' })
-        } else {
-          setUser(user ? { value: user, label: userLabel(user) } : null);
-          setReason({value:{reasonCode:t.codicecausale, description:t.nomecausale}, label:t.nomecausale});
-          setDate(moment(t.data, "DD/MM/YYYY").format("YYYY-MM-DD"));
-          setDescription(t.descrizione);
-          setAmount(t.importo);
-        }
-      }).catch(err => {
-        enqueueSnackbar(err.response?.statusText || 'Errore nel caricamento del movimento', { variant: 'error' })
-      });
-
+      apiGetJson(`/api/accounting/user/entry/${transactionId}`, {})
+        .then(t => {
+          if (t.error) {
+            enqueueSnackbar(t.errorMessage, { variant: 'error' });
+          } else {
+            setUser(user ? { value: user, label: userLabel(user) } : null);
+            setReason({
+              value: {
+                reasonCode: t.codicecausale,
+                description: t.nomecausale,
+              },
+              label: t.nomecausale,
+            });
+            setDate(moment(t.data, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+            setDescription(t.descrizione);
+            setAmount(t.importo);
+          }
+        })
+        .catch(err => {
+          enqueueSnackbar(
+            err.response?.statusText || 'Errore nel caricamento del movimento',
+            { variant: 'error' }
+          );
+        });
     } else {
       setUser(user ? { value: user, label: userLabel(user) } : null);
       setReason(null);
       setDate();
-      setDescription("");
+      setDescription('');
       setAmount(0);
     }
 
-    getJson("/api/user/list", {}).then(uu => {
+    apiGetJson('/api/user/list', {}).then(uu => {
       if (uu.error) {
-        enqueueSnackbar(uu.errorMessage,{variant:'error'})
+        enqueueSnackbar(uu.errorMessage, { variant: 'error' });
       } else {
         setUsers(
           _.orderBy(
             uu,
             [
-              "attivo",
-              sort === "NC" ? "nome" : "cognome",
-              sort === "NC" ? "cognome" : "nome"
+              'attivo',
+              sort === 'NC' ? 'nome' : 'cognome',
+              sort === 'NC' ? 'cognome' : 'nome',
             ],
-            ["desc", "asc", "asc"]
+            ['desc', 'asc', 'asc']
           )
         );
       }
     });
 
-    getJson("/api/accounting/reason/list", {}).then(rr => {
+    apiGetJson('/api/accounting/reason/list', {}).then(rr => {
       if (rr.error) {
-        enqueueSnackbar(rr.errorMessage,{variant:'error'})
+        enqueueSnackbar(rr.errorMessage, { variant: 'error' });
       } else {
         setReasons(rr);
       }
     });
-
   }, [info, open, sort, user, userLabel, transactionId, enqueueSnackbar]);
 
   const canSave = useMemo(() => {
@@ -125,60 +144,67 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
     [refreshNeeded, onClose]
   );
 
-  const save = useCallback(contnue => {
-    const params = {
-      data: moment(date, "YYYY-MM-DD").format("DD/MM/YYYY"),
-      idutente: _user.value.idUtente,
-      nomeutente: `${_user.value.nome} ${_user.value.cognome}`,
-      codicecausale: reason.value.reasonCode,
-      nomecausale: reason.value.description,
-      descrizione: description,
-      importo: amount
-    }
-    const thenFn = () => {
-      enqueueSnackbar('Movimento salvato',{variant:'success'});
-      if (contnue) {
-        setRefreshNeeded(true);
-        setUser(user ? { value: user, label: userLabel(user) } : null);
-        setAmount(0);
-      } else {
-        close(true);
-      }
-    }
-    const catchFn = err => {
-      enqueueSnackbar(err.response?.statusText || 'Errore nel salvataggio del movimento contabile',{variant:'error'})
-    }
+  const save = useCallback(
+    contnue => {
+      const params = {
+        data: moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY'),
+        idutente: _user.value.idUtente,
+        nomeutente: `${_user.value.nome} ${_user.value.cognome}`,
+        codicecausale: reason.value.reasonCode,
+        nomecausale: reason.value.description,
+        descrizione: description,
+        importo: amount,
+      };
+      const thenFn = () => {
+        enqueueSnackbar('Movimento salvato', { variant: 'success' });
+        if (contnue) {
+          setRefreshNeeded(true);
+          setUser(user ? { value: user, label: userLabel(user) } : null);
+          setAmount(0);
+        } else {
+          close(true);
+        }
+      };
+      const catchFn = err => {
+        enqueueSnackbar(
+          err.response?.statusText ||
+            'Errore nel salvataggio del movimento contabile',
+          { variant: 'error' }
+        );
+      };
 
-    if (transactionId) {
-      apiPut(`/api/accounting/user/entry/${transactionId}`, params)
-      .then(thenFn)
-      .catch(catchFn);
-    } else {
-      apiPost("/api/accounting/user/entry", params)
-      .then(thenFn)
-      .catch(catchFn);
-    }
-  }, [transactionId,
-    _user,
-    reason,
-    date,
-    description,
-    amount,
-    setRefreshNeeded,
-    close,
-    user,
-    userLabel,
-    enqueueSnackbar
-  ]);
+      if (transactionId) {
+        apiPut(`/api/accounting/user/entry/${transactionId}`, params)
+          .then(thenFn)
+          .catch(catchFn);
+      } else {
+        apiPost('/api/accounting/user/entry', params)
+          .then(thenFn)
+          .catch(catchFn);
+      }
+    },
+    [
+      transactionId,
+      _user,
+      reason,
+      date,
+      description,
+      amount,
+      setRefreshNeeded,
+      close,
+      user,
+      userLabel,
+      enqueueSnackbar,
+    ]
+  );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
-      <DialogTitle>
-        Nuovo movimento
-      </DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Nuovo movimento</DialogTitle>
 
       <DialogContent className={classes.content}>
-        <Select className={classes.field}
+        <Select
+          className={classes.field}
           menuPortalTarget={document.body}
           styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
           options={users.map(u => ({ value: u, label: userLabel(u) }))}
@@ -198,14 +224,15 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
             e.stopPropagation();
           }}
           onChange={value =>
-            setDate(moment(value, "DD/MM/YYYY").format("YYYY-MM-DD"))
+            setDate(moment(value, 'DD/MM/YYYY').format('YYYY-MM-DD'))
           }
-          confirm={() => { }}
-          value={date ? moment(date, "YYYY-MM-DD").format("DD/MM/YYYY") : ""}
+          confirm={() => {}}
+          value={date ? moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY') : ''}
         >
-          <TextField className={classes.field}
+          <TextField
+            className={classes.field}
             label="Data del movimento"
-            value={date ? moment(date, "YYYY-MM-DD").format("DD/MM/YYYY") : ""}
+            value={date ? moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY') : ''}
             variant="outlined"
             size="small"
             InputLabelProps={{
@@ -219,11 +246,11 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
                 </InputAdornment>
               ),
             }}
-
           />
         </NumPad.Calendar>
 
-        <Select className={classes.field}
+        <Select
+          className={classes.field}
           menuPortalTarget={document.body}
           styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
           options={reasons.map(r => ({ value: r, label: r.description }))}
@@ -233,7 +260,8 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
           isClearable
         />
 
-        <TextField className={classes.field}
+        <TextField
+          className={classes.field}
           label="Descrizione"
           value={description}
           variant="outlined"
@@ -245,7 +273,8 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
           fullWidth
         />
 
-        <TextField className={classes.field}
+        <TextField
+          className={classes.field}
           label="Importo"
           type="number"
           variant="outlined"
@@ -269,22 +298,22 @@ const EditTransactionDialog = ({ open, onClose, info, user, transactionId, enque
         <Button onClick={close} autoFocus>
           Annulla
         </Button>
-        {transactionId ? null : 
+        {transactionId ? null : (
           <Button onClick={() => save(true)} disabled={!canSave}>
             Salva e continua
           </Button>
-        }
+        )}
         <Button onClick={() => save(false)} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 const mapStateToProps = state => {
   return {
-    info: state.info
+    info: state.info,
   };
 };
 
