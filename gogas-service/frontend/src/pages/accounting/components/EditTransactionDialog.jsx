@@ -295,7 +295,7 @@ const EditTransactionDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={close} autoFocus>
+        <Button onClick={() => close()} autoFocus>
           Annulla
         </Button>
         {transactionId ? null : (

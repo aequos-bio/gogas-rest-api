@@ -124,10 +124,13 @@ const Reasons = ({ enqueueSnackbar }) => {
     ));
   }, [editReason, deleteReason, classes, reasons, loading]);
 
-  const dialogClosed = useCallback(() => {
-    setDialogMode(false);
-    reload();
-  }, [reload]);
+  const dialogClosed = useCallback(
+    refresh => {
+      setDialogMode(false);
+      if (refresh) reload();
+    },
+    [reload]
+  );
 
   const doDeleteReason = useCallback(() => {
     apiDelete(`/api/accounting/reason/${selectedCode}`)

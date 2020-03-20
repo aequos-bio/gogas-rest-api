@@ -74,7 +74,7 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
           `Causale ${mode === 'new' ? 'salvata' : 'modificata'}`,
           { variant: 'success' }
         );
-        onClose();
+        onClose(true);
       })
       .catch(err => {
         enqueueSnackbar(
@@ -99,7 +99,12 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
   }, [code, description, accountingCode]);
 
   return (
-    <Dialog open={mode !== false} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={mode !== false}
+      onClose={() => onClose()}
+      maxWidth="xs"
+      fullWidth
+    >
       <DialogTitle>{mode === 'new' ? 'Nuova' : 'Modifica'} causale</DialogTitle>
 
       <DialogContent className={classes.content}>
@@ -174,7 +179,7 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} autoFocus>
+        <Button onClick={() => onClose(false)} autoFocus>
           Annulla
         </Button>
         <Button onClick={() => save(false)} disabled={!canSave}>
