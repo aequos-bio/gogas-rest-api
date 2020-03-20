@@ -14,13 +14,16 @@ import {
 } from '@material-ui/core';
 import { withSnackbar } from 'notistack';
 import _ from 'lodash';
-import { apiGetJson } from '../../utils/axios_utils';
+import { apiGetJson, apiPut } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
+import ActionDialog from '../../components/ActionDialog';
 
 const Years = ({ enqueueSnackbar }) => {
   const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState();
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -38,13 +41,28 @@ const Years = ({ enqueueSnackbar }) => {
     reload();
   }, [reload]);
 
-  const closeYear = useCallback(
-    y => {
-      console.warn('closing year', y);
-      enqueueSnackbar('Funzione non implementata!', { variant: 'error' });
-    },
-    [enqueueSnackbar]
-  );
+  const closeYear = useCallback(y => {
+    setSelectedYear(y);
+    setConfigDlgOpen(true);
+    console.warn('closing year', y);
+  }, []);
+
+  const doCloseYear = useCallback(() => {
+    apiPut(`/api/year/close/${selectedYear.year}`)
+      .then(() => {
+        setConfigDlgOpen(false);
+        setSelectedYear();
+        reload();
+        enqueueSnackbar('Anno chiuso', { variant: 'success' });
+      })
+      .catch(err => {
+        enqueueSnackbar(
+          err.response?.statusText ||
+            "Errore nell'eliminazione della categoria",
+          { variant: 'error' }
+        );
+      });
+  }, [enqueueSnackbar, reload, selectedYear]);
 
   const rows = useMemo(() => {
     return loading ? (
@@ -90,6 +108,15 @@ const Years = ({ enqueueSnackbar }) => {
           <TableBody>{rows}</TableBody>
         </Table>
       </TableContainer>
+
+      <ActionDialog
+        open={confirmDlgOpen}
+        title="Conferma chiusura"
+        message={`Sei sicuro di voler chiudere l'anno ${selectedYear?.year}?`}
+        onCancel={() => setConfigDlgOpen(false)}
+        onAction={doCloseYear}
+        actions={['Ok']}
+      />
     </Container>
   );
 };
