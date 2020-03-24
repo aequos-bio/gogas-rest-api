@@ -182,7 +182,6 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
-
         Order order = this.getRequiredWithType(orderId);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
     }

@@ -29,13 +29,16 @@ public class OrderFriendService {
     private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
+    private AccountingService accountingService;
 
     public OrderFriendService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                              ProductService productService, UserService userService) {
+                              ProductService productService, UserService userService, AccountingService accountingService) {
+
         this.orderItemService = orderItemService;
         this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
+        this.accountingService = accountingService;
     }
 
     private List<Product> getProducts(boolean showAllProductsOnPriceList, String orderTypeId, Collection<OpenOrderItem> orderItems) {
@@ -83,6 +86,7 @@ public class OrderFriendService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public void setFriendAccounted(String userId, String orderId, String productId, boolean accounted) throws GoGasException {
         BigDecimal summaryUserQty = orderItemService.getSummaryUserQuantityByProduct(userId, productId, orderId)
                 .map(OrderItemQtyOnly::getDeliveredQuantity)
@@ -98,6 +102,7 @@ public class OrderFriendService {
             throw new GoGasException("Impossibile procedere con la contabilizzazione degli amici: la somma delle quantità ripartite non corrisponde alla quantità effettivamente ritirata");
 
         orderItemService.accountFriendOrder(userId, orderId, productId, accounted);
+        accountingService.updateFriendBalancesFromOrderItems(userId, orderId, productId);
     }
 
     @Transactional

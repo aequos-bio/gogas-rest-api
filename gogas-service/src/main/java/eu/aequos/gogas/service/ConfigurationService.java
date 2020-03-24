@@ -48,6 +48,7 @@ public class ConfigurationService {
         this.configurationRepo = configurationRepo;
     }
 
+    //TODO: cache
     public UserSorting getUserSorting() {
         String sortingConf = configurationRepo.findValueByKey(USER_SORTING_KEY)
                 .orElse(USER_SORTING_NAME_FIRST)
