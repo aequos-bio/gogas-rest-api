@@ -5,6 +5,7 @@ import eu.aequos.gogas.exception.ItemNotDeletableException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
@@ -37,6 +38,8 @@ public abstract class CrudService<Model, ID> {
         try {
             log.info("deleting " + type + " with id " + id);
             crudRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException ex) {
+            throw new ItemNotFoundException(type, id);
         } catch (DataIntegrityViolationException ex) {
             log.info("Cannot delete " + type + " with id " + id + "(" + ex.getMessage() + ")");
             throw new ItemNotDeletableException(type, id);

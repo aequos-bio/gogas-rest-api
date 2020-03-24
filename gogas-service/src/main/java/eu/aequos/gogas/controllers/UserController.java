@@ -11,6 +11,7 @@ import eu.aequos.gogas.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -46,14 +47,14 @@ public class UserController {
 
     @PostMapping()
     @IsAdmin
-    public BasicResponseDTO create(@RequestBody UserDTO userDTO) {
+    public BasicResponseDTO create(@Valid @RequestBody UserDTO userDTO) throws GoGasException {
         String userId = userService.create(userDTO).getId();
         return new BasicResponseDTO(userId);
     }
 
     @PutMapping(value = "{userId}")
     @IsAdmin
-    public BasicResponseDTO update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String userId, @Valid @RequestBody UserDTO userDTO) throws ItemNotFoundException {
         String updatedUserId = userService.update(userId, userDTO).getId();
         return new BasicResponseDTO(updatedUserId);
     }
@@ -73,13 +74,13 @@ public class UserController {
     }
 
     @PutMapping(value = "password/reset")
-    public BasicResponseDTO resetPassword(@RequestBody PasswordResetDTO passwordResetDTO) throws GoGasException {
+    public BasicResponseDTO resetPassword(@Valid @RequestBody PasswordResetDTO passwordResetDTO) throws GoGasException {
         userService.resetPassword(passwordResetDTO);
         return new BasicResponseDTO("OK");
     }
 
     @PutMapping(value = "password/change")
-    public BasicResponseDTO changePassword(@RequestBody PasswordChangeDTO passwordChangeDTO) throws GoGasException {
+    public BasicResponseDTO changePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDTO) throws GoGasException {
         GoGasUserDetails currentUser = authorizationService.getCurrentUser();
         userService.changePassword(currentUser.getId(), passwordChangeDTO);
         return new BasicResponseDTO("OK");

@@ -545,7 +545,6 @@ SELECT     'S' AS TipoMovimento, dbo.movimenti.idUtente, dbo.movimenti.dataMovim
                       dbo.causale.segno, dbo.movimenti.importo + COALESCE(s.importo, 0) as importo,
                       dbo.movimenti.idMovimento AS idRiga, dbo.movimenti.idDateOrdini AS idOrdine
 FROM         dbo.causale INNER JOIN dbo.movimenti ON dbo.causale.codiceCausale = dbo.movimenti.causale
-             INNER JOIN dbo.utenti ON dbo.movimenti.idUtente = dbo.utenti.idUtente
              LEFT OUTER JOIN speseTrasporto s ON dbo.movimenti.idUtente = s.idUtente AND dbo.movimenti.idDateOrdini = s.idDateOrdini
 WHERE     confermato = 1
 
@@ -1434,6 +1433,19 @@ BEGIN
 END
 GO
 
+/**************** ADDITIONAL INDEXES **********************/
+
+CREATE INDEX IDX_dataOrdine_utente ON ordini (idDateOrdine ASC, idUtente ASC
+INCLUDE (riepilogoUtente, qtaRitirataKg, prezzoKg, idReferenteAmico, contabilizzato)
+
+CREATE INDEX IDX_spese_trasporto ON speseTrasporto (idDateOrdini ASC, idUtente ASC)
+INCLUDE (importo)
+
+CREATE UNIQUE INDEX IDX_dateOrdine_tipologia
+ON dateOrdini (idTipologiaOrdine ASC, dataConsegna DESC, idDateOrdini ASC)
+
+CREATE INDEX IDX_movimento_utente ON movimenti (confermato ASC, idUtente ASC, causale DESC)
+INCLUDE (idMovimento, dataMovimento, idReferente, descrizione, importo, idDateOrdini)
 
 /******************** INITIAL DATA ********************************************/
 
