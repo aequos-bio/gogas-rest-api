@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.mapping;
 
 @Service
 public class DeliveryService {
@@ -56,28 +56,26 @@ public class DeliveryService {
 
         List<UserDTO> users = userService.getUsersByRoles(visibleUserRoles(order.getOrderType()));
 
+        //TODO: fare metodo nel service che recupera meno dati
+        Map<String, List<DeliveryOrderItemDTO>> deliveryOrderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
+                .collect(Collectors.groupingBy(OrderItem::getProduct, mapping(this::toOrderItemDTO, Collectors.toList())));
+
         //TODO: usare metodo adhoc
         List<DeliveryProductDTO> deliveryProducts = orderManagerService.getOrderDetailByProduct(order).stream()
-                .map(this::toProductDTO)
+                .map(product -> toProductDTO(product, deliveryOrderItems.get(product.getProductId())))
                 .collect(Collectors.toList());
-
-        //TODO: fare metodo nel service che recupera meno dati
-        List<DeliveryOrderItemDTO> deliveryOrderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
-                .map(this::toOrderItemDTO)
-                .collect(toList());
 
         DeliveryOrderDTO deliveryOrder = new DeliveryOrderDTO();
         deliveryOrder.setOrderId(orderId);
         deliveryOrder.setOrderType(order.getOrderType().getDescription());
         deliveryOrder.setDeliveryDate(order.getDeliveryDate());
         deliveryOrder.setProducts(deliveryProducts);
-        deliveryOrder.setOrderItems(deliveryOrderItems);
         deliveryOrder.setUsers(users);
 
         return deliveryOrder;
     }
 
-    private DeliveryProductDTO toProductDTO(OrderByProductDTO product) {
+    private DeliveryProductDTO toProductDTO(OrderByProductDTO product, List<DeliveryOrderItemDTO> orderItems) {
         DeliveryProductDTO deliveryProductDTO = new DeliveryProductDTO();
         deliveryProductDTO.setProductId(product.getProductId());
         deliveryProductDTO.setProductName(product.getProductName());
@@ -85,13 +83,13 @@ public class DeliveryService {
         deliveryProductDTO.setUnitOfMeasure(product.getUnitOfMeasure());
         deliveryProductDTO.setBoxWeight(product.getBoxWeight());
         deliveryProductDTO.setOrderedBoxes(product.getOrderedBoxes());
+        deliveryProductDTO.setOrderItems(orderItems);
         return deliveryProductDTO;
     }
 
     private DeliveryOrderItemDTO toOrderItemDTO(OrderItem item) {
         DeliveryOrderItemDTO itemDTO = new DeliveryOrderItemDTO();
         itemDTO.setUserId(item.getUser());
-        itemDTO.setProductId(item.getProduct());
         itemDTO.setRequestedQty(item.getOrderedQuantity());
         itemDTO.setOriginalDeliveredQty(item.getDeliveredQuantity());
         itemDTO.setFinalDeliveredQty(item.getDeliveredQuantity());
@@ -146,13 +144,11 @@ public class DeliveryService {
                 .filter(u -> u.getFriendReferralId() != null)
                 .collect(Collectors.toMap(UserDTO::getId, UserDTO::getFriendReferralId));
 
-        Map<String, DeliveryProductDTO> productMap = ListConverter.fromList(deliveredOrder.getProducts())
-                .toMap(DeliveryProductDTO::getProductId);
-
-        for (DeliveryOrderItemDTO deliveredItem : deliveredOrder.getOrderItems()) {
-            DeliveryProductDTO productDTO = productMap.get(deliveredItem.getProductId());
-            Optional<OrderItem> createdOrderItem = updateOrCreateQuantity(orderId, usersReferralMap, productDTO, deliveredItem);
-            createdOrderItem.ifPresent(itemsCreated::add);
+        for (DeliveryProductDTO productDTO : deliveredOrder.getProducts()) {
+            for (DeliveryOrderItemDTO deliveredItem : productDTO.getOrderItems()) {
+                Optional<OrderItem> createdOrderItem = updateOrCreateQuantity(orderId, usersReferralMap, productDTO, deliveredItem);
+                createdOrderItem.ifPresent(itemsCreated::add);
+            }
         }
 
         if (!itemsCreated.isEmpty())
