@@ -4,6 +4,7 @@ import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.notification.mail.MailNotificationSender;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
@@ -26,16 +27,18 @@ public class UserService extends CrudService<User, String> {
     private ConfigurationService configurationService;
     private UserRepo userRepo;
     private PasswordEncoder passwordEncoder;
+    private MailNotificationSender mailNotificationSender;
 
     //TODO: cache users
 
     public UserService(ConfigurationService configurationService, UserRepo userRepo,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder, MailNotificationSender mailNotificationSender) {
         super(userRepo, "user");
 
         this.configurationService = configurationService;
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.mailNotificationSender = mailNotificationSender;
     }
 
     public List<SelectItemDTO> getUsersForSelect(String role, boolean withAll) {
@@ -46,7 +49,20 @@ public class UserService extends CrudService<User, String> {
         if (userRepo.findByUsername(dto.getUsername()).isPresent())
             throw new GoGasException("Esiste già un utente con la username specificata");
 
+        dto.setHashedPassword(encodePassword(dto.getPassword()));
         return super.create(dto);
+    }
+
+    public User update(String s, UserDTO dto) throws ItemNotFoundException {
+        dto.setHashedPassword(encodePassword(dto.getPassword()));
+        return super.update(s, dto);
+    }
+
+    private String encodePassword(String plainPassword) {
+        if (plainPassword == null || plainPassword.isEmpty())
+            return null;
+
+        return passwordEncoder.encode(plainPassword);
     }
 
     public List<SelectItemDTO> getFriendsForSelect(String referralUserId, boolean withAll, boolean includeReferral) {
@@ -169,8 +185,8 @@ public class UserService extends CrudService<User, String> {
         String encodedPassword = passwordEncoder.encode(randomPassword);
         userRepo.updatePassword(user.getId(), encodedPassword);
 
-        log.info("New password is {}", randomPassword);
-        //TODO: send email
+        log.info("Sending mail message for password reset to user {} ({})", user.getUsername(), user.getEmail());
+        mailNotificationSender.sendResetPasswordMessage(user, randomPassword);
     }
 
     @Transactional
@@ -187,6 +203,6 @@ public class UserService extends CrudService<User, String> {
         String encodedPassword = passwordEncoder.encode(passwordChangeDTO.getNewPassword());
         userRepo.updatePassword(user.getId(), encodedPassword);
 
-        log.info("New password is {}", passwordChangeDTO.getNewPassword());
+        log.info("Password changed for user {}", user.getUsername());
     }
 }

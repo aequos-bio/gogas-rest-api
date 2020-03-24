@@ -1,5 +1,6 @@
 package eu.aequos.gogas.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.User;
 import lombok.Data;
@@ -22,6 +23,9 @@ public final class UserDTO implements ConvertibleDTO<User> {
     @NotEmpty
     @JsonProperty(value = "password")
     private String password;
+
+    @JsonIgnore
+    private String hashedPassword;
 
     @NotEmpty
     @Pattern(regexp = "A|U|S", message = "wrong role type")
@@ -88,8 +92,8 @@ public final class UserDTO implements ConvertibleDTO<User> {
         model.setPhone(phone);
         model.setEnabled(enabled);
 
-        if (password != null && !password.isEmpty())
-            model.setPassword(password); //TODO: HASH
+        if (hashedPassword != null && !hashedPassword.isEmpty())
+            model.setPassword(hashedPassword);
 
         if (friendReferralId != null && !friendReferralId.isEmpty())
             model.setFriendReferral(new User().withUserId(friendReferralId));
