@@ -1,6 +1,6 @@
 package eu.aequos.gogas.exception;
 
-public class GoGasException extends Exception {
+public class GoGasException extends RuntimeException {
 
     public GoGasException() {
     }
