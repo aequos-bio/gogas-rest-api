@@ -8,10 +8,10 @@ import { AddSharp as PlusIcon } from '@material-ui/icons';
 import _ from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
-import { apiGetJson } from '../../utils/axios_utils';
-import PageTitle from '../../components/PageTitle';
-import UserItem from './components/UserItem';
-import LoadingListItem from '../../components/LoadingListItem';
+import { apiGetJson } from '../../../utils/axios_utils';
+import PageTitle from '../../../components/PageTitle';
+import UserItem from './UserItem';
+import LoadingListItem from '../../../components/LoadingListItem';
 
 const useStyles = makeStyles(theme => ({
   fab: {

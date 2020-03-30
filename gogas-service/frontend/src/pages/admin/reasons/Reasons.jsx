@@ -19,11 +19,11 @@ import {
 import _ from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
-import { apiGetJson, apiDelete } from '../../utils/axios_utils';
-import PageTitle from '../../components/PageTitle';
-import EditReasonDialog from './components/EditReasonDialog';
-import ActionDialog from '../../components/ActionDialog';
-import Loadingrow from '../../components/LoadingRow';
+import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
+import PageTitle from '../../../components/PageTitle';
+import EditReasonDialog from './EditReasonDialog';
+import ActionDialog from '../../../components/ActionDialog';
+import Loadingrow from '../../../components/LoadingRow';
 
 const useStyles = makeStyles(theme => ({
   fab: {

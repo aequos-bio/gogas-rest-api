@@ -186,21 +186,6 @@ const EditOrderTypeDialog = ({
           fullWidth
         />
 
-        <TextField
-          className={classes.field}
-          label="Codice contabile"
-          value={accountingCode}
-          variant="outlined"
-          size="small"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          onChange={evt => {
-            setAccountingCode(evt.target.value);
-          }}
-          fullWidth
-        />
-
         <FormControlLabel
           control={<Checkbox checked={orderToAequos} disabled />}
           label="Ordine Aequos"

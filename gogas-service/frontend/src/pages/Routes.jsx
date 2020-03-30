@@ -5,12 +5,13 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Home from './Home';
 import NavBar from '../components/NavBar';
 import Login from './Login';
-import Users from './admin/Users2';
-import Reasons from './admin/Reasons';
+import Users from './admin/users/Users2';
+import Reasons from './admin/reasons/Reasons';
 import UserAccounting from './accounting/UserAccounting';
 import UserAccountingDetails from './accounting/UserAccountingDetails';
 import Years from './accounting/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
+import AccountingCodes from './admin/accountingcodes/AccountingCodes';
 import Managers from './admin/Managers';
 import { init } from '../store/actions';
 import PrivateRoute from '../components/PrivateRoute';
@@ -23,6 +24,7 @@ const privateRoutes = [
   { path: '/users', component: Users },
   { path: '/reasons', component: Reasons },
   { path: '/ordertypes', component: OrderTypes },
+  { path: '/accountingcodes', component: AccountingCodes },
   { path: '/managers', component: Managers },
 ];
 

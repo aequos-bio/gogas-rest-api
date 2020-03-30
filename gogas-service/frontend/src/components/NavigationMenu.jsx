@@ -1,6 +1,6 @@
 /* eslint-disable react/no-array-index-key */
-import React, { useMemo, useCallback } from "react";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { useMemo, useCallback } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import {
   Typography,
   Drawer,
@@ -9,8 +9,8 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
-} from "@material-ui/core";
+  ListItemText,
+} from '@material-ui/core';
 import {
   HomeSharp as HomeIcon,
   EventSharp as EventIcon,
@@ -18,62 +18,63 @@ import {
   GroupSharp as GroupIcon,
   Settings as SettingsIcon,
   ViewListSharp as ListIcon,
-  ExploreSharp as ExploreIcon
-} from "@material-ui/icons";
-import { useHistory } from "react-router-dom";
-import { connect } from "react-redux";
-import Jwt from "jsonwebtoken";
-import Logo from "../logo_aequos.png";
+  ExploreSharp as ExploreIcon,
+  CodeSharp as CodeIcon,
+} from '@material-ui/icons';
+import { useHistory } from 'react-router-dom';
+import { connect } from 'react-redux';
+import Jwt from 'jsonwebtoken';
+import Logo from '../logo_aequos.png';
 
-const drawerWidth = "280px";
+const drawerWidth = '280px';
 const useStyles = makeStyles(theme => ({
   drawer: {},
   drawerHeader: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     padding: theme.spacing(0, 1),
     ...theme.mixins.toolbar,
-    justifyContent: "flex-end"
+    justifyContent: 'flex-end',
   },
   menuContainer: {
     width: drawerWidth,
     padding: theme.spacing(1, 0),
-    display: "flex",
-    flexDirection: "column"
+    display: 'flex',
+    flexDirection: 'column',
   },
   menuChapter: {
-    paddingLeft: theme.spacing(2)
+    paddingLeft: theme.spacing(2),
   },
   menuItemList: {
-    padding: 0
+    padding: 0,
   },
   menuItem: {
-    padding: theme.spacing(0.5, 2)
+    padding: theme.spacing(0.5, 2),
   },
   menuItemIcon: {
-    minWidth: theme.spacing(6)
+    minWidth: theme.spacing(6),
   },
   link: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     margin: theme.spacing(1, 0),
-    "& svg": {
-      marginRight: theme.spacing(2)
-    }
+    '& svg': {
+      marginRight: theme.spacing(2),
+    },
   },
   logo: {
-    display: "flex",
-    justifyContent: "center",
-    position: "fixed",
+    display: 'flex',
+    justifyContent: 'center',
+    position: 'fixed',
     bottom: theme.spacing(6),
-    width: drawerWidth
+    width: drawerWidth,
   },
   copyright: {
-    position: "fixed",
+    position: 'fixed',
     bottom: theme.spacing(1),
     width: drawerWidth,
-    textAlign: "center"
-  }
+    textAlign: 'center',
+  },
 }));
 
 const icons = [
@@ -83,49 +84,56 @@ const icons = [
   <GroupIcon />,
   <SettingsIcon />,
   <ListIcon />,
-  <ExploreIcon />
+  <ExploreIcon />,
+  <CodeIcon />,
 ];
 
 const menuItems = [
   {
-    items: [{ label: "Home", url: "/", icon: 0 }]
+    items: [{ label: 'Home', url: '/', icon: 0 }],
   },
   {
-    label: "Contabilità",
+    label: 'Contabilità',
     items: [
-      { label: "Anni contabili", url: "/years", restrictions: ["A"], icon: 1 },
+      { label: 'Anni contabili', url: '/years', restrictions: ['A'], icon: 1 },
       {
-        label: "Situazione utenti",
-        url: "/useraccounting",
-        restrictions: ["A"],
-        icon: 2
-      }
-    ]
-  },
-  {
-    label: "Gestione",
-    items: [
-      { label: "Utenti", url: "/users", restrictions: ["A"], icon: 3 },
-      { label: "Causali", url: "/reasons", restrictions: ["A"], icon: 4 },
-      {
-        label: "Tipi ordine",
-        url: "/ordertypes",
-        restrictions: ["A"],
-        icon: 5
+        label: 'Situazione utenti',
+        url: '/useraccounting',
+        restrictions: ['A'],
+        icon: 2,
       },
-      { label: "Referenti", url: "/managers", restrictions: ["A"], icon: 6 }
-    ]
+    ],
   },
   {
-    label: "Utente",
+    label: 'Gestione',
+    items: [
+      { label: 'Utenti', url: '/users', restrictions: ['A'], icon: 3 },
+      { label: 'Causali', url: '/reasons', restrictions: ['A'], icon: 4 },
+      {
+        label: 'Tipi ordine',
+        url: '/ordertypes',
+        restrictions: ['A'],
+        icon: 5,
+      },
+      {
+        label: 'Codici contabili',
+        url: '/accountingcodes',
+        restrictions: ['A'],
+        icon: 7,
+      },
+      { label: 'Referenti', url: '/managers', restrictions: ['A'], icon: 6 },
+    ],
+  },
+  {
+    label: 'Utente',
     items: [
       {
-        label: "Situazione contabile",
+        label: 'Situazione contabile',
         url: `/useraccountingdetails?userId=:userId`,
-        icon: 2
-      }
-    ]
-  }
+        icon: 2,
+      },
+    ],
+  },
 ];
 
 const NavigationMenu = ({ authentication, open, onClose }) => {
@@ -142,7 +150,7 @@ const NavigationMenu = ({ authentication, open, onClose }) => {
 
   const menuClick = useCallback(
     menu => {
-      const url = menu.url.replace(":userId", jwt.id);
+      const url = menu.url.replace(':userId', jwt.id);
       history.push(url);
       onClose();
     },
@@ -223,7 +231,7 @@ const NavigationMenu = ({ authentication, open, onClose }) => {
 const mapStateToProps = state => {
   return {
     info: state.info,
-    authentication: state.authentication
+    authentication: state.authentication,
   };
 };
 

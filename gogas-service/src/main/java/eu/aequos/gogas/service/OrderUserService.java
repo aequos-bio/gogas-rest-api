@@ -8,6 +8,7 @@ import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,14 +26,16 @@ public class OrderUserService {
     private ProductService productService;
     private UserService userService;
     private OrderRepo orderRepo;
+    private UserRepo userRepo;
 
     public OrderUserService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                            ProductService productService, UserService userService, OrderRepo orderRepo) {
+                            ProductService productService, UserService userService, OrderRepo orderRepo, UserRepo userRepo) {
         this.orderItemService = orderItemService;
         this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
         this.orderRepo = orderRepo;
+        this.userRepo = userRepo;
     }
 
     public List<OpenOrderDTO> getOpenOrders(String userId) {
@@ -44,11 +47,14 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(openOrders)
                 .extractIds(Order::getId);
 
+        List<User> users = userRepo.findAll();
+        Map<String, User> userMap = ListConverter.fromList(users).toMap(User::getId);
+
         Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, orderIds).stream()
                 .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
 
         return openOrders.stream()
-                .map(o -> new OpenOrderDTO().fromModel(o, openOrderSummaries.getOrDefault(o.getId(), new ArrayList<>())))
+                .map(o -> new OpenOrderDTO().fromModel(o, openOrderSummaries.getOrDefault(o.getId(), new ArrayList<>()), userMap))
                 .collect(Collectors.toList());
     }
 

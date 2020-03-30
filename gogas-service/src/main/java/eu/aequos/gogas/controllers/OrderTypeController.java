@@ -179,8 +179,8 @@ public class OrderTypeController {
 
     @IsAdmin
     @PutMapping(value = "{orderTypeId}/accounting")
-    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody String accountingCode) {
-        orderTypeService.updateAccountingCode(orderTypeId, accountingCode);
+    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody Map value) {
+        orderTypeService.updateAccountingCode(orderTypeId, value.get("accountingCode").toString());
         return new BasicResponseDTO("OK");
     }
 }

@@ -192,7 +192,6 @@ const OrderTypes = ({ enqueueSnackbar }) => {
           <TableHead>
             <TableRow>
               <TableCell className={classes.cellHeader}>Descrizione</TableCell>
-              <TableCell className={classes.cellHeader}>Cod. contab.</TableCell>
               <TableCell
                 className={`${classes.cellHeader} ${classes.cellHeaderFlag}`}
               >

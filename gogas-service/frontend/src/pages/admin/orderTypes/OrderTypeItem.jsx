@@ -62,7 +62,6 @@ const OrderTypeItem = ({
           <span className={classes.label}>AEQUOS</span>
         ) : null}
       </TableCell>
-      <TableCell>{orderType.accountingCode}</TableCell>
       <TableCell className={`${classes.tableCell} ${classes.tdFlag}`}>
         {orderType.riepilogo ? <CheckIcon /> : null}
       </TableCell>
