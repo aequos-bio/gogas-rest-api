@@ -18,36 +18,6 @@ import java.util.stream.Collectors;
 @Table(name = "dateordini")
 public class Order {
 
-    public enum OrderStatus {
-        Opened(0, "Aperto"),
-        Closed(1, "Chiuso"),
-        Accounted(2, "Contabilizzato"),
-        Cancelled(3, "Annullato");
-
-        private int statusCode;
-        private String description;
-
-        OrderStatus(int statusCode, String description) {
-            this.statusCode = statusCode;
-            this.description = description;
-        }
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public boolean isOpen() {
-            return this == Opened;
-        }
-    }
-
-    private static Map<Integer, OrderStatus> orderStatusMap = Arrays.stream(OrderStatus.values())
-            .collect(Collectors.toMap(OrderStatus::getStatusCode, Function.identity()));
-
     @Id
     @GenericGenerator(name = "generator", strategy = "uuid2")
     @GeneratedValue(generator = "generator")
@@ -109,38 +79,7 @@ public class Order {
     @Column(name = "lastweightupdate")
     private LocalDateTime lastWeightUpdate;
 
-    public OrderStatus getStatus() {
-        return orderStatusMap.get(this.statusCode);
-    }
-
     public LocalDateTime getDueDateAndTime() {
         return this.dueDate.atTime(this.dueHour, 0);
-    }
-
-    public boolean isEditable() {
-        LocalDateTime now = LocalDateTime.now();
-        return now.isAfter(openingDate.atStartOfDay()) && now.isBefore(this.getDueDateAndTime());
-    }
-
-    public boolean isExpiring(int minutesBefore) {
-        return isDateTimeWithinMinutesFromNow(getDueDateAndTime(), minutesBefore);
-    }
-
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(getDueDateAndTime());
-    }
-
-    public boolean isNotYetOpened() {
-        return LocalDate.now().isBefore(openingDate);
-    }
-
-    public boolean isInDelivery(int referenceHour, int minutesBefore) {
-        LocalDateTime deliveryDateAndTime = this.deliveryDate.atTime(referenceHour, 0);
-        return isDateTimeWithinMinutesFromNow(deliveryDateAndTime, minutesBefore);
-    }
-
-    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes) {
-        long diffInMinutesFromNow = Duration.between(orderDate, LocalDateTime.now()).toMinutes();
-        return Math.abs(diffInMinutesFromNow - minutes) < 2;
     }
 }

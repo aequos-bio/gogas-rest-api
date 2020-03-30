@@ -2,6 +2,7 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.order.OrderItemAmount;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
@@ -39,8 +40,14 @@ public class SmallUserOrderItemDTO {
 
     @JsonProperty("tot")
     public BigDecimal getOrderTotalAmount() {
-        return computeOrderAmountFromDeliveredQty()
-                .orElse(computeOrderAmountFromRequestedQty());
+        return OrderItemAmount.builder()
+                .withBoxUnitOfMeasure(boxUnitOfMeasure)
+                .withBoxWeight(boxWeight)
+                .withUnitPrice(unitPrice)
+                .withOrderUnitOfMeasure(orderUnitOfMeasure)
+                .withOrderRequestedQty(orderRequestedQty)
+                .withOrderDeliveredQty(orderDeliveredQty)
+                .compute();
     }
 
     @JsonProperty("colliOrdinati")

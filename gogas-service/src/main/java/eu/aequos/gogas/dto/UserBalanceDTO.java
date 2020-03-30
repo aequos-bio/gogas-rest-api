@@ -1,7 +1,7 @@
 package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -27,7 +27,7 @@ public final class UserBalanceDTO {
     @JsonProperty(value = "attivo")
     private boolean enabled;
 
-    public UserBalanceDTO fromModel(User user, String userFullName) {
+    public UserBalanceDTO fromModel(UserCoreInfo user, String userFullName) {
         userId = user.getId();
         firstName = user.getFirstName();
         lastName = user.getLastName();

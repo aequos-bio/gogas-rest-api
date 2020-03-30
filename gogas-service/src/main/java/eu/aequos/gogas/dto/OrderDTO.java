@@ -3,10 +3,12 @@ package eu.aequos.gogas.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
+import eu.aequos.gogas.persistence.entity.UserOrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -84,10 +86,10 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     //input only
     private boolean updateProductList;
 
-    public OrderDTO fromModel(Order order, OrderSummary totalAmount, List<String> actions) {
-        fromModel(order);
+    public OrderDTO fromModel(GoGasOrder order, OrderSummary totalAmount, List<String> actions) {
+        fromModel(order.getModel());
 
-        this.totalAmount = computeTotalAmount(totalAmount, order.getShippingCost());
+        this.totalAmount = computeTotalAmount(totalAmount, order.getModel().getShippingCost());
         this.actions = String.join(",", actions);
 
         return this;
@@ -103,20 +105,22 @@ public class OrderDTO implements ConvertibleDTO<Order> {
         return totalAmount.getTotalAmount().add(shippingCost);
     }
 
-    public OrderDTO fromModel(Order order, UserOrderSummary userOrderSummary) {
-        fromModel(order);
+    public OrderDTO fromModel(GoGasOrder order, UserOrderSummary userOrderSummary) {
+        fromModel(order.getModel());
 
         BigDecimal shippingCost = null;
 
         if (userOrderSummary != null) {
             this.itemsCount = userOrderSummary.getItemsCount();
-            this.hasFriends = userOrderSummary.getFriendCount() > 0;
-            this.accounted = userOrderSummary.getfriendAccounted() > 0;
+            this.hasFriends = userOrderSummary.getFriendItemsCount() > 0;
+            this.accounted = userOrderSummary.getFriendItemsAccounted() > 0;
             shippingCost = userOrderSummary.getShippingCost();
         }
 
-        this.accountable = !order.getStatus().isOpen() && order.getOrderType().isSummaryRequired();
-        this.totalAmount = computeTotalAmount(userOrderSummary, shippingCost);
+        this.accountable = !order.getStatus().isOpen() && order.isSummaryRequired();
+
+        if (order.canShowUserAmount())
+            this.totalAmount = computeTotalAmount(userOrderSummary, shippingCost);
 
         return this;
     }
@@ -131,7 +135,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
         this.dueHour = order.getDueHour();
         this.deliveryDate = order.getDeliveryDate();
         this.statusCode = order.getStatusCode();
-        this.statusName = order.getStatus().getDescription();
+        this.statusName = GoGasOrder.getOrderStatus(order.getStatusCode()).getDescription();
         this.sent = order.isSent();
         this.paid = order.isPaid();
         this.invoiceAmount = order.getInvoiceAmount();
@@ -160,7 +164,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
 
         Order newOrder = new Order();
         newOrder.setOrderType(orderType);
-        newOrder.setStatusCode(Order.OrderStatus.Opened.getStatusCode());
+        newOrder.setStatusCode(OrderStatus.Opened.getStatusCode());
         newOrder.setPaid(false);
         newOrder.setShippingCost(BigDecimal.ZERO);
         return newOrder;

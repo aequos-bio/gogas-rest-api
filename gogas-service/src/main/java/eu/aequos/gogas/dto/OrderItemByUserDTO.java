@@ -28,14 +28,14 @@ public class OrderItemByUserDTO {
     boolean cancelled;
 
     /** builder **/
-    public OrderItemByUserDTO fromModel(OpenOrderItem orderItem, String productName, boolean computedAmount) {
+    public OrderItemByUserDTO fromModel(OpenOrderItem orderItem, String productName, boolean showAmount) {
         this.orderItemId = orderItem.getId();
         this.productName = productName;
         this.unitOfMeasure = orderItem.getUm();
         this.deliveredQty = orderItem.getDeliveredQuantity();
         this.cancelled = orderItem.isCancelled();
 
-        if (computedAmount)
+        if (showAmount)
             this.totalAmount = deliveredQty.multiply(orderItem.getPrice());
 
         return this;

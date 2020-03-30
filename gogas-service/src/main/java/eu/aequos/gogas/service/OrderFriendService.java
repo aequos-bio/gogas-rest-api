@@ -7,7 +7,8 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.UserOrderItemDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.GoGasOrderFactory;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.User;
@@ -30,15 +31,18 @@ public class OrderFriendService {
     private ProductService productService;
     private UserService userService;
     private AccountingService accountingService;
+    private GoGasOrderFactory orderFactory;
 
     public OrderFriendService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                              ProductService productService, UserService userService, AccountingService accountingService) {
+                              ProductService productService, UserService userService, AccountingService accountingService,
+                              GoGasOrderFactory orderFactory) {
 
         this.orderItemService = orderItemService;
         this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
         this.accountingService = accountingService;
+        this.orderFactory = orderFactory;
     }
 
     private List<Product> getProducts(boolean showAllProductsOnPriceList, String orderTypeId, Collection<OpenOrderItem> orderItems) {
@@ -54,13 +58,13 @@ public class OrderFriendService {
 
     /** Friends **/
     public List<UserOrderItemDTO> getOriginalFriendsOrder(String userId, String orderId) {
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         User user = userService.getRequired(userId);
 
-        Map<String, OpenOrderItem> userSummaryOrderItemsMap = orderItemService.getUserOrderItems(userId, orderId, true);
+        Map<String, OpenOrderItem> userSummaryOrderItemsMap = order.getUserOrderItems(user);
         Map<String, FriendTotalOrder> friendsTotalDeliveredQuantityMap = orderItemService.getFriendTotalQuantity(userId, orderId);
 
-        List<Product> products = getProducts(false, order.getOrderType().getId(), userSummaryOrderItemsMap.values());
+        List<Product> products = getProducts(false, order.getOrderTypeId(), userSummaryOrderItemsMap.values());
 
         return convertToDTOFriend(userSummaryOrderItemsMap, products, friendsTotalDeliveredQuantityMap);
     }
@@ -73,7 +77,7 @@ public class OrderFriendService {
     }
 
     public List<OrderItemByProductDTO> getFriendOrderItemsByProduct(String userId, String orderId, String productId) throws ItemNotFoundException {
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         User user = userService.getRequired(userId);
 
         List<ByProductOrderItem> orderItems = orderItemService.getFriendItemsByProduct(userId, productId, orderId);
@@ -132,10 +136,10 @@ public class OrderFriendService {
                 .findAny();
 
         if (friendReferralOrderItemId.isPresent())
-            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty);
+            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty, false);
 
         //after all checks, perform update of delivered quantity
-        orderItemService.updateDeliveredQty(orderId, itemId, qty);
+        orderItemService.updateDeliveredQty(orderId, itemId, qty, true);
 
         return new OrderItemByProductDTO()
                 .itemIdAndQuantity(friendReferralOrderItemId.orElse(""), userRemainingQty);
@@ -171,7 +175,7 @@ public class OrderFriendService {
                 .findAny();
 
         if (friendReferralOrderItemId.isPresent())
-            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty);
+            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty, false);
 
         //after all checks, perform update of delivered quantity
         insertOrderItem(orderId, orderItem);

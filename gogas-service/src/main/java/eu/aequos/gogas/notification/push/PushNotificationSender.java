@@ -5,8 +5,8 @@ import eu.aequos.gogas.notification.push.builder.OrderPushNotificationBuilder;
 import eu.aequos.gogas.notification.push.builder.PushNotificationBuilderSelector;
 import eu.aequos.gogas.notification.push.client.PushNotificationClient;
 import eu.aequos.gogas.notification.push.client.PushNotificationRequest;
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
-import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesViewRepo;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,7 +45,7 @@ public class PushNotificationSender {
         this.pushTokenRepo = pushTokenRepo;
     }
 
-    public void sendOrderNotification(Order order, OrderEvent event) {
+    public void sendOrderNotification(GoGasOrder order, OrderEvent event) {
         log.info("Sending order push notifications for event {}", event.name());
         OrderPushNotificationBuilder pushNotificationBuilder = pushNotificationBuilderSelector.select(event);
 
@@ -61,8 +60,8 @@ public class PushNotificationSender {
         log.info("Notification send, response: " + response);
     }
 
-    private List<String> extractNotificationTokens(Order order, OrderPushNotificationBuilder orderPushNotification) {
-        String orderTypeId = order.getOrderType().getId();
+    private List<String> extractNotificationTokens(GoGasOrder order, OrderPushNotificationBuilder orderPushNotification) {
+        String orderTypeId = order.getOrderTypeId();
         List<NotificationPreferencesView> notificationPrefs = notificationPreferencesViewRepo.findByOrderTypeId(orderTypeId);
 
         Set<String> targetUsers = orderPushNotification.filterPreferences(order, notificationPrefs)

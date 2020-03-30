@@ -1,7 +1,7 @@
 package eu.aequos.gogas.notification.push.builder;
 
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
-import eu.aequos.gogas.persistence.entity.Order;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -29,12 +29,12 @@ public class ExpirationNotificationBuilder extends OrderPushNotificationBuilder 
     }
 
     @Override
-    public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
+    public Stream<NotificationPreferencesView> filterPreferences(GoGasOrder order, List<NotificationPreferencesView> preferences) {
         return preferences.stream()
                 .filter(pref -> filter(order, pref));
     }
 
-    private boolean filter(Order order, NotificationPreferencesView preference) {
+    private boolean filter(GoGasOrder order, NotificationPreferencesView preference) {
         return preference.onOrderExpiration() &&
                 order.isExpiring(preference.getOnExpirationMinutesBefore());
     }

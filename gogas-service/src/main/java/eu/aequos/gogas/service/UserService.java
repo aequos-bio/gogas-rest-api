@@ -1,7 +1,10 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.dto.PasswordChangeDTO;
+import eu.aequos.gogas.dto.PasswordResetDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.notification.mail.MailNotificationSender;
@@ -93,10 +96,13 @@ public class UserService extends CrudService<User, String> {
     }
 
     public Map<String, String> getUsersFullNameMap(Set<String> userIds) {
-        return userRepo.findByIdIn(userIds, UserCoreInfo.class).stream()
+        return getUsersByIds(userIds).stream()
                 .collect(Collectors.toMap(UserCoreInfo::getId, this::getUserDisplayName));
     }
 
+    public List<UserCoreInfo> getUsersByIds(Set<String> userIds) {
+        return userRepo.findByIdIn(userIds, UserCoreInfo.class);
+    }
 
     private SelectItemDTO getSelectItem(UserCoreInfo user) {
         String icon = user.isEnabled() ? "" : DISABLED_ICON;
@@ -105,11 +111,7 @@ public class UserService extends CrudService<User, String> {
         return new SelectItemDTO(user.getId(), label);
     }
 
-    private String getUserDisplayName(UserCoreInfo user) {
-        return getUserDisplayName(user.getFirstName(), user.getLastName());
-    }
-
-    public String getUserDisplayName(User user) {
+    public String getUserDisplayName(UserCoreInfo user) {
         return getUserDisplayName(user.getFirstName(), user.getLastName());
     }
 
@@ -136,7 +138,7 @@ public class UserService extends CrudService<User, String> {
     }
 
     public List<UserDTO> getUsers(String role) {
-        List<User> users = role != null ? userRepo.findByRole(role) : userRepo.findAll();
+        List<User> users = role != null ? userRepo.findByRole(role, User.class) : userRepo.findAll();
         return convertFromModel(users);
     }
 

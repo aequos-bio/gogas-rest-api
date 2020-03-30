@@ -4,6 +4,8 @@ import eu.aequos.gogas.multitenancy.TenantContext;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.GoGasOrderFactory;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -24,12 +27,15 @@ public class OrderNotificationTask {
     private TenantRegistry tenantRegistry;
     private OrderRepo orderRepo;
     private PushNotificationSender pushNotificationSender;
+    private GoGasOrderFactory orderFatory;
 
     public OrderNotificationTask(TenantRegistry tenantRegistry, OrderRepo orderRepo,
-                                 PushNotificationSender pushNotificationSender) {
+                                 PushNotificationSender pushNotificationSender, GoGasOrderFactory orderFatory) {
+
         this.tenantRegistry = tenantRegistry;
         this.orderRepo = orderRepo;
         this.pushNotificationSender = pushNotificationSender;
+        this.orderFatory = orderFatory;
     }
 
     @Scheduled(cron = "${notification.task.cron}")
@@ -53,10 +59,11 @@ public class OrderNotificationTask {
                 .and(orderDateFilter, LocalDate.now())
                 .build();
 
-        List<Order> orderList = orderRepo.findAll(filter);
+        List<GoGasOrder> orderList = orderRepo.findAll(filter).stream()
+                .map(orderFatory::initOrder)
+                .collect(Collectors.toList());
 
-        for (Order order : orderList) {
+        for (GoGasOrder order : orderList)
             pushNotificationSender.sendOrderNotification(order, event);
-        }
     }
 }

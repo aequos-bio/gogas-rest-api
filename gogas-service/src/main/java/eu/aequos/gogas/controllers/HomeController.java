@@ -3,7 +3,7 @@ package eu.aequos.gogas.controllers;
 import eu.aequos.gogas.dto.MenuDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.MenuService;
 import org.springframework.http.MediaType;
@@ -44,7 +44,7 @@ public class HomeController {
     //TODO: move to appropriate controller and put logic in service
     @GetMapping(value = "order/status")
     public List<SelectItemDTO> getOrderStatusList() {
-        return Arrays.stream(Order.OrderStatus.values())
+        return Arrays.stream(OrderStatus.values())
                 .map(s -> new SelectItemDTO(Integer.toString(s.getStatusCode()), s.getDescription()))
                 .collect(Collectors.toList());
     }

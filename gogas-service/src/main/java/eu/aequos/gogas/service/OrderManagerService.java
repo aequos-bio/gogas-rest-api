@@ -12,12 +12,12 @@ import eu.aequos.gogas.integration.api.OrderSynchItem;
 import eu.aequos.gogas.integration.api.OrderSynchResponse;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.GoGasOrderFactory;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
-import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
-import eu.aequos.gogas.persistence.repository.ShippingCostRepo;
-import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
+import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.workflow.OrderWorkflowHandler;
@@ -41,12 +41,14 @@ import static java.util.stream.Collectors.toList;
 public class OrderManagerService extends CrudService<Order, String> {
 
     private OrderRepo orderRepo;
+    private UserOrderSummaryRepo userOrderSummaryRepo;
     private OrderManagerRepo orderManagerRepo;
     private OrderItemService orderItemService;
     private SupplierOrderItemRepo supplierOrderItemRepo;
     private ShippingCostRepo shippingCostRepo;
 
     private OrderWorkflowHandler orderWorkflowHandler;
+    private GoGasOrderFactory orderFactory;
 
     private UserService userService;
     private OrderTypeService orderTypeService;
@@ -57,21 +59,23 @@ public class OrderManagerService extends CrudService<Order, String> {
     private AttachmentService attachmentService;
     private ExcelGenerationService reportService;
 
-    public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
+    public OrderManagerService(OrderRepo orderRepo, UserOrderSummaryRepo userOrderSummaryRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
-                               UserService userService, OrderTypeService orderTypeService, ProductService productService,
+                               GoGasOrderFactory orderFactory, UserService userService, OrderTypeService orderTypeService,
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
                                PushNotificationSender pushNotificationSender, AttachmentService attachmentService,
-                               ExcelGenerationService reportService) {
+                               ExcelGenerationService reportService, ProductService productService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
+        this.userOrderSummaryRepo = userOrderSummaryRepo;
         this.orderManagerRepo = orderManagerRepo;
         this.orderItemService = orderItemService;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
         this.shippingCostRepo = shippingCostRepo;
         this.orderWorkflowHandler = orderWorkflowHandler;
+        this.orderFactory = orderFactory;
         this.userService = userService;
         this.orderTypeService = orderTypeService;
         this.productService = productService;
@@ -82,17 +86,12 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.reportService = reportService;
     }
 
-    public Order getRequiredWithType(String id) throws ItemNotFoundException {
-        return orderRepo.findByIdWithType(id)
-                .orElseThrow(() -> new ItemNotFoundException(type, id));
-    }
-
     public List<OrderByProductDTO> getOrderDetailByProduct(String orderId) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         return getOrderDetailByProduct(order);
     }
 
-    public List<OrderByProductDTO> getOrderDetailByProduct(Order order) throws ItemNotFoundException {
+    public List<OrderByProductDTO> getOrderDetailByProduct(GoGasOrder order) throws ItemNotFoundException {
         boolean isOrderOpen = order.getStatus().isOpen();
 
         List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(order.getId(), isOrderOpen);
@@ -112,8 +111,6 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(toList());
     }
 
-
-
     public synchronized Order create(OrderDTO dto) throws GoGasException {
         log.info("Creating order for type {}", dto.getOrderTypeId());
         OrderType orderType = orderTypeService.getRequired(dto.getOrderTypeId());
@@ -129,8 +126,9 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         //this is required to have order type description in push notification
         createdOrder.getOrderType().setDescription(orderType.getDescription());
+        GoGasOrder goGasOrder = orderFactory.initOrder(createdOrder);
 
-        pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
+        pushNotificationSender.sendOrderNotification(goGasOrder, OrderEvent.Opened);
 
         if (dto.isUpdateProductList())
             productService.syncPriceList(orderType);
@@ -159,15 +157,14 @@ public class OrderManagerService extends CrudService<Order, String> {
         if (orderList.isEmpty())
             return new ArrayList<>();
 
-        Map<String, OrderSummary> orderSummaries = orderRepo.findOrderSummary(orderList.stream()
-                .map(Order::getId)
-                .collect(Collectors.toSet()))
-                .stream()
+        Set<String> orderIds = ListConverter.fromList(orderList).extractIds(Order::getId);
+
+        Map<String, OrderSummary> orderSummaries = orderRepo.findOrderSummary(orderIds).stream()
                 .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
 
-
         return orderList.stream()
-                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId()),  orderWorkflowHandler.getAvailableActions(entry, User.Role.A)))
+                .map(orderFactory::initOrder)
+                .map(order -> new OrderDTO().fromModel(order, orderSummaries.get(order.getId()),  orderWorkflowHandler.getAvailableActions(order, User.Role.A)))
                 .collect(toList());
     }
 
@@ -182,16 +179,16 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
-        Order order = this.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
     }
 
     /*** OPERATIONS *****/
 
     public List<OrderItemByProductDTO> getOrderItemsByProduct(String orderId, String productId) throws ItemNotFoundException {
-        Order order = this.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
-        List<ByProductOrderItem> orderItems = orderItemService.getItemsByProduct(productId, orderId, !order.getStatus().isOpen());
+        List<ByProductOrderItem> orderItems = orderItemService.getItemsByProduct(productId, orderId, !order.isOpen());
         Set<String> orderItemsId = ListConverter.fromList(orderItems).extractIds(ByProductOrderItem::getUser);
         Map<String, String> userFullNameMap = userService.getUsersFullNameMap(orderItemsId);
 
@@ -202,16 +199,16 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public boolean updateItemDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
-        return orderItemService.updateDeliveredQty(orderId, orderItemId, deliveredQty);
+        return orderItemService.updateDeliveredQty(orderId, orderItemId, deliveredQty, true);
     }
 
     public void insertOrderItem(String orderId, OrderItemUpdateRequest orderItem) throws GoGasException {
         if (orderItem.getQuantity() == null || orderItem.getQuantity().compareTo(BigDecimal.ZERO) <= 0)
             throw new GoGasException("Inserire una quantità maggiore di zero");
 
-        Order order = getRequired(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
-        if (order.getStatus() != Order.OrderStatus.Closed)
+        if (order.getStatus() != OrderStatus.Closed)
             throw new OrderClosedException();
 
         User user = userService.getRequired(orderItem.getUserId());
@@ -230,8 +227,8 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     private List<SelectItemDTO> getUsersNotOrdering(String orderId, Set<String> userIds) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
-        Set<String> userRoles = userService.getAllUserRolesAsString(false, !order.getOrderType().isSummaryRequired());
+        GoGasOrder order = orderFactory.initOrder(orderId);
+        Set<String> userRoles = userService.getAllUserRolesAsString(false, !order.isSummaryRequired());
 
         if (userIds.isEmpty())
             return userService.getActiveUsersByRoles(userRoles);
@@ -244,12 +241,12 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public void replaceOrderItemWithProduct(String orderId, String orderItemId, String productId) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
         SupplierOrderItem supplierOrderItem = supplierOrderItemRepo.findByOrderIdAndProductId(orderId, productId)
                 .orElseThrow(() -> new ItemNotFoundException("SupplierOrder", Arrays.asList(orderId, productId)));
 
-        orderItemService.replaceOrderItemsProduct(orderItemId, order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
+        orderItemService.replaceOrderItemsProduct(orderItemId, order.isSummaryRequired(), productId, supplierOrderItem);
     }
 
     @Transactional
@@ -279,7 +276,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public String updateUserCost(String orderId, String userId, BigDecimal cost) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         User user = userService.getRequired(userId);
 
         return accountingService.createOrUpdateEntryForOrder(order, user, cost); //TODO: ricalcolare costo trasporto
@@ -290,54 +287,35 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public List<OrderByUserDTO> getOrderDetailByUser(String orderId) throws ItemNotFoundException {
-        return getOrderDetailByUser(getRequiredWithType(orderId));
+        return getOrderDetailByUser(orderFactory.initOrder(orderId));
     }
 
-    private List<OrderByUserDTO> getOrderDetailByUser(Order order) {
-        boolean computedAmount = order.getOrderType().isComputedAmount();
+    private List<OrderByUserDTO> getOrderDetailByUser(GoGasOrder order) {
+        Map<String, UserOrderSummary> userOrderSummaryMap = ListConverter.fromList(order.getUserOrderSummary())
+                .toMap(UserOrderSummary::getUserId);
 
-        Map<String, BigDecimal> accountingEntries = accountingService.getOrderAccountingEntries(order.getId()).stream()
-                .collect(Collectors.toMap(entry -> entry.getUser().getId(), AccountingEntry::getAmount));
+        List<UserCoreInfo> users = userService.getUsersByIds(userOrderSummaryMap.keySet());
 
-        Map<String, ByUserOrderItem> userOrderItems = ListConverter.fromList(orderItemService.getItemsCountAndAmountByUser(order.getId()))
-                .toMap(ByUserOrderItem::getUserId);
-
-        Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()
-                .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
-
-        Set<String> allUserIds = Stream.concat(accountingEntries.keySet().stream(), userOrderItems.keySet().stream())
-                .collect(Collectors.toSet());
-
-        Map<String, String> users = userService.getUsersFullNameMap(allUserIds);
-
-         return users.entrySet().stream()
-                 .map(user -> getOrderByUser(user, userOrderItems.get(user.getKey()), accountingEntries.get(user.getKey()), shippingCostMap.get(user.getKey()), computedAmount))
-                 .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
-                 .collect(toList());
+        return users.stream()
+                .map(user -> getOrderByUser(user, userOrderSummaryMap.get(user.getId())))
+                .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
+                .collect(toList());
     }
 
-    private OrderByUserDTO getOrderByUser(Map.Entry<String, String> user, ByUserOrderItem userOrderItem,
-                                          BigDecimal accountingEntryAmount, BigDecimal shippingCost,
-                                          boolean computedAmount) {
-
+    private OrderByUserDTO getOrderByUser(UserCoreInfo user, UserOrderSummary userOrderSummary) {
         OrderByUserDTO orderByUser = new OrderByUserDTO();
-        orderByUser.setUserId(user.getKey());
-        orderByUser.setUserFullName(user.getValue());
-        orderByUser.setOrderedItemsCount(userOrderItem != null ? userOrderItem.getOrderedItems() : 0);
-        orderByUser.setShippingCost(shippingCost);
-        orderByUser.setNegativeBalance(false); //TODO: riempire correttamente
-
-        if (computedAmount)
-            orderByUser.setNetAmount(userOrderItem.getTotalAmount());
-        else
-            orderByUser.setNetAmount(Optional.ofNullable(accountingEntryAmount).orElse(BigDecimal.ZERO));
-
+        orderByUser.setUserId(user.getId());
+        orderByUser.setUserFullName(userService.getUserDisplayName(user));
+        orderByUser.setOrderedItemsCount(userOrderSummary.getItemsCount());
+        orderByUser.setShippingCost(userOrderSummary.getShippingCost());
+        orderByUser.setNegativeBalance(user.getBalance().compareTo(BigDecimal.ZERO) < 0);
+        orderByUser.setNetAmount(userOrderSummary.getTotalAmount());
         return orderByUser;
     }
 
     @Transactional
     public List<OrderByUserDTO> updateShippingCost(String orderId, BigDecimal shippingCost) throws ItemNotFoundException {
-        Order order = getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         order.setShippingCost(shippingCost);
 
         List<OrderByUserDTO> userOrders = getOrderDetailByUser(order);
@@ -359,8 +337,11 @@ public class OrderManagerService extends CrudService<Order, String> {
                 shippingCostEntity.setUserId(userOrder.getUserId());
                 shippingCostEntity.setAmount(userShippingCost);
                 shippingCostRepo.save(shippingCostEntity);
+
+                userOrderSummaryRepo.updateShippingCost(orderId, userOrder.getUserId(), userShippingCost);
             } else {
                 shippingCostRepo.deleteByOrderIdAndUserId(orderId, userOrder.getUserId());
+                userOrderSummaryRepo.updateShippingCost(orderId, userOrder.getUserId(), BigDecimal.ZERO);
             }
 
             userOrder.setShippingCost(userShippingCost);
@@ -370,29 +351,20 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public List<OrderItemByUserDTO> getOrderItemsByUser(String orderId, String userId) throws ItemNotFoundException {
-        boolean computedAmount = getRequiredWithType(orderId).getOrderType().isComputedAmount();
+        GoGasOrder order = orderFactory.initOrder(orderId);
+        User user = userService.getRequired(userId);
 
-        Map<String, OpenOrderItem> orderItemsMap = orderItemService.getUserOrderItems(userId, orderId, true);
+        Map<String, OpenOrderItem> orderItemsMap = order.getUserOrderItems(user);
         List<Product> orderedProducts = productService.getProducts(orderItemsMap.keySet());
 
         return orderedProducts.stream()
-                .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), computedAmount))
+                .map(p -> new OrderItemByUserDTO().fromModel(orderItemsMap.get(p.getId()), p.getDescription(), order.showComputedAmount()))
                 .collect(toList());
     }
 
     public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
-
-        if (invoiceData.getInvoiceAmount() != null && invoiceData.getInvoiceAmount().compareTo(BigDecimal.ZERO) <= 0)
-            throw new GoGasException("L'importo fattura deve essere un valore maggiore di zero");
-
-        Order order = getRequiredWithType(orderId);
-        order.setInvoiceNumber(invoiceData.getInvoiceNumber());
-        order.setInvoiceDate(invoiceData.getInvoiceDate());
-        order.setInvoiceAmount(invoiceData.getInvoiceAmount());
-        order.setPaymentDate(invoiceData.getPaymentDate());
-        order.setPaid(invoiceData.isPaid());
-
-        orderRepo.save(order);
+        GoGasOrder order = orderFactory.initOrder(orderId);
+        order.updateInvoiceData(invoiceData);
     }
 
     public void saveInvoiceAttachment(String orderId, byte[] attachmentContent, String contentType) throws GoGasException {
@@ -407,8 +379,8 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
 
-        Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
-                .map(Order.OrderStatus::getStatusCode)
+        Set<Integer> statusCodes = Stream.of(OrderStatus.Opened, OrderStatus.Closed)
+                .map(OrderStatus::getStatusCode)
                 .collect(Collectors.toSet());
 
         Set<String> aequosOrderTypeIds = ListConverter.fromList(aequosOrderTypeMapping.values())
@@ -453,19 +425,19 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
         boolean hasAttachment = attachmentService.hasAttachment(AttachmentType.Invoice, orderId);
         return new OrderDetailsDTO().fromModel(order, hasAttachment);
     }
 
     public AttachmentDTO readInvoiceAttachment(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
         byte[] attachmentContent = attachmentService.retrieveAttachment(AttachmentType.Invoice, orderId);
         return buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
     }
 
     public AttachmentDTO extractExcelReport(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
         byte[] excelReportContent = reportService.extractOrderDetails(order);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         return buildAttachmentDTO(order, excelReportContent, contentType);
@@ -479,7 +451,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public String sendOrderToAequos(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
 
         Integer aequosOrderType = order.getOrderType().getAequosOrderId();
         if (aequosOrderType == null)
@@ -494,7 +466,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     @Transactional
     public int sendWeightsToAequos(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
 
         if (order.getOrderType().getAequosOrderId() == null)
             throw new GoGasException("Order type is not linked to Aequos");
@@ -513,7 +485,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     @Transactional
     public void synchOrderWithAequos(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
+        Order order = orderFactory.getRequiredWithType(orderId);
 
         if (order.getOrderType().getAequosOrderId() == null)
             throw new GoGasException("Order type is not linked to Aequos");

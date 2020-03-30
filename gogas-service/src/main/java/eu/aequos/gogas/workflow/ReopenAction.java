@@ -1,24 +1,30 @@
 package eu.aequos.gogas.workflow;
 
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ShippingCostRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
+import eu.aequos.gogas.service.OrderItemService;
 
 import static eu.aequos.gogas.workflow.ActionValidity.notValid;
 import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class ReopenAction extends OrderStatusAction {
 
-    public ReopenAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                        SupplierOrderItemRepo supplierOrderItemRepo, Order order) {
+    private ShippingCostRepo shippingCostRepo;
 
-        super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Opened);
+    public ReopenAction(OrderItemService orderItemService, OrderRepo orderRepo,
+                        SupplierOrderItemRepo supplierOrderItemRepo, GoGasOrder order,
+                        ShippingCostRepo shippingCostRepo) {
+
+        super(orderItemService, orderRepo, supplierOrderItemRepo, order, OrderStatus.Opened);
+        this.shippingCostRepo = shippingCostRepo;
     }
 
     @Override
     protected ActionValidity isActionValid() {
-        if (order.getStatus() != Order.OrderStatus.Closed)
+        if (order.getStatus() != OrderStatus.Closed)
             return notValid("Invalid order status");
 
         return valid();
@@ -26,7 +32,7 @@ public class ReopenAction extends OrderStatusAction {
 
     @Override
     protected void processOrder() {
-        orderItemRepo.deleteByOrderAndSummary(order.getId(), true);
+        order.clearOrderManagerData();
         supplierOrderItemRepo.deleteByOrderId(order.getId());
     }
 }

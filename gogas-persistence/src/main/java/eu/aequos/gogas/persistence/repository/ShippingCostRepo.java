@@ -14,4 +14,8 @@ public interface ShippingCostRepo extends CrudRepository<ShippingCost, ShippingC
     @Modifying
     @Query("DELETE ShippingCost s WHERE orderId = ?1 AND userId = ?2")
     int deleteByOrderIdAndUserId(String orderId, String userId);
+
+    @Modifying
+    @Query("DELETE ShippingCost s WHERE orderId = ?1")
+    int deleteByOrderId(String id);
 }

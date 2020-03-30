@@ -5,9 +5,12 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.OrderClosedException;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.GoGasOrderFactory;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,18 +24,21 @@ import java.util.stream.Collectors;
 public class OrderUserService {
 
     private OrderItemService orderItemService;
-    private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
     private OrderRepo orderRepo;
+    private UserOrderSummaryRepo userOrderSummaryRepo;
+    private GoGasOrderFactory orderFactory;
 
-    public OrderUserService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                            ProductService productService, UserService userService, OrderRepo orderRepo) {
+    public OrderUserService(OrderItemService orderItemService, ProductService productService,
+                            UserService userService, OrderRepo orderRepo,
+                            UserOrderSummaryRepo userOrderSummaryRepo, GoGasOrderFactory orderFactory) {
         this.orderItemService = orderItemService;
-        this.orderManagerService = orderManagerService;
         this.productService = productService;
         this.userService = userService;
         this.orderRepo = orderRepo;
+        this.userOrderSummaryRepo = userOrderSummaryRepo;
+        this.orderFactory = orderFactory;
     }
 
     public List<OpenOrderDTO> getOpenOrders(String userId) {
@@ -44,8 +50,8 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(openOrders)
                 .extractIds(Order::getId);
 
-        Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, orderIds).stream()
-                .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
+        Map<String, List<UserOrderSummary>> openOrderSummaries = userOrderSummaryRepo.findOpenOrderSummaries(userId, orderIds).stream()
+                .collect(Collectors.groupingBy(UserOrderSummary::getOrderId));
 
         return openOrders.stream()
                 .map(o -> new OpenOrderDTO().fromModel(o, openOrderSummaries.getOrDefault(o.getId(), new ArrayList<>())))
@@ -62,11 +68,11 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(orderList)
                 .extractIds(Order::getId);
 
-        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderIds).stream()
+        Map<String, UserOrderSummary> orderSummaries = userOrderSummaryRepo.findUserOrderSummaryByUser(userId, orderIds).stream()
                 .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
 
         return orderList.stream()
-                .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
+                .map(order -> new OrderDTO().fromModel(orderFactory.initOrder(order), orderSummaries.get(order.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -89,29 +95,22 @@ public class OrderUserService {
     }
 
     public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         User user = userService.getRequired(userId);
 
-        //TODO: change to have more OOP
-        if (order.getOrderType().isExternal())
-            return Collections.emptyList();
+        Map<String, OpenOrderItem> userOrderMap = order.getUserOrderItems(user);
 
-        boolean isOrderOpen = order.getStatus().isOpen();
-        boolean showAllProductsOnPriceList = isOrderOpen && order.isEditable();
-        boolean showGroupedOrderItems = showGroupedOrderItems(isOrderOpen, order.getOrderType(), user);
-
-        Map<String, OpenOrderItem> userOrderMap = orderItemService.getUserOrderItems(userId, orderId, showGroupedOrderItems);
-
-        Map<String, ProductTotalOrder> productOrderTotalMap = getProductOrderTotal(orderId, isOrderOpen).stream()
+        boolean showAllProductsOnPriceList =  order.isOpen() && order.isEditable();
+        Map<String, ProductTotalOrder> productOrderTotalMap = getProductOrderTotal(orderId, order.isOpen()).stream()
                 .collect(Collectors.toMap(ProductTotalOrder::getProduct, Function.identity()));
 
-        List<Product> products = getProducts(showAllProductsOnPriceList, order.getOrderType().getId(), userOrderMap.values());
+        List<Product> products = getProducts(showAllProductsOnPriceList, order.getOrderTypeId(), userOrderMap.values());
 
         return convertToDTO(userOrderMap, products, productOrderTotalMap);
     }
 
     public SmallUserOrderItemDTO updateUserOrder(String orderId, OrderItemUpdateRequest orderItemUpdate) throws ItemNotFoundException, OrderClosedException {
-        Order order = orderManagerService.getRequired(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
         if (!order.getStatus().isOpen() || !order.isEditable())
             throw new OrderClosedException();
@@ -124,15 +123,6 @@ public class OrderUserService {
 
         return new SmallUserOrderItemDTO()
                 .fromModel(product, orderItem, productTotalOrder.orElse(null));
-    }
-
-    private boolean showGroupedOrderItems(boolean isOrderOpen, OrderType orderType, User user) {
-        boolean useGroupedOrderItems = !isOrderOpen;
-
-        if (user.getRoleEnum().isFriend())
-            useGroupedOrderItems &= !orderType.isSummaryRequired();
-
-        return useGroupedOrderItems;
     }
 
     private List<Product> getProducts(boolean showAllProductsOnPriceList, String orderTypeId, Collection<OpenOrderItem> orderItems) {
@@ -150,10 +140,10 @@ public class OrderUserService {
     }
 
     private List<ProductTotalOrder> getProductOrderTotal(String orderId, boolean isOrderOpen) {
-        if (isOrderOpen)
-            return orderItemService.getTotalQuantityByProduct(orderId, true);
+        if (!isOrderOpen)
+            return new ArrayList<>();
 
-        return new ArrayList<>();
+        return orderItemService.getTotalQuantityByProduct(orderId, true);
     }
 
     private List<UserOrderItemDTO> convertToDTO(Map<String, OpenOrderItem> userOrderMap, List<Product> products,
@@ -164,7 +154,7 @@ public class OrderUserService {
     }
 
     public UserOrderDetailsDTO getOrderDetails(String orderId) throws ItemNotFoundException {
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
         return new UserOrderDetailsDTO().fromModel(order);
     }
 }

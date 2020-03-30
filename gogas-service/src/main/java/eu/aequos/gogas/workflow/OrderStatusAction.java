@@ -1,26 +1,26 @@
 package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.exception.InvalidOrderActionException;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
-import org.springframework.transaction.annotation.Transactional;
+import eu.aequos.gogas.service.OrderItemService;
 
 public abstract class OrderStatusAction {
 
-    protected OrderItemRepo orderItemRepo;
+    protected OrderItemService orderItemService;
     protected OrderRepo orderRepo;
     protected SupplierOrderItemRepo supplierOrderItemRepo;
 
-    protected Order order;
-    private Order.OrderStatus targetStatus;
+    protected GoGasOrder order;
+    private OrderStatus targetStatus;
 
-    public OrderStatusAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                             SupplierOrderItemRepo supplierOrderItemRepo, Order order,
-                             Order.OrderStatus targetStatus) {
+    public OrderStatusAction(OrderItemService orderItemService, OrderRepo orderRepo,
+                             SupplierOrderItemRepo supplierOrderItemRepo, GoGasOrder order,
+                             OrderStatus targetStatus) {
 
-        this.orderItemRepo = orderItemRepo;
+        this.orderItemService = orderItemService;
         this.orderRepo = orderRepo;
         this.supplierOrderItemRepo = supplierOrderItemRepo;
         this.order = order;
@@ -32,7 +32,7 @@ public abstract class OrderStatusAction {
         if (!validity.isValid())
             throw new InvalidOrderActionException(validity.getMessage());
 
-        orderRepo.updateOrderStatus(order.getId(), targetStatus.getStatusCode());
+        order.updateStatus(targetStatus);
 
         processOrder();
     }

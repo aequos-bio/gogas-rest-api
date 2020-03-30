@@ -6,7 +6,10 @@ import eu.aequos.gogas.dto.UserBalanceEntryDTO;
 import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummaryExtraction;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
@@ -33,10 +36,11 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     private UserService userService;
     private UserRepo userRepo;
     private YearRepo yearRepo;
+    private UserOrderSummaryRepo userOrderSummaryRepo;
 
     public AccountingService(AccountingRepo accountingRepo, AccountingReasonRepo accountingReasonRepo,
                              UserBalanceEntryRepo userBalanceEntryRepo, UserService userService,
-                             UserRepo userRepo, YearRepo yearRepo) {
+                             UserRepo userRepo, YearRepo yearRepo, UserOrderSummaryRepo userOrderSummaryRepo) {
 
         super(accountingRepo, "accounting entry");
         this.accountingRepo = accountingRepo;
@@ -45,6 +49,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         this.userService = userService;
         this.userRepo = userRepo;
         this.yearRepo = yearRepo;
+        this.userOrderSummaryRepo = userOrderSummaryRepo;
     }
 
     public BigDecimal getBalance(String userId) {
@@ -117,21 +122,25 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .collect(Collectors.toList());
     }
 
-    public String createOrUpdateEntryForOrder(Order order, User user, BigDecimal amount) {
+    public String createOrUpdateEntryForOrder(GoGasOrder order, User user, BigDecimal amount) {
         AccountingEntry userOrderEntry = accountingRepo.findByOrderIdAndUserId(order.getId(), user.getId())
                 .orElse(prepareAccountingEntryForOrder(order, user));
 
         userOrderEntry.setAmount(amount);
-        return accountingRepo.save(userOrderEntry).getId();
+        String accountingEntryId = accountingRepo.save(userOrderEntry).getId();
+
+        recomputeUserTotal(order.getId(), user.getId());
+
+        return accountingEntryId;
     }
 
-    private AccountingEntry prepareAccountingEntryForOrder(Order order, User user) {
+    private AccountingEntry prepareAccountingEntryForOrder(GoGasOrder order, User user) {
         AccountingEntry entry = new AccountingEntry();
         entry.setUser(user);
         entry.setOrderId(order.getId());
         entry.setDate(order.getDeliveryDate());
         entry.setReason(new AccountingEntryReason().withReasonCode("ORDINE"));
-        entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
+        entry.setDescription("Totale ordine " + order.getOrderTypeDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
         entry.setConfirmed(false);
 
         if (user.getRoleEnum().isFriend() && user.getFriendReferral() != null) {
@@ -148,7 +157,13 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public boolean deleteUserEntryForOrder(String orderId, String userId) {
-        return accountingRepo.deleteByOrderIdAndUserId(orderId, userId) > 0;
+        boolean updated = accountingRepo.deleteByOrderIdAndUserId(orderId, userId) > 0;
+        recomputeUserTotal(orderId, userId);
+        return updated;
+    }
+
+    public boolean deleteEntriesForOrder(String orderId) {
+        return accountingRepo.deleteByOrderId(orderId) > 0;
     }
 
     public List<AccountingEntry> getOrderAccountingEntries(String orderId) {
@@ -156,14 +171,14 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public List<UserBalanceDTO> getUserBalanceList() {
-        return toUserBalanceDTO(userRepo.findByRole(User.Role.U.name()));
+        return toUserBalanceDTO(userRepo.findByRole(User.Role.U.name(), UserCoreInfo.class));
     }
 
     public List<UserBalanceDTO> getFriendBalanceList(String referralId) {
-        return toUserBalanceDTO(userRepo.findByFriendReferralId(referralId, User.class));
+        return toUserBalanceDTO(userRepo.findByFriendReferralId(referralId, UserCoreInfo.class));
     }
 
-    private List<UserBalanceDTO> toUserBalanceDTO(List<User> userList) {
+    private List<UserBalanceDTO> toUserBalanceDTO(List<UserCoreInfo> userList) {
         return userList.stream()
                 .map(balance -> new UserBalanceDTO().fromModel(balance, userService.getUserDisplayName(balance.getFirstName(), balance.getLastName())))
                 .sorted(Comparator.comparing(UserBalanceDTO::getFullName))
@@ -216,5 +231,38 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
 
     public int updateFriendBalancesFromOrderItems(String referralId, String orderId, String productId) {
         return userRepo.updateFriendBalancesFromOrderItems(referralId, orderId, productId);
+    }
+
+    private void recomputeUserTotal(String orderId, String userId) {
+        UserOrderSummary userOrderSummary = userOrderSummaryRepo.extractUserOrderSummaryFromAccountEntry(orderId, userId)
+                .map(extractedUserOrderSummary -> createUserOrderSummary(orderId, extractedUserOrderSummary))
+                .orElse(new UserOrderSummary(orderId, userId));
+
+        if (userOrderSummary.getTotalAmount() == null && userOrderSummary.getItemsCount() == 0)
+            userOrderSummaryRepo.delete(userOrderSummary);
+        else
+            userOrderSummaryRepo.save(userOrderSummary);
+    }
+
+    @Transactional
+    public void recomputeAllUsersTotal(String orderId) {
+        List<UserOrderSummaryExtraction> extractedUserOrderSummaries = userOrderSummaryRepo.extractUserOrderSummaryFromAccountEntries(orderId);
+
+        List<UserOrderSummary> userOrderSummaries = extractedUserOrderSummaries.stream()
+                .map(summary -> createUserOrderSummary(orderId, summary))
+                .collect(Collectors.toList());
+
+        userOrderSummaryRepo.deleteAllUserOrderSummary(orderId);
+        userOrderSummaryRepo.saveAll(userOrderSummaries);
+    }
+
+    private UserOrderSummary createUserOrderSummary(String orderId, UserOrderSummaryExtraction extractedUserOrderSummary) {
+        UserOrderSummary userOrderSummary = new UserOrderSummary(orderId, extractedUserOrderSummary.getUserId());
+        userOrderSummary.setItemsCount(extractedUserOrderSummary.getItemsCount());
+        userOrderSummary.setTotalAmount(extractedUserOrderSummary.getTotalAmount());
+        userOrderSummary.setFriendItemsCount(extractedUserOrderSummary.getFriendItemsCount());
+        userOrderSummary.setFriendItemsAccounted(extractedUserOrderSummary.getFriendItemsAccounted());
+        userOrderSummary.setShippingCost(extractedUserOrderSummary.getShippingCost());
+        return userOrderSummary;
     }
 }

@@ -1,20 +1,13 @@
 package eu.aequos.gogas.notification.push.builder;
 
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.OrderItemService;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public class DeliveryNotificationBuilder extends OrderPushNotificationBuilder {
-
-    private OrderItemService orderItemService;
-
-    public DeliveryNotificationBuilder(OrderItemService orderItemService) {
-        this.orderItemService = orderItemService;
-    }
 
     @Override
     protected String getEventName() {
@@ -37,15 +30,15 @@ public class DeliveryNotificationBuilder extends OrderPushNotificationBuilder {
     }
 
     @Override
-    public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
-        Set<String> usersOrdering = orderItemService.getUsersWithOrder(order.getId());
+    public Stream<NotificationPreferencesView> filterPreferences(GoGasOrder order, List<NotificationPreferencesView> preferences) {
+        Set<String> usersOrdering = order.getOrderingUsers();
 
         return preferences.stream()
                 .filter(pref -> usersOrdering.contains(pref.getUserId()))
                 .filter(pref -> filter(order, pref));
     }
 
-    public boolean filter(Order order, NotificationPreferencesView preference) {
+    private boolean filter(GoGasOrder order, NotificationPreferencesView preference) {
         return preference.onOrderDelivery() &&
                 order.isInDelivery(11, preference.getOnDeliveryMinutesBefore());
     }

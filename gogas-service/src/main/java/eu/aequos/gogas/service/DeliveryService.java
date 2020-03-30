@@ -12,11 +12,10 @@ import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.GoGasOrderFactory;
 import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,26 +34,28 @@ public class DeliveryService {
     private static final DateTimeFormatter FILE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private OrderManagerService orderManagerService;
-    private OrderItemRepo orderItemRepo;
     private UserService userService;
     private PushNotificationSender pushNotificationSender;
     private ObjectMapper objectMapper;
+    private GoGasOrderFactory orderFactory;
+    private OrderItemService orderItemService;
 
-    public DeliveryService(OrderManagerService orderManagerService, OrderItemRepo orderItemRepo,
+    public DeliveryService(OrderManagerService orderManagerService, OrderItemService orderItemService,
                            UserService userService, PushNotificationSender pushNotificationSender,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper, GoGasOrderFactory orderFactory) {
 
         this.orderManagerService = orderManagerService;
-        this.orderItemRepo = orderItemRepo;
         this.userService = userService;
         this.pushNotificationSender = pushNotificationSender;
         this.objectMapper = objectMapper;
+        this.orderFactory = orderFactory;
+        this.orderItemService = orderItemService;
     }
 
     public DeliveryOrderDTO getOrderForDelivery(String orderId) {
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
-        List<UserDTO> users = userService.getUsersByRoles(visibleUserRoles(order.getOrderType()));
+        List<UserDTO> users = userService.getUsersByRoles(visibleUserRoles(order.isSummaryRequired()));
 
         //TODO: usare metodo adhoc
         List<DeliveryProductDTO> deliveryProducts = orderManagerService.getOrderDetailByProduct(order).stream()
@@ -62,13 +63,13 @@ public class DeliveryService {
                 .collect(Collectors.toList());
 
         //TODO: fare metodo nel service che recupera meno dati
-        List<DeliveryOrderItemDTO> deliveryOrderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
+        List<DeliveryOrderItemDTO> deliveryOrderItems = orderItemService.getItemsByOrderAndSummary(orderId, true).stream()
                 .map(this::toOrderItemDTO)
                 .collect(toList());
 
         DeliveryOrderDTO deliveryOrder = new DeliveryOrderDTO();
         deliveryOrder.setOrderId(orderId);
-        deliveryOrder.setOrderType(order.getOrderType().getDescription());
+        deliveryOrder.setOrderType(order.getOrderTypeDescription());
         deliveryOrder.setDeliveryDate(order.getDeliveryDate());
         deliveryOrder.setProducts(deliveryProducts);
         deliveryOrder.setOrderItems(deliveryOrderItems);
@@ -98,11 +99,11 @@ public class DeliveryService {
         return itemDTO;
     }
 
-    private Set<String> visibleUserRoles(OrderType orderType) {
+    private Set<String> visibleUserRoles(boolean isSummaryRequired) {
         Set<String> roles = new HashSet<>();
         roles.add(User.Role.U.name());
 
-        if (!orderType.isSummaryRequired())
+        if (!isSummaryRequired)
             roles.add(User.Role.S.name());
 
         return roles;
@@ -138,7 +139,7 @@ public class DeliveryService {
         if (!orderId.equalsIgnoreCase(deliveredOrder.getOrderId()))
             throw new GoGasException("Order id is not valid");
 
-        Order order = orderManagerService.getRequiredWithType(orderId);
+        GoGasOrder order = orderFactory.initOrder(orderId);
 
         List<OrderItem> itemsCreated = new ArrayList<>();
 
@@ -156,7 +157,9 @@ public class DeliveryService {
         }
 
         if (!itemsCreated.isEmpty())
-            orderItemRepo.saveAll(itemsCreated);
+            orderItemService.saveAll(itemsCreated);
+
+        order.recomputeAllUsersTotal();
 
         pushNotificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
@@ -177,7 +180,7 @@ public class DeliveryService {
         BigDecimal deliveredQuantity = Optional.ofNullable(deliveredItem.getFinalDeliveredQty())
                 .orElse(BigDecimal.ZERO);
 
-        int updatedRows = orderItemRepo.updateDeliveredQty(orderId, deliveredItem.getUserId(), productId, deliveredQuantity);
+        int updatedRows = orderItemService.updateDeliveredQty(orderId, deliveredItem.getUserId(), productId, deliveredQuantity);
 
         return updatedRows > 0;
     }

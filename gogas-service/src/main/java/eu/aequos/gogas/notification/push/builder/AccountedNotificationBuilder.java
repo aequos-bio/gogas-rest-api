@@ -1,23 +1,13 @@
 package eu.aequos.gogas.notification.push.builder;
 
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.AccountingService;
-import eu.aequos.gogas.service.OrderItemService;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
-
-    private OrderItemService orderItemService;
-    private AccountingService accountingService;
-
-    public AccountedNotificationBuilder(OrderItemService orderItemService, AccountingService accountingService) {
-        this.orderItemService = orderItemService;
-        this.accountingService = accountingService;
-    }
 
     @Override
     protected String getEventName() {
@@ -40,19 +30,11 @@ public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
     }
 
     @Override
-    public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
-        Set<String> orderingUsers = getOrderingUsers(order);
+    public Stream<NotificationPreferencesView> filterPreferences(GoGasOrder order, List<NotificationPreferencesView> preferences) {
+        Set<String> orderingUsers = order.getChargedUsers();
 
         return preferences.stream()
                 .filter(pref -> orderingUsers.contains(pref.getUserId()))
                 .filter(NotificationPreferencesView::onOrderAccounted);
-    }
-
-    //TODO: potrebbe diventare metodo dell'ordine stesso.... (OOP)
-    private Set<String> getOrderingUsers(Order order) {
-        if (order.getOrderType().isComputedAmount())
-            return orderItemService.getUsersWithOrder(order.getId());
-
-        return accountingService.getUsersWithOrder(order.getId());
     }
 }

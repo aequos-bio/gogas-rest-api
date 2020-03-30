@@ -2,6 +2,7 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.entity.Order;
 import lombok.Data;
 
@@ -93,8 +94,8 @@ public class OrderDetailsDTO {
         this.aequosId = order.getOrderType().getAequosOrderId();
         this.computedAmount = order.getOrderType().isComputedAmount();
         this.shippingCost = order.getShippingCost();
-        this.editable = order.getStatus().equals(Order.OrderStatus.Closed);
-        this.accounted = order.getStatus().equals(Order.OrderStatus.Accounted);
+        this.editable = order.getStatusCode() == OrderStatus.Closed.getStatusCode();
+        this.accounted = order.getStatusCode() == OrderStatus.Accounted.getStatusCode();
         this.external = order.getOrderType().isExternal();
         this.invoiceNumber = order.getInvoiceNumber();
         this.invoiceDate = order.getInvoiceDate();

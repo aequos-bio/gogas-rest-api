@@ -1,24 +1,25 @@
 package eu.aequos.gogas.workflow;
 
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
+import eu.aequos.gogas.service.OrderItemService;
 
 import static eu.aequos.gogas.workflow.ActionValidity.notValid;
 import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class UndoCancelAction extends OrderStatusAction {
 
-    public UndoCancelAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                            SupplierOrderItemRepo supplierOrderItemRepo, Order order) {
+    public UndoCancelAction(OrderItemService orderItemService, OrderRepo orderRepo,
+                            SupplierOrderItemRepo supplierOrderItemRepo, GoGasOrder order) {
 
-        super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Opened);
+        super(orderItemService, orderRepo, supplierOrderItemRepo, order, OrderStatus.Opened);
     }
 
     @Override
     protected ActionValidity isActionValid() {
-        if (order.getStatus() != Order.OrderStatus.Cancelled)
+        if (order.getStatus() != OrderStatus.Cancelled)
             return notValid("Invalid order status");
 
         return valid();
@@ -26,6 +27,6 @@ public class UndoCancelAction extends OrderStatusAction {
 
     @Override
     protected void processOrder() {
-        orderItemRepo.setCancelledByOrderId(order.getId(), false);
+        orderItemService.setCancelledByOrderId(order.getId(), false);
     }
 }

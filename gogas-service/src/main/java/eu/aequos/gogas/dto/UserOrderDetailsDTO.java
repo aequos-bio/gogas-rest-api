@@ -2,7 +2,7 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.order.GoGasOrder;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -37,15 +37,15 @@ public class UserOrderDetailsDTO {
     @JsonProperty("completamentoColli")
     private boolean showBoxCompletion;
 
-    public UserOrderDetailsDTO fromModel(Order order) {
+    public UserOrderDetailsDTO fromModel(GoGasOrder order) {
         this.id = order.getId();
-        this.orderTypeId = order.getOrderType().getId();
-        this.orderTypeName = order.getOrderType().getDescription();
-        this.dueDate = order.getDueDate();
+        this.orderTypeId = order.getOrderTypeId();
+        this.orderTypeName = order.getOrderTypeDescription();
+        this.dueDate = order.getModel().getDueDate();
         this.deliveryDate = order.getDeliveryDate();
         this.open = order.getStatus().isOpen();
-        this.showAdvance = order.getOrderType().isShowAdvance();
-        this.showBoxCompletion = order.getOrderType().isShowBoxCompletion();
+        this.showAdvance = order.showAdvance();
+        this.showBoxCompletion = order.showBoxCompletion();
 
         return this;
     }

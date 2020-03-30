@@ -1,11 +1,10 @@
 package eu.aequos.gogas.notification.push.builder;
 
 import eu.aequos.gogas.notification.push.client.PushNotificationRequest;
+import eu.aequos.gogas.order.GoGasOrder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
-import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -19,16 +18,16 @@ public abstract class OrderPushNotificationBuilder {
 
     protected abstract String getMessageTemplate();
 
-    public abstract Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences);
+    public abstract Stream<NotificationPreferencesView> filterPreferences(GoGasOrder order, List<NotificationPreferencesView> preferences);
 
-    private String formatOrderMessage(Order order) {
+    private String formatOrderMessage(GoGasOrder order) {
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
         String messageTemplate = getMessageTemplate();
 
-        return String.format(messageTemplate, order.getOrderType().getDescription(), formattedDeliveryDate);
+        return String.format(messageTemplate, order.getOrderTypeDescription(), formattedDeliveryDate);
     }
 
-    public PushNotificationRequest buildRequest(Order order, List<String> targetTokens, String serviceAppId) {
+    public PushNotificationRequest buildRequest(GoGasOrder order, List<String> targetTokens, String serviceAppId) {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
         request.setHeadings(getHeading());

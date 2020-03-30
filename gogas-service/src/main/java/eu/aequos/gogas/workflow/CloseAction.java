@@ -1,11 +1,13 @@
 package eu.aequos.gogas.workflow;
 
-import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.order.GoGasOrder;
+import eu.aequos.gogas.order.OrderStatus;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.OrderItemService;
 import lombok.Value;
 
 import java.math.BigDecimal;
@@ -25,13 +27,13 @@ public class CloseAction extends OrderStatusAction {
 
     private Map<String, Product> productMap;
 
-    public CloseAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
+    public CloseAction(OrderItemService orderItemService, OrderRepo orderRepo,
                        SupplierOrderItemRepo supplierOrderItemRepo,
                        ConfigurationService.RoundingMode roundingMode,
-                       Order order, ProductRepo productRepo,
+                       GoGasOrder order, ProductRepo productRepo,
                        ConfigurationService configurationService) {
 
-        super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Closed);
+        super(orderItemService, orderRepo, supplierOrderItemRepo, order, OrderStatus.Closed);
         this.roundingMode = roundingMode;
         this.configurationService = configurationService;
         this.productRepo = productRepo;
@@ -48,18 +50,20 @@ public class CloseAction extends OrderStatusAction {
     @Override
     protected void processOrder() {
         List<OrderItem> savedOrderItems = processOrderItems();
-        orderItemRepo.saveAll(savedOrderItems);
+        orderItemService.saveAll(savedOrderItems);
+
+        order.recomputeAllUsersTotal();
 
         List<SupplierOrderItem> supplierOrderItems = processSupplierOrders(savedOrderItems);
         supplierOrderItemRepo.saveAll(supplierOrderItems);
     }
 
     private List<OrderItem> processOrderItems() {
-        List<OrderItem> source = orderItemRepo.findByOrderAndSummary(order.getId(), false);
+        List<OrderItem> source = orderItemService.findByOrderAndSummary(order.getId(), false);
 
         List<OrderItem> normalizedOrderItems = copyOrderItemsWithNormalizedQty(source);
 
-        if (order.getOrderType().isSummaryRequired())
+        if (order.isSummaryRequired())
             return groupOrderItemsByUser(normalizedOrderItems);
 
         return normalizedOrderItems;
@@ -130,6 +134,7 @@ public class CloseAction extends OrderStatusAction {
         groupedItem.setUser(user);
         groupedItem.setOrderedQuantity(totalQty);
         groupedItem.setDeliveredQuantity(totalQty);
+        groupedItem.setFriendReferral(null);
         return groupedItem;
     }
 

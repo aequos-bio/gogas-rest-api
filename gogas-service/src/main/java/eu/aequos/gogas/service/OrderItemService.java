@@ -2,18 +2,17 @@ package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
 import eu.aequos.gogas.exception.ItemNotFoundException;
-import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
-import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -21,28 +20,35 @@ import static java.util.stream.Collectors.*;
 public class OrderItemService {
 
     private OrderItemRepo orderItemRepo;
+    private UserOrderSummaryRepo userOrderSummaryRepo;
 
-    public OrderItemService(OrderItemRepo orderItemRepo) {
+    public OrderItemService(OrderItemRepo orderItemRepo, UserOrderSummaryRepo userOrderSummaryRepo) {
         this.orderItemRepo = orderItemRepo;
+        this.userOrderSummaryRepo = userOrderSummaryRepo;
     }
 
-    public OrderItem insertItemByManager(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, true);
+    public void insertItemByManager(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+        insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, true);
+        recomputeUserTotal(orderId, user.getId());
     }
 
-    public OrderItem insertItemByFriendReferral(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, false);
+    public void insertItemByFriendReferral(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+        insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, false);
+        recomputeUserTotal(orderId, user.getId());
     }
 
     public OrderItem updateOrDeleteItemByUser(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
         Optional<OrderItem> existingOrderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false, OrderItem.class);
 
-        if (orderItemUpdate.getQuantity() == null || orderItemUpdate.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+        OrderItem modifiedOrderItem = null;
+        if (orderItemUpdate.getQuantity() == null || orderItemUpdate.getQuantity().compareTo(BigDecimal.ZERO) <= 0)
             existingOrderItem.ifPresent(orderItemRepo::delete);
-            return null;
-        }
+        else
+            modifiedOrderItem = insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false, false);
 
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false, false);
+        recomputeUserTotal(orderId, user.getId());
+
+        return modifiedOrderItem;
     }
 
     private OrderItem insertOrUpdateItem(User user, Product product, String orderId,
@@ -76,11 +82,6 @@ public class OrderItemService {
         return orderItem;
     }
 
-    public Map<String, OpenOrderItem> getUserOrderItems(String userId, String orderId, boolean showGroupedOrderItems) {
-        return orderItemRepo.findByUserAndOrderAndSummary(userId, orderId, showGroupedOrderItems, OpenOrderItem.class).stream()
-                .collect(toMap(OpenOrderItem::getProduct, Function.identity()));
-    }
-
     public Optional<ProductTotalOrder> getTotalQuantityByProduct(String orderId, String productId) {
         return orderItemRepo.totalQuantityAndUsersByProductForOpenOrder(orderId, productId);
     }
@@ -97,8 +98,8 @@ public class OrderItemService {
                 .collect(toMap(FriendTotalOrder::getProduct, Function.identity()));
     }
 
-    public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId) {
-        return orderItemRepo.itemsCountAndAmountByUserForClosedOrder(orderId);
+    public List<OrderItem> getItemsByOrderAndSummary(String orderId, boolean summary) {
+        return orderItemRepo.findByOrderAndSummary(orderId, summary);
     }
 
     public List<ByProductOrderItem> getItemsByProduct(String productId, String orderId, boolean summary) {
@@ -121,17 +122,21 @@ public class OrderItemService {
         return orderItemRepo.findByUserAndOrderAndProductAndSummary(userId, orderId, productId, true, OrderItemQtyOnly.class);
     }
 
-    public boolean updateDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty) {
+    public boolean updateDeliveredQty(String orderId, String orderItemId, BigDecimal deliveredQty, boolean recomputeUserTotal) {
         int updatedRows = orderItemRepo.updateDeliveredQtyByItemId(orderId, orderItemId, deliveredQty);
+
+        if (recomputeUserTotal)
+            recomputeUserTotalByOrderItem(orderItemId);
+
         return updatedRows > 0;
+    }
+
+    public int updateDeliveredQty(String orderId, String userId, String productId, BigDecimal deliveredQty) {
+        return orderItemRepo.updateDeliveredQty(orderId, userId, productId, deliveredQty);
     }
 
     public Set<String> getUsersWithOrder(String orderId, String productId) {
         return orderItemRepo.findUserOrderingByProductAndSummary(orderId, productId, true);
-    }
-
-    public Set<String> getUsersWithOrder(String orderId) {
-        return orderItemRepo.findUserOrderingBySummary(orderId, true);
     }
 
     public Set<String> getUsersWithNotSummaryOrder(String orderId, String productId) {
@@ -144,18 +149,22 @@ public class OrderItemService {
 
     public void cancelProductOrder(String orderId, String productId) {
         orderItemRepo.cancelByOrderAndProduct(orderId, productId);
+        recomputeAllUsersTotal(orderId);
     }
 
     public void restoreProductOrder(String orderId, String productId) {
         orderItemRepo.restoreByOrderAndProduct(orderId, productId);
+        recomputeAllUsersTotal(orderId);
     }
 
     public void cancelOrderItem(String orderItemId) {
         orderItemRepo.cancelByOrderItem(orderItemId);
+        recomputeUserTotalByOrderItem(orderItemId);
     }
 
     public void restoreOrderItem(String orderItemId) {
         orderItemRepo.restoreByOrderItem(orderItemId);
+        recomputeUserTotalByOrderItem(orderItemId);
     }
 
     @Transactional
@@ -182,6 +191,8 @@ public class OrderItemService {
         }
 
         cancelOrderItem(orderItemId);
+
+        recomputeUserTotalByOrderItem(orderItemId);
     }
 
     private OrderItem cloneForProductReplacement(OrderItem original, String targetProduct, SupplierOrderItem supplierOrderItem) {
@@ -214,10 +225,12 @@ public class OrderItemService {
 
     public void updatePriceByOrderIdAndProductId(String orderId, String productId, BigDecimal price) {
         orderItemRepo.updatePriceByOrderIdAndProductId(orderId, productId, price);
+        recomputeAllUsersTotal(orderId);
     }
 
     public void increaseDeliveredQtyByProduct(String orderId, String product, BigDecimal deliveredQtyRatio) {
         orderItemRepo.increaseDeliveredQtyByProduct(orderId, product, deliveredQtyRatio);
+        recomputeAllUsersTotal(orderId);
     }
 
     public void accountFriendOrder(String userId, String orderId, String productId, boolean accounted) {
@@ -231,5 +244,57 @@ public class OrderItemService {
     public Map<String, List<String>> getBuyersInOrderIds(Set<String> orderIds) {
         return orderItemRepo.findDistinctByOrderIn(orderIds).stream()
                 .collect(groupingBy(OrderItemUserOnly::getUser, mapping(OrderItemUserOnly::getOrder, toList())));
+    }
+
+    private void recomputeUserTotalByOrderItem(String orderItemId) {
+        OrderItem orderItem = orderItemRepo.findById(orderItemId).get();
+        recomputeUserTotal(orderItem.getOrder(), orderItem.getUser());
+    }
+
+    private void recomputeUserTotal(String orderId, String userId) {
+        UserOrderSummaryExtraction extractedUserOrderSummary = userOrderSummaryRepo.extractUserOrderSummary(orderId, userId);
+        UserOrderSummary userOrderSummary = createUserOrderSummary(orderId, extractedUserOrderSummary);
+
+        if (userOrderSummary.getItemsCount() == 0)
+            userOrderSummaryRepo.delete(userOrderSummary);
+        else
+            userOrderSummaryRepo.save(userOrderSummary);
+    }
+
+    public void recomputeAllUsersTotal(String orderId) {
+        List<UserOrderSummaryExtraction> extractedUserOrderSummaries = userOrderSummaryRepo.extractUserOrderSummaries(orderId);
+
+        List<UserOrderSummary> userOrderSummaries = extractedUserOrderSummaries.stream()
+                .map(summary -> createUserOrderSummary(orderId, summary))
+                .collect(Collectors.toList());
+
+        userOrderSummaryRepo.deleteAllUserOrderSummary(orderId);
+        userOrderSummaryRepo.saveAll(userOrderSummaries);
+    }
+
+    private UserOrderSummary createUserOrderSummary(String orderId, UserOrderSummaryExtraction extractedUserOrderSummary) {
+        UserOrderSummary userOrderSummary = new UserOrderSummary(orderId, extractedUserOrderSummary.getUserId());
+        userOrderSummary.setItemsCount(extractedUserOrderSummary.getItemsCount());
+        userOrderSummary.setTotalAmount(extractedUserOrderSummary.getTotalAmount());
+        userOrderSummary.setFriendItemsCount(extractedUserOrderSummary.getFriendItemsCount());
+        userOrderSummary.setFriendItemsAccounted(extractedUserOrderSummary.getFriendItemsAccounted());
+        userOrderSummary.setShippingCost(extractedUserOrderSummary.getShippingCost());
+        return userOrderSummary;
+    }
+
+    public void saveAll(List<OrderItem> itemsCreated) {
+        orderItemRepo.saveAll(itemsCreated);
+    }
+
+    public int setCancelledByOrderId(String orderId, boolean cancelled) {
+        return orderItemRepo.setCancelledByOrderId(orderId, cancelled);
+    }
+
+    public int deleteByOrderAndSummary(String orderId, boolean summary) {
+        return orderItemRepo.deleteByOrderAndSummary(orderId, summary);
+    }
+
+    public List<OrderItem> findByOrderAndSummary(String orderId, boolean summary) {
+        return orderItemRepo.findByOrderAndSummary(orderId, summary);
     }
 }
