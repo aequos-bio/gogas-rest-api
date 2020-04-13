@@ -13,6 +13,10 @@ import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -58,10 +62,19 @@ public class OrderUserService {
                 .collect(Collectors.toList());
     }
 
+
     public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
-
         List<Order> orderList = getFilteredOrders(searchFilter, userId);
+        return convertToDTOs(userId, orderList);
+    }
 
+    public PageResultDTO<OrderDTO> search(OrderSearchFilter searchFilter, String userId, PageParamsDTO pageParamsDTO) {
+        Page<Order> orderPage = getFilteredOrdersPaginated(searchFilter, userId, pageParamsDTO);
+        List<OrderDTO> orderDTOList = convertToDTOs(userId, orderPage.getContent());
+        return new PageResultDTO<>(orderDTOList, orderPage.hasNext());
+    }
+
+    private List<OrderDTO> convertToDTOs(String userId, List<Order> orderList) {
         if (orderList.isEmpty())
             return new ArrayList<>();
 
@@ -77,11 +90,26 @@ public class OrderUserService {
     }
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
-
         if (searchFilter.inDelivery != null && searchFilter.inDelivery)
             return orderRepo.getInDeliveryOrders(userId);
 
-        Specification<Order> filter = new SpecificationBuilder<Order>()
+        Specification<Order> specification = createOrderSpecification(searchFilter, userId);
+        return orderRepo.findAll(specification);
+    }
+
+    private Page<Order> getFilteredOrdersPaginated(OrderSearchFilter searchFilter, String userId, PageParamsDTO pageParamsDTO) {
+        Pageable pageable = PageRequest.of(pageParamsDTO.getPageNumber(), pageParamsDTO.getPageSize());
+
+        if (searchFilter.inDelivery != null && searchFilter.inDelivery)
+            return new PageImpl<>(orderRepo.getInDeliveryOrders(userId));
+
+        Specification<Order> specification = createOrderSpecification(searchFilter, userId);
+        return orderRepo.findAll(specification, pageable);
+    }
+
+
+    private Specification<Order> createOrderSpecification(OrderSearchFilter searchFilter, String userId) {
+        return new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
                 .and(OrderSpecs::type, searchFilter.getOrderType())
                 .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())
@@ -89,9 +117,8 @@ public class OrderUserService {
                 .and(OrderSpecs::deliveryDateFrom, searchFilter.getDeliveryDateFrom())
                 .and(OrderSpecs::deliveryDateTo, searchFilter.getDeliveryDateTo())
                 .and(OrderSpecs::statusIn, searchFilter.getStatus())
+                .and(OrderSpecs::hasOrdered, userId)
                 .build();
-
-        return orderRepo.findAll(filter);
     }
 
     public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {
@@ -100,7 +127,7 @@ public class OrderUserService {
 
         Map<String, OpenOrderItem> userOrderMap = order.getUserOrderItems(user);
 
-        boolean showAllProductsOnPriceList =  order.isOpen() && order.isEditable();
+        boolean showAllProductsOnPriceList = order.isOpen() && order.isEditable();
         Map<String, ProductTotalOrder> productOrderTotalMap = getProductOrderTotal(orderId, order.isOpen()).stream()
                 .collect(Collectors.toMap(ProductTotalOrder::getProduct, Function.identity()));
 

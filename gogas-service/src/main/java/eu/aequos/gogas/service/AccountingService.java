@@ -1,9 +1,6 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.dto.AccountingEntryDTO;
-import eu.aequos.gogas.dto.UserBalanceDTO;
-import eu.aequos.gogas.dto.UserBalanceEntryDTO;
-import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.order.GoGasOrder;
@@ -14,6 +11,9 @@ import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.persistence.specification.UserBalanceSpecs;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -264,5 +264,20 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         userOrderSummary.setFriendItemsAccounted(extractedUserOrderSummary.getFriendItemsAccounted());
         userOrderSummary.setShippingCost(extractedUserOrderSummary.getShippingCost());
         return userOrderSummary;
+    }
+
+    public PageResultDTO<UserBalanceEntryDTO> getPaginatedBalanceEntries(String userId, int pageNumber, int pageSize) {
+        Specification<UserBalanceEntry> filter = new SpecificationBuilder<UserBalanceEntry>()
+                .withBaseFilter(UserBalanceSpecs.user(userId, false))
+                .build();
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+
+        Page<UserBalanceEntry> entriesPage = userBalanceEntryRepo.findAll(filter, pageable);
+        List<UserBalanceEntryDTO> userBalanceEntryList = entriesPage.getContent().stream()
+                .map(entry -> new UserBalanceEntryDTO().fromModel(entry))
+                .collect(Collectors.toList());
+
+        return new PageResultDTO<>(userBalanceEntryList, entriesPage.hasNext());
     }
 }

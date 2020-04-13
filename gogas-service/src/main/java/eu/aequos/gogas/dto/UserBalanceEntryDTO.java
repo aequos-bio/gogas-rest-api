@@ -27,11 +27,14 @@ public class UserBalanceEntryDTO {
     @JsonProperty(value = "importo")
     private BigDecimal amount;
 
+    private String orderId;
+
     public UserBalanceEntryDTO fromModel(UserBalanceEntry model) {
         id = model.getId();
         date = model.getDate();
         description = model.getDescription();
         amount = getSignedAmount(model.getAmount(), model.getSign());
+        orderId = model.getOrderId();
         return this;
     }
 

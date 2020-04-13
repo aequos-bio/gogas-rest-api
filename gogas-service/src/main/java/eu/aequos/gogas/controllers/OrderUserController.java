@@ -35,6 +35,12 @@ public class OrderUserController {
         return orderUserService.search(searchFilter, authorizationService.getCurrentUser().getId());
     }
 
+    @PostMapping(value = "list/{page}")
+    public PageResultDTO<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter, @PathVariable int page, @RequestParam int pageSize) {
+        PageParamsDTO pageParamsDTO = new PageParamsDTO(page, pageSize);
+        return orderUserService.search(searchFilter, authorizationService.getCurrentUser().getId(), pageParamsDTO);
+    }
+
     @GetMapping(value = "{orderId}")
     public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws GoGasException {
         return orderUserService.getOrderDetails(orderId);

@@ -19,6 +19,7 @@ public class ConfigurationService {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private static final String GAS_NAME_KEY = "gas.nome";
     private static final String USER_SORTING_KEY = "visualizzazione.utenti";
     private static final String USER_SORTING_NAME_FIRST = "NC";
     private static final String USER_SORTING_SURNAME_FIRST = "CN";
@@ -55,6 +56,11 @@ public class ConfigurationService {
                 .toUpperCase();
 
         return USER_SORTING_SURNAME_FIRST.equals(sortingConf) ? UserSorting.SurnameFirst : UserSorting.NameFirst;
+    }
+
+    public String getGasName() {
+        return configurationRepo.findValueByKey(GAS_NAME_KEY)
+                .orElse("GoGas");
     }
 
     public BigDecimal getBoxRoundingThreshold() {

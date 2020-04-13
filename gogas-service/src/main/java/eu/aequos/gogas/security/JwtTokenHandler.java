@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,14 +29,19 @@ public class JwtTokenHandler implements Serializable {
     private static final String CLAIM_KEY_ROLE = "role";
     private static final String CLAIM_KEY_ENABLED = "enabled";
     private static final String CLAIM_KEY_MANAGER = "manager";
+    private static final String CLAIM_KEY_GAS = "gas";
 
     private JWTVerifier verifier;
+    private ConfigurationService configurationService;
+
     private String key = "4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:";
     private Algorithm algorithm = Algorithm.HMAC256(key);
+
     @Value("${jwt.duration.minutes:60}")
     private int tokenValidityInMinutes;
 
-    public JwtTokenHandler() {
+    public JwtTokenHandler(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
         verifier = JWT.require(algorithm)
                 .withIssuer(ISSUER)
                 .build();
@@ -56,6 +62,7 @@ public class JwtTokenHandler implements Serializable {
                 .withClaim(CLAIM_KEY_ROLE, getRoleFromUserDetails(userDetails))
                 .withClaim(CLAIM_KEY_ENABLED, userDetails.isEnabled())
                 .withClaim(CLAIM_KEY_MANAGER, userDetails.isManager())
+                .withClaim(CLAIM_KEY_GAS, configurationService.getGasName())
                 .sign(algorithm);
     }
 

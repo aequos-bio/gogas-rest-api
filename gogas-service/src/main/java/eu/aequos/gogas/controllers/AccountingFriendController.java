@@ -80,13 +80,13 @@ public class AccountingFriendController {
         return new BasicResponseDTO("OK");
     }
 
-    @GetMapping(value = "balance")
+    @GetMapping(value = "balance/list")
     public List<UserBalanceDTO> getUserBalanceList() {
         return accountingService.getFriendBalanceList(authorizationService.getCurrentUser().getId());
     }
 
     @IsCurrentUserFriend
-    @GetMapping(value = "balance/{userId}")
+    @GetMapping(value = "balance/{userId}/entries")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
                                                 @RequestParam(required = false) String dateFrom,
                                                 @RequestParam(required = false) String dateTo) {

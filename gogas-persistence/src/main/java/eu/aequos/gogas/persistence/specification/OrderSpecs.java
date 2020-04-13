@@ -1,8 +1,12 @@
 package eu.aequos.gogas.persistence.specification;
 
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.OrderItem;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -29,7 +33,7 @@ public class OrderSpecs {
     }
 
     public static Specification<Order> type(String orderType) {
-        return (entry, cq, cb) -> cb.equal(entry.get( "orderType").get("id"), orderType);
+        return (entry, cq, cb) -> cb.equal(entry.get("orderType").get("id"), orderType);
     }
 
     public static Specification<Order> managedByUser(List<String> managedOrderTypes) {
@@ -44,10 +48,26 @@ public class OrderSpecs {
         return (entry, cq, cb) -> cb.equal(entry.get( "paid"), paid);
     }
 
+    public static Specification<Order> hasOrdered(String userId) {
+        return (entry, cq, cb) -> {
+            Subquery<String> sq = cq.subquery(String.class);
+            Root subRoot = sq.from(OrderItem.class);
+            sq.select(subRoot.get("order"));
+            sq.where(cb.equal(subRoot.get("user"), userId));
+            Predicate userHasOrder = entry.get("id").in(sq);
+
+            Predicate externalOrder = cb.equal(entry.get("orderType").get("external"), true);
+
+            return cb.or(userHasOrder, externalOrder);
+        };
+    }
+
     public static Specification<Order> select() {
         return (entry, cq, cb) -> {
             //forcing fetching (inline join instead of n+1 queries)
-            entry.fetch("orderType");
+            //avoiding fetch on count query (created by pageable) to avoid errors
+            if (cq.getResultType() != Long.class && cq.getResultType() != long.class)
+                entry.fetch("orderType");
 
             //ordering
             cq.orderBy(cb.desc(entry.get("dueDate")), cb.desc(entry.get("dueHour")));
