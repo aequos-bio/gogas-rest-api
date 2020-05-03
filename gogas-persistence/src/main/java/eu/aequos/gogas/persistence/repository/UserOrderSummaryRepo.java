@@ -49,7 +49,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
             "  GROUP BY o.idDateOrdine, o.idReferenteAmico\n" +
             ") f ON f.idDateOrdine = tot.idDateOrdine AND f.idReferenteAmico = tot.idUtente\n" +
             "WHERE d.idDateOrdini = ?1", nativeQuery = true)
-    UserOrderSummaryExtraction extractUserOrderSummary(String orderId, String userId);
+    Optional<UserOrderSummaryExtraction> extractUserOrderSummary(String orderId, String userId);
 
     @Query(value = "SELECT tot.idUtente as userId, tot.importo as totalAmount, tot.itemsCount,\n" +
             "   COALESCE(f.friendCount, 0) as friendItemsCount,\n" +

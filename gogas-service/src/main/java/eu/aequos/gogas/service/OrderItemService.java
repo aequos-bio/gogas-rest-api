@@ -252,8 +252,9 @@ public class OrderItemService {
     }
 
     private void recomputeUserTotal(String orderId, String userId) {
-        UserOrderSummaryExtraction extractedUserOrderSummary = userOrderSummaryRepo.extractUserOrderSummary(orderId, userId);
-        UserOrderSummary userOrderSummary = createUserOrderSummary(orderId, extractedUserOrderSummary);
+        UserOrderSummary userOrderSummary = userOrderSummaryRepo.extractUserOrderSummary(orderId, userId)
+                .map(extractedUserOrderSummary -> createUserOrderSummary(orderId, extractedUserOrderSummary))
+                .orElse(createEmptyUserOrderSummary(orderId, userId));
 
         if (userOrderSummary.getItemsCount() == 0)
             userOrderSummaryRepo.delete(userOrderSummary);
@@ -280,6 +281,10 @@ public class OrderItemService {
         userOrderSummary.setFriendItemsAccounted(extractedUserOrderSummary.getFriendItemsAccounted());
         userOrderSummary.setShippingCost(extractedUserOrderSummary.getShippingCost());
         return userOrderSummary;
+    }
+
+    private UserOrderSummary createEmptyUserOrderSummary(String orderId, String userId) {
+        return new UserOrderSummary(orderId, userId);
     }
 
     public void saveAll(List<OrderItem> itemsCreated) {

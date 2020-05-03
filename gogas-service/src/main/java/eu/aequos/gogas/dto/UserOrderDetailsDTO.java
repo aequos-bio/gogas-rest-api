@@ -43,7 +43,7 @@ public class UserOrderDetailsDTO {
         this.orderTypeName = order.getOrderTypeDescription();
         this.dueDate = order.getModel().getDueDate();
         this.deliveryDate = order.getDeliveryDate();
-        this.open = order.getStatus().isOpen();
+        this.open = order.isOpen() && order.isEditable();
         this.showAdvance = order.showAdvance();
         this.showBoxCompletion = order.showBoxCompletion();
 
