@@ -96,4 +96,16 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
 
         return accountingGasEntryDTOs;
     }
+
+    public List<OrderAccountingInfoDTO> getOrderAccontingInfos(LocalDate dateFrom, LocalDate dateTo) {
+        //getting unique by invoice key (accountingCode, invoiceNumber, invoiceDate) to avoid duplicating aequos invoices for multiple orders
+        Collection<OrderAccountingInfoDTO> infoList = orderRepo.findAccountedByInvoiceDateBetween(dateFrom, dateTo).stream()
+                .map(o -> new OrderAccountingInfoDTO().fromOrder(o))
+                .collect(Collectors.toMap(OrderAccountingInfoDTO::getInvoiceKey, Function.identity(), OrderAccountingInfoDTO::mergeByInvoiceKey))
+                .values();
+
+        List<OrderAccountingInfoDTO> list = new ArrayList<>();
+        list.addAll(infoList);
+        return list;
+    }
 }

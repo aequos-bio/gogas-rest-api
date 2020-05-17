@@ -7,6 +7,8 @@ import NavBar from '../components/NavBar';
 import Login from './Login';
 import Users from './admin/users/Users2';
 import Reasons from './admin/reasons/Reasons';
+import GasAccounting from './accounting/GasAccounting';
+import InvoiceManagement from './accounting/invoicemanagement/InvoiceManagement';
 import UserAccounting from './accounting/UserAccounting';
 import UserAccountingDetails from './accounting/UserAccountingDetails';
 import Years from './accounting/Years';
@@ -19,6 +21,8 @@ import PrivateRoute from '../components/PrivateRoute';
 const privateRoutes = [
   { path: '/', component: Home },
   { path: '/years', component: Years },
+  { path: '/gasaccounting', component: GasAccounting },
+  { path: '/invoices', component: InvoiceManagement },
   { path: '/useraccounting', component: UserAccounting },
   { path: '/useraccountingdetails', component: UserAccountingDetails },
   { path: '/users', component: Users },

@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class OrderAccountingInfoDTO {
@@ -15,6 +17,7 @@ public class OrderAccountingInfoDTO {
     private LocalDate invoiceDate;
     private LocalDate paymentDate;
     private boolean paid;
+    private List<String> orderIds = new ArrayList<>();
 
     public OrderAccountingInfoDTO fromOrder(Order order) {
         accountingCode = order.getOrderType().getAccountingCode();
@@ -24,6 +27,7 @@ public class OrderAccountingInfoDTO {
         description = order.getOrderType().getDescription();
         paymentDate = order.getPaymentDate();
         paid = order.isPaid();
+        orderIds.add(order.getId());
         return this;
     }
 
@@ -47,6 +51,8 @@ public class OrderAccountingInfoDTO {
         merged.setDescription(o1.getDescription() + ", " + o2.getDescription());
         merged.setPaymentDate(o1.getPaymentDate() != null ? o1.getPaymentDate() : o2.getPaymentDate());
         merged.setPaid(o1.isPaid() || o2.isPaid());
+        merged.getOrderIds().addAll(o1.orderIds);
+        merged.getOrderIds().addAll(o2.orderIds);
         return merged;
     }
 

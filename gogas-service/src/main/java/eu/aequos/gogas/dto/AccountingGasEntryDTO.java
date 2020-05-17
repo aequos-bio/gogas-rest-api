@@ -18,7 +18,7 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
     private String id;
 
     @JsonProperty(value = "data")
-    @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
+    @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 
     @JsonProperty(value = "codicecausale")
@@ -26,6 +26,9 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
 
     @JsonProperty(value = "nomecausale")
     private String reasonDescription;
+
+    @JsonProperty(value = "segnocausale")
+    private String reasonSign;
 
     @JsonProperty(value = "codicecontabile")
     private String accountingCode;
@@ -46,6 +49,7 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         AccountingEntryReason reason = model.getReason();
         reasonCode = reason.getReasonCode();
         reasonDescription = reason.getDescription() + " (" + reason.getSign() + ")";
+        reasonSign = reason.getSign();
         accountingCode = reason.getAccountingCode();
 
         return this;

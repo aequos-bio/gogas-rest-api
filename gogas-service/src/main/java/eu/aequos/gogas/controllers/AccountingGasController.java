@@ -2,6 +2,7 @@ package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.AccountingGasEntryDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.OrderAccountingInfoDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.IsAdmin;
@@ -62,7 +63,7 @@ public class AccountingGasController {
         accountingGasService.delete(accountingGasEntryId);
         return new BasicResponseDTO("OK");
     }
-    
+
     @GetMapping(value = "report/{year}")
     public List<AccountingGasEntryDTO> allAccountingEntriesByYear(@PathVariable int year) {
         return accountingGasService.getAccountingEntriesInYear(year);
@@ -78,4 +79,13 @@ public class AccountingGasController {
         return excelGenerationService.exportGasEntries(entriesInYear);
 
     }
+
+    @GetMapping(value="invoices/{year}")
+    public List<OrderAccountingInfoDTO> getAllInvoices(@PathVariable int year) {
+        LocalDate dateFrom = LocalDate.of(year, 1, 1);
+        LocalDate dateTo = LocalDate.of(year, 12, 31);
+        return accountingGasService.getOrderAccontingInfos(dateFrom, dateTo);
+    }
+
+
 }

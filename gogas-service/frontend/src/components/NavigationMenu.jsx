@@ -20,6 +20,8 @@ import {
   ViewListSharp as ListIcon,
   ExploreSharp as ExploreIcon,
   CodeSharp as CodeIcon,
+  AccountBalanceSharp as AccountBalanceIcon,
+  ReceiptSharp as BillIcon,
 } from '@material-ui/icons';
 import { useHistory } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -86,6 +88,8 @@ const icons = [
   <ListIcon />,
   <ExploreIcon />,
   <CodeIcon />,
+  <AccountBalanceIcon />,
+  <BillIcon />,
 ];
 
 const menuItems = [
@@ -101,6 +105,18 @@ const menuItems = [
         url: '/useraccounting',
         restrictions: ['A'],
         icon: 2,
+      },
+      {
+        label: 'Contabilità del GAS',
+        url: '/gasaccounting',
+        restrictions: ['A'],
+        icon: 8,
+      },
+      {
+        label: 'Fatture',
+        url: '/invoices',
+        restrictions: ['A'],
+        icon: 9,
       },
     ],
   },

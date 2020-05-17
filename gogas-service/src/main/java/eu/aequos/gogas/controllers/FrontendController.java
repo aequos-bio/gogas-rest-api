@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class FrontendController {
 
     @GetMapping(value = {"/", "/login",
-        "/years", "/useraccounting", "/useraccountingdetails",
-        "/users", "/reasons", "/ordertypes", "/managers"})
+        "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
+        "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers"})
     public String home() {
         return "singlepage";
     }
