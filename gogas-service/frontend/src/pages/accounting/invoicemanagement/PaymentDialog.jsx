@@ -78,7 +78,7 @@ const PaymentDialog = ({ invoice, open, onClose, enqueueSnackbar }) => {
   }, [onClose, invoice, enqueueSnackbar, paymentDate]);
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} size="sm" fullWidth>
       <DialogTitle>Pagamento fattura </DialogTitle>
 
       <DialogContent>

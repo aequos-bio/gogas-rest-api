@@ -1,9 +1,9 @@
+/* eslint-disable no-nested-ternary */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
 import {
   Container,
   Fab,
-  Button,
   IconButton,
   TableContainer,
   Table,
@@ -25,8 +25,12 @@ import { apiGetJson } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import PaymentDialog from './PaymentDialog';
+import InvoiceDialog from './InvoiceDialog';
 
 const useStyles = makeStyles(theme => ({
+  tableContainer: {
+    marginBottom: theme.spacing(2),
+  },
   cellAmount: {
     textAlign: 'right',
   },
@@ -45,20 +49,29 @@ const useStyles = makeStyles(theme => ({
     position: 'fixed',
     bottom: theme.spacing(2),
     right: theme.spacing(2),
+    zIndex: 1000,
   },
 }));
 
 const InvoiceManagement = ({ enqueueSnackbar }) => {
   const classes = useStyles();
   const [year, setYear] = useState(moment().format('YYYY'));
+  const [aequosAccountingCode, setAequosAccountingCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState([]);
-  const [showDlg, setShowDlg] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState();
   const [showPayDlg, setShowPayDlg] = useState(false);
+  const [showInvoiceDlg, setShowInvoiceDlg] = useState(false);
 
   const reload = useCallback(() => {
     setLoading(true);
+    apiGetJson(`/api/ordertype/accounting`, {}).then(accountingCodes => {
+      const aequos = accountingCodes.filter(a => a.id === 'aequos');
+      if (aequos.length) {
+        setAequosAccountingCode(aequos[0].accountingCode);
+      }
+    });
+
     apiGetJson(`/api/accounting/gas/invoices/${year}`, {}).then(tt => {
       setLoading(false);
       if (tt.error) {
@@ -83,6 +96,27 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
       setShowPayDlg(false);
       setSelectedInvoice();
       if (needrefresh) {
+        reload();
+      }
+    },
+    [reload]
+  );
+
+  const onNewInvoice = () => {
+    setSelectedInvoice();
+    setShowInvoiceDlg(true);
+  };
+
+  const onEditInvoice = invoice => {
+    setSelectedInvoice(invoice);
+    setShowInvoiceDlg(true);
+  };
+
+  const onInvoiceDialogClosed = useCallback(
+    needRefresh => {
+      setShowInvoiceDlg(false);
+      setSelectedInvoice();
+      if (needRefresh) {
         reload();
       }
     },
@@ -114,15 +148,15 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
               {e.paymentDate ? moment(e.paymentDate).format('DD/MM/YYYY') : ''}
             </TableCell>
             <TableCell className={classes.cellButtons}>
-              <IconButton
-                onClick={() => {
-                  enqueueSnackbar('Non implementato', { variant: 'error' });
-                }}
-                size="small"
-                title="Modifica"
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
+              {e.accountingCode === aequosAccountingCode ? null : (
+                <IconButton
+                  onClick={() => onEditInvoice(e)}
+                  size="small"
+                  title="Modifica"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              )}
               <IconButton
                 onClick={() => onPayInvoice(e)}
                 size="small"
@@ -135,21 +169,15 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
         );
       })
     );
-  }, [entries, loading, enqueueSnackbar, classes]);
+  }, [entries, loading, classes, aequosAccountingCode]);
 
   return (
     <Container maxWidth={false}>
       <PageTitle title="Gestione fatture fornitori" />
-      <Fab
-        className={classes.fab}
-        color="secondary"
-        onClick={() => {
-          enqueueSnackbar('Non implementato', { variant: 'error' });
-        }}
-      >
+      <Fab className={classes.fab} color="secondary" onClick={onNewInvoice}>
         <PlusIcon />
       </Fab>
-      <TableContainer>
+      <TableContainer className={classes.tableContainer}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -171,6 +199,12 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
         invoice={selectedInvoice}
         open={showPayDlg}
         onClose={onPayDialogClosed}
+      />
+
+      <InvoiceDialog
+        invoice={selectedInvoice}
+        open={showInvoiceDlg}
+        onClose={onInvoiceDialogClosed}
       />
     </Container>
   );

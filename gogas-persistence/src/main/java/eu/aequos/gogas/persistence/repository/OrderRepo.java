@@ -119,4 +119,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND o.invoiceDate BETWEEN ?1 AND ?2")
     List<Order> findAccountedByInvoiceDateBetween(LocalDate invoiceDateFrom, LocalDate invoiceDateTo);
+
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND o.invoiceNumber IS NULL AND o.deliveryDate BETWEEN ?1 AND ?2 AND o.orderType.billedByAequos=false")
+    List<Order> findAccountedOrdersWithoutInvoice(LocalDate invoiceDateFrom, LocalDate invoiceDateTo);
 }

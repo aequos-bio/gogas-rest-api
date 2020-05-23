@@ -1,6 +1,8 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.AccountingGasEntryDTO;
+import eu.aequos.gogas.dto.ConvertibleDTO;
+import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
@@ -99,7 +101,8 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
 
     public List<OrderAccountingInfoDTO> getOrderAccontingInfos(LocalDate dateFrom, LocalDate dateTo) {
         //getting unique by invoice key (accountingCode, invoiceNumber, invoiceDate) to avoid duplicating aequos invoices for multiple orders
-        Collection<OrderAccountingInfoDTO> infoList = orderRepo.findAccountedByInvoiceDateBetween(dateFrom, dateTo).stream()
+        Collection<OrderAccountingInfoDTO> infoList = orderRepo.findAccountedByInvoiceDateBetween(dateFrom, dateTo)
+                .stream()
                 .map(o -> new OrderAccountingInfoDTO().fromOrder(o))
                 .collect(Collectors.toMap(OrderAccountingInfoDTO::getInvoiceKey, Function.identity(), OrderAccountingInfoDTO::mergeByInvoiceKey))
                 .values();
@@ -107,5 +110,12 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
         List<OrderAccountingInfoDTO> list = new ArrayList<>();
         list.addAll(infoList);
         return list;
+    }
+
+    public List<ConvertibleDTO> getOrdersWithoutInvoice(LocalDate dateFrom, LocalDate dateTo) {
+        return orderRepo.findAccountedOrdersWithoutInvoice(dateFrom, dateTo)
+                .stream()
+                .map(o -> new OrderDTO().fromModel(o))
+                .collect(Collectors.toList());
     }
 }

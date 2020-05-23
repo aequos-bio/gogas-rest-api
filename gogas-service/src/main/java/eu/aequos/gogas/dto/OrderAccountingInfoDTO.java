@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class OrderAccountingInfoDTO {
         invoiceNumber = order.getInvoiceNumber();
         invoiceDate = order.getInvoiceDate();
         invoiceAmount = order.getInvoiceAmount();
-        description = order.getOrderType().getDescription();
+        description = order.getOrderType().getDescription() + " (" + order.getDeliveryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ")";
         paymentDate = order.getPaymentDate();
         paid = order.isPaid();
         orderIds.add(order.getId());
