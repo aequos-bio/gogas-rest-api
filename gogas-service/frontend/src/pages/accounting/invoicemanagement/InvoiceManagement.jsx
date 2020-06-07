@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import {
   Container,
   Fab,
+  Button,
   IconButton,
   TableContainer,
   Table,
@@ -21,7 +22,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
 import _ from 'lodash';
 import moment from 'moment-timezone';
-import { apiGetJson } from '../../../utils/axios_utils';
+import { apiGetJson, apiGet } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import PaymentDialog from './PaymentDialog';
@@ -123,6 +124,21 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
     [reload]
   );
 
+  const syncOrders = useCallback(() => {
+    apiGet(`api/accounting/gas/syncAequosOrdersWithoutInvoice/${year}`).then(
+      response => {
+        console.log(response);
+        reload();
+        enqueueSnackbar(
+          `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
+          {
+            variant: 'success',
+          }
+        );
+      }
+    );
+  }, [enqueueSnackbar, year, reload]);
+
   const rows = useMemo(() => {
     return loading ? (
       <LoadingRow colSpan={7} />
@@ -173,7 +189,12 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Gestione fatture fornitori" />
+      <PageTitle title="Gestione fatture fornitori">
+        <Button type="button" onClick={syncOrders}>
+          Sincronizza fatture Aequos
+        </Button>
+      </PageTitle>
+
       <Fab className={classes.fab} color="secondary" onClick={onNewInvoice}>
         <PlusIcon />
       </Fab>

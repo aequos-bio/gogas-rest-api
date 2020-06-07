@@ -1,15 +1,13 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.AccountingGasEntryDTO;
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.ConvertibleDTO;
-import eu.aequos.gogas.dto.OrderAccountingInfoDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.AccountingGasService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ExcelGenerationService;
+import eu.aequos.gogas.service.OrderManagerService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,14 +23,17 @@ public class AccountingGasController {
     private AccountingGasService accountingGasService;
     private ConfigurationService configurationService;
     private ExcelGenerationService excelGenerationService;
+    private OrderManagerService orderManagerService;
 
     public AccountingGasController(AccountingGasService accountingGasService,
                                    ConfigurationService configurationService,
-                                   ExcelGenerationService excelGenerationService) {
+                                   ExcelGenerationService excelGenerationService,
+                                   OrderManagerService orderManagerService) {
 
         this.accountingGasService = accountingGasService;
         this.configurationService = configurationService;
         this.excelGenerationService = excelGenerationService;
+        this.orderManagerService = orderManagerService;
     }
 
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -93,7 +94,29 @@ public class AccountingGasController {
         LocalDate dateFrom = LocalDate.of(year, 1, 1);
         LocalDate dateTo = LocalDate.of(year, 12, 31);
 
-        return accountingGasService.getOrdersWithoutInvoice(dateFrom, dateTo);
+        return accountingGasService.getOrdersWithoutInvoice(dateFrom, dateTo, false);
+    }
+
+    @GetMapping(value="syncAequosOrdersWithoutInvoice/{year}")
+    public BasicResponseDTO syncAequosOrdersWithoutInvoice(@PathVariable int year) {
+        LocalDate dateFrom = LocalDate.of(year, 1, 1);
+        LocalDate dateTo = LocalDate.of(year, 12, 31);
+
+        List<ConvertibleDTO> orders = accountingGasService.getOrdersWithoutInvoice(dateFrom, dateTo, true);
+        int count = 0;
+        if (orders!=null && orders.size()>0) {
+            for(ConvertibleDTO order : orders) {
+                try {
+                    if (orderManagerService.syncOrderInvoiceWithAequos(((OrderDTO)order).getId())) {
+                        count++;
+                    }
+                } catch (GoGasException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return new BasicResponseDTO(count);
     }
 
 

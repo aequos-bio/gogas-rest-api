@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -526,9 +527,32 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
         updateSupplierOrderItems(orderId, order.getOrderType().getId(), orderSynchResponse.getOrderItems());
-        orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), LocalDateTime.now());
+        LocalDate invoiceDate = orderSynchResponse.getInvoiceNumber() != null && !orderSynchResponse.getInvoiceNumber().isEmpty() ? order.getDeliveryDate() : null;
+        orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), invoiceDate , LocalDateTime.now());
 
         log.info("Synchronization completed successfully");
+    }
+
+    @Transactional
+    public boolean syncOrderInvoiceWithAequos(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+
+        if (order.getOrderType().getAequosOrderId() == null)
+            throw new GoGasException("Order type is not linked to Aequos");
+
+        if (order.getExternalOrderId() == null)
+            throw new GoGasException("Missing Aequos order id");
+
+        log.info("Synchronizing invoice with Aequos, {} del {} (order id {}, Aequos id {}) ", order.getOrderType().getDescription(), order.getDeliveryDate().toString() ,orderId, order.getExternalOrderId());
+
+        OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
+        if (orderSynchResponse.getInvoiceNumber() != null && !orderSynchResponse.getInvoiceNumber().isEmpty()) {
+            LocalDate invoiceDate = order.getDeliveryDate();
+            orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), invoiceDate, LocalDateTime.now());
+            log.info("Synchronization completed successfully");
+            return true;
+        }
+        return false;
     }
 
     private void updateSupplierOrderItems(String orderId, String orderTypeId, List<OrderSynchItem> aequosOrderItems) {

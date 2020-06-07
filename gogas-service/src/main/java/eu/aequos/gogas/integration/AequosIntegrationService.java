@@ -10,6 +10,7 @@ import eu.aequos.gogas.persistence.entity.derived.SupplierOrderBoxes;
 import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -101,12 +102,17 @@ public class AequosIntegrationService {
         Map<String, String> formParams = initParamsWithCredentials();
         formParams.put("order_id", aequosOrderId);
 
-        OrderSynchResponse response = aequosApiClient.synchOrder(formParams);
+        try {
+            String response = aequosApiClient.synchOrder2(formParams);
+            OrderSynchResponse syncResponse = new ObjectMapper().readValue(response, OrderSynchResponse.class);
+            if (syncResponse.isError())
+                throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + syncResponse.getErrorMessage());
 
-        if (response.isError())
-            throw new GoGasException("Errore durante l'invio dei pesi per l'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
+            return syncResponse;
+        } catch(IOException ex) {
+            throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + ex.getMessage());
+        }
 
-        return response;
     }
 
     private String extractAndSerializeOrderItems(List<SupplierOrderBoxes> orderBoxes) throws GoGasException {

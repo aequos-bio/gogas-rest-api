@@ -110,8 +110,8 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     int updateOrderExternalId(String orderId, String externalOrderId, boolean sent);
 
     @Modifying
-    @Query("UPDATE Order o SET o.invoiceNumber = ?2, o.invoiceAmount = ?3, o.lastSynchro = ?4 WHERE o.id = ?1")
-    int updateInvoiceDataAndSynchDate(String orderId, String invoiceNumber, BigDecimal orderTotalAmount, LocalDateTime lastSynchroDate);
+    @Query("UPDATE Order o SET o.invoiceNumber = ?2, o.invoiceAmount = ?3, o.invoiceDate = ?4, o.lastSynchro = ?5 WHERE o.id = ?1")
+    int updateInvoiceDataAndSynchDate(String orderId, String invoiceNumber, BigDecimal orderTotalAmount, LocalDate invoiceDate, LocalDateTime lastSynchroDate);
 
     @Modifying
     @Query("UPDATE Order o SET o.lastWeightUpdate = ?2 WHERE o.id = ?1")
@@ -120,6 +120,6 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND o.invoiceDate BETWEEN ?1 AND ?2")
     List<Order> findAccountedByInvoiceDateBetween(LocalDate invoiceDateFrom, LocalDate invoiceDateTo);
 
-    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND o.invoiceNumber IS NULL AND o.deliveryDate BETWEEN ?1 AND ?2 AND o.orderType.billedByAequos=false")
-    List<Order> findAccountedOrdersWithoutInvoice(LocalDate invoiceDateFrom, LocalDate invoiceDateTo);
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND (o.invoiceNumber IS NULL OR o.invoiceDate IS NULL OR o.invoiceAmount IS NULL) AND o.deliveryDate BETWEEN ?1 AND ?2 AND o.orderType.billedByAequos=?3")
+    List<Order> findAccountedOrdersWithoutInvoice(LocalDate invoiceDateFrom, LocalDate invoiceDateTo, boolean aequosOrders);
 }
