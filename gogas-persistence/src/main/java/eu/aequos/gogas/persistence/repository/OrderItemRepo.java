@@ -72,6 +72,7 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
             "GROUP BY o.user")
     List<ByUserOrderItem> itemsCountAndAmountByUserForClosedOrder(String orderId);
 
+    @Transactional
     @Modifying
     int deleteByOrderAndSummary(String orderId, boolean summary);
 

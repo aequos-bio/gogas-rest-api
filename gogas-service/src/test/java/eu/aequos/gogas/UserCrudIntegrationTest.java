@@ -41,7 +41,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAnInvalidRole_whenCreating_anErrorIsReturned() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         validUserDTO.setRole("Y");
 
@@ -54,7 +54,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAnEmptyUserDefinition_whenCreating_anErrorIsReturned() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         UserDTO userDTO = new UserDTO();
         userDTO.setUsername("test-admin");
@@ -68,8 +68,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAValidUserDefinition_whenCreating_theUserIsCreated() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
-
+        mockMvcGoGas.loginAsAdmin();
         mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk());
 
@@ -90,14 +89,13 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAValidUserDefinition_whenCreating_theUserCanLogin() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk());
 
         try {
-            //MockMvcGoGas newUserAuth = new MockMvcGoGas(mockMvc, objectMapper)
-             mockMvcGoGas.withCredentials(validUserDTO.getUsername(), validUserDTO.getPassword());
+            mockMvcGoGas.loginAs(validUserDTO.getUsername(), validUserDTO.getPassword());
         } finally {
             User userEntity = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin")).get();
             mockMvcGoGas.executeOnRepo(() -> { userRepo.delete(userEntity); return null; });
@@ -106,7 +104,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenADuplicatedUsername_whenCreating_theUserIsNotCreated() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk());
@@ -120,7 +118,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenANonExistingUser_whenUpdating_NotFoundIsReturned() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         mockMvcGoGas.put("/api/user/58C32B3D-C814-4086-AF3D-1154593884FF", validUserDTO)
                 .andExpect(status().isNotFound());
@@ -128,7 +126,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAnExistingUser_whenUpdating_theUserIsUpdated() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         String responseContent = mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk())
@@ -153,7 +151,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenANonExistingUser_whenDeleting_NotFoundIsReturned() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         mockMvcGoGas.delete("/api/user/58C32B3D-C814-4086-AF3D-1154593884FF")
                 .andExpect(status().isNotFound());
@@ -161,7 +159,7 @@ class UserCrudIntegrationTest {
 
     @Test
     void givenAnExistingUser_whenDeleting_theUserIsDeleted() throws Exception {
-        mockMvcGoGas.withCredentials("admin", "integration-test");
+        mockMvcGoGas.loginAsAdmin();
 
         String responseContent = mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk())

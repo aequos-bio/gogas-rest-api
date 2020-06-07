@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "aequos-api", url = "http://order.aequos.bio")
+@FeignClient(name = "aequos-api", url = "https://order.aequos.bio")
 @RequestMapping(value = "order/services")
 public interface AequosApiClient {
 

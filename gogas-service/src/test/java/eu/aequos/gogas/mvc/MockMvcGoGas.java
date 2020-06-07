@@ -29,7 +29,15 @@ public class MockMvcGoGas {
         this.objectMapper = objectMapper;
     }
 
-    public MockMvcGoGas withCredentials(String username, String password) throws Exception {
+    public MockMvcGoGas loginAsAdmin() throws Exception {
+        return loginAs("admin", "integration-test");
+    }
+
+    public MockMvcGoGas loginAsSimpleUser() throws Exception {
+        return loginAs("user1", "user1");
+    }
+
+    public MockMvcGoGas loginAs(String username, String password) throws Exception {
         CredentialsDTO credentialsDTO = new CredentialsDTO();
         credentialsDTO.setUsername(username);
         credentialsDTO.setPassword(password);
