@@ -2,8 +2,10 @@ package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.exception.DuplicatedItemException;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.notification.mail.MailNotificationSender;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
@@ -41,13 +43,13 @@ public class UserService extends CrudService<User, String> {
         this.mailNotificationSender = mailNotificationSender;
     }
 
-    public List<SelectItemDTO> getUsersForSelect(String role, boolean withAll) {
-        return toSelectItems(userRepo.findByRole(role, UserCoreInfo.class), withAll);
+    public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll) {
+        return toSelectItems(userRepo.findByRole(role.name(), UserCoreInfo.class), withAll);
     }
 
-    public User create(UserDTO dto) throws GoGasException {
+    public User create(UserDTO dto) {
         if (userRepo.findByUsername(dto.getUsername()).isPresent())
-            throw new GoGasException("Esiste già un utente con la username specificata");
+            throw new DuplicatedItemException("user", dto.getUsername());
 
         dto.setHashedPassword(encodePassword(dto.getPassword()));
         return super.create(dto);
@@ -135,8 +137,8 @@ public class UserService extends CrudService<User, String> {
         return convertFromModel(userRepo.findByFriendReferralId(friendReferralId, User.class));
     }
 
-    public List<UserDTO> getUsers(String role) {
-        List<User> users = role != null ? userRepo.findByRole(role) : userRepo.findAll();
+    public List<UserDTO> getUsers(User.Role role) {
+        List<User> users = role != null ? userRepo.findByRole(role.name()) : userRepo.findAll();
         return convertFromModel(users);
     }
 
@@ -196,13 +198,13 @@ public class UserService extends CrudService<User, String> {
     @Transactional
     public void changePassword(String userId, PasswordChangeDTO passwordChangeDTO) throws GoGasException {
         if (passwordChangeDTO.getNewPassword() == null || passwordChangeDTO.getOldPassword() == null)
-            throw new GoGasException("Invalid password");
+            throw new MissingOrInvalidParameterException("Invalid password");
 
         User user = getRequired(userId);
 
         String encodedOldPassword = passwordEncoder.encode(passwordChangeDTO.getOldPassword());
         if (!user.getPassword().equalsIgnoreCase(encodedOldPassword))
-            throw new GoGasException("Wrong password");
+            throw new MissingOrInvalidParameterException("Wrong password");
 
         String encodedPassword = passwordEncoder.encode(passwordChangeDTO.getNewPassword());
         userRepo.updatePassword(user.getId(), encodedPassword);
