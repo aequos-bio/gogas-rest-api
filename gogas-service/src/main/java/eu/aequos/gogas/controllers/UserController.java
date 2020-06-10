@@ -8,12 +8,15 @@ import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.Authorization;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 
+@Api("Users")
 @RestController
 @RequestMapping("api/user")
 public class UserController {

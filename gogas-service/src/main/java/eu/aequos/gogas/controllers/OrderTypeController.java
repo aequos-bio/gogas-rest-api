@@ -11,12 +11,14 @@ import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
+import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Api("Order types")
 @RestController
 @RequestMapping("api/ordertype")
 public class OrderTypeController {

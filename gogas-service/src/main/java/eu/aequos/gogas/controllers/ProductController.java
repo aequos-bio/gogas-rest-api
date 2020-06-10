@@ -10,6 +10,7 @@ import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.ProductService;
+import io.swagger.annotations.Api;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Api("Products")
 @RestController
 @RequestMapping("api/products")
 public class ProductController {

@@ -6,11 +6,13 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.service.OrderUserService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Api("User order fill")
 @RestController
 @RequestMapping("api/order/user")
 public class OrderUserController {

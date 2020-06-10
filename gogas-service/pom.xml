@@ -73,6 +73,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>openapi-generator</artifactId>
+            <version>4.3.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.5.2</version>
@@ -92,6 +98,62 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <skip>false</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.kongchen</groupId>
+                <artifactId>swagger-maven-plugin</artifactId>
+                <version>3.1.8</version>
+                <configuration>
+                    <apiSources>
+                        <apiSource>
+                            <info>
+                                <title>Go!Gas REST APIs</title>
+                                <version>v1</version>
+                            </info>
+                            <springmvc>true</springmvc>
+                            <locations>
+                                <location>eu.aequos.gogas.controllers</location>
+                            </locations>
+                            <outputPath>${basedir}/docs/openapi/gogas.html</outputPath>
+                            <swaggerDirectory>${basedir}/src/main/resources/static/openapi</swaggerDirectory>
+                            <attachSwaggerArtifact>true</attachSwaggerArtifact>
+                            <swaggerFileName>openapi</swaggerFileName>
+                            <outputFormats>yaml</outputFormats>
+                        </apiSource>
+                    </apiSources>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>redoc-cli</executable>
+                    <arguments>
+                        <argument>bundle</argument>
+                        <argument>${basedir}/src/main/resources/static/openapi/openapi.yaml</argument>
+                        <argument>--cdn</argument>
+                        <argument>true</argument>
+                        <argument>--output</argument>
+                        <argument>${basedir}/src/main/resources/static/openapi/openapi.html</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>

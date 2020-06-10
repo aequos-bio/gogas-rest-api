@@ -5,11 +5,13 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.persistence.entity.ProductCategory;
 import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
 import eu.aequos.gogas.security.annotations.IsAdmin;
+import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Api("Product categories")
 @RestController
 @RequestMapping("api/category")
 public class ProductCategoryController {

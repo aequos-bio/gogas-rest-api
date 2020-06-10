@@ -8,6 +8,7 @@ import eu.aequos.gogas.service.AccountingGasService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.OrderManagerService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
+@Api("GAS accounting")
 @RestController
 @RequestMapping("api/accounting/gas")
 @IsAdmin

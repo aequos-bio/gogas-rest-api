@@ -7,12 +7,14 @@ import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsOrderItemOwner;
 import eu.aequos.gogas.service.OrderFriendService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Api("Friends order fill")
 @RestController
 @RequestMapping("api/order/friend")
 public class OrderFriendController {

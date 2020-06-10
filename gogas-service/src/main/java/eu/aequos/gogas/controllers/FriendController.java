@@ -9,11 +9,13 @@ import eu.aequos.gogas.security.annotations.IsCurrentUserFriend;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.UserService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Api("Friends management")
 @RestController
 @RequestMapping("api/friend")
 public class FriendController {

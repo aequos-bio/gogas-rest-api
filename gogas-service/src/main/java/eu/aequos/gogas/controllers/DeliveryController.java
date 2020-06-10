@@ -6,6 +6,7 @@ import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.service.DeliveryService;
+import io.swagger.annotations.Api;
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+@Api("Order delivery operations")
 @RestController
 @RequestMapping("api/delivery")
 @IsOrderManager

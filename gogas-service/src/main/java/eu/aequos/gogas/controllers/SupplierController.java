@@ -6,11 +6,13 @@ import eu.aequos.gogas.dto.SupplierDTO;
 import eu.aequos.gogas.persistence.entity.Supplier;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.SupplierService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Api("Suppliers")
 @RestController
 @RequestMapping("api/supplier")
 public class SupplierController {

@@ -5,11 +5,13 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.AccountingReasonService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Api("Accounting reasons")
 @RestController
 @RequestMapping("api/accounting/reason")
 public class AccountingReasonController {

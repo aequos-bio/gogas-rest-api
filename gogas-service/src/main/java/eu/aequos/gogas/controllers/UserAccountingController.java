@@ -11,6 +11,7 @@ import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.UserAccountingService;
 import eu.aequos.gogas.utils.RestResponse;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 //TODO: check if we can merge with other controllers
+@Api("Reports for user accounting")
 @RestController
 @RequestMapping(value = "api/useraccounting")
 public class UserAccountingController {
