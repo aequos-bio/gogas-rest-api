@@ -29,7 +29,7 @@ public class UserController {
         this.authorizationService = authorizationService;
     }
 
-    @ApiOperation(value = "List for dropdown selection", tags = "admin")
+    @ApiOperation(value = "List for dropdown selection")
     @GetMapping(value = "select", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @IsAdmin
     public List<SelectItemDTO> listForSelection(@ApiParam("user role") @RequestParam User.Role role,
