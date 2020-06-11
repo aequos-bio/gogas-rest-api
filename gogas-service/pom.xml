@@ -115,11 +115,18 @@
                             <locations>
                                 <location>eu.aequos.gogas.controllers</location>
                             </locations>
+                            <basePath>/</basePath>
                             <outputPath>${basedir}/docs/openapi/gogas.html</outputPath>
                             <swaggerDirectory>${project.build.outputDirectory}/static/openapi</swaggerDirectory>
                             <attachSwaggerArtifact>true</attachSwaggerArtifact>
                             <swaggerFileName>openapi</swaggerFileName>
                             <outputFormats>yaml</outputFormats>
+                            <securityDefinitions>
+                                <securityDefinition>
+                                    <name>jwt</name>
+                                    <type>apiKey</type>
+                                </securityDefinition>
+                            </securityDefinitions>
                         </apiSource>
                     </apiSources>
                 </configuration>

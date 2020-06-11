@@ -5,43 +5,66 @@ import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.Supplier;
 import eu.aequos.gogas.persistence.entity.ProductCategory;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
+
+@ApiModel("Product")
 @Data
 public class ProductDTO implements ConvertibleDTO<Product> {
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     private String id;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("descrizione")
     private String description;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("unitamisura")
     private String um;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("pesocassa")
     private BigDecimal boxWeight;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("prezzounitario")
     private BigDecimal price;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("idtipo")
     private String typeId;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty("nometipo")
     private String typeName;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("ordinabile")
     private boolean available;
 
     @JsonProperty("unitamisuracollo")
     private String boxUm;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("idproduttore")
     private String supplierId;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty("nomeproduttore")
     private String supplierName;
 
@@ -51,9 +74,12 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     @JsonProperty("note")
     private String notes;
 
+    @ApiModelProperty(required = true)
+    @NotEmpty
     @JsonProperty("idcategoria")
     private String categoryId;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty("nomecategoria")
     private String categoryName;
 

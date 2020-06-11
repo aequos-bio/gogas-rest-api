@@ -1,14 +1,27 @@
 package eu.aequos.gogas.dto;
 
 import eu.aequos.gogas.persistence.entity.OrderManager;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+@ApiModel("Order manager")
 @Data
 public class ManagerDTO {
+
+  @ApiModelProperty("association id")
   private String id;
+
+  @ApiModelProperty("manager user id")
   private String userId;
+
+  @ApiModelProperty("manager name")
   private String userName;
+
+  @ApiModelProperty("managed order type id")
   private String orderTypeId;
+
+  @ApiModelProperty("managed order type name")
   private String orderTypeName;
 
   public ManagerDTO() {}

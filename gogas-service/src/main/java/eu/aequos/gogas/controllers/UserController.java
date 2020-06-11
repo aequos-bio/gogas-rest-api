@@ -29,7 +29,10 @@ public class UserController {
         this.authorizationService = authorizationService;
     }
 
-    @ApiOperation(value = "List for dropdown selection")
+    @ApiOperation(
+        value = "List for dropdown selection",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @GetMapping(value = "select", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @IsAdmin
     public List<SelectItemDTO> listForSelection(@ApiParam("user role") @RequestParam User.Role role,
@@ -37,7 +40,10 @@ public class UserController {
         return userService.getUsersForSelect(role, withAll);
     }
 
-    @ApiOperation(value = "Get user details")
+    @ApiOperation(
+        value = "Get user details",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role"), @AuthorizationScope(scope ="current user", description = "user in session") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = UserDTO.class),
         @ApiResponse(code = 404, message = "Item not found. Type: user, Id: <userId>"),
@@ -48,14 +54,20 @@ public class UserController {
         return new UserDTO().fromModel(userService.getRequired(userId));
     }
 
-    @ApiOperation(value = "List users")
+    @ApiOperation(
+        value = "List users",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @GetMapping(value = "list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @IsAdmin
     public List<UserDTO> listUsers(@RequestParam(required = false) User.Role role) {
         return userService.getUsers(role);
     }
 
-    @ApiOperation(value = "Create user")
+    @ApiOperation(
+        value = "Create user",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 409, message = "L'elemento non può essere creato perché già esistente")
@@ -67,7 +79,10 @@ public class UserController {
         return new BasicResponseDTO(userId);
     }
 
-    @ApiOperation(value = "Update user")
+    @ApiOperation(
+        value = "Update user",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 404, message = "Item not found. Type: user, Id: <userId>"),
@@ -79,7 +94,10 @@ public class UserController {
         return new BasicResponseDTO(updatedUserId);
     }
 
-    @ApiOperation(value = "Delete user")
+    @ApiOperation(
+        value = "Delete user",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 404, message = "Item not found. Type: user, Id: <userId>"),
@@ -92,7 +110,11 @@ public class UserController {
         return new BasicResponseDTO("OK");
     }
 
-    @ApiOperation(value = "Reset user password (admin)", notes = "Reset password of the specific user. Operation allowed only to admin users. An email containing the new password is sent to the user.")
+    @ApiOperation(
+        value = "Reset user password (admin)",
+        notes = "Reset password of the specific user. Operation allowed only to admin users. An email containing the new password is sent to the user.",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 400, message = "Missing or invalid parameter"),
@@ -105,7 +127,11 @@ public class UserController {
         return new BasicResponseDTO("OK");
     }
 
-    @ApiOperation(value = "Reset own password", notes = "Reset password for the current user. An email containing the new password is sent to the user.")
+    @ApiOperation(
+        value = "Reset own password",
+        notes = "Reset password for the current user. An email containing the new password is sent to the user.",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="any role", description = "any role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 400, message = "Missing or invalid parameter"),
@@ -117,7 +143,10 @@ public class UserController {
         return new BasicResponseDTO("OK");
     }
 
-    @ApiOperation(value = "Change own password")
+    @ApiOperation(
+        value = "Change own password",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="any role", description = "any role") }) }
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 400, message = "Missing or invalid parameter"),
