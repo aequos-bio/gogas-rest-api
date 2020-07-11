@@ -20,7 +20,7 @@ import { apiGetJson } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   cellAmount: {
     textAlign: 'right',
   },
@@ -58,7 +58,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
     return entries.map(e => {
       const dateStr = moment(e.data).format('DD/MM/YYYY');
       if (e.codicecausale) {
-        // movimento manuale
+        // movimento manuale GAS
         return (
           <TableRow>
             <TableCell>{dateStr}</TableCell>
@@ -72,12 +72,32 @@ const GasAccounting = ({ enqueueSnackbar }) => {
             <TableCell className={classes.cellCode}>
               {e.segnocausale === '-' ? '1000' : e.codicecontabile}
             </TableCell>
+            <TableCell>{e.type}</TableCell>
             <TableCell />
           </TableRow>
         );
       }
-      if (e.importo < 0) {
-        // pagamento fattura
+
+      if (e.type === 1) {
+        // fattura
+        return (
+          <TableRow>
+            <TableCell>{dateStr}</TableCell>
+            <TableCell>{e.descrizione}</TableCell>
+            <TableCell className={classes.cellAmount}>
+              {e.importo.toFixed(2)}
+            </TableCell>
+            <TableCell className={classes.cellCode}>4000</TableCell>
+            <TableCell className={classes.cellCode}>
+              {e.codicecontabile}
+            </TableCell>
+            <TableCell>{e.type}</TableCell>
+            <TableCell />
+          </TableRow>
+        );
+      }
+      if (e.type === 2) {
+        // pagamento fattura fornitore (type===2)
         return (
           <TableRow>
             <TableCell>{dateStr}</TableCell>
@@ -89,27 +109,31 @@ const GasAccounting = ({ enqueueSnackbar }) => {
               {e.codicecontabile}
             </TableCell>
             <TableCell className={classes.cellCode}>1000</TableCell>
+            <TableCell>{e.type}</TableCell>
             <TableCell />
           </TableRow>
         );
       }
-      // fattura
-      return (
-        <TableRow>
-          <TableCell>{dateStr}</TableCell>
-          <TableCell>{e.descrizione}</TableCell>
-          <TableCell className={classes.cellAmount}>
-            {e.importo.toFixed(2)}
-          </TableCell>
-          <TableCell className={classes.cellCode}>4000</TableCell>
-          <TableCell className={classes.cellCode}>
-            {e.codicecontabile}
-          </TableCell>
-          <TableCell />
-        </TableRow>
-      );
+      if (e.type === 3) {
+        // addebito ordine ai gasisti
+        return (
+          <TableRow>
+            <TableCell>{dateStr}</TableCell>
+            <TableCell>{e.descrizione}</TableCell>
+            <TableCell className={classes.cellAmount}>
+              {e.importo.toFixed(2)}
+            </TableCell>
+            <TableCell className={classes.cellCode}>
+              {e.codicecontabile}
+            </TableCell>
+            <TableCell className={classes.cellCode}>3000</TableCell>
+            <TableCell>{e.type}</TableCell>
+            <TableCell />
+          </TableRow>
+        );
+      }
     });
-  }, [loading, entries]);
+  }, [loading, entries, classes]);
 
   return (
     <Container maxWidth={false}>
@@ -136,6 +160,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
               <TableCell className={classes.cellAmount}>Importo</TableCell>
               <TableCell className={classes.cellCode}>Conto Dare</TableCell>
               <TableCell className={classes.cellCode}>Conto Avere</TableCell>
+              <TableCell className={classes.cellCode}>TYPE</TableCell>
               <TableCell />
             </TableRow>
           </TableHead>

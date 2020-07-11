@@ -4,16 +4,22 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
+import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
 @Data
 public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry> {
+    public static int SUPPLIER_INVOICE = 1;
+    public static int SUPPLIER_PAYMENT = 2;
+    public static int CUSTOMER_CHARGE = 3;
+    public static int CUSTOMER_PAYMENT = 4;
 
     private String id;
 
@@ -39,6 +45,8 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
     @JsonProperty(value = "importo")
     private BigDecimal amount;
 
+    private int type;
+
     @Override
     public AccountingGasEntryDTO fromModel(AccountingGasEntry model) {
         id = model.getId();
@@ -51,6 +59,11 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         reasonDescription = reason.getDescription() + " (" + reason.getSign() + ")";
         reasonSign = reason.getSign();
         accountingCode = reason.getAccountingCode();
+
+        if (reason.getSign().equals("+"))
+            type = SUPPLIER_INVOICE;
+        else
+            type = SUPPLIER_PAYMENT;
 
         return this;
     }
@@ -73,6 +86,7 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         reasonDescription = "Fattura ordine";
         accountingCode = order.getAccountingCode();
         amount = order.getInvoiceAmount();
+        type = SUPPLIER_INVOICE;
         return this;
     }
 
@@ -82,6 +96,17 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
         reasonDescription = "Pagamento ordine";
         accountingCode = order.getAccountingCode();
         amount = order.getInvoiceAmount().negate();
+        type = SUPPLIER_PAYMENT;
+        return this;
+    }
+
+    public AccountingGasEntryDTO fromOrderTotal(OrderTotal total) {
+        id = total.getOrderId();
+        date = total.getDeliveryDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        description = "Totale addebiti " + total.getDescription();
+        amount = total.getTotal();
+        accountingCode = "C_XXX";
+        type = CUSTOMER_CHARGE;
         return this;
     }
 }

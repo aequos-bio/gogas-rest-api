@@ -1,12 +1,10 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.dto.AccountingGasEntryDTO;
-import eu.aequos.gogas.dto.ConvertibleDTO;
-import eu.aequos.gogas.dto.OrderDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
-import eu.aequos.gogas.dto.OrderAccountingInfoDTO;
+import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
 import eu.aequos.gogas.persistence.repository.AccountingGasRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.AccountingGasSpecs;
@@ -76,7 +74,11 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
 
         Stream<AccountingGasEntryDTO> orderEntries = getOrderAccontingEntries(dateFrom, dateTo).stream();
 
-        return Stream.concat(manualEntries, orderEntries)
+        List<OrderTotal> totals = orderRepo.getOrderTotals(dateFrom, dateTo);
+        Stream<AccountingGasEntryDTO> orderTotals = totals.stream()
+            .map(total -> new AccountingGasEntryDTO().fromOrderTotal(total));
+
+        return Stream.concat(Stream.concat(manualEntries, orderEntries), orderTotals)
                 .sorted(Comparator.comparing(AccountingGasEntryDTO::getDate))
                 .collect(Collectors.toList());
     }

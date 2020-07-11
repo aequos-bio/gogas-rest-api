@@ -1,6 +1,7 @@
 package eu.aequos.gogas.security;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         try {
-            if (request.getServletPath().equals("/authenticate")) {
+            if (request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/favicon.png") || request.getServletPath().startsWith("/login") || request.getServletPath().startsWith("/static")) {
                 chain.doFilter(request, response);
             } else {
                 String authToken = extractAuthTokenFromRequest(request);
@@ -68,6 +69,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
                 chain.doFilter(request, response);
             }
+        } catch (TokenExpiredException ex) {
+            response.sendRedirect("/login");
         } catch (JWTVerificationException ex) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token non valido o scaduto");
         } catch (UserNotAuthorizedException ex) {

@@ -3,6 +3,7 @@ package eu.aequos.gogas.persistence.repository;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
 import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -122,4 +123,16 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.statusCode = 2 AND (o.invoiceNumber IS NULL OR o.invoiceDate IS NULL OR o.invoiceAmount IS NULL) AND o.deliveryDate BETWEEN ?1 AND ?2 AND o.orderType.billedByAequos=?3")
     List<Order> findAccountedOrdersWithoutInvoice(LocalDate invoiceDateFrom, LocalDate invoiceDateTo, boolean aequosOrders);
+
+    @Query(value = "SELECT o.idDateOrdini as orderId, t.tipoOrdine as description, o.dataConsegna as deliveryDate, round(sum(o2.qtaRitirataKg*o2.prezzoKg),2) as total " +
+        "FROM dateordini o " +
+        "    inner join tipologiaOrdine t on o.idTipologiaOrdine = t.idTipologiaOrdine " +
+        "    inner join ordini o2 on o.idDateOrdini = o2.idDateOrdine " +
+        "WHERE o.stato = 2 " +
+        "AND o.dataConsegna >= ?1 " +
+        "AND o.dataConsegna < ?2 " +
+        "and o2.contabilizzato=1 " +
+        "group by o.idDateOrdini, t.tipoOrdine, o.dataConsegna " +
+        "order by o.dataConsegna ", nativeQuery = true)
+    List<OrderTotal> getOrderTotals(LocalDate deliveryDateFrom, LocalDate deliveryDateTo);
 }
