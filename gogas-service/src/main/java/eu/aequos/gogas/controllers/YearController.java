@@ -4,12 +4,14 @@ import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.persistence.entity.Year;
 import eu.aequos.gogas.persistence.repository.YearRepo;
 import eu.aequos.gogas.utils.RestResponse;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
+@Api(value = "Years")
 @RestController
 @RequestMapping("api/year")
 public class YearController {

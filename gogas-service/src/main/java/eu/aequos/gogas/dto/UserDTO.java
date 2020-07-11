@@ -3,6 +3,10 @@ package eu.aequos.gogas.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.User;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModelProperty.AccessMode;
+import io.swagger.annotations.ApiParam;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
@@ -10,16 +14,22 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import java.util.Optional;
 
+import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
+
+@ApiModel("User")
 @Data
 public final class UserDTO implements ConvertibleDTO<User> {
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty(value = "idUtente")
     private String id;
 
+    @ApiModelProperty(required = true)
     @NotEmpty
     @JsonProperty(value = "username")
     private String username;
 
+    @ApiModelProperty(required = true)
     @NotEmpty
     @JsonProperty(value = "password")
     private String password;
@@ -27,18 +37,22 @@ public final class UserDTO implements ConvertibleDTO<User> {
     @JsonIgnore
     private String hashedPassword;
 
+    @ApiModelProperty(required = true)
     @NotEmpty
     @Pattern(regexp = "A|U|S", message = "wrong role type")
     @JsonProperty(value = "ruolo")
     private String role;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty(value = "ruololabel")
     private String roleLabel;
 
+    @ApiModelProperty(required = true)
     @NotEmpty
     @JsonProperty(value = "nome")
     private String firstName;
 
+    @ApiModelProperty(required = true)
     @NotEmpty
     @JsonProperty(value = "cognome")
     private String lastName;
@@ -47,15 +61,17 @@ public final class UserDTO implements ConvertibleDTO<User> {
     @JsonProperty(value = "email")
     private String email;
 
-    @JsonProperty(value = "attivo")
+    @JsonProperty(value = "attivo", defaultValue = "true")
     private boolean enabled;
 
     @JsonProperty(value = "telefono")
     private String phone;
 
+    @ApiModelProperty(name = "idReferente", value = "Valid only with role 'friend' (S)")
     @JsonProperty(value = "idReferente")
     private String friendReferralId;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
     @JsonProperty(value = "nomeReferente")
     private String friendReferralName;
 

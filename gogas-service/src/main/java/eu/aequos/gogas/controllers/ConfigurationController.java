@@ -6,10 +6,12 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.ConfigurationService;
+import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Api("Global configuration")
 @IsAdmin
 @RestController
 @RequestMapping("api/configuration")

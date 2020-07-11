@@ -11,6 +11,7 @@ import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.*;
+import io.swagger.annotations.Api;
 import org.apache.commons.io.IOUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@Api("Order manager operations")
 @RestController
 @RequestMapping("api/order/manage")
 @IsOrderManager

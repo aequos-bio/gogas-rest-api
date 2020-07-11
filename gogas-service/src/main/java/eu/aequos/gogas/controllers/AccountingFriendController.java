@@ -11,12 +11,14 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsCurrentUserFriend;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Api("Friends accounting")
 @RestController
 @RequestMapping("api/accounting/friend")
 public class AccountingFriendController {

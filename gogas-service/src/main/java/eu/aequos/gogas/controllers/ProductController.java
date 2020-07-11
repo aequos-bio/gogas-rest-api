@@ -1,15 +1,13 @@
 package eu.aequos.gogas.controllers;
 
-import eu.aequos.gogas.dto.AttachmentDTO;
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
-import eu.aequos.gogas.dto.ProductDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.ProductService;
+import io.swagger.annotations.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
@@ -21,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Api("Products")
 @RestController
 @RequestMapping("api/products")
 public class ProductController {
@@ -33,57 +32,115 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping(value = "list/{productType}/available", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<Product> getAvailableProducts(@PathVariable String productType) {
-        return productRepo.findAvailableByTypeOrderByPriceList(productType);
+    @ApiOperation(
+        value = "Get available products by order type",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="?", description = "?") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = Product.class, responseContainer = "List"),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
+    @GetMapping(value = "list/{productTypeId}/available", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public List<Product> getAvailableProducts(@PathVariable String productTypeId) {
+        return productRepo.findAvailableByTypeOrderByPriceList(productTypeId);
     }
 
-    @GetMapping(value = "list/{productType}")
-    public List<ProductDTO> listProducts(@PathVariable String productType,
+    @ApiOperation(
+        value = "Search products",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = ProductDTO.class, responseContainer = "List"),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
+    @IsOrderTypeManager
+    @GetMapping(value = "list/{productTypeId}")
+    public List<ProductDTO> listProducts(@PathVariable String productTypeId,
                                          @RequestParam String category,
                                          @RequestParam Boolean available,
                                          @RequestParam Boolean cancelled) throws ItemNotFoundException {
 
-        return productService.searchProducts(productType, category, available, cancelled);
+        return productService.searchProducts(productTypeId, category, available, cancelled);
     }
 
-    @GetMapping(value = "list")
-    public List<ProductDTO> listProducts() {
-        return new ArrayList<>();
-    }
-
+    @ApiOperation(
+        value = "Create product",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @IsOrderTypeManager
     @PostMapping()
-    public BasicResponseDTO create(@RequestBody ProductDTO productDTO) {
+    public BasicResponseDTO createProduct(@RequestBody ProductDTO productDTO) {
         String productId = productService.create(productDTO).getId();
         return new BasicResponseDTO(productId);
     }
 
+    @ApiOperation(
+        value = "Modify product",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
+        @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
+    })
+    @IsOrderTypeManager
     @PutMapping(value = "{productId}")
-    public BasicResponseDTO update(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
+    public BasicResponseDTO updateProduct(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
         String updatedProductId = productService.update(productId, productDTO).getId();
         return new BasicResponseDTO(updatedProductId);
     }
 
+    @ApiOperation(
+        value = "Delete product",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
+        @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
+    })
+    @IsOrderTypeManager
     @DeleteMapping(value = "{productId}")
-    public BasicResponseDTO delete(@PathVariable String productId) {
+    public BasicResponseDTO deleteProduct(@PathVariable String productId) {
         productService.delete(productId);
         return new BasicResponseDTO("OK");
     }
 
-
+    @ApiOperation(
+        value = "Export products to excel file",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = String.class),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
     @IsOrderTypeManager
-    @GetMapping(value = "list/{productType}/export")
-    public void generateProductsExcel(HttpServletResponse response, @PathVariable String productType) throws IOException, GoGasException {
-        AttachmentDTO excelPriceListAttachment = productService.generateExcelPriceList(productType);
+    @GetMapping(value = "list/{productTypeId}/export", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public void generateProductsExcel(HttpServletResponse response, @PathVariable String productTypeId) throws IOException, GoGasException {
+        AttachmentDTO excelPriceListAttachment = productService.generateExcelPriceList(productTypeId);
         excelPriceListAttachment.writeToHttpResponse(response);
     }
 
+    @ApiOperation(
+        value = "Synchronize products with Aequos",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = OrderSynchroInfoDTO.class),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
     @IsOrderTypeManager
     @PutMapping(value = "{productType}/sync")
     public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
         return productService.syncPriceList(productType);
     }
 
+    @ApiOperation(
+        value = "Import products from excel file",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = OrderSynchroInfoDTO.class),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
     @IsOrderTypeManager
     @PostMapping(value = "{productType}/import")
     public OrderSynchroInfoDTO importProductsFromExcel(@PathVariable String productType, @RequestParam("file") MultipartFile excelFile) throws IOException, GoGasException {

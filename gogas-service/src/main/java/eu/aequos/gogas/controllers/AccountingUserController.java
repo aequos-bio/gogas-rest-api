@@ -10,6 +10,7 @@ import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
+import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@Api("Users accounting")
 @RestController
 @RequestMapping("api/accounting/user")
 @IsAdmin

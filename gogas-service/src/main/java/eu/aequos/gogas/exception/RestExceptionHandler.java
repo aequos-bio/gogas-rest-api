@@ -27,6 +27,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, error, ex));
     }
 
+    @ExceptionHandler(MissingOrInvalidParameterException.class)
+    protected ResponseEntity<Object> handleInvalidParameter(MissingOrInvalidParameterException ex) {
+        log.warn("Missing or invalid parameter", ex);
+        return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
+    }
+
     @ExceptionHandler(ItemNotFoundException.class)
     protected ResponseEntity<Object> handleItemNotFound(ItemNotFoundException ex) {
         log.warn("Item of type {} with id {} not found", ex.getItemType(), ex.getItemId());
@@ -43,6 +49,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleJWTVerificationError(JWTVerificationException ex) {
         log.warn("JWT Token expired: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.UNAUTHORIZED, "Token non valido o scaduto", ex));
+    }
+
+    @ExceptionHandler(DuplicatedItemException.class)
+    protected ResponseEntity<Object> handleDuplicatedItem(DuplicatedItemException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere creato perché già esistente", ex));
     }
 
     @ExceptionHandler(ItemNotDeletableException.class)
