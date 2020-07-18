@@ -1,48 +1,65 @@
+/* eslint-disable react/no-array-index-key */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
-import {
-  Container,
-  Fab,
-  Button,
-  IconButton,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Container, Button } from '@material-ui/core';
+import { SaveAltSharp as SaveIcon } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
 import _ from 'lodash';
 import moment from 'moment-timezone';
+import Excel from 'exceljs';
 import { apiGetJson } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
-import LoadingRow from '../../components/LoadingRow';
-
-const useStyles = makeStyles(() => ({
-  cellAmount: {
-    textAlign: 'right',
-  },
-  cellCode: {
-    textAlign: 'right',
-  },
-}));
+import DataTable from '../../components/DataTable';
 
 const GasAccounting = ({ enqueueSnackbar }) => {
-  const classes = useStyles();
+  // eslint-disable-next-line no-unused-vars
   const [year, setYear] = useState(moment().format('YYYY'));
   const [loading, setLoading] = useState(false);
-  const [entries, setEntries] = useState([]);
+  const [userEntries, setUserEntries] = useState([]);
+  const [gasEntries, setGasEntries] = useState([]);
+
+  const columns = [
+    { label: 'Data', type: 'Date', alignment: 'Left', property: 'data' },
+    {
+      label: 'Descrizione',
+      type: 'String',
+      alignment: 'Left',
+      property: 'descrizione',
+    },
+    { label: 'Importo', type: 'Amount', property: 'importo' },
+    {
+      label: 'Conto Dare',
+      type: 'String',
+      alignment: 'Right',
+      property: 'dare',
+    },
+    {
+      label: 'Conto Avere',
+      type: 'String',
+      alignment: 'Right',
+      property: 'avere',
+    },
+    { label: 'TYPE', type: 'Number', property: 'type' },
+  ];
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson(`/api/accounting/gas/report/${year}`, {}).then(tt => {
+
+    Promise.all([
+      apiGetJson(`/api/accounting/user/entry/list`, {
+        dateFrom: `01/01/${year}`,
+        dateTo: `31/12/${year}`,
+      }),
+      apiGetJson(`/api/accounting/gas/report/${year}`, {}),
+    ]).then(([user, gas]) => {
       setLoading(false);
-      if (tt.error) {
-        enqueueSnackbar(tt.errorMessage, { variant: 'error' });
+      if (user.error || gas.error) {
+        enqueueSnackbar(user.errorMessage || gas.errorMessage, {
+          variant: 'error',
+        });
       } else {
-        setEntries(tt);
+        setUserEntries(user);
+        setGasEntries(gas);
       }
     });
   }, [enqueueSnackbar, year]);
@@ -52,122 +69,131 @@ const GasAccounting = ({ enqueueSnackbar }) => {
   }, [reload]);
 
   const rows = useMemo(() => {
-    if (loading) {
-      return <LoadingRow colSpan={6} />;
-    }
-    return entries.map(e => {
-      const dateStr = moment(e.data).format('DD/MM/YYYY');
+    const userRows = userEntries.map(e => {
+      // movimenti manuali registrati sui gasisti
+      if (e.segno === '+') {
+        // versamenti
+        return {
+          ...e,
+          descrizione: `${e.nomecausale} (${e.nomeutente}): ${e.descrizione}`,
+          data: moment(e.data, 'DD/MM/YYYY').format('YYYY-MM-DD'),
+          dare: '1000',
+          avere: 'C_XXX',
+          type: 4,
+        };
+      }
+      return {
+        // addebiti
+        ...e,
+        descrizione: `${e.nomecausale} (${e.nomeutente}): ${e.descrizione}`,
+        data: moment(e.data, 'DD/MM/YYYY').format('YYYY-MM-DD'),
+        dare: 'C_XXX',
+        avere: '3000',
+        type: 3,
+      };
+    });
+
+    const gasRows = gasEntries.map(e => {
       if (e.codicecausale) {
         // movimento manuale GAS
-        return (
-          <TableRow>
-            <TableCell>{dateStr}</TableCell>
-            <TableCell>{e.descrizione}</TableCell>
-            <TableCell className={classes.cellAmount}>
-              {e.importo.toFixed(2)}
-            </TableCell>
-            <TableCell className={classes.cellCode}>
-              {e.segnocausale === '-' ? e.codicecontabile : '4000'}
-            </TableCell>
-            <TableCell className={classes.cellCode}>
-              {e.segnocausale === '-' ? '1000' : e.codicecontabile}
-            </TableCell>
-            <TableCell>{e.type}</TableCell>
-            <TableCell />
-          </TableRow>
-        );
+        return {
+          ...e,
+          dare: e.segnocausale === '-' ? e.codicecontabile : '4000',
+          avere: e.segnocausale === '-' ? '1000' : e.codicecontabile,
+        };
       }
 
       if (e.type === 1) {
         // fattura
-        return (
-          <TableRow>
-            <TableCell>{dateStr}</TableCell>
-            <TableCell>{e.descrizione}</TableCell>
-            <TableCell className={classes.cellAmount}>
-              {e.importo.toFixed(2)}
-            </TableCell>
-            <TableCell className={classes.cellCode}>4000</TableCell>
-            <TableCell className={classes.cellCode}>
-              {e.codicecontabile}
-            </TableCell>
-            <TableCell>{e.type}</TableCell>
-            <TableCell />
-          </TableRow>
-        );
+        return {
+          ...e,
+          dare: '4000',
+          avere: e.codicecontabile,
+        };
       }
       if (e.type === 2) {
         // pagamento fattura fornitore (type===2)
-        return (
-          <TableRow>
-            <TableCell>{dateStr}</TableCell>
-            <TableCell>Pagamento {e.descrizione}</TableCell>
-            <TableCell className={classes.cellAmount}>
-              {(-1 * e.importo).toFixed(2)}
-            </TableCell>
-            <TableCell className={classes.cellCode}>
-              {e.codicecontabile}
-            </TableCell>
-            <TableCell className={classes.cellCode}>1000</TableCell>
-            <TableCell>{e.type}</TableCell>
-            <TableCell />
-          </TableRow>
-        );
+        return {
+          ...e,
+          descrizione: `Pagamento ${e.descrizione}`,
+          importo: -1 * e.importo,
+          dare: e.codicecontabile,
+          avere: '1000',
+        };
       }
       if (e.type === 3) {
         // addebito ordine ai gasisti
-        return (
-          <TableRow>
-            <TableCell>{dateStr}</TableCell>
-            <TableCell>{e.descrizione}</TableCell>
-            <TableCell className={classes.cellAmount}>
-              {e.importo.toFixed(2)}
-            </TableCell>
-            <TableCell className={classes.cellCode}>
-              {e.codicecontabile}
-            </TableCell>
-            <TableCell className={classes.cellCode}>3000</TableCell>
-            <TableCell>{e.type}</TableCell>
-            <TableCell />
-          </TableRow>
-        );
+        return {
+          ...e,
+          dare: e.codicecontabile,
+          avere: '3000',
+        };
       }
+      return null;
     });
-  }, [loading, entries, classes]);
+
+    const rr = _.orderBy(gasRows.concat(userRows), ['data'], ['asc']);
+    return rr.map(v => ({ value: v }));
+  }, [gasEntries, userEntries]);
+
+  const exportXls = useCallback(() => {
+    const wb = new Excel.Workbook();
+    wb.calcProperties.fullCalcOnLoad = true;
+    const sh = wb.addWorksheet('Contabilità GAS');
+
+    const headerRow = sh.getRow(1);
+    headerRow.style = { font: { size: 12, bold: true } };
+    for (let c = 0; c < columns.length; c++) {
+      headerRow.getCell(c + 1).value = columns[c].label;
+    }
+
+    let rowNum = 2;
+    rows.forEach(row => {
+      const valueRow = sh.getRow(rowNum);
+      for (let c = 0; c < columns.length; c++) {
+        valueRow.getCell(c + 1).value = row.value[columns[c].property];
+      }
+
+      rowNum += 1;
+    });
+
+    wb.xlsx
+      .writeBuffer({
+        base64: true,
+      })
+      .then(buffer => {
+        const base64 = buffer.toString('base64');
+
+        const a = document.createElement('a');
+        a.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+        a.target = '_blank';
+        a.download = 'contabilita.xlsx';
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+  }, [rows]);
 
   return (
     <Container maxWidth={false}>
       <PageTitle title="Situazione contabile del GAS">
-        {/* <Button onClick={() => setExportDlgOpen(true)} startIcon={<SaveIcon />}>
+        <Button onClick={exportXls} startIcon={<SaveIcon />}>
           Esporta XLS
-        </Button> */}
+        </Button>
       </PageTitle>
 
-      {/* <Fab
-        className={classes.fab}
-        color="secondary"
-        onClick={() => setShowDlg(true)}
-      >
-        <PlusIcon />
-      </Fab> */}
-
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Descrizione</TableCell>
-              <TableCell className={classes.cellAmount}>Importo</TableCell>
-              <TableCell className={classes.cellCode}>Conto Dare</TableCell>
-              <TableCell className={classes.cellCode}>Conto Avere</TableCell>
-              <TableCell className={classes.cellCode}>TYPE</TableCell>
-              <TableCell />
-            </TableRow>
-          </TableHead>
-
-          <TableBody>{rows}</TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        settings={{
+          canEdit: false,
+          canDelete: false,
+          canAdd: false,
+          pagination: false,
+        }}
+        columns={columns}
+        rows={rows}
+        loading={loading}
+      />
     </Container>
   );
 };

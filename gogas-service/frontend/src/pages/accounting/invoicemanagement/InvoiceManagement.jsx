@@ -56,6 +56,7 @@ const useStyles = makeStyles(theme => ({
 
 const InvoiceManagement = ({ enqueueSnackbar }) => {
   const classes = useStyles();
+  // eslint-disable-next-line no-unused-vars
   const [year, setYear] = useState(moment().format('YYYY'));
   const [aequosAccountingCode, setAequosAccountingCode] = useState('');
   const [loading, setLoading] = useState(false);

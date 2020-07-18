@@ -40,6 +40,9 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
     @JsonProperty(value = "importo")
     private BigDecimal amount;
 
+    @JsonProperty(value = "segno")
+    private String sign;
+
     private String friendReferralId;
 
     @Override
@@ -50,7 +53,8 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         userName = model.getUser().getFirstName() + " " + model.getUser().getLastName();
         description = model.getDescription();
         reasonCode = model.getReason().getReasonCode();
-        reasonDescription = model.getReason().getDescription() + " (" + model.getReason().getSign() + ")";
+        reasonDescription = model.getReason().getDescription();
+        sign = model.getReason().getSign();
         amount = model.getAmount();
         return this;
     }
@@ -64,6 +68,7 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         reasonCode = model.getReason().getReasonCode();
         reasonDescription = model.getReason().getDescription();
         amount = model.getAmount();
+        sign = model.getReason().getSign();
         return this;
     }
 

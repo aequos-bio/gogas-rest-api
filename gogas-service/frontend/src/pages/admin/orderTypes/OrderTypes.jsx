@@ -63,6 +63,7 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   const [selectedId, setSelectedId] = useState();
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
   const [categoriesDlgOpen, setCategoriesDlgOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [managersDlgOpen, setManagersDlgOpen] = useState(false);
 
   const reload = useCallback(() => {

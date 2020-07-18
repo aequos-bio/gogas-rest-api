@@ -10,12 +10,11 @@ import {
   InputAdornment,
   TableContainer,
   Table,
-  TableHead,
   TableBody,
   TableRow,
   TableCell,
 } from '@material-ui/core';
-import { EuroSharp as EuroIcon, LocalDrinkSharp } from '@material-ui/icons';
+import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import moment from 'moment-timezone';
 import _ from 'lodash';
@@ -43,6 +42,7 @@ const useStyles = makeStyles(theme => ({
 
 const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   const classes = useStyles();
+  // eslint-disable-next-line no-unused-vars
   const [year, setYear] = useState(moment().format('YYYY'));
   const [orders, setOrders] = useState([]);
   const [date, setDate] = useState();
