@@ -9,6 +9,7 @@ import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ExcelGenerationService;
 import eu.aequos.gogas.service.OrderManagerService;
 import io.swagger.annotations.Api;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Api("GAS accounting")
 @RestController
 @RequestMapping("api/accounting/gas")
@@ -92,7 +94,7 @@ public class AccountingGasController {
     }
 
     @GetMapping(value="ordersWithoutInvoice/{year}")
-    public List<ConvertibleDTO> getAllOrdersWithoutInvoice(@PathVariable int year) {
+    public List<OrderDTO> getAllOrdersWithoutInvoice(@PathVariable int year) {
         LocalDate dateFrom = LocalDate.of(year, 1, 1);
         LocalDate dateTo = LocalDate.of(year, 12, 31);
 
@@ -104,22 +106,22 @@ public class AccountingGasController {
         LocalDate dateFrom = LocalDate.of(year, 1, 1);
         LocalDate dateTo = LocalDate.of(year, 12, 31);
 
-        List<ConvertibleDTO> orders = accountingGasService.getOrdersWithoutInvoice(dateFrom, dateTo, true);
-        int count = 0;
-        if (orders!=null && orders.size()>0) {
-            for(ConvertibleDTO order : orders) {
-                try {
-                    if (orderManagerService.syncOrderInvoiceWithAequos(((OrderDTO)order).getId())) {
-                        count++;
-                    }
-                } catch (GoGasException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        List<OrderDTO> aequosOrdersWithoutInvoice = accountingGasService.getOrdersWithoutInvoice(dateFrom, dateTo, true);
 
-        return new BasicResponseDTO(count);
+        long orderUpdated = aequosOrdersWithoutInvoice.stream()
+                .map(this::synchOrderWithAequos)
+                .filter(Boolean::booleanValue)
+                .count();
+
+        return new BasicResponseDTO(orderUpdated);
     }
 
-
+    private boolean synchOrderWithAequos(OrderDTO aequosOrder) {
+        try {
+            return orderManagerService.synchOrderWithAequos(aequosOrder.getId(), true);
+        } catch (GoGasException e) {
+            log.error("Error while synchronizing order {} with Aequos", aequosOrder.getId());
+            return false;
+        }
+    }
 }

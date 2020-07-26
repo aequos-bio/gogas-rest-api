@@ -122,7 +122,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     }
 
     @Override
-    public ConvertibleDTO fromModel(Order order) {
+    public OrderDTO fromModel(Order order) {
         this.id = order.getId();
         this.orderTypeId = order.getOrderType().getId();
         this.orderTypeName = order.getOrderType().getDescription();

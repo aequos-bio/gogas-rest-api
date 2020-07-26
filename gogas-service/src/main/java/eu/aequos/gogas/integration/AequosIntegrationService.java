@@ -102,17 +102,12 @@ public class AequosIntegrationService {
         Map<String, String> formParams = initParamsWithCredentials();
         formParams.put("order_id", aequosOrderId);
 
-        try {
-            String response = aequosApiClient.synchOrder2(formParams);
-            OrderSynchResponse syncResponse = new ObjectMapper().readValue(response, OrderSynchResponse.class);
-            if (syncResponse.isError())
-                throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + syncResponse.getErrorMessage());
+        OrderSynchResponse response = aequosApiClient.synchOrder(formParams);
 
-            return syncResponse;
-        } catch(IOException ex) {
-            throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + ex.getMessage());
-        }
+        if (response.isError())
+            throw new GoGasException("Errore durante l'invio dei pesi per l'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
 
+        return response;
     }
 
     private String extractAndSerializeOrderItems(List<SupplierOrderBoxes> orderBoxes) throws GoGasException {

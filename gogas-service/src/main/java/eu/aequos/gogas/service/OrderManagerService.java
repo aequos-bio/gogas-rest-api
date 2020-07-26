@@ -514,7 +514,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     @Transactional
-    public void synchOrderWithAequos(String orderId) throws GoGasException {
+    public boolean synchOrderWithAequos(String orderId, boolean onlyIfInvoiceAvailable) throws GoGasException {
         Order order = getRequiredWithType(orderId);
 
         if (order.getOrderType().getAequosOrderId() == null)
@@ -526,33 +526,20 @@ public class OrderManagerService extends CrudService<Order, String> {
         log.info("Synchronizing with Aequos order with id {} (Aequos id {}) ", orderId, order.getExternalOrderId());
 
         OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
+
+        if (onlyIfInvoiceAvailable && isEmpty(orderSynchResponse.getInvoiceNumber()))
+            return false;
+
         updateSupplierOrderItems(orderId, order.getOrderType().getId(), orderSynchResponse.getOrderItems());
         LocalDate invoiceDate = orderSynchResponse.getInvoiceNumber() != null && !orderSynchResponse.getInvoiceNumber().isEmpty() ? order.getDeliveryDate() : null;
         orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), invoiceDate , LocalDateTime.now());
 
         log.info("Synchronization completed successfully");
+        return true;
     }
 
-    @Transactional
-    public boolean syncOrderInvoiceWithAequos(String orderId) throws GoGasException {
-        Order order = getRequiredWithType(orderId);
-
-        if (order.getOrderType().getAequosOrderId() == null)
-            throw new GoGasException("Order type is not linked to Aequos");
-
-        if (order.getExternalOrderId() == null)
-            throw new GoGasException("Missing Aequos order id");
-
-        log.info("Synchronizing invoice with Aequos, {} del {} (order id {}, Aequos id {}) ", order.getOrderType().getDescription(), order.getDeliveryDate().toString() ,orderId, order.getExternalOrderId());
-
-        OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
-        if (orderSynchResponse.getInvoiceNumber() != null && !orderSynchResponse.getInvoiceNumber().isEmpty()) {
-            LocalDate invoiceDate = order.getDeliveryDate();
-            orderRepo.updateInvoiceDataAndSynchDate(orderId, orderSynchResponse.getInvoiceNumber(), orderSynchResponse.getOrderTotalAmount(), invoiceDate, LocalDateTime.now());
-            log.info("Synchronization completed successfully");
-            return true;
-        }
-        return false;
+    private boolean isEmpty(String invoiceNumber) {
+        return invoiceNumber == null || invoiceNumber.trim().isEmpty();
     }
 
     private void updateSupplierOrderItems(String orderId, String orderTypeId, List<OrderSynchItem> aequosOrderItems) {
@@ -561,10 +548,11 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         List<SupplierOrderItem> existingSupplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId);
         for (SupplierOrderItem supplierOrderItem : existingSupplierOrderItems) {
-            OrderSynchItem aequosOrderItem = aequosItemsMap.get(supplierOrderItem.getProductExternalCode());
+            String productExternalCode = getProductExternalCode(supplierOrderItem);
+            OrderSynchItem aequosOrderItem = aequosItemsMap.get(productExternalCode);
 
             if (updateSupplierOrderItem(orderId, supplierOrderItem, aequosOrderItem))
-                aequosItemsMap.remove(supplierOrderItem.getProductExternalCode());
+                aequosItemsMap.remove(productExternalCode);
         }
 
         List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap.values().stream()
@@ -574,6 +562,16 @@ public class OrderManagerService extends CrudService<Order, String> {
         existingSupplierOrderItems.addAll(newSupplierOrderItems);
 
         supplierOrderItemRepo.saveAll(existingSupplierOrderItems);
+    }
+
+    //For backward compatibility, old version didn't have external code
+    private String getProductExternalCode(SupplierOrderItem supplierOrderItem) {
+        if (supplierOrderItem.getProductExternalCode() == null) {
+            Product product = productService.getRequired(supplierOrderItem.getProductId());
+            supplierOrderItem.setProductExternalCode(product.getExternalId());
+        }
+
+        return supplierOrderItem.getProductExternalCode();
     }
 
     private boolean updateSupplierOrderItem(String orderId, SupplierOrderItem supplierOrderItem, OrderSynchItem aequosOrderItem) {

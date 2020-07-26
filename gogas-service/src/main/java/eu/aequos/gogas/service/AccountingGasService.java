@@ -114,7 +114,7 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
         return list;
     }
 
-    public List<ConvertibleDTO> getOrdersWithoutInvoice(LocalDate dateFrom, LocalDate dateTo, boolean aequosOrders) {
+    public List<OrderDTO> getOrdersWithoutInvoice(LocalDate dateFrom, LocalDate dateTo, boolean aequosOrders) {
         return orderRepo.findAccountedOrdersWithoutInvoice(dateFrom, dateTo, aequosOrders)
                 .stream()
                 .map(o -> new OrderDTO().fromModel(o))

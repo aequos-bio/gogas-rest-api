@@ -12,6 +12,9 @@ import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.service.*;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.AuthorizationScope;
 import org.apache.commons.io.IOUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +49,10 @@ public class OrderManagerController {
         this.configurationService = configurationService;
     }
 
+    @ApiOperation(
+        value = "Search order",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
     @IsManager
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
@@ -191,7 +198,7 @@ public class OrderManagerController {
 
     @PostMapping(value = "{orderId}/aequos/order/synch")
     public BasicResponseDTO synchOrderFromAequos(@PathVariable String orderId) throws GoGasException {
-        orderManagerService.synchOrderWithAequos(orderId);
+        orderManagerService.synchOrderWithAequos(orderId, false);
         return new BasicResponseDTO("OK");
     }
 
