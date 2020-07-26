@@ -20,9 +20,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Api("Authentication")
 @RestController
@@ -71,13 +70,13 @@ public class AuthenticationController {
 
     @GetMapping(value = "info")
     public @ResponseBody Map<String,Object> getInfo() {
-        List<Configuration> configs = configurationRepo.findAll();
-        Map<String,Object> map = new HashMap<>();
-        for(Configuration cfg : configs) {
-            if (cfg.isVisible()) {
-                map.put(cfg.getKey(), cfg);
-            }
-        }
-        return map;                  
-    }      
+        return configurationRepo.findByVisibleOrderByKey(true).stream()
+                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+    }
+
+    @GetMapping(value = "info/gas")
+    public @ResponseBody Map<String,Object> getGasInfo() {
+        return configurationRepo.findByKeyLike("gas%").stream()
+                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+    }
 }

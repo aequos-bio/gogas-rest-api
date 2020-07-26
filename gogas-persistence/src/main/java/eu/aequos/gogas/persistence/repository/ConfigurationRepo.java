@@ -19,6 +19,8 @@ public interface ConfigurationRepo extends CrudRepository<Configuration, String>
 
   List<Configuration> findByVisibleOrderByKey(boolean visible);
 
+  List<Configuration> findByKeyLike(String key);
+
   @Transactional
   @Modifying
   @Query("UPDATE Configuration c SET c.value = ?2 WHERE c.key = ?1")

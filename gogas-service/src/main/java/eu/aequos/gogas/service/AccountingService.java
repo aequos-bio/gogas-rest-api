@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public BigDecimal getBalance(String userId) {
-        return userBalanceRepo.getBalance(userId);
+        return Optional.ofNullable(userBalanceRepo.getBalance(userId))
+                .orElse(BigDecimal.ZERO);
     }
 
     public AccountingEntry create(AccountingEntryDTO dto) throws GoGasException {
