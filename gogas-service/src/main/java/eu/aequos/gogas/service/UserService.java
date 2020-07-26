@@ -211,4 +211,8 @@ public class UserService extends CrudService<User, String> {
 
         log.info("Password changed for user {}", user.getUsername());
     }
+
+    public boolean userAlreadyExists(String username) {
+        return userRepo.findByUsername(username).isPresent();
+    }
 }

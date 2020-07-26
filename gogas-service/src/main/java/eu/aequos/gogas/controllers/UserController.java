@@ -65,6 +65,16 @@ public class UserController {
     }
 
     @ApiOperation(
+        value = "Check if username exists",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
+    )
+    @GetMapping(value = "exists", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @IsAdmin
+    public BasicResponseDTO isUserExisting(@RequestParam String username) {
+        return new BasicResponseDTO(userService.userAlreadyExists(username));
+    }
+
+    @ApiOperation(
         value = "Create user",
         authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
     )
