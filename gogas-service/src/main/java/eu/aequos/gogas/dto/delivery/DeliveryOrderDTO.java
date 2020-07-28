@@ -20,5 +20,4 @@ public class DeliveryOrderDTO {
 
     private List<UserDTO> users;
     private List<DeliveryProductDTO> products;
-    private List<DeliveryOrderItemDTO> orderItems;
 }
