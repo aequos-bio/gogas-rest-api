@@ -43,8 +43,8 @@ public class UserService extends CrudService<User, String> {
         this.mailNotificationSender = mailNotificationSender;
     }
 
-    public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll) {
-        return toSelectItems(userRepo.findByRole(role.name(), UserCoreInfo.class), withAll);
+    public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll, String allLabel) {
+        return toSelectItems(userRepo.findByRole(role.name(), UserCoreInfo.class), withAll, allLabel);
     }
 
     public User create(UserDTO dto) throws MissingOrInvalidParameterException {
@@ -76,25 +76,27 @@ public class UserService extends CrudService<User, String> {
         if (includeReferral)
             selectItems.add(getSelectItem(getRequired(referralUserId)));
 
-        selectItems.addAll(toSelectItems(userRepo.findByFriendReferralId(referralUserId, UserCoreInfo.class), withAll));
+        selectItems.addAll(toSelectItems(userRepo.findByFriendReferralId(referralUserId, UserCoreInfo.class), withAll, null));
 
         return selectItems;
     }
 
     public List<SelectItemDTO> getActiveUsersByRoles(Set<String> roles) {
-        return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true), false);
+        return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true), false, null);
     }
 
     public List<SelectItemDTO> getActiveUsersForSelectByBlackListAndRoles(Set<String> blackList, Set<String> role) {
-        return toSelectItems(userRepo.findByIdNotInAndRoleInAndEnabled(blackList, role, true), false);
+        return toSelectItems(userRepo.findByIdNotInAndRoleInAndEnabled(blackList, role, true), false, null);
     }
 
-    private List<SelectItemDTO> toSelectItems(List<UserCoreInfo> users, boolean withAll) {
+    private List<SelectItemDTO> toSelectItems(List<UserCoreInfo> users, boolean withAll, String allLabel) {
         Stream<UserCoreInfo> userStream = users.stream()
                 .sorted(getUserSorting());
 
+        String emptySelectionLabel = Optional.ofNullable(allLabel).orElse("Tutti");
+
         return ListConverter.fromStream(userStream)
-                .toSelectItems(this::getSelectItem, withAll, "Tutti");
+                .toSelectItems(this::getSelectItem, withAll, emptySelectionLabel);
     }
 
     public Map<String, String> getUsersFullNameMap(Set<String> userIds) {

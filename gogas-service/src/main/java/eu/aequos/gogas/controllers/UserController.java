@@ -36,8 +36,9 @@ public class UserController {
     @GetMapping(value = "select", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     @IsAdmin
     public List<SelectItemDTO> listForSelection(@ApiParam("user role") @RequestParam User.Role role,
-                                                @ApiParam("include \"all\" entry") @RequestParam(required = false) boolean withAll) {
-        return userService.getUsersForSelect(role, withAll);
+                                                @ApiParam("include \"all\" entry") @RequestParam(required = false) boolean withAll,
+                                                @ApiParam("\"all\" label") @RequestParam String allLabel) {
+        return userService.getUsersForSelect(role, withAll, allLabel);
     }
 
     @ApiOperation(
