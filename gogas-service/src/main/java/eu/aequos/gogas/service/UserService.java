@@ -47,9 +47,12 @@ public class UserService extends CrudService<User, String> {
         return toSelectItems(userRepo.findByRole(role.name(), UserCoreInfo.class), withAll);
     }
 
-    public User create(UserDTO dto) {
+    public User create(UserDTO dto) throws MissingOrInvalidParameterException {
         if (userRepo.findByUsername(dto.getUsername()).isPresent())
             throw new DuplicatedItemException("user", dto.getUsername());
+
+        if (!dto.hasPassword())
+            throw new MissingOrInvalidParameterException("Password is required");
 
         dto.setHashedPassword(encodePassword(dto.getPassword()));
         return super.create(dto);

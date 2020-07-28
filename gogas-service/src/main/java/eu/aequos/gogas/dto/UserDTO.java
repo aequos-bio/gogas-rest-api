@@ -29,8 +29,6 @@ public final class UserDTO implements ConvertibleDTO<User> {
     @JsonProperty(value = "username")
     private String username;
 
-    @ApiModelProperty(required = true)
-    @NotEmpty
     @JsonProperty(value = "password")
     private String password;
 
@@ -115,5 +113,9 @@ public final class UserDTO implements ConvertibleDTO<User> {
             model.setFriendReferral(new User().withUserId(friendReferralId));
 
         return model;
+    }
+
+    public boolean hasPassword() {
+        return password != null && !password.isEmpty();
     }
 }
