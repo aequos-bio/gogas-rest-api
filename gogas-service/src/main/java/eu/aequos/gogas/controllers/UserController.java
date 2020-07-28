@@ -37,7 +37,7 @@ public class UserController {
     @IsAdmin
     public List<SelectItemDTO> listForSelection(@ApiParam("user role") @RequestParam User.Role role,
                                                 @ApiParam("include \"all\" entry") @RequestParam(required = false) boolean withAll,
-                                                @ApiParam("\"all\" label") @RequestParam String allLabel) {
+                                                @ApiParam("\"all\" label") @RequestParam(required = false) String allLabel) {
         return userService.getUsersForSelect(role, withAll, allLabel);
     }
 
