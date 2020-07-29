@@ -157,7 +157,7 @@ public class ProductController {
             @ApiResponse(code = 200, message = "OK", response = SelectItemDTO.class, responseContainer = "List"),
             @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
     })
-    @GetMapping(value = "{productId}/um", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "{productId}/um")
     public List<SelectItemDTO> getProductAvailableUM(@PathVariable String productId) {
         return productService.getAvailableUM(productId);
     }
