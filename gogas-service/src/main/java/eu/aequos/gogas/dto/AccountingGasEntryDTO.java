@@ -24,7 +24,7 @@ public class AccountingGasEntryDTO implements ConvertibleDTO<AccountingGasEntry>
     private String id;
 
     @JsonProperty(value = "data")
-    @JsonFormat(shape = STRING, pattern = "yyyy-MM-dd")
+    @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate date;
 
     @JsonProperty(value = "codicecausale")
