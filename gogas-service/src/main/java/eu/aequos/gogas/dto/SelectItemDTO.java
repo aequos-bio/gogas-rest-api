@@ -17,4 +17,8 @@ public class SelectItemDTO {
     public static SelectItemDTO empty(String description) {
         return new SelectItemDTO("", description);
     }
+
+    public static SelectItemDTO valueAsLabel(String description) {
+        return new SelectItemDTO(description, description);
+    }
 }

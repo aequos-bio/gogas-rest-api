@@ -4,6 +4,7 @@ import eu.aequos.gogas.attachments.AttachmentService;
 import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.OrderSynchroInfoDTO;
 import eu.aequos.gogas.dto.ProductDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.excel.products.ExcelPriceList;
 import eu.aequos.gogas.excel.products.ExtractProductsResponse;
@@ -23,10 +24,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static eu.aequos.gogas.dto.SelectItemDTO.valueAsLabel;
 
 @Slf4j
 @Service
@@ -134,5 +135,17 @@ public class ProductService extends CrudService<Product, String> {
 
     public Optional<Product> getByExternalId(String productType, String externalId) {
         return productRepo.findByTypeAndExternalId(productType, externalId);
+    }
+
+    public List<SelectItemDTO> getAvailableUM(String productId) {
+        Product product = getRequired(productId);
+
+        if (product.getBoxUm() == null)
+            return Collections.singletonList(valueAsLabel(product.getUm()));
+
+        if (product.isBoxOnly())
+            return Collections.singletonList(valueAsLabel(product.getBoxUm()));
+
+        return Arrays.asList(valueAsLabel(product.getUm()), valueAsLabel(product.getBoxUm()));
     }
 }

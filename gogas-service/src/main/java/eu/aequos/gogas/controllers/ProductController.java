@@ -148,4 +148,17 @@ public class ProductController {
         String excelType = FilenameUtils.getExtension(excelFile.getOriginalFilename());
         return productService.loadProductsFromExcel(productType, excelFileContent, excelType);
     }
+
+    @ApiOperation(
+            value = "Get Unit of Measure available for the product",
+            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "OK", response = SelectItemDTO.class, responseContainer = "List"),
+            @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
+    })
+    @GetMapping(value = "{productId}/um", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public List<SelectItemDTO> getProductAvailableUM(@PathVariable String productId) {
+        return productService.getAvailableUM(productId);
+    }
 }
