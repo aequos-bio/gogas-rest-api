@@ -50,7 +50,7 @@ public class AccountAction extends OrderStatusAction {
 
     private void updateAccountingEntries() throws InvalidOrderActionException {
         long orderAccountingEntriesCount = accountingService.countEntriesByOrderId(order.getId());
-        long orderUsers = orderItemRepo.countDistinctUserByOrderAndSummary(order.getId(), true);
+        long orderUsers = orderItemRepo.countDistinctUserByOrder(order.getId());
 
         if (orderAccountingEntriesCount < orderUsers) {
             throw new InvalidOrderActionException("Il numero di movimenti inseriti è minore degli utenti ordinanti");
