@@ -174,7 +174,7 @@ public class CloseAction extends OrderStatusAction {
                 BigDecimal decimalPart = boxesCount.remainder(BigDecimal.ONE);
 
                 if (decimalPart.compareTo(configurationService.getBoxRoundingThreshold()) >= 0)
-                    intPart.add(BigDecimal.ONE);
+                    return intPart.add(BigDecimal.ONE);
 
                 return intPart;
 
