@@ -70,7 +70,6 @@ public class UserController {
         authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin role") }) }
     )
     @GetMapping(value = "exists", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @IsAdmin
     public BasicResponseDTO isUserExisting(@RequestParam String username) {
         return new BasicResponseDTO(userService.userAlreadyExists(username));
     }
@@ -84,6 +83,7 @@ public class UserController {
         @ApiResponse(code = 409, message = "L'elemento non può essere creato perché già esistente")
     })
     @PostMapping()
+    @IsAdmin
     public BasicResponseDTO createUser(@Valid @RequestBody UserDTO userDTO) throws GoGasException {
         String userId = userService.create(userDTO).getId();
         return new BasicResponseDTO(userId);
