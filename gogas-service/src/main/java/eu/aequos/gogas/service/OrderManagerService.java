@@ -463,21 +463,14 @@ public class OrderManagerService extends CrudService<Order, String> {
     public AttachmentDTO readInvoiceAttachment(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
         byte[] attachmentContent = attachmentService.retrieveAttachment(AttachmentType.Invoice, orderId);
-        return buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
+        return attachmentService.buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
     }
 
     public AttachmentDTO extractExcelReport(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
         byte[] excelReportContent = reportService.extractOrderDetails(order);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        return buildAttachmentDTO(order, excelReportContent, contentType);
-    }
-
-    private AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String contentType) {
-        String fileName = attachmentService.buildFileName(order.getOrderType().getDescription(),
-                order.getDeliveryDate(), contentType);
-
-        return new AttachmentDTO(attachmentContent, contentType, fileName);
+        return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
     }
 
     public String sendOrderToAequos(String orderId) throws GoGasException {

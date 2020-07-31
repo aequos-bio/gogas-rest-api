@@ -23,6 +23,9 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
 
     List<OrderItem> findByOrderAndSummary(String orderId, boolean summary);
 
+    @Query("SELECT o FROM OrderItem o WHERE o.order = ?1 AND (o.user = ?2 OR o.friendReferral = ?2) AND o.summary = false")
+    List<OrderItem> findByOrderAndUserOrFriend(String orderItemId, String userId);
+
     <T> Optional<T> findByUserAndOrderAndProductAndSummary(String userId, String orderId, String product, boolean summary, Class<T> type);
 
     @Query("SELECT o.id FROM OrderItem o WHERE o.id = ?1 AND (o.user = ?2 OR o.friendReferral = ?2)")

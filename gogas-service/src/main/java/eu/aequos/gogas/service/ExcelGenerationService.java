@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -113,11 +114,54 @@ public class ExcelGenerationService {
         }
     }
 
+    public byte[] extractFriendsOrderDetails(Order order, String userId) throws ItemNotFoundException, GoGasException {
+        List<OrderItemExport> originalOrderItems = orderItemRepo.findByOrderAndUserOrFriend(order.getId(), userId).stream()
+                .map(this::getOrderItemsForFriendExport)
+                .collect(Collectors.toList());
+
+        List<UserExport> userList = userRepo.findUserAndFriendsByUserId(userId).stream()
+                .map(this::convertUserForExport)
+                .sorted(Comparator.comparing(UserExport::getFullName))
+                .collect(Collectors.toList());
+
+        List<ProductExport> products = getProductsForFriendExport(originalOrderItems).stream()
+                .map(this::convertProductForExport)
+                .collect(Collectors.toList());
+
+        List<OrderItem> summaryOrderItems = orderItemRepo.findByUserAndOrderAndSummary(userId, order.getId(), true, OrderItem.class);
+        List<SupplierOrderItemExport> supplierOrderItems = summaryOrderItems.stream()
+                .map(this::getSupplierOrderItemsForFriendExport)
+                .collect(Collectors.toList());
+
+        OrderExportRequest orderExportRequest = new OrderExportRequest();
+        orderExportRequest.setProducts(products);
+        orderExportRequest.setUsers(userList);
+        orderExportRequest.setUserOrder(originalOrderItems);
+        orderExportRequest.setSupplierOrder(supplierOrderItems);
+        orderExportRequest.setFriends(true);
+
+        try {
+            return excelServiceClient.order(orderExportRequest);
+        } catch(Exception ex) {
+            log.error("Error while calling excel service", ex);
+            throw new GoGasException("Error while generating excel file");
+        }
+    }
+
     private OrderItemExport getOrderItemsForExport(OrderItem item) {
         OrderItemExport i = new OrderItemExport();
         i.setProductId(item.getProduct());
         i.setUserId(item.getUser());
         i.setQuantity(item.getDeliveredQuantity());
+        i.setUnitPrice(item.getPrice());
+        return i;
+    }
+
+    private OrderItemExport getOrderItemsForFriendExport(OrderItem item) {
+        OrderItemExport i = new OrderItemExport();
+        i.setProductId(item.getProduct());
+        i.setUserId(item.getUser());
+        i.setQuantity(item.getOrderedQuantity());
         i.setUnitPrice(item.getPrice());
         return i;
     }
@@ -154,6 +198,14 @@ public class ExcelGenerationService {
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
     }
 
+    private List<Product> getProductsForFriendExport(List<OrderItemExport> orderItems) {
+        Set<String> productIdsInOrder = orderItems.stream()
+                .map(item -> item.getProductId())
+                .collect(Collectors.toSet());
+
+        return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
+    }
+
 
     private ProductExport convertProductForExport(Product pr) {
         ProductExport p = new ProductExport();
@@ -171,6 +223,15 @@ public class ExcelGenerationService {
         s.setUnitPrice(item.getUnitPrice());
         s.setBoxWeight(item.getBoxWeight());
         s.setQuantity(item.getBoxesCount());
+        return s;
+    }
+
+    private SupplierOrderItemExport getSupplierOrderItemsForFriendExport(OrderItem item) {
+        SupplierOrderItemExport s = new SupplierOrderItemExport();
+        s.setProductId(item.getProduct());
+        s.setUnitPrice(item.getPrice());
+        s.setBoxWeight(BigDecimal.ZERO);
+        s.setQuantity(item.getDeliveredQuantity());
         return s;
     }
 

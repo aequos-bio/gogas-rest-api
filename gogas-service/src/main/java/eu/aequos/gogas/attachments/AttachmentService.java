@@ -1,8 +1,10 @@
 package eu.aequos.gogas.attachments;
 
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.multitenancy.TenantContext;
+import eu.aequos.gogas.persistence.entity.Order;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
@@ -55,6 +57,13 @@ public class AttachmentService {
             log.error("Error while retrieving attachment {} of type {}", fileName, type, ex);
             throw new GoGasException("Unable to read attachment");
         }
+    }
+
+    public AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String contentType) {
+        String fileName = buildFileName(order.getOrderType().getDescription(),
+                order.getDeliveryDate(), contentType);
+
+        return new AttachmentDTO(attachmentContent, contentType, fileName);
     }
 
     public String buildFileName(String description, LocalDate date, String mimeType) {

@@ -11,6 +11,8 @@ import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -68,5 +70,12 @@ public class OrderFriendController {
 
         String userId = authorizationService.getCurrentUser().getId();
         return orderFriendService.insertFriendOrderItem(userId, orderId, orderItem);
+    }
+
+    @GetMapping(value = "{orderId}/export")
+    public void exportUserOrderItems(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException, GoGasException {
+        String userId = authorizationService.getCurrentUser().getId();
+        AttachmentDTO excelAttachment = orderFriendService.extractExcelReport(orderId, userId);
+        excelAttachment.writeToHttpResponse(response);
     }
 }

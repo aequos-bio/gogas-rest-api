@@ -1,10 +1,8 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.attachments.AttachmentService;
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.OrderItemByProductDTO;
-import eu.aequos.gogas.dto.OrderItemUpdateRequest;
-import eu.aequos.gogas.dto.SelectItemDTO;
-import eu.aequos.gogas.dto.UserOrderItemDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Order;
@@ -15,6 +13,7 @@ import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.OrderItemQtyOnly;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,20 +22,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class OrderFriendService {
 
     private OrderItemService orderItemService;
     private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
-
-    public OrderFriendService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                              ProductService productService, UserService userService) {
-        this.orderItemService = orderItemService;
-        this.orderManagerService = orderManagerService;
-        this.productService = productService;
-        this.userService = userService;
-    }
+    private ExcelGenerationService reportService;
+    private AttachmentService attachmentService;
 
     private List<Product> getProducts(boolean showAllProductsOnPriceList, String orderTypeId, Collection<OpenOrderItem> orderItems) {
         if (showAllProductsOnPriceList)
@@ -191,5 +185,12 @@ public class OrderFriendService {
         return friendsList.stream()
                 .filter(u -> !userIdsAlreadyOrdered.contains(u.getId()))
                 .collect(Collectors.toList());
+    }
+
+    public AttachmentDTO extractExcelReport(String orderId, String userId) {
+        Order order = orderManagerService.getRequiredWithType(orderId);
+        byte[] excelReportContent = reportService.extractFriendsOrderDetails(order, userId);
+        String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
     }
 }
