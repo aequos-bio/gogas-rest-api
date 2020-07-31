@@ -77,7 +77,7 @@ public class OrderUserService {
     }
 
     private List<UserOrderSummary> fetchUserOrderSummary(String userId, String userRole, Set<String> orderIds) {
-        if (userRole.equals(User.Role.A.name()))
+        if (userRole.equals(User.Role.S.name()))
             return orderRepo.findFriendOrderSummary(userId, orderIds);
 
         return orderRepo.findUserOrderSummary(userId, orderIds);
