@@ -58,7 +58,7 @@ public class OrderUserService {
                 .collect(Collectors.toList());
     }
 
-    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
+    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, String userRole) {
 
         List<Order> orderList = getFilteredOrders(searchFilter, userId);
 
@@ -68,12 +68,19 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(orderList)
                 .extractIds(Order::getId);
 
-        Map<String, UserOrderSummary> orderSummaries = orderRepo.findUserOrderSummary(userId, orderIds).stream()
+        Map<String, UserOrderSummary> orderSummaries = fetchUserOrderSummary(userId, userRole, orderIds).stream()
                 .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
 
         return orderList.stream()
                 .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
                 .collect(Collectors.toList());
+    }
+
+    private List<UserOrderSummary> fetchUserOrderSummary(String userId, String userRole, Set<String> orderIds) {
+        if (userRole.equals(User.Role.A.name()))
+            return orderRepo.findFriendOrderSummary(userId, orderIds);
+
+        return orderRepo.findUserOrderSummary(userId, orderIds);
     }
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {

@@ -5,6 +5,7 @@ import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.security.AuthorizationService;
+import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.service.OrderUserService;
 import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
@@ -34,7 +35,8 @@ public class OrderUserController {
 
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
-        return orderUserService.search(searchFilter, authorizationService.getCurrentUser().getId());
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        return orderUserService.search(searchFilter, currentUser.getId(), currentUser.getRole());
     }
 
     @GetMapping(value = "{orderId}")

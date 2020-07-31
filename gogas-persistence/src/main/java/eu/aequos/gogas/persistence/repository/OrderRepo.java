@@ -70,6 +70,27 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
             "WHERE d.idDateOrdini IN ?2", nativeQuery = true)
     List<UserOrderSummary> findUserOrderSummary(String userId, Set<String> orderIds);
 
+    @Query(value = "SELECT d.idDateOrdini AS orderId, " +
+            "CASE " +
+            "   WHEN t.\"external\" = 1 OR t.totaleCalcolato = 0 THEN " +
+            "       (SELECT SUM(importo) FROM movimenti m WHERE d.idDateOrdini = m.idDateOrdini AND m.idUtente = ?1) " +
+            "   ELSE " +
+            "       (SELECT SUM(COALESCE(qtaRitirataKg, qtaOrdinata) * o.prezzoKg * " +
+            "               CASE WHEN o.um = p.umCollo THEN p.pesoCassa ELSE 1 END) " +
+            "        FROM ordini o " +
+            "        INNER JOIN prodotti p ON o.idProdotto = p.idProdotto " +
+            "        WHERE d.idDateOrdini = o.idDateOrdine AND o.riepilogoUtente = (1 - t.riepilogo) AND o.idUtente = ?1" +
+            "       ) " +
+            "END as totalAmount, " +
+            "(SELECT COUNT(*) FROM ordini o WHERE d.idDateOrdini = o.idDateOrdine AND o.riepilogoUtente = (1 - t.riepilogo) AND o.idUtente = ?1) as itemsCount, " +
+            "0 as friendCount, 0 as friendAccounted, " +
+            "s.importo AS shippingCost " +
+            "FROM dateOrdini d " +
+            "INNER JOIN tipologiaOrdine t ON d.idTipologiaOrdine = t.idTipologiaOrdine " +
+            "LEFT OUTER JOIN speseTrasporto s ON  d.idDateOrdini = s.idDateOrdini AND s.idUtente = ?1 " +
+            "WHERE d.idDateOrdini IN ?2", nativeQuery = true)
+    List<UserOrderSummary> findFriendOrderSummary(String userId, Set<String> orderIds);
+
     @Modifying
     @Query("UPDATE Order o SET o.statusCode = ?2 WHERE o.id = ?1")
     int updateOrderStatus(String orderId, int status);
