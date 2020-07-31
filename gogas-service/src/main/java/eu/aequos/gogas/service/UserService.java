@@ -169,7 +169,7 @@ public class UserService extends CrudService<User, String> {
 
     public User createFriend(UserDTO userDTO, String friendReferral) {
         userDTO.setFriendReferralId(friendReferral);
-        return super.create(userDTO);
+        return create(userDTO);
     }
 
     @Transactional
