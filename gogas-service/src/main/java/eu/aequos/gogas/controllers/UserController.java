@@ -84,7 +84,6 @@ public class UserController {
         @ApiResponse(code = 409, message = "L'elemento non può essere creato perché già esistente")
     })
     @PostMapping()
-    @IsAdmin
     public BasicResponseDTO createUser(@Valid @RequestBody UserDTO userDTO) throws GoGasException {
         String userId = userService.create(userDTO).getId();
         return new BasicResponseDTO(userId);
