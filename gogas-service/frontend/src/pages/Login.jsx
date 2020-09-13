@@ -66,7 +66,7 @@ const Login = ({ authentication, location, history, info, ...props }) => {
           <div className={classes.title}>
             <img src={Logo} width="50px" height="50px" alt="" />
             <h1 style={{ margin: '0px 15px' }}>
-              {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
+              {info['gas.nome'] || 'GoGas'}
             </h1>
           </div>
 

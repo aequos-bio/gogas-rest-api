@@ -173,7 +173,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
         a.click();
         document.body.removeChild(a);
       });
-  }, [rows]);
+  }, [rows, columns]);
 
   return (
     <Container maxWidth={false}>
