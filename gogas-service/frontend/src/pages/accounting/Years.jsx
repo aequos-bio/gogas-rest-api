@@ -40,7 +40,6 @@ const Years = ({ enqueueSnackbar }) => {
           if (y.error) {
             enqueueSnackbar(y.errorMessage, { variant: 'error' });
           } else {
-            debugger;
             alert(`Creato nuovo anno contabile ${y.data.data.year}`);
             // eslint-disable-next-line no-use-before-define
             reload();
