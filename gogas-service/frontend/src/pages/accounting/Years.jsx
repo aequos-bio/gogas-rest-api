@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -14,7 +15,8 @@ import {
 } from '@material-ui/core';
 import { withSnackbar } from 'notistack';
 import _ from 'lodash';
-import { apiGetJson, apiPut } from '../../utils/axios_utils';
+import moment from 'moment-timezone';
+import { apiGetJson, apiPut, apiPost } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
 import ActionDialog from '../../components/ActionDialog';
@@ -25,6 +27,29 @@ const Years = ({ enqueueSnackbar }) => {
   const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState();
 
+  const checkCurrentYear = yy => {
+    const currentYear = Number.parseInt(moment().format('YYYY'), 10);
+    const existing = yy.filter(y => y.year === currentYear);
+    if (!existing.length) {
+      // eslint-disable-next-line no-restricted-globals
+      const result = confirm(
+        `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`
+      );
+      if (result) {
+        apiPost(`/api/year/${currentYear}`).then(y => {
+          if (y.error) {
+            enqueueSnackbar(y.errorMessage, { variant: 'error' });
+          } else {
+            debugger;
+            alert(`Creato nuovo anno contabile ${y.data.data.year}`);
+            // eslint-disable-next-line no-use-before-define
+            reload();
+          }
+        });
+      }
+    }
+  };
+
   const reload = useCallback(() => {
     setLoading(true);
     apiGetJson('/api/year/all', {}).then(yy => {
@@ -33,6 +58,7 @@ const Years = ({ enqueueSnackbar }) => {
         enqueueSnackbar(yy.errorMessage, { variant: 'error' });
       } else {
         setYears(_.orderBy(yy.data, 'year', 'desc'));
+        checkCurrentYear(yy.data);
       }
     });
   }, [enqueueSnackbar]);

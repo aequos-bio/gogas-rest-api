@@ -31,6 +31,14 @@ public class YearController {
         return new RestResponse<>(years);
     }
 
+    @PostMapping("/{year}")
+    public BasicResponseDTO add(@PathVariable int year) {
+        Year newyear = new Year();
+        newyear.setYear(year);
+        repo.save(newyear);
+        return new BasicResponseDTO(newyear);
+    }
+
     @PutMapping(value = "/close/{year}")
     public BasicResponseDTO close(@PathVariable int year) {
         Optional<Year> opt = repo.findById(year);
