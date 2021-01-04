@@ -131,15 +131,21 @@ const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
   const syncOrders = useCallback(() => {
     apiGet(
       `api/accounting/gas/syncAequosOrdersWithoutInvoice/${accounting.currentYear}`
-    ).then(response => {
-      reload();
-      enqueueSnackbar(
-        `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
-        {
-          variant: 'success',
-        }
-      );
-    });
+    )
+      .then(response => {
+        reload();
+        enqueueSnackbar(
+          `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
+          {
+            variant: 'success',
+          }
+        );
+      })
+      .catch(err => {
+        enqueueSnackbar(`Errore di sincronizzazione: ${err}`, {
+          variant: 'error',
+        });
+      });
   }, [enqueueSnackbar, accounting, reload]);
 
   const rows = useMemo(() => {
