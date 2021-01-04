@@ -179,7 +179,11 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   return (
     <Container maxWidth={false}>
       <PageTitle title="Tipi di ordine">
-        <Button onClick={syncWithAequos} startIcon={<SyncIcon />}>
+        <Button
+          onClick={syncWithAequos}
+          variant="outlined"
+          startIcon={<SyncIcon />}
+        >
           Sincronizza
         </Button>
       </PageTitle>

@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable no-alert */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/control-has-associated-label */
@@ -20,36 +21,37 @@ import { apiGetJson, apiPut, apiPost } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
 import ActionDialog from '../../components/ActionDialog';
+import { setAccountingYear } from '../../store/actions';
 
-const Years = ({ enqueueSnackbar }) => {
+const Years = ({ enqueueSnackbar, accounting, setAccountingYear }) => {
   const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(false);
   const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState();
 
-  const checkCurrentYear = yy => {
-    const currentYear = Number.parseInt(moment().format('YYYY'), 10);
-    const existing = yy.filter(y => y.year === currentYear);
-    if (!existing.length) {
-      // eslint-disable-next-line no-restricted-globals
-      const result = confirm(
-        `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`
-      );
-      if (result) {
-        apiPost(`/api/year/${currentYear}`).then(y => {
-          if (y.error) {
-            enqueueSnackbar(y.errorMessage, { variant: 'error' });
-          } else {
-            alert(`Creato nuovo anno contabile ${y.data.data.year}`);
-            // eslint-disable-next-line no-use-before-define
-            reload();
-          }
-        });
-      }
-    }
-  };
-
   const reload = useCallback(() => {
+    const checkCurrentYear = yy => {
+      const currentYear = Number.parseInt(moment().format('YYYY'), 10);
+      const existing = yy.filter(y => y.year === currentYear);
+      if (!existing.length) {
+        // eslint-disable-next-line no-restricted-globals
+        const result = confirm(
+          `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`
+        );
+        if (result) {
+          apiPost(`/api/year/${currentYear}`).then(y => {
+            if (y.error) {
+              enqueueSnackbar(y.errorMessage, { variant: 'error' });
+            } else {
+              alert(`Creato nuovo anno contabile ${y.data.data.year}`);
+              // eslint-disable-next-line no-use-before-define
+              reload();
+            }
+          });
+        }
+      }
+    };
+
     setLoading(true);
     apiGetJson('/api/year/all', {}).then(yy => {
       setLoading(false);
@@ -98,23 +100,35 @@ const Years = ({ enqueueSnackbar }) => {
           <TableCell>{y.year}</TableCell>
           <TableCell style={{ color: y.closed ? 'red' : 'black' }}>
             {y.closed ? 'Chiuso' : `Aperto${i === 0 ? ', in corso' : ''}`}
+            {y.year === accounting.currentYear ? ', corrente' : ''}
           </TableCell>
           <TableCell align="right">
             {y.closed || i === 0 ? null : (
               <Button
                 variant="outlined"
                 size="small"
-                color="secondary"
                 onClick={() => closeYear(y)}
               >
                 Chiudi
+              </Button>
+            )}
+            {y.year === accounting.currentYear ? null : (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  setAccountingYear(y.year);
+                }}
+                style={{ marginLeft: '5px' }}
+              >
+                Seleziona
               </Button>
             )}
           </TableCell>
         </TableRow>
       ))
     );
-  }, [years, closeYear, loading]);
+  }, [years, closeYear, loading, accounting, setAccountingYear]);
 
   return (
     <Container maxWidth={false}>
@@ -148,11 +162,13 @@ const Years = ({ enqueueSnackbar }) => {
 
 const mapStateToProps = state => {
   return {
-    authentication: state.authentication,
+    accounting: state.accounting,
   };
 };
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  setAccountingYear,
+};
 
 export default connect(
   mapStateToProps,

@@ -117,7 +117,6 @@ const NavBar = ({
   const openBalanceDetail = useCallback(() => {
     history.push(`/userAccountingDetails?userId=${jwt.id}`);
   }, [history, jwt]);
-
   return (
     <>
       <AppBar className={classes.appbar} position="fixed">
@@ -132,7 +131,7 @@ const NavBar = ({
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" className={classes.title}>
-            {info['gas.nome'] ? info['gas.nome'].value : 'GoGas'}
+            {info['gas.nome'] || 'GoGas'}
           </Typography>
           {authentication && (
             <div className={classes.userbutton}>

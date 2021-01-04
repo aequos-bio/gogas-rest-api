@@ -146,7 +146,11 @@ function UserAccounting({ history, enqueueSnackbar }) {
   return (
     <Container maxWidth={false}>
       <PageTitle title="Situazione contabile utenti">
-        <Button onClick={() => setExportDlgOpen(true)} startIcon={<SaveIcon />}>
+        <Button
+          onClick={() => setExportDlgOpen(true)}
+          variant="outlined"
+          startIcon={<SaveIcon />}
+        >
           Esporta XLS
         </Button>
       </PageTitle>

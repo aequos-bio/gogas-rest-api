@@ -8,6 +8,7 @@ export const LOGIN_END = 'LOGIN_END';
 export const LOGIN_ERROR = 'LOGIN_ERROR';
 export const LOGOUT_END = 'LOGOUT_END';
 export const LOGOUT_ERROR = 'LOGOUT_ERROR';
+export const SET_YEAR = 'SET_YEAR';
 
 // ////////////
 // INFO
@@ -81,6 +82,15 @@ export const logout = () => {
     Cookies.expire('jwt-token');
     dispatch({
       type: LOGOUT_END,
+    });
+  };
+};
+
+export const setAccountingYear = year => {
+  return dispatch => {
+    dispatch({
+      type: SET_YEAR,
+      payload: year,
     });
   };
 };

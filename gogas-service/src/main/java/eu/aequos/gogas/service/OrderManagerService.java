@@ -548,12 +548,14 @@ public class OrderManagerService extends CrudService<Order, String> {
                 aequosItemsMap.remove(productExternalCode);
         }
 
-        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap.values().stream()
-                .map(aequosItem -> createSupplierOrderItem(orderId, orderTypeId, aequosItem))
-                .collect(toList());
+        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap
+            .values()
+            .stream()
+            .map(aequosItem -> createSupplierOrderItem(orderId, orderTypeId, aequosItem))
+            .collect(toList());
 
         existingSupplierOrderItems.addAll(newSupplierOrderItems);
-
+        existingSupplierOrderItems.removeAll(Collections.singleton(null));
         supplierOrderItemRepo.saveAll(existingSupplierOrderItems);
     }
 
@@ -596,8 +598,12 @@ public class OrderManagerService extends CrudService<Order, String> {
     private SupplierOrderItem createSupplierOrderItem(String orderId, String orderTypeId, OrderSynchItem aequosOrderItem) {
         Optional<Product> product = productService.getByExternalId(orderTypeId, aequosOrderItem.getId());
 
-        log.info("Creating new supplier order item for product with id {} ({})", product.get().getId(), aequosOrderItem.getId());
+        // Necessario per evitare errori di sincronia con l'ordine del fresco di novembre 2020 in cui compare un item TRASPORTO0000 inesistente (Trasporto Cartizze?)
+        if (!product.isPresent()) {
+            return null;
+        }
 
+        log.info("Creating new supplier order item for product with id {} ({})", product.get().getId(), aequosOrderItem.getId());
         SupplierOrderItem item = new SupplierOrderItem();
         item.setOrderId(orderId);
         item.setProductId(product.get().getId());

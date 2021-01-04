@@ -30,7 +30,7 @@ function Users({ info, enqueueSnackbar }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const sort = info['visualizzazione.utenti']
-    ? info['visualizzazione.utenti'].value
+    ? info['visualizzazione.utenti']
     : 'NC';
 
   const reload = useCallback(() => {

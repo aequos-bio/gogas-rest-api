@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
@@ -54,10 +55,9 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const InvoiceManagement = ({ enqueueSnackbar }) => {
+const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
   const classes = useStyles();
   // eslint-disable-next-line no-unused-vars
-  const [year, setYear] = useState(moment().format('YYYY'));
   const [aequosAccountingCode, setAequosAccountingCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState([]);
@@ -74,7 +74,10 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
       }
     });
 
-    apiGetJson(`/api/accounting/gas/invoices/${year}`, {}).then(tt => {
+    apiGetJson(
+      `/api/accounting/gas/invoices/${accounting.currentYear}`,
+      {}
+    ).then(tt => {
       setLoading(false);
       if (tt.error) {
         enqueueSnackbar(tt.errorMessage, { variant: 'error' });
@@ -82,7 +85,7 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
         setEntries(_.orderBy(tt, ['invoiceDate']));
       }
     });
-  }, [enqueueSnackbar, year]);
+  }, [enqueueSnackbar, accounting]);
 
   useEffect(() => {
     reload();
@@ -126,29 +129,28 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
   );
 
   const syncOrders = useCallback(() => {
-    apiGet(`api/accounting/gas/syncAequosOrdersWithoutInvoice/${year}`).then(
-      response => {
-        console.log(response);
-        reload();
-        enqueueSnackbar(
-          `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
-          {
-            variant: 'success',
-          }
-        );
-      }
-    );
-  }, [enqueueSnackbar, year, reload]);
+    apiGet(
+      `api/accounting/gas/syncAequosOrdersWithoutInvoice/${accounting.currentYear}`
+    ).then(response => {
+      reload();
+      enqueueSnackbar(
+        `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
+        {
+          variant: 'success',
+        }
+      );
+    });
+  }, [enqueueSnackbar, accounting, reload]);
 
   const rows = useMemo(() => {
     return loading ? (
       <LoadingRow colSpan={7} />
     ) : (
-      entries.map(e => {
+      entries.map((e, j) => {
         const scaduta =
           !e.paid && moment().diff(moment(e.invoiceDate), 'days') > 30;
         return (
-          <TableRow key={`invoice-${e.accountingCode}-${e.invoiceNumber}`}>
+          <TableRow key={`invoice-${e.accountingCode}-${e.invoiceNumber}-${j}`}>
             <TableCell>{moment(e.invoiceDate).format('DD/MM/YYYY')}</TableCell>
             <TableCell>{e.invoiceNumber}</TableCell>
             <TableCell>{e.description}</TableCell>
@@ -190,8 +192,10 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Gestione fatture fornitori">
-        <Button type="button" onClick={syncOrders}>
+      <PageTitle
+        title={`Gestione fatture fornitori - ${accounting.currentYear}`}
+      >
+        <Button type="button" variant="outlined" onClick={syncOrders}>
           Sincronizza fatture Aequos
         </Button>
       </PageTitle>
@@ -234,7 +238,7 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
 
 const mapStateToProps = state => {
   return {
-    authentication: state.authentication,
+    accounting: state.accounting,
   };
 };
 

@@ -338,7 +338,11 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
         title={`Dettaglio situazione contabile di ${user.nome ||
           ''} ${user.cognome || ''}`}
       >
-        <Button onClick={downloadXls} startIcon={<SaveIcon />}>
+        <Button
+          onClick={downloadXls}
+          variant="outlined"
+          startIcon={<SaveIcon />}
+        >
           Esporta XLS
         </Button>
       </PageTitle>

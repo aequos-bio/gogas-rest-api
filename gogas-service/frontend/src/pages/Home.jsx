@@ -73,7 +73,7 @@ const Home = ({ authentication, info }) => {
                 {o.userOrders.map(uo => (
                   <div key={`userorder-${o.id}-${uo.userId}`}>
                     {info['visualizzazione.utenti'] &&
-                    info['visualizzazione.utenti'].value === 'NC'
+                    info['visualizzazione.utenti'] === 'NC'
                       ? `${uo.firstname} ${uo.lastname}`
                       : `${uo.lastname} ${uo.firstname}`}
                     , {uo.itemsCount} articoli, {uo.totalAmount.toFixed(2)} €

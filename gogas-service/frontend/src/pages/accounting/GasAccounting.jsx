@@ -11,9 +11,7 @@ import { apiGetJson } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import DataTable from '../../components/DataTable';
 
-const GasAccounting = ({ enqueueSnackbar }) => {
-  // eslint-disable-next-line no-unused-vars
-  const [year, setYear] = useState(moment().format('YYYY'));
+const GasAccounting = ({ enqueueSnackbar, accounting }) => {
   const [loading, setLoading] = useState(false);
   const [userEntries, setUserEntries] = useState([]);
   const [gasEntries, setGasEntries] = useState([]);
@@ -47,10 +45,10 @@ const GasAccounting = ({ enqueueSnackbar }) => {
 
     Promise.all([
       apiGetJson(`/api/accounting/user/entry/list`, {
-        dateFrom: `01/01/${year}`,
-        dateTo: `31/12/${year}`,
+        dateFrom: `01/01/${accounting.currentYear}`,
+        dateTo: `31/12/${accounting.currentYear}`,
       }),
-      apiGetJson(`/api/accounting/gas/report/${year}`, {}),
+      apiGetJson(`/api/accounting/gas/report/${accounting.currentYear}`, {}),
     ]).then(([user, gas]) => {
       setLoading(false);
       if (user.error || gas.error) {
@@ -62,7 +60,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
         setGasEntries(gas);
       }
     });
-  }, [enqueueSnackbar, year]);
+  }, [enqueueSnackbar, accounting]);
 
   useEffect(() => {
     reload();
@@ -177,8 +175,10 @@ const GasAccounting = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Situazione contabile del GAS">
-        <Button onClick={exportXls} startIcon={<SaveIcon />}>
+      <PageTitle
+        title={`Situazione contabile del GAS - ${accounting.currentYear}`}
+      >
+        <Button onClick={exportXls} variant="outlined" startIcon={<SaveIcon />}>
           Esporta XLS
         </Button>
       </PageTitle>
@@ -200,7 +200,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
 
 const mapStateToProps = state => {
   return {
-    authentication: state.authentication,
+    accounting: state.accounting,
   };
 };
 

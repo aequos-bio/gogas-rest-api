@@ -40,7 +40,7 @@ const EditTransactionDialog = ({
 }) => {
   const classes = useStyles();
   const sort = info['visualizzazione.utenti']
-    ? info['visualizzazione.utenti'].value
+    ? info['visualizzazione.utenti']
     : 'NC';
   const userLabel = useCallback(
     u => {
