@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
@@ -40,6 +41,12 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
     { label: 'TYPE', type: 'Number', property: 'type' },
   ];
 
+  const checkDateFormat = data => {
+    return data.includes('/')
+      ? moment(data, 'DD/MM/YYYY').format('YYYY-MM-DD')
+      : data;
+  };
+
   const reload = useCallback(() => {
     setLoading(true);
 
@@ -56,8 +63,18 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
           variant: 'error',
         });
       } else {
-        setUserEntries(user);
-        setGasEntries(gas);
+        setUserEntries(
+          user.map(u => ({
+            ...u,
+            data: checkDateFormat(u.data),
+          }))
+        );
+        setGasEntries(
+          gas.map(g => ({
+            ...g,
+            data: checkDateFormat(g.data),
+          }))
+        );
       }
     });
   }, [enqueueSnackbar, accounting]);
@@ -74,7 +91,7 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
         return {
           ...e,
           descrizione: `${e.nomecausale} (${e.nomeutente}): ${e.descrizione}`,
-          data: moment(e.data, 'DD/MM/YYYY').format('YYYY-MM-DD'),
+          data: moment(e.data).format('YYYY-MM-DD'),
           dare: '1000',
           avere: 'C_XXX',
           type: 4,
@@ -84,7 +101,7 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
         // addebiti
         ...e,
         descrizione: `${e.nomecausale} (${e.nomeutente}): ${e.descrizione}`,
-        data: moment(e.data, 'DD/MM/YYYY').format('YYYY-MM-DD'),
+        data: moment(e.data).format('YYYY-MM-DD'),
         dare: 'C_XXX',
         avere: '3000',
         type: 3,
