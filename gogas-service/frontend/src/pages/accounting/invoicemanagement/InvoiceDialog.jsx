@@ -126,6 +126,10 @@ const InvoiceDialog = ({
       .catch(catchFn);
   }, [number, date, amount, orderIds, paymentDate, onClose, enqueueSnackbar]);
 
+  const cancel = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
   const selectOrder = useCallback(id => {
     const ids = [];
     ids.push(id);
@@ -146,7 +150,7 @@ const InvoiceDialog = ({
   }, [orders, orderIds, classes, selectOrder]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={cancel} maxWidth="sm" fullWidth>
       <DialogTitle>{invoice ? 'Modifica' : 'Nuova'} fattura</DialogTitle>
 
       <DialogContent>
@@ -213,14 +217,7 @@ const InvoiceDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button
-          onClick={() => {
-            onClose();
-          }}
-        >
-          Annulla
-        </Button>
-
+        <Button onClick={cancel}>Annulla</Button>
         <Button onClick={save} disabled={!canSave}>
           Salva
         </Button>

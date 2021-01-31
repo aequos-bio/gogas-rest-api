@@ -51,6 +51,8 @@ const UserItem = ({
   onEdit,
   onDelete,
   onPasswordReset,
+  onEnable,
+  onDisable,
 }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -68,18 +70,28 @@ const UserItem = ({
 
   const handleEdit = useCallback(() => {
     setAnchorEl(null);
-    onEdit(user.idUtente);
+    onEdit(user);
   }, [user, onEdit]);
 
   const handleDelete = useCallback(() => {
     setAnchorEl(null);
-    onDelete(user.idUtente);
+    onDelete(user);
   }, [user, onDelete]);
+
+  const handleEnable = useCallback(() => {
+    setAnchorEl(null);
+    onEnable(user);
+  }, [user, onEnable]);
+
+  const handleDisable = useCallback(() => {
+    setAnchorEl(null);
+    onDisable(user);
+  }, [user, onDisable]);
 
   const handlePasswordReset = useCallback(() => {
     setAnchorEl(null);
-    onPasswordReset(user.idUtente);
-  }, [onPasswordReset, user.idUtente]);
+    onPasswordReset(user);
+  }, [onPasswordReset, user]);
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);
@@ -158,6 +170,12 @@ const UserItem = ({
             }}
           >
             <MenuItem onClick={handleEdit}>Modifica</MenuItem>
+            {user.attivo ? null : (
+              <MenuItem onClick={handleEnable}>Riattiva</MenuItem>
+            )}
+            {user.attivo ? (
+              <MenuItem onClick={handleDisable}>Disattiva</MenuItem>
+            ) : null}
             <MenuItem onClick={handleDelete}>Elimina</MenuItem>
             <MenuItem onClick={handlePasswordReset}>Reset password</MenuItem>
           </Menu>
