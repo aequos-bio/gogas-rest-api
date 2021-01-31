@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { connect } from 'react-redux';
 import {
   Dialog,
   DialogTitle,
@@ -40,10 +41,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
+const InvoiceDialog = ({
+  open,
+  onClose,
+  invoice,
+  enqueueSnackbar,
+  accounting,
+}) => {
   const classes = useStyles();
-  // eslint-disable-next-line no-unused-vars
-  const [year, setYear] = useState(moment().format('YYYY'));
   const [orders, setOrders] = useState([]);
   const [date, setDate] = useState();
   const [number, setNumber] = useState();
@@ -53,7 +58,9 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
 
   useEffect(() => {
     if (open) {
-      apiGet(`api/accounting/gas/ordersWithoutInvoice/${year}`).then(oo => {
+      apiGet(
+        `api/accounting/gas/ordersWithoutInvoice/${accounting.currentYear}`
+      ).then(oo => {
         setOrders(
           _.orderBy(
             oo.data,
@@ -76,7 +83,7 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
       setOrderIds([]);
       setPaymentDate();
     }
-  }, [invoice, open, year]);
+  }, [invoice, open, accounting]);
 
   const canSave = useMemo(() => {
     return date && number && amount && orderIds.length;
@@ -222,4 +229,15 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(InvoiceDialog);
+const mapStateToProps = state => {
+  return {
+    accounting: state.accounting,
+  };
+};
+
+const mapDispatchToProps = {};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withSnackbar(InvoiceDialog));

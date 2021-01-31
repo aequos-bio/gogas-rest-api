@@ -201,6 +201,9 @@ const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
       <PageTitle
         title={`Gestione fatture fornitori - ${accounting.currentYear}`}
       >
+        <Button type="button" variant="outlined" onClick={reload}>
+          Ricarica
+        </Button>
         <Button type="button" variant="outlined" onClick={syncOrders}>
           Sincronizza fatture Aequos
         </Button>
