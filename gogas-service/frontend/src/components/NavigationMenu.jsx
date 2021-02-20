@@ -38,6 +38,9 @@ const useStyles = makeStyles(theme => ({
     ...theme.mixins.toolbar,
     justifyContent: 'flex-end',
   },
+  menu: {
+    flexGrow: 1,
+  },
   menuContainer: {
     width: drawerWidth,
     padding: theme.spacing(1, 0),
@@ -64,16 +67,17 @@ const useStyles = makeStyles(theme => ({
       marginRight: theme.spacing(2),
     },
   },
+  credits: {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(1.5, 0),
+  },
   logo: {
     display: 'flex',
     justifyContent: 'center',
-    position: 'fixed',
-    bottom: theme.spacing(6),
     width: drawerWidth,
   },
   copyright: {
-    position: 'fixed',
-    bottom: theme.spacing(1),
     width: drawerWidth,
     textAlign: 'center',
   },
@@ -100,6 +104,13 @@ const menuItems = [
     label: 'Contabilità',
     items: [
       { label: 'Anni contabili', url: '/years', restrictions: ['A'], icon: 1 },
+      { label: 'Causali', url: '/reasons', restrictions: ['A'], icon: 4 },
+      {
+        label: 'Codici contabili',
+        url: '/accountingcodes',
+        restrictions: ['A'],
+        icon: 7,
+      },
       {
         label: 'Situazione utenti',
         url: '/useraccounting',
@@ -107,16 +118,16 @@ const menuItems = [
         icon: 2,
       },
       {
-        label: 'Contabilità del GAS',
-        url: '/gasaccounting',
-        restrictions: ['A'],
-        icon: 8,
-      },
-      {
         label: 'Fatture',
         url: '/invoices',
         restrictions: ['A'],
         icon: 9,
+      },
+      {
+        label: 'Contabilità del GAS',
+        url: '/gasaccounting',
+        restrictions: ['A'],
+        icon: 8,
       },
     ],
   },
@@ -124,18 +135,11 @@ const menuItems = [
     label: 'Gestione',
     items: [
       { label: 'Utenti', url: '/users', restrictions: ['A'], icon: 3 },
-      { label: 'Causali', url: '/reasons', restrictions: ['A'], icon: 4 },
       {
         label: 'Tipi ordine',
         url: '/ordertypes',
         restrictions: ['A'],
         icon: 5,
-      },
-      {
-        label: 'Codici contabili',
-        url: '/accountingcodes',
-        restrictions: ['A'],
-        icon: 7,
       },
       { label: 'Referenti', url: '/managers', restrictions: ['A'], icon: 6 },
     ],
@@ -226,20 +230,21 @@ const NavigationMenu = ({ authentication, open, onClose }) => {
 
   return (
     <Drawer className={classes.drawer} open={open} onClose={onClose}>
-      {menu}
-
-      <div className={classes.logo}>
-        <Avatar src={Logo} />
+      <div className={classes.menu}>{menu}</div>
+      <div className={classes.credits}>
+        <div className={classes.logo}>
+          <Avatar src={Logo} />
+        </div>
+        <Typography
+          className={classes.copyright}
+          variant="overline"
+          display="block"
+          gutterBottom
+          color="textSecondary"
+        >
+          Copyright 2019-2020 AEQUOS.BIO
+        </Typography>
       </div>
-      <Typography
-        className={classes.copyright}
-        variant="overline"
-        display="block"
-        gutterBottom
-        color="textSecondary"
-      >
-        Copyright 2019-2020 AEQUOS.BIO
-      </Typography>
     </Drawer>
   );
 };
