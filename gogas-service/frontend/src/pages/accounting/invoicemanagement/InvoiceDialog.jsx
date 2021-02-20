@@ -171,6 +171,7 @@ const InvoiceDialog = ({
                 value={date ? moment(date) : null}
                 onChange={setDate}
                 autoOk
+                inputVariant="outlined"
               />
             </MuiPickersUtilsProvider>
           </Grid>
