@@ -112,6 +112,12 @@ const menuItems = [
         icon: 7,
       },
       {
+        label: 'Movimenti del gas',
+        url: '/gasmovements',
+        restrictions: ['A'],
+        icon: 2,
+      },
+      {
         label: 'Situazione utenti',
         url: '/useraccounting',
         restrictions: ['A'],
@@ -226,7 +232,7 @@ const NavigationMenu = ({ authentication, accounting, open, onClose }) => {
       }
     });
     return mm;
-  }, [classes, jwt, menuClick]);
+  }, [classes, jwt, menuClick, accounting]);
 
   return (
     <Drawer className={classes.drawer} open={open} onClose={onClose}>

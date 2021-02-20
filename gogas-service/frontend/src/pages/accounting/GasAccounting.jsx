@@ -38,7 +38,6 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
       alignment: 'Right',
       property: 'avere',
     },
-    { label: 'TYPE', type: 'Number', property: 'type' },
   ];
 
   const checkDateFormat = data => {

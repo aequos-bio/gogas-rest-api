@@ -9,11 +9,12 @@ import {
   TableCell,
   TableBody,
   TablePagination,
+  IconButton,
 } from '@material-ui/core';
 import {
   AddSharp as PlusIcon,
-  // EditSharp as EditIcon,
-  // DeleteSharp as DeleteIcon,
+  EditSharp as EditIcon,
+  DeleteSharp as DeleteIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import moment from 'moment-timezone';
@@ -61,6 +62,11 @@ const useStyles = makeStyles(theme => ({
   cellNumber: {
     textAlign: 'right',
   },
+  cellCommands: {
+    textAlign: 'right',
+    minWidth: '90px',
+    width: '90px',
+  },
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
@@ -74,6 +80,8 @@ const DataTable = ({
   settings = default_settings,
   loading = false,
   onAdd,
+  onEdit,
+  onDelete,
 }) => {
   const classes = useStyles();
   const [page, setPage] = useState(0);
@@ -126,13 +134,20 @@ const DataTable = ({
       );
     });
     if (settings.canEdit || settings.canDelete) {
-      hh.push(<TableCell />);
+      hh.push(<TableCell className={classes.cellCommands} />);
     }
     return hh;
-  }, [columns, cellClasses, settings]);
+  }, [columns, cellClasses, settings, classes]);
 
   const values = useMemo(() => {
-    if (loading) return <LoadingRow colSpan={columns.length} />;
+    if (loading)
+      return (
+        <LoadingRow
+          colSpan={
+            columns.length + (settings.canEdit || settings.canDelete ? 1 : 0)
+          }
+        />
+      );
 
     const rr = [];
     for (
@@ -166,11 +181,47 @@ const DataTable = ({
               </TableCell>
             );
           })}
+          {settings.canEdit || settings.canDelete ? (
+            <TableCell
+              key={`cell-${i}-commands`}
+              className={classes.cellCommands}
+            >
+              {settings.canEdit && onEdit ? (
+                <IconButton
+                  onClick={() => {
+                    onEdit(row.value);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+              {settings.canDelete && onDelete ? (
+                <IconButton
+                  onClick={() => {
+                    onDelete(row.value);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              ) : null}
+            </TableCell>
+          ) : null}
         </TableRow>
       );
     }
     return rr;
-  }, [rows, loading, columns, cellClasses, page, rowsPerPage]);
+  }, [
+    rows,
+    loading,
+    columns,
+    cellClasses,
+    page,
+    rowsPerPage,
+    settings,
+    classes,
+    onEdit,
+    onDelete,
+  ]);
 
   return (
     <>

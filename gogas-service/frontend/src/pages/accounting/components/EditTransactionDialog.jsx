@@ -8,14 +8,10 @@ import {
   TextField,
   InputAdornment,
 } from '@material-ui/core';
-import {
-  EuroSharp as EuroIcon,
-  EventSharp as CalendarIcon,
-} from '@material-ui/icons';
+import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
 import { connect } from 'react-redux';
-import NumPad from 'react-numpad';
 import _ from 'lodash';
 import moment from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
