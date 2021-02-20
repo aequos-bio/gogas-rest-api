@@ -101,7 +101,7 @@ const menuItems = [
     items: [{ label: 'Home', url: '/', icon: 0 }],
   },
   {
-    label: 'Contabilità',
+    label: 'Contabilità [year]',
     items: [
       { label: 'Anni contabili', url: '/years', restrictions: ['A'], icon: 1 },
       { label: 'Causali', url: '/reasons', restrictions: ['A'], icon: 4 },
@@ -156,7 +156,7 @@ const menuItems = [
   },
 ];
 
-const NavigationMenu = ({ authentication, open, onClose }) => {
+const NavigationMenu = ({ authentication, accounting, open, onClose }) => {
   const classes = useStyles();
   const history = useHistory();
 
@@ -202,7 +202,7 @@ const NavigationMenu = ({ authentication, open, onClose }) => {
                 color="textSecondary"
                 className={classes.menuChapter}
               >
-                {menuChapter.label}
+                {menuChapter.label.replace('[year]', accounting.currentYear)}
               </Typography>
             ) : null}
             <List className={classes.menuItemList}>
@@ -253,6 +253,7 @@ const mapStateToProps = state => {
   return {
     info: state.info,
     authentication: state.authentication,
+    accounting: state.accounting,
   };
 };
 
