@@ -55,6 +55,7 @@ public class UserService extends CrudService<User, String> {
             throw new MissingOrInvalidParameterException("Password is required");
 
         dto.setHashedPassword(encodePassword(dto.getPassword()));
+        dto.setPosition(userRepo.getMaxUserPosition() + 1);
         return super.create(dto);
     }
 

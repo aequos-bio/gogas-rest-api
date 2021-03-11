@@ -75,6 +75,9 @@ public final class User implements UserCoreInfo {
     @Column(name = "telefono", length = 20)
     private String phone;
 
+    @Column(name = "position")
+    private int position;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="idreferente")
     private User friendReferral;

@@ -88,7 +88,7 @@ public class ExcelGenerationService {
 
         List<UserExport> userList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers()).stream()
                 .map(this::convertUserForExport)
-                .sorted(Comparator.comparing(UserExport::getFullName))
+                .sorted(Comparator.comparing(UserExport::getPosition))
                 .collect(Collectors.toList());
 
         List<ProductExport> products = getProductsForExport(orderItems, order.getOrderType()).stream()
@@ -180,6 +180,7 @@ public class ExcelGenerationService {
     private UserExport convertUserForExport(User user) {
         UserExport reportUser = new UserExport();
         reportUser.setId(user.getId());
+        reportUser.setPosition(user.getPosition());
         reportUser.setFullName(userService.getUserDisplayName(user.getFirstName(), user.getLastName()));
         reportUser.setRole(user.getRole());
         reportUser.setEmail(user.getEmail());

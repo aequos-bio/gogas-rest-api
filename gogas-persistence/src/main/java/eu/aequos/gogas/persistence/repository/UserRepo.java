@@ -51,4 +51,7 @@ public interface UserRepo extends CrudRepository<User, String> {
     int updatePassword(String userId, String encodedPassword);
 
     User findByUsernameAndEmail(String username, String email);
+
+    @Query(value = "SELECT max(u.position) FROM User u")
+    int getMaxUserPosition();
 }

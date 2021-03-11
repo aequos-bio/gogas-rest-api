@@ -507,6 +507,7 @@ CREATE TABLE [utenti](
 	[attivo] [bit] NULL,
 	[idReferente] [uniqueidentifier] NULL,
 	[telefono] [varchar](20) NULL,
+	[position] [numeric] NOT NULL,
  CONSTRAINT [PK_utenti] PRIMARY KEY CLUSTERED
 (
 	[idUtente] ASC
@@ -1124,6 +1125,9 @@ GO
 ALTER TABLE [utenti]  WITH CHECK ADD FOREIGN KEY([idReferente])
 REFERENCES [utenti] ([idUtente])
 GO
+CREATE UNIQUE CLUSTERED INDEX IDX_utenti_position
+ON utenti ([position] ASC)
+GO
 /****** Object:  StoredProcedure [CalendarioInternet_Get]    Script Date: 11/12/2019 22:43:56 ******/
 SET ANSI_NULLS ON
 GO
@@ -1544,7 +1548,7 @@ INSERT [dbo].[configurazione] ([chiave], [descrizione], [valore], [visibile]) VA
 
 INSERT INTO [dbo].[causale] ([codiceCausale], [segno], [descrizione]) VALUES ('ORDINE', '-', 'Addebito ordine')
 
-INSERT INTO [dbo].[utenti] ([idUtente], [utente], [pwd], [ruolo], [nome], [cognome], [attivo]) VALUES (N'00000000-0000-0000-0000-000000000000', N'admin', CONVERT(VARCHAR(100), HASHBYTES('SHA1', '$$$-bogus-$$$tenant_id}'), 2), N'A', N'Admin', N'', 1)
+INSERT INTO [dbo].[utenti] ([idUtente], [utente], [pwd], [ruolo], [nome], [cognome], [attivo], [position]) VALUES (N'00000000-0000-0000-0000-000000000000', N'admin', CONVERT(VARCHAR(100), HASHBYTES('SHA1', '$$$-bogus-$$$tenant_id}'), 2), N'A', N'Admin', N'', 1, 0)
 
 SET IDENTITY_INSERT [dbo].[notificationPrefs] ON
 INSERT [dbo].[notificationPrefs] ([id], [idUtente], [idTipologiaOrdine], [apertura], [scadenza], [minutiScadenza], [consegna], [minutiConsegna], [aggiornamentoQta], [contabilizzazione]) VALUES (1, N'00000000-0000-0000-0000-000000000000', NULL, 1, 1, 60, 1, 60, 1, 1)

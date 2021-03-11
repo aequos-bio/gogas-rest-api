@@ -73,6 +73,9 @@ public final class UserDTO implements ConvertibleDTO<User> {
     @JsonProperty(value = "nomeReferente")
     private String friendReferralName;
 
+    @ApiModelProperty(accessMode = READ_ONLY)
+    private int position;
+
     @Override
     public UserDTO fromModel(User user) {
         id = user.getId();
@@ -84,6 +87,7 @@ public final class UserDTO implements ConvertibleDTO<User> {
         email = user.getEmail();
         phone = user.getPhone();
         enabled = user.isEnabled();
+        position = user.getPosition();
 
         User friendReferral = user.getFriendReferral();
         if (friendReferral != null) {
@@ -96,7 +100,7 @@ public final class UserDTO implements ConvertibleDTO<User> {
 
     @Override
     public User toModel(Optional<User> existingUser) {
-        User model = existingUser.orElse(new User());
+        User model = existingUser.orElseGet(this::initUser);
 
         model.setUsername(username);
         model.setRole(role);
@@ -113,6 +117,12 @@ public final class UserDTO implements ConvertibleDTO<User> {
             model.setFriendReferral(new User().withUserId(friendReferralId));
 
         return model;
+    }
+
+    private User initUser() {
+        User user = new User();
+        user.setPosition(position);
+        return user;
     }
 
     public boolean hasPassword() {
