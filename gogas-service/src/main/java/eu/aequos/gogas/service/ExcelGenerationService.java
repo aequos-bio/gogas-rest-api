@@ -28,6 +28,8 @@ import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 @Service
 public class ExcelGenerationService {
 
+    private static final int CARNI_BIANCHE_AEQUOS_ORDER_TYPE = 26;
+
     private ExcelServiceClient excelServiceClient;
 
     private UserRepo userRepo;
@@ -105,6 +107,7 @@ public class ExcelGenerationService {
         orderExportRequest.setUserOrder(orderItems);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
+        orderExportRequest.setAddWeightColumns(requiresWeightColumns(order));
 
         try {
             return excelServiceClient.order(orderExportRequest);
@@ -112,6 +115,11 @@ public class ExcelGenerationService {
             log.error("Error while calling excel service", ex);
             throw new GoGasException("Error while generating excel file");
         }
+    }
+
+    private boolean requiresWeightColumns(Order order) {
+        Integer aequosOrderId = order.getOrderType().getAequosOrderId();
+        return aequosOrderId != null && aequosOrderId.intValue() == CARNI_BIANCHE_AEQUOS_ORDER_TYPE;
     }
 
     public byte[] extractFriendsOrderDetails(Order order, String userId) throws ItemNotFoundException, GoGasException {

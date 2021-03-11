@@ -11,4 +11,5 @@ public class OrderExportRequest {
     List<OrderItemExport> userOrder;
     List<SupplierOrderItemExport> supplierOrder;
     boolean friends;
+    boolean addWeightColumns;
 }
