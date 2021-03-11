@@ -171,6 +171,7 @@ const InvoiceDialog = ({
                 value={date ? moment(date) : null}
                 onChange={setDate}
                 autoOk
+                inputVariant="outlined"
               />
             </MuiPickersUtilsProvider>
           </Grid>
@@ -181,6 +182,7 @@ const InvoiceDialog = ({
               value={number}
               size="small"
               onChange={evt => setNumber(evt.target.value)}
+              variant="outlined"
             />
           </Grid>
 
@@ -199,6 +201,7 @@ const InvoiceDialog = ({
               }}
               value={amount}
               onChange={evt => setAmount(evt.target.value)}
+              variant="outlined"
             />
           </Grid>
           <Grid item xs={12}>

@@ -8,12 +8,10 @@ import {
   TextField,
   InputAdornment,
 } from '@material-ui/core';
-import {
-  EuroSharp as EuroIcon,
-  EventSharp as CalendarIcon,
-} from '@material-ui/icons';
+import { EuroSharp as EuroIcon } from '@material-ui/icons';
+import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
+import MomentUtils from '@date-io/moment';
 import { connect } from 'react-redux';
-import NumPad from 'react-numpad';
 import _ from 'lodash';
 import moment from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
@@ -215,39 +213,25 @@ const EditTransactionDialog = ({
           isDisabled={user !== undefined}
         />
 
-        <NumPad.Calendar
-          position="startBottomLeft"
+        <MuiPickersUtilsProvider
+          className={classes.field}
+          libInstance={moment}
+          utils={MomentUtils}
           locale="it"
-          dateFormat="DD/MM/YYYY"
-          onClick={e => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onChange={value =>
-            setDate(moment(value, 'DD/MM/YYYY').format('YYYY-MM-DD'))
-          }
-          confirm={() => {}}
-          value={date ? moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY') : ''}
         >
-          <TextField
-            className={classes.field}
+          <DatePicker
+            disableToolbar
+            variant="inline"
+            format="DD/MM/YYYY"
+            margin="dense"
+            id="date-picker-inline"
             label="Data del movimento"
-            value={date ? moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY') : ''}
-            variant="outlined"
-            size="small"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            InputProps={{
-              readOnly: true,
-              endAdornment: (
-                <InputAdornment position="end">
-                  <CalendarIcon className={classes.icon} />
-                </InputAdornment>
-              ),
-            }}
+            value={date ? moment(date, 'YYYY-MM-DD') : null}
+            onChange={setDate}
+            autoOk
+            inputVariant="outlined"
           />
-        </NumPad.Calendar>
+        </MuiPickersUtilsProvider>
 
         <Select
           className={classes.field}

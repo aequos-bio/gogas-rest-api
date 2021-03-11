@@ -6,22 +6,24 @@ import Home from './Home';
 import NavBar from '../components/NavBar';
 import Login from './Login';
 import Users from './admin/users/Users';
-import Reasons from './admin/reasons/Reasons';
+import Reasons from './accounting/reasons/Reasons';
 import GasAccounting from './accounting/GasAccounting';
 import InvoiceManagement from './accounting/invoicemanagement/InvoiceManagement';
 import UserAccounting from './accounting/UserAccounting';
 import UserAccountingDetails from './accounting/UserAccountingDetails';
 import Years from './accounting/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
-import AccountingCodes from './admin/accountingcodes/AccountingCodes';
+import AccountingCodes from './accounting/accountingcodes/AccountingCodes';
 import Managers from './admin/Managers';
 import { init } from '../store/actions';
 import PrivateRoute from '../components/PrivateRoute';
+import GasMovements from './accounting/movements/GasMovements';
 
 const privateRoutes = [
   { path: '/', component: Home },
   { path: '/years', component: Years },
   { path: '/gasaccounting', component: GasAccounting },
+  { path: '/gasmovements', component: GasMovements },
   { path: '/invoices', component: InvoiceManagement },
   { path: '/useraccounting', component: UserAccounting },
   { path: '/useraccountingdetails', component: UserAccountingDetails },
