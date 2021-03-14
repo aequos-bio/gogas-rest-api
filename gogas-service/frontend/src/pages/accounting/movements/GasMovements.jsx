@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { withSnackbar } from 'notistack';
 import { Container } from '@material-ui/core';
 import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import DataTable from '../../../components/DataTable';
 import ActionDialog from '../../../components/ActionDialog';
+import EditGasMovementDialog from './EditGasMovementDialog';
 
-const GasMovements = ({ enqueueSnackbar, accounting }) => {
+const GasMovements = ({ enqueueSnackbar }) => {
   const [loading, setLoading] = useState(false);
-  const [rows, setrows] = useState([]);
+  const [rows, setRows] = useState([]);
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState();
+  const [showDlg, setShowDlg] = useState(false);
+  const accounting = useSelector(state => state.accounting);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -25,7 +28,7 @@ const GasMovements = ({ enqueueSnackbar, accounting }) => {
           variant: 'error',
         });
       } else {
-        setrows(vv);
+        setRows(vv);
       }
     });
   }, [enqueueSnackbar, accounting]);
@@ -56,15 +59,14 @@ const GasMovements = ({ enqueueSnackbar, accounting }) => {
   ];
 
   const addMovement = useCallback(() => {
-    enqueueSnackbar('Funzione non implementata', { variant: 'error' });
-  }, [enqueueSnackbar]);
+    setSelectedMovement();
+    setShowDlg(true);
+  }, []);
 
-  const editMovement = useCallback(
-    mov => {
-      enqueueSnackbar('Funzione non implementata', { variant: 'error' });
-    },
-    [enqueueSnackbar]
-  );
+  const editMovement = useCallback(mov => {
+    setSelectedMovement(mov);
+    setShowDlg(true);
+  }, []);
 
   const deleteMovement = useCallback(mov => {
     setSelectedMovement(mov);
@@ -85,6 +87,14 @@ const GasMovements = ({ enqueueSnackbar, accounting }) => {
         });
       });
   }, [enqueueSnackbar, reload, selectedMovement]);
+
+  const editDialogClosed = useCallback(
+    refreshdata => {
+      setShowDlg(false);
+      if (refreshdata) reload();
+    },
+    [reload]
+  );
 
   return (
     <Container maxWidth={false}>
@@ -113,19 +123,13 @@ const GasMovements = ({ enqueueSnackbar, accounting }) => {
         title="Conferma eliminazione"
         message="Sei sicuro di voler eliminare il movimento selezionato?"
       />
+      <EditGasMovementDialog
+        open={showDlg}
+        onClose={editDialogClosed}
+        movement={selectedMovement}
+      />
     </Container>
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(GasMovements));
+export default withSnackbar(GasMovements);

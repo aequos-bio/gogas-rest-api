@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Container,
   Fab,
@@ -33,7 +33,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function Users({ info, enqueueSnackbar }) {
+function Users({ enqueueSnackbar }) {
   const classes = useStyles();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,7 @@ function Users({ info, enqueueSnackbar }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const info = useSelector(state => state.info);
 
   const sort = info['visualizzazione.utenti']
     ? info['visualizzazione.utenti']
@@ -286,16 +287,4 @@ function Users({ info, enqueueSnackbar }) {
   );
 }
 
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-    info: state.info,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(Users));
+export default withSnackbar(Users);

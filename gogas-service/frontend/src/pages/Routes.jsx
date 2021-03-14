@@ -1,6 +1,6 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Home from './Home';
 import NavBar from '../components/NavBar';
@@ -34,10 +34,13 @@ const privateRoutes = [
   { path: '/managers', component: Managers },
 ];
 
-function Routes({ authentication, ...props }) {
+const Routes = () => {
+  const authentication = useSelector(state => state.authentication);
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    props.init();
-  }, [props]);
+    dispatch(init());
+  }, [dispatch]);
 
   return (
     <Router basename="/">
@@ -63,16 +66,6 @@ function Routes({ authentication, ...props }) {
       </>
     </Router>
   );
-}
-
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-  };
 };
 
-const mapDispatchToProps = {
-  init,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Routes);
+export default Routes;

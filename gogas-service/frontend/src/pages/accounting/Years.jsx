@@ -3,7 +3,7 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Container,
   Button,
@@ -23,11 +23,13 @@ import LoadingRow from '../../components/LoadingRow';
 import ActionDialog from '../../components/ActionDialog';
 import { setAccountingYear } from '../../store/actions';
 
-const Years = ({ enqueueSnackbar, accounting, setAccountingYear }) => {
+const Years = ({ enqueueSnackbar }) => {
   const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(false);
   const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState();
+  const accounting = useSelector(state => state.accounting);
+  const dispatch = useDispatch();
 
   const reload = useCallback(() => {
     const checkCurrentYear = yy => {
@@ -117,7 +119,7 @@ const Years = ({ enqueueSnackbar, accounting, setAccountingYear }) => {
                 variant="outlined"
                 size="small"
                 onClick={() => {
-                  setAccountingYear(y.year);
+                  dispatch(setAccountingYear(y.year));
                 }}
                 style={{ marginLeft: '5px' }}
               >
@@ -128,7 +130,7 @@ const Years = ({ enqueueSnackbar, accounting, setAccountingYear }) => {
         </TableRow>
       ))
     );
-  }, [years, closeYear, loading, accounting, setAccountingYear]);
+  }, [years, closeYear, loading, accounting, dispatch]);
 
   return (
     <Container maxWidth={false}>
@@ -160,17 +162,4 @@ const Years = ({ enqueueSnackbar, accounting, setAccountingYear }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {
-  setAccountingYear,
-};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(Years));
+export default withSnackbar(Years);

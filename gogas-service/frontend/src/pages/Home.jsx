@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Container,
   Grid,
@@ -22,9 +22,10 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Home = ({ authentication, info }) => {
+const Home = () => {
   const classes = useStyles();
   const [openOrders, setOpenOrders] = useState([]);
+  const { authentication, info } = useSelector(state => state);
 
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
@@ -98,13 +99,4 @@ const Home = ({ authentication, info }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-    info: state.info,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Home);
+export default Home;

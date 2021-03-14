@@ -1,7 +1,7 @@
 /* eslint-disable no-constant-condition */
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Container, Button } from '@material-ui/core';
 import { SaveAltSharp as SaveIcon } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
@@ -12,10 +12,11 @@ import { apiGetJson } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import DataTable from '../../components/DataTable';
 
-const GasAccounting = ({ enqueueSnackbar, accounting }) => {
+const GasAccounting = ({ enqueueSnackbar }) => {
   const [loading, setLoading] = useState(false);
   const [userEntries, setUserEntries] = useState([]);
   const [gasEntries, setGasEntries] = useState([]);
+  const accounting = useSelector(state => state.accounting);
 
   const columns = [
     { label: 'Data', type: 'Date', alignment: 'Left', property: 'data' },
@@ -214,15 +215,4 @@ const GasAccounting = ({ enqueueSnackbar, accounting }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(GasAccounting));
+export default withSnackbar(GasAccounting);

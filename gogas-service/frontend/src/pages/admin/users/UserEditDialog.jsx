@@ -15,13 +15,17 @@ import {
   Select,
   InputLabel,
   MenuItem,
+  ListItemText,
+  ListItemIcon,
 } from '@material-ui/core';
 import {
   Check as CheckIcon,
   ErrorOutline as ErrorIcon,
+  Block as DisabledIcon,
 } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
+import { useSelector } from 'react-redux';
 import { apiPut, apiPost, apiGetJson } from '../../../utils/axios_utils';
 
 const MIN_PASSWORD_LEN = 6;
@@ -54,13 +58,29 @@ const UserEditDialog = ({ open, onClose, user, enqueueSnackbar }) => {
   const [role, setRole] = useState('U');
   const [friends, setFriends] = useState([]);
   const [friendRef, setFriendRef] = useState(user?.idReferente);
+  const info = useSelector(state => state.info);
 
   useEffect(() => {
     if (!open) return;
-    apiGetJson('/api/user/select', { role: 'U' }).then(list => {
-      setFriends(list);
+    apiGetJson('/api/user/list', { role: 'U' }).then(list => {
+      setFriends(
+        list
+          .map(f => ({
+            description:
+              info['visualizzazione.utenti'] === 'NC'
+                ? `${f.nome} ${f.cognome}`
+                : `${f.cognome} ${f.nome}`,
+            attivo: f.attivo,
+          }))
+          .sort((f1, f2) => {
+            if (f1.attivo === f2.attivo) {
+              return f1.description > f2.description ? 1 : -1;
+            }
+            return f1.attivo > f2.attivo ? -1 : 1;
+          })
+      );
     });
-  }, [open]);
+  }, [open, info]);
 
   useEffect(() => {
     if (!open) return;
@@ -304,7 +324,10 @@ const UserEditDialog = ({ open, onClose, user, enqueueSnackbar }) => {
                 >
                   {friends.map(f => (
                     <MenuItem key={`friend-ref-${f.id}`} value={f.id}>
-                      {f.description}
+                      <ListItemIcon>
+                        {f.attivo ? null : <DisabledIcon />}
+                      </ListItemIcon>
+                      <ListItemText>{f.description}</ListItemText>
                     </MenuItem>
                   ))}
                 </Select>

@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import moment from 'moment-timezone';
 import Jwt from 'jsonwebtoken';
 import { Redirect } from 'react-router-dom';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import queryString from 'query-string';
 import { login } from '../store/actions';
 import Logo from '../logo_aequos.png';
@@ -29,19 +29,23 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const Login = ({ authentication, location, history, info, ...props }) => {
+const Login = ({ location, history }) => {
   const classes = useStyles();
   const search = queryString.parse(location.search);
+  const info = useSelector(state => state.info);
+  const authentication = useSelector(state => state.authentication);
+  const dispatch = useDispatch();
+
   const dologin = useCallback(
     e => {
       e.preventDefault();
       const username = e.target.username.value;
       const password = e.target.password.value;
-      props.login(username, password);
+      dispatch(login(username, password));
       history.push('/');
       return false;
     },
-    [props, history]
+    [dispatch, history]
   );
 
   const validJwt = useMemo(() => {
@@ -118,15 +122,4 @@ const Login = ({ authentication, location, history, info, ...props }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    info: state.info,
-    authentication: state.authentication,
-  };
-};
-
-const mapDispatchToProps = {
-  login,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default Login;

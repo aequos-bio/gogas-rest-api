@@ -11,7 +11,7 @@ import {
 import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import _ from 'lodash';
 import moment from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
@@ -31,15 +31,23 @@ const useStyles = makeStyles(theme => ({
 const EditTransactionDialog = ({
   open,
   onClose,
-  info,
   user,
   transactionId,
   enqueueSnackbar,
 }) => {
   const classes = useStyles();
+  const [date, setDate] = useState();
+  const [reason, setReason] = useState();
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState(0);
+  const [users, setUsers] = useState([]);
+  const [reasons, setReasons] = useState([]);
+  const [refreshNeeded, setRefreshNeeded] = useState(false);
+  const info = useSelector(state => state.info);
   const sort = info['visualizzazione.utenti']
     ? info['visualizzazione.utenti']
     : 'NC';
+
   const userLabel = useCallback(
     u => {
       const name =
@@ -56,17 +64,9 @@ const EditTransactionDialog = ({
     },
     [sort]
   );
-
   const [_user, setUser] = useState(
     user ? { value: user, label: userLabel(user) } : undefined
   );
-  const [date, setDate] = useState();
-  const [reason, setReason] = useState();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState(0);
-  const [users, setUsers] = useState([]);
-  const [reasons, setReasons] = useState([]);
-  const [refreshNeeded, setRefreshNeeded] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -214,12 +214,12 @@ const EditTransactionDialog = ({
         />
 
         <MuiPickersUtilsProvider
-          className={classes.field}
           libInstance={moment}
           utils={MomentUtils}
           locale="it"
         >
           <DatePicker
+            className={classes.field}
             disableToolbar
             variant="inline"
             format="DD/MM/YYYY"
@@ -295,15 +295,4 @@ const EditTransactionDialog = ({
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    info: state.info,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(EditTransactionDialog));
+export default withSnackbar(EditTransactionDialog);

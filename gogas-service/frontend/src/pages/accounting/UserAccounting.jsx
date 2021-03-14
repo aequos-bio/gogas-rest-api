@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { connect } from 'react-redux';
 import {
   Container,
   Fab,
@@ -204,15 +203,4 @@ function UserAccounting({ history, enqueueSnackbar }) {
   );
 }
 
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(UserAccounting));
+export default withSnackbar(UserAccounting);

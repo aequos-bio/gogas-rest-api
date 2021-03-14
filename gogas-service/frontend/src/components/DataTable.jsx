@@ -162,7 +162,9 @@ const DataTable = ({
             const value = row.value[col.property];
             let val;
             if (col.type === 'Date') {
-              val = moment(value).format('DD/MM/YYYY');
+              let date = moment(value);
+              if (!date.isValid()) date = moment(value, 'DD/MM/YYYY');
+              val = date.format('DD/MM/YYYY');
             } else if (col.type === 'DateTime') {
               val = moment(value).format('DD/MM/YYYY HH:mm');
             } else if (col.type === 'Time') {

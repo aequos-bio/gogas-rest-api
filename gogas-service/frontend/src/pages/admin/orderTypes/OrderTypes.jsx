@@ -15,7 +15,6 @@ import {
   SyncSharp as SyncIcon,
 } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
-import { connect } from 'react-redux';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiGetJson, apiPut, apiDelete } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
@@ -259,16 +258,4 @@ const OrderTypes = ({ enqueueSnackbar }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-    info: state.info,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(OrderTypes));
+export default withSnackbar(OrderTypes);

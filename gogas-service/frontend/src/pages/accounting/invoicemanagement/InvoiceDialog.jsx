@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Dialog,
   DialogTitle,
@@ -41,13 +41,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const InvoiceDialog = ({
-  open,
-  onClose,
-  invoice,
-  enqueueSnackbar,
-  accounting,
-}) => {
+const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   const classes = useStyles();
   const [orders, setOrders] = useState([]);
   const [date, setDate] = useState();
@@ -55,6 +49,7 @@ const InvoiceDialog = ({
   const [amount, setAmount] = useState();
   const [orderIds, setOrderIds] = useState([]);
   const [paymentDate, setPaymentDate] = useState();
+  const accounting = useSelector(state => state.accounting);
 
   useEffect(() => {
     if (open) {
@@ -229,15 +224,4 @@ const InvoiceDialog = ({
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(InvoiceDialog));
+export default withSnackbar(InvoiceDialog);

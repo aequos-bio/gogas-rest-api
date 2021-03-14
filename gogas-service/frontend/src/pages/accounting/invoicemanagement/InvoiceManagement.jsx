@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Container,
   Fab,
@@ -55,7 +55,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
+const InvoiceManagement = ({ enqueueSnackbar }) => {
   const classes = useStyles();
   // eslint-disable-next-line no-unused-vars
   const [aequosAccountingCode, setAequosAccountingCode] = useState('');
@@ -64,6 +64,7 @@ const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
   const [selectedInvoice, setSelectedInvoice] = useState();
   const [showPayDlg, setShowPayDlg] = useState(false);
   const [showInvoiceDlg, setShowInvoiceDlg] = useState(false);
+  const accounting = useSelector(state => state.accounting);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -245,15 +246,4 @@ const InvoiceManagement = ({ enqueueSnackbar, accounting }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(InvoiceManagement));
+export default withSnackbar(InvoiceManagement);

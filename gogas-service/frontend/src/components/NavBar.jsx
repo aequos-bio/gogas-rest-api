@@ -14,7 +14,7 @@ import {
   MenuSharp as MenuIcon,
   AccountCircleSharp as AccountCircleIcon,
 } from '@material-ui/icons';
-import { connect } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Jwt from 'jsonwebtoken';
 import { withSnackbar } from 'notistack';
 import moment from 'moment-timezone';
@@ -57,18 +57,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const NavBar = ({
-  authentication,
-  info,
-  history,
-  enqueueSnackbar,
-  ...props
-}) => {
+const NavBar = ({ history, enqueueSnackbar, ...props }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const open = Boolean(anchorEl);
   const [balance, setBalance] = useState(0);
+  const info = useSelector(state => state.info);
+  const authentication = useSelector(state => state.authentication);
+  const dispatch = useDispatch();
 
   const handleMenu = event => {
     setAnchorEl(event.currentTarget);
@@ -110,9 +107,9 @@ const NavBar = ({
   }, [jwt, enqueueSnackbar]);
 
   const disconnect = useCallback(() => {
-    props.logout();
+    dispatch(logout());
     history.push('/login?disconnect');
-  }, [props, history]);
+  }, [history, dispatch]);
 
   const openBalanceDetail = useCallback(() => {
     history.push(`/userAccountingDetails?userId=${jwt.id}`);
@@ -184,18 +181,4 @@ const NavBar = ({
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    info: state.info,
-    authentication: state.authentication,
-  };
-};
-
-const mapDispatchToProps = {
-  logout,
-};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(NavBar));
+export default withSnackbar(NavBar);

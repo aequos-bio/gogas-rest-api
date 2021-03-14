@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Container,
   Fab,
@@ -57,7 +57,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
+function UserAccountingDetails({ location, enqueueSnackbar }) {
   const classes = useStyles();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
@@ -68,6 +68,7 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   const [selectedId, setSelectedId] = useState();
   const [years, setYears] = useState({});
   const [loading, setLoading] = useState(false);
+  const authentication = useSelector(state => state.authentication);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -415,15 +416,4 @@ function UserAccountingDetails({ authentication, location, enqueueSnackbar }) {
   );
 }
 
-const mapStateToProps = state => {
-  return {
-    authentication: state.authentication,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withSnackbar(UserAccountingDetails));
+export default withSnackbar(UserAccountingDetails);

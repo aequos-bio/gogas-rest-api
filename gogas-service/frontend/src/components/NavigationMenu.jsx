@@ -24,7 +24,7 @@ import {
   ReceiptSharp as BillIcon,
 } from '@material-ui/icons';
 import { useHistory } from 'react-router-dom';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Jwt from 'jsonwebtoken';
 import Logo from '../logo_aequos.png';
 
@@ -162,9 +162,10 @@ const menuItems = [
   },
 ];
 
-const NavigationMenu = ({ authentication, accounting, open, onClose }) => {
+const NavigationMenu = ({ open, onClose }) => {
   const classes = useStyles();
   const history = useHistory();
+  const { authentication, accounting } = useSelector(state => state);
 
   const jwt = useMemo(() => {
     if (authentication.jwtToken) {
@@ -255,14 +256,4 @@ const NavigationMenu = ({ authentication, accounting, open, onClose }) => {
   );
 };
 
-const mapStateToProps = state => {
-  return {
-    info: state.info,
-    authentication: state.authentication,
-    accounting: state.accounting,
-  };
-};
-
-const mapDispatchToProps = {};
-
-export default connect(mapStateToProps, mapDispatchToProps)(NavigationMenu);
+export default NavigationMenu;
