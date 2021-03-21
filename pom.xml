@@ -11,6 +11,7 @@
     <modules>
         <module>gogas-service</module>
         <module>gogas-persistence</module>
+        <module>telegram-service</module>
     </modules>
 
     <name>Go!Gas REST APIs</name>

@@ -1,0 +1,12 @@
+package bio.aequos.gogas.telegram;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class TelegramServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(TelegramServiceApplication.class, args);
+    }
+}
