@@ -18,11 +18,13 @@ public class TelegramClient {
         this.bot = new TelegramBot(botToken);
     }
 
-    public void sendMessage(long chatId, String message) {
+    public boolean sendMessage(long chatId, String message) {
         SendMessage sendMessage = new SendMessage(chatId, message)
                 .parseMode(ParseMode.MarkdownV2);
 
         SendResponse execute = bot.execute(sendMessage);
         log.info("message sent {}", execute);
+
+        return execute.isOk();
     }
 }
