@@ -4,8 +4,9 @@ import eu.aequos.gogas.dto.OrderItemUpdateRequest;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.mvc.MockMvcGoGas;
 import eu.aequos.gogas.mvc.OrderUtil;
-import eu.aequos.gogas.mvc.TestUsers;
+import eu.aequos.gogas.mock.MockUsers;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.repository.UserRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,12 @@ class UserOrderIntegrationTest {
     @Autowired
     private OrderUtil orderUtil;
 
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private MockUsers mockUsers;
+
     private String orderId;
 
     @BeforeEach
@@ -46,13 +53,14 @@ class UserOrderIntegrationTest {
 
     @Test
     void givenAValidOrder_whenAddingUserOrderItem_itemIsAdded() throws Exception {
-        mockMvcGoGas.loginAsSimpleUser();
+        mockUsers.createSimpleUser("user1", "user1");
+        mockMvcGoGas.loginAs("user1", "user1");
 
         OrderItemUpdateRequest request = new OrderItemUpdateRequest();
         request.setProductId(PRODUCT_ID);
         request.setQuantity(BigDecimal.ONE);
         request.setUnitOfMeasure("KG");
-        request.setUserId(TestUsers.USER1_ID);
+        request.setUserId("user1");
 
         mockMvcGoGas.post("/api/order/user/" + orderId + "/item", request)
                 .andExpect(status().isOk())

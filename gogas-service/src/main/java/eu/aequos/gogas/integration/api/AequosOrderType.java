@@ -1,9 +1,14 @@
 package eu.aequos.gogas.integration.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.extern.jackson.Jacksonized;
 
-@Data
+@Jacksonized
+@Builder
+@Getter
 public class AequosOrderType {
 
     @JsonProperty("id")

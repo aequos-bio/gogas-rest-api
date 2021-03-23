@@ -17,12 +17,12 @@ public class TenantAspect {
     public Object setTenant(ProceedingJoinPoint call) throws Throwable {
         MethodSignature signature = (MethodSignature) call.getSignature();
         WithTenant tenant = signature.getMethod().getAnnotation(WithTenant.class);
-        TenantContext.setTenantId(tenant.value());
 
-        Object proceed = call.proceed();
-
-        TenantContext.clearTenantId();
-
-        return proceed;
+        try {
+            TenantContext.setTenantId(tenant.value());
+            return call.proceed();
+        } finally {
+            TenantContext.clearTenantId();
+        }
     }
 }

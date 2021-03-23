@@ -5,6 +5,7 @@ import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.mvc.MockMvcGoGas;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,15 @@ class UserCrudIntegrationTest {
         validUserDTO.setFirstName("Pinco");
         validUserDTO.setLastName("Pallino");
         validUserDTO.setEnabled(true);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockMvcGoGas.executeOnRepo(() -> {
+            userRepo.findByUsername("test-admin")
+                    .ifPresent(userRepo::delete);
+            return null;
+        });
     }
 
     @Test
@@ -83,8 +93,6 @@ class UserCrudIntegrationTest {
         assertEquals("Pinco", userEntity.getFirstName());
         assertEquals("Pallino", userEntity.getLastName());
         assertNull(userEntity.getFriendReferral());
-
-        mockMvcGoGas.executeOnRepo(() -> { userRepo.delete(userEntity); return null; });
     }
 
     @Test
@@ -94,12 +102,7 @@ class UserCrudIntegrationTest {
         mockMvcGoGas.post("/api/user", validUserDTO)
                 .andExpect(status().isOk());
 
-        try {
-            mockMvcGoGas.loginAs(validUserDTO.getUsername(), validUserDTO.getPassword());
-        } finally {
-            User userEntity = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin")).get();
-            mockMvcGoGas.executeOnRepo(() -> { userRepo.delete(userEntity); return null; });
-        }
+        mockMvcGoGas.loginAs(validUserDTO.getUsername(), validUserDTO.getPassword());
     }
 
     @Test
@@ -110,10 +113,7 @@ class UserCrudIntegrationTest {
                 .andExpect(status().isOk());
 
         mockMvcGoGas.post("/api/user", validUserDTO)
-                .andExpect(status().is5xxServerError());
-
-        Optional<User> userEntityOpt = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin"));
-        mockMvcGoGas.executeOnRepo(() -> { userRepo.delete(userEntityOpt.get()); return null; });
+                .andExpect(status().is(409));
     }
 
     @Test
@@ -128,13 +128,7 @@ class UserCrudIntegrationTest {
     void givenAnExistingUser_whenUpdating_theUserIsUpdated() throws Exception {
         mockMvcGoGas.loginAsAdmin();
 
-        String responseContent = mockMvcGoGas.post("/api/user", validUserDTO)
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        BasicResponseDTO userIdResponse = mockMvcGoGas.parseJSON(responseContent, BasicResponseDTO.class);
+        BasicResponseDTO userIdResponse = mockMvcGoGas.postDTO("/api/user",  validUserDTO, BasicResponseDTO.class);
 
         validUserDTO.setFirstName("Pinco2");
         validUserDTO.setLastName("Pallino2");
@@ -145,8 +139,6 @@ class UserCrudIntegrationTest {
         User userEntity = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin")).get();
         assertEquals("Pinco2", userEntity.getFirstName());
         assertEquals("Pallino2", userEntity.getLastName());
-
-        mockMvcGoGas.executeOnRepo(() -> { userRepo.delete(userEntity); return null; });
     }
 
     @Test
@@ -161,13 +153,7 @@ class UserCrudIntegrationTest {
     void givenAnExistingUser_whenDeleting_theUserIsDeleted() throws Exception {
         mockMvcGoGas.loginAsAdmin();
 
-        String responseContent = mockMvcGoGas.post("/api/user", validUserDTO)
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        BasicResponseDTO userIdResponse = mockMvcGoGas.parseJSON(responseContent, BasicResponseDTO.class);
+        BasicResponseDTO userIdResponse = mockMvcGoGas.postDTO("/api/user", validUserDTO, BasicResponseDTO.class);
 
         mockMvcGoGas.delete("/api/user/" + userIdResponse.getData())
                 .andExpect(status().isOk());
