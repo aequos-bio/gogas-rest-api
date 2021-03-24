@@ -1,17 +1,23 @@
 version: 2.1
 
 orbs:
+  maven: circleci/maven@1.1.1
   node: circleci/node@4.2.0
 
 jobs:
-  build:
+  redoc:
     executor: node/default
     steps:
-      - run: npm install redoc-cli
-      - checkout
-      - run: mvn clean package
+      - run: npm init
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+          override-ci-command: npm install redoc-cli
 
 workflows:
   maven_test:
     jobs:
-      - build
+      - redoc
+      - maven/test:
+          command: 'package'
+          requires:
+            - redoc
