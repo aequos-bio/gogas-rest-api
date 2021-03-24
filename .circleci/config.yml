@@ -8,9 +8,7 @@ jobs:
   redoc:
     executor: node/default
     steps:
-      - node/install-packages:
-          cache-path: ~/project/node_modules
-          override-ci-command: npm install -g redoc-cli
+      - run: npm install -g redoc-cli
 
 workflows:
   maven_test:
