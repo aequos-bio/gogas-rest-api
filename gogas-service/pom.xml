@@ -139,44 +139,39 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>npm install (clean)</id>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <phase>pre-clean</phase>
-                        <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>install</argument>
-                                <argument>redoc-cli</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <executable>redoc-cli</executable>
-                    <arguments>
-                        <argument>bundle</argument>
-                        <argument>${project.build.outputDirectory}/static/openapi/openapi.yaml</argument>
-                        <argument>--cdn</argument>
-                        <argument>true</argument>
-                        <argument>--output</argument>
-                        <argument>${project.build.outputDirectory}/static/openapi/openapi.html</argument>
-                    </arguments>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>redoc</id>
+            <build>
+                <plugins>
+                    <plugin><groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <executable>redoc-cli</executable>
+                            <arguments>
+                                <argument>bundle</argument>
+                                <argument>${project.build.outputDirectory}/static/openapi/openapi.yaml</argument>
+                                <argument>--cdn</argument>
+                                <argument>true</argument>
+                                <argument>--output</argument>
+                                <argument>${project.build.outputDirectory}/static/openapi/openapi.html</argument>
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
