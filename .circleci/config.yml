@@ -18,4 +18,4 @@ jobs:
 workflows:
   maven_test:
     jobs:
-      build
+      - build
