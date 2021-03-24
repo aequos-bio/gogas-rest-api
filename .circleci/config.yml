@@ -16,6 +16,6 @@ jobs:
           command: 'package'
 
 workflows:
-  gogas:
+  maven_test:
     jobs:
-      - build
+      build
