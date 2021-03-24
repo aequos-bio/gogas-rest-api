@@ -5,17 +5,17 @@ orbs:
   node: circleci/node@4.2.0
 
 jobs:
-  redoc:
+  build:
     executor: node/default
     steps:
-      - run: touch ~/project/package.json
+      - run: npm init
       - node/install-packages:
           cache-path: ~/project/node_modules
           override-ci-command: npm install redoc-cli
-
-workflows:
-  maven_test:
-    jobs:
-      - redoc
       - maven/test:
           command: 'package'
+
+workflows:
+  gogas:
+    jobs:
+      - build
