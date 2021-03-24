@@ -8,7 +8,7 @@ jobs:
   redoc:
     executor: node/default
     steps:
-      - run: npm install -g redoc-cli
+      - run: npm install redoc-cli
 
 workflows:
   maven_test:
