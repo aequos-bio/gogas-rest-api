@@ -4,17 +4,8 @@ orbs:
   maven: circleci/maven@1.1.1
   node: circleci/node@4.2.0
 
-jobs:
-  redoc:
-    executor: node/default
-    steps:
-      - run: npm install redoc-cli
-
 workflows:
   maven_test:
     jobs:
-      - redoc
       - maven/test:
-          command: 'package'
-          requires:
-            - redoc
+          command: 'package -P'
