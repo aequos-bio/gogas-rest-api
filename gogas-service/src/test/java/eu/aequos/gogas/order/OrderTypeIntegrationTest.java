@@ -1,33 +1,23 @@
 package eu.aequos.gogas.order;
 
+import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.mock.MockOrders;
-import eu.aequos.gogas.mock.MockUsers;
-import eu.aequos.gogas.mvc.MockMvcGoGas;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class OrderTypeIntegrationTest {
-
-    @Autowired
-    private MockMvcGoGas mockMvcGoGas;
+class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Autowired
     private MockOrders mockOrders;
-
-    @Autowired
-    private MockUsers mockUsers;
 
     @BeforeEach
     void setUp() {
@@ -40,8 +30,7 @@ class OrderTypeIntegrationTest {
 
     @Test
     void givenASimpleUserLogin_whenCreatingOrderType_thenUnauthorizedIsReturned() throws Exception {
-        mockUsers.createSimpleUser("simple_user", "simple_user");
-        mockMvcGoGas.loginAs("simple_user", "simple_user");
+        mockMvcGoGas.loginAsSimpleUser();
 
         OrderTypeDTO orderTypeDTO = new OrderTypeDTO();
         orderTypeDTO.setDescription("Test Order");
@@ -72,9 +61,7 @@ class OrderTypeIntegrationTest {
     @Test
     void givenANotUsedOrderTypeAndASimpleUser_whenDeletingOrderType_thenUnauthorizedIsReturned() throws Exception {
         OrderType testOrder = mockOrders.createExistingOrderType("Test Order", null);
-
-        mockUsers.createSimpleUser("simple_user", "simple_user");
-        mockMvcGoGas.loginAs("simple_user", "simple_user");
+        mockMvcGoGas.loginAsSimpleUser();
 
         mockMvcGoGas.delete("/api/ordertype/" + testOrder.getId())
                 .andExpect(status().isForbidden());

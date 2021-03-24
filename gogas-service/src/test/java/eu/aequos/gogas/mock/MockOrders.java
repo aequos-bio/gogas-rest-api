@@ -2,14 +2,12 @@ package eu.aequos.gogas.mock;
 
 import eu.aequos.gogas.mvc.WithTenant;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,14 +16,14 @@ import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Component
-public class MockOrders implements DisposableBean {
+@WithTenant("integration-test")
+public class MockOrders {
 
     private final OrderTypeRepo orderTypeRepo;
     private final ProductRepo productRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
 
-    @WithTenant("integration-test")
     public OrderType createExistingOrderType(String name, Integer aequosId) {
         OrderType orderType = new OrderType();
         orderType.setDescription(name);
@@ -34,7 +32,12 @@ public class MockOrders implements DisposableBean {
         return orderTypeRepo.save(orderType);
     }
 
-    @WithTenant("integration-test")
+    public Order createOrder(String orderTypeId) {
+        OrderType orderType = new OrderType();
+        orderType.setId(orderTypeId);
+        return createExistingOrder(orderType);
+    }
+
     public Order createExistingOrder(OrderType orderType) {
         Order order = new Order();
         order.setOrderType(orderType);
@@ -46,7 +49,12 @@ public class MockOrders implements DisposableBean {
         return orderRepo.save(order);
     }
 
-    @WithTenant("integration-test")
+    public void deleteOrder(String orderId) {
+        orderItemRepo.deleteByOrderAndSummary(orderId, false);
+        orderItemRepo.deleteByOrderAndSummary(orderId, true);
+        orderRepo.deleteById(orderId);
+    }
+
     public void deleteAllOrderTypes() {
         orderItemRepo.deleteAll();
         orderRepo.deleteAll();
@@ -54,9 +62,7 @@ public class MockOrders implements DisposableBean {
         orderTypeRepo.deleteAll();
     }
 
-    @Override
-    @WithTenant("integration-test")
-    public void destroy() throws Exception {
+    public void destroy() {
         orderItemRepo.deleteAll();
         orderRepo.deleteAll();
         productRepo.deleteAll();

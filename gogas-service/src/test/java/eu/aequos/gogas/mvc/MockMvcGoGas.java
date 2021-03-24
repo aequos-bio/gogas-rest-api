@@ -1,11 +1,9 @@
 package eu.aequos.gogas.mvc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.aequos.gogas.dto.CredentialsDTO;
-import eu.aequos.gogas.dto.OrderTypeDTO;
+import eu.aequos.gogas.mock.MockUsers;
 import eu.aequos.gogas.multitenancy.TenantContext;
-import eu.aequos.gogas.persistence.entity.OrderType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -16,12 +14,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import javax.servlet.http.Cookie;
-import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Component
@@ -41,6 +36,10 @@ public class MockMvcGoGas {
 
     public MockMvcGoGas loginAsAdmin() throws Exception {
         return loginAs("admin", "integration-test");
+    }
+
+    public MockMvcGoGas loginAsSimpleUser() throws Exception {
+        return loginAs(MockUsers.SIMPLE_USER_USERNAME, MockUsers.SIMPLE_USER_PASSWORD);
     }
 
     public MockMvcGoGas loginAs(String username, String password) throws Exception {
@@ -168,6 +167,6 @@ public class MockMvcGoGas {
                 .getResponse()
                 .getContentAsString();
 
-        return objectMapper.readValue(responseBody, new TypeReference<List<OrderTypeDTO>>() {});
+        return objectMapper.readValue(responseBody, objectMapper.getTypeFactory().constructCollectionType(List.class, dtoClass));
     }
 }

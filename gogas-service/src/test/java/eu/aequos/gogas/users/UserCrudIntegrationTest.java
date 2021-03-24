@@ -1,31 +1,18 @@
-package eu.aequos.gogas;
+package eu.aequos.gogas.users;
 
+import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.UserDTO;
-import eu.aequos.gogas.mvc.MockMvcGoGas;
-import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.repository.UserRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class UserCrudIntegrationTest {
-
-    @Autowired
-    private MockMvcGoGas mockMvcGoGas;
-
-    @Autowired
-    private UserRepo userRepo;
+class UserCrudIntegrationTest extends BaseGoGasIntegrationTest {
 
     private UserDTO validUserDTO;
 
@@ -42,11 +29,7 @@ class UserCrudIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        mockMvcGoGas.executeOnRepo(() -> {
-            userRepo.findByUsername("test-admin")
-                    .ifPresent(userRepo::delete);
-            return null;
-        });
+        mockUsers.deleteByUsername("test-admin");
     }
 
     @Test
@@ -56,10 +39,10 @@ class UserCrudIntegrationTest {
         validUserDTO.setRole("Y");
 
         mockMvcGoGas.post("/api/user", validUserDTO)
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
 
-        Optional<User> userEntityOpt = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin"));
-        assertFalse(userEntityOpt.isPresent());
+        List<UserDTO> allUsers = mockMvcGoGas.getDTOList("/api/user/list", UserDTO.class);
+        assertFalse(allUsers.stream().anyMatch(user -> user.getUsername().equals("test-admin")));
     }
 
     @Test
@@ -70,29 +53,26 @@ class UserCrudIntegrationTest {
         userDTO.setUsername("test-admin");
 
         mockMvcGoGas.post("/api/user", userDTO)
-                .andExpect(status().is4xxClientError());
+                .andExpect(status().isBadRequest());
 
-        Optional<User> userEntityOpt = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin"));
-        assertFalse(userEntityOpt.isPresent());
+        List<UserDTO> allUsers = mockMvcGoGas.getDTOList("/api/user/list", UserDTO.class);
+        assertFalse(allUsers.stream().anyMatch(user -> user.getUsername().equals("test-admin")));
     }
 
     @Test
     void givenAValidUserDefinition_whenCreating_theUserIsCreated() throws Exception {
         mockMvcGoGas.loginAsAdmin();
-        mockMvcGoGas.post("/api/user", validUserDTO)
-                .andExpect(status().isOk());
+        BasicResponseDTO basicResponseDTO = mockMvcGoGas.postDTO("/api/user", validUserDTO, BasicResponseDTO.class);
+        String userId = basicResponseDTO.getData().toString();
 
-        Optional<User> userEntityOpt = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin"));
-        assertTrue(userEntityOpt.isPresent());
+        UserDTO user = mockMvcGoGas.getDTO("/api/user/" + userId, UserDTO.class);
 
-        User userEntity = userEntityOpt.get();
-        assertEquals("test-admin", userEntity.getUsername());
-        assertNotNull(userEntity.getPassword());
-        assertTrue(userEntity.isEnabled());
-        assertEquals("A", userEntity.getRole());
-        assertEquals("Pinco", userEntity.getFirstName());
-        assertEquals("Pallino", userEntity.getLastName());
-        assertNull(userEntity.getFriendReferral());
+        assertEquals("test-admin", user.getUsername());
+        assertTrue(user.isEnabled());
+        assertEquals("A", user.getRole());
+        assertEquals("Pinco", user.getFirstName());
+        assertEquals("Pallino", user.getLastName());
+        assertNull(user.getFriendReferralId());
     }
 
     @Test
@@ -129,16 +109,17 @@ class UserCrudIntegrationTest {
         mockMvcGoGas.loginAsAdmin();
 
         BasicResponseDTO userIdResponse = mockMvcGoGas.postDTO("/api/user",  validUserDTO, BasicResponseDTO.class);
+        String userId = userIdResponse.getData().toString();
 
         validUserDTO.setFirstName("Pinco2");
         validUserDTO.setLastName("Pallino2");
 
-        mockMvcGoGas.put("/api/user/" + userIdResponse.getData(), validUserDTO)
+        mockMvcGoGas.put("/api/user/" + userId, validUserDTO)
                 .andExpect(status().isOk());
 
-        User userEntity = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin")).get();
-        assertEquals("Pinco2", userEntity.getFirstName());
-        assertEquals("Pallino2", userEntity.getLastName());
+        UserDTO user = mockMvcGoGas.getDTO("/api/user/" + userId, UserDTO.class);
+        assertEquals("Pinco2", user.getFirstName());
+        assertEquals("Pallino2", user.getLastName());
     }
 
     @Test
@@ -158,8 +139,8 @@ class UserCrudIntegrationTest {
         mockMvcGoGas.delete("/api/user/" + userIdResponse.getData())
                 .andExpect(status().isOk());
 
-        Optional<User> userEntityOpt = mockMvcGoGas.executeOnRepo(() -> userRepo.findByUsername("test-admin"));
-        assertFalse(userEntityOpt.isPresent());
+        mockMvcGoGas.get("/api/user/" + userIdResponse.getData())
+                .andExpect(status().isNotFound());
     }
 
     //TODO: list with filter on role, cannot delete for constraints, friend, password reset, password change, validation cross fields (e.g. friend+referralId)

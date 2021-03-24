@@ -44,6 +44,12 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         this.aequosIntegrationService = aequosIntegrationService;
     }
 
+    public OrderTypeDTO getById(String orderTypeId) {
+        OrderType orderType = getRequired(orderTypeId);
+        Set<String> usedOrderTypes = orderRepo.findAllUsedOrderTypes();
+        return new OrderTypeDTO().fromModel(orderType, usedOrderTypes.contains(orderTypeId));
+    }
+
     public List<OrderTypeDTO> getAll() {
         Set<String> usedOrderTypes = orderRepo.findAllUsedOrderTypes();
 

@@ -1,22 +1,22 @@
 package eu.aequos.gogas.integration;
 
+import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosOrderType;
 import eu.aequos.gogas.mock.MockOrders;
-import eu.aequos.gogas.mock.MockUsers;
-import eu.aequos.gogas.mvc.MockMvcGoGas;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,18 +24,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class AequosIntegrationTest {
-
-    @Autowired
-    private MockMvcGoGas mockMvcGoGas;
+class AequosIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Autowired
     private MockOrders mockOrders;
-
-    @Autowired
-    private MockUsers mockUsers;
 
     @MockBean
     private AequosApiClient aequosApiClient;
@@ -56,8 +48,7 @@ class AequosIntegrationTest {
 
     @Test
     void givenASimpleUserLogin_whenRequestingAequosOrderTypeSynch_thenUnauthorizedIsReturned() throws Exception {
-        mockUsers.createSimpleUser("simple_user", "simple_user");
-        mockMvcGoGas.loginAs("simple_user", "simple_user");
+        mockMvcGoGas.loginAsSimpleUser();
 
         mockMvcGoGas.put("/api/ordertype/aequos/sync")
                 .andExpect(status().isForbidden());
