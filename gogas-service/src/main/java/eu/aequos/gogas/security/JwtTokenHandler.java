@@ -6,6 +6,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import eu.aequos.gogas.persistence.entity.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -29,15 +30,24 @@ public class JwtTokenHandler implements Serializable {
     private static final String CLAIM_KEY_ENABLED = "enabled";
     private static final String CLAIM_KEY_MANAGER = "manager";
 
+    private static final String LEGACY_KEY = "GQDstcKsx0NHjPOuXOYg5MbeJ1XT0uFiwDVvVBrk";
+    private static final Algorithm LEGACY_ALGORITHM = Algorithm.HMAC256(LEGACY_KEY);
+
+    private static final String KEY = "4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:";
+    private static final Algorithm ALGORITHM = Algorithm.HMAC256(KEY);
+
     private JWTVerifier verifier;
-    private String key = "4eQu05%&/G0g!45sS£=)2020Nw£éd+f*W°5@SWd^^||£LKJ%$ddknnSMNadf+,-:";
-    private Algorithm algorithm = Algorithm.HMAC256(key);
+    private JWTVerifier legacyVerifier;
+
     @Value("${jwt.duration.minutes:60}")
     private int tokenValidityInMinutes;
 
     public JwtTokenHandler() {
-        verifier = JWT.require(algorithm)
+        verifier = JWT.require(ALGORITHM)
                 .withIssuer(ISSUER)
+                .build();
+
+        legacyVerifier = JWT.require(LEGACY_ALGORITHM)
                 .build();
     }
 
@@ -56,7 +66,7 @@ public class JwtTokenHandler implements Serializable {
                 .withClaim(CLAIM_KEY_ROLE, getRoleFromUserDetails(userDetails))
                 .withClaim(CLAIM_KEY_ENABLED, userDetails.isEnabled())
                 .withClaim(CLAIM_KEY_MANAGER, userDetails.isManager())
-                .sign(algorithm);
+                .sign(ALGORITHM);
     }
 
     private Date generateExpiringDate(Date now) {
@@ -85,5 +95,15 @@ public class JwtTokenHandler implements Serializable {
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElse(User.Role.U.name());
+    }
+
+    public String extractUserIdFromLegacyJWT(String host, String token) {
+        DecodedJWT decodedToken = legacyVerifier.verify(token);
+
+        if (!host.equals(decodedToken.getClaim("host").asString())) {
+            throw new BadCredentialsException("invalid host");
+        }
+
+        return decodedToken.getClaim("uid").asString();
     }
 }
