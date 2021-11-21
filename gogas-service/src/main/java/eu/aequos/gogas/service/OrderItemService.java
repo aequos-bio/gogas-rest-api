@@ -232,4 +232,8 @@ public class OrderItemService {
         return orderItemRepo.findDistinctByOrderIn(orderIds).stream()
                 .collect(groupingBy(OrderItemUserOnly::getUser, mapping(OrderItemUserOnly::getOrder, toList())));
     }
+
+    public List<Product> getNotOrderedProductsByCategory(String userId, String orderId, String categoryId) {
+        return orderItemRepo.getNotOrderedProductsByCategory(userId, orderId, categoryId);
+    }
 }

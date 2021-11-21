@@ -85,11 +85,13 @@ public class AccountingUserController {
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
                                                 @RequestParam(required = false) String dateFrom,
-                                                @RequestParam(required = false) String dateTo) {
+                                                @RequestParam(required = false) String dateTo,
+                                                @RequestParam(required = false) Integer skipItems,
+                                                @RequestParam(required = false) Integer maxItems) {
 
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo, false);
+        return accountingService.getPaginatedUserBalance(userId, parsedDateFrom, parsedDateTo, false, skipItems, maxItems);
     }
 }

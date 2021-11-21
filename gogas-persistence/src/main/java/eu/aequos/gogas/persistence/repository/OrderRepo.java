@@ -23,6 +23,8 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.id = ?1")
     Optional<Order> findByIdWithType(String orderId);
 
+    List<Order> findByIdIn(Set<String> orderIds);
+
     List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
 
     @Query("SELECT DISTINCT o.orderType.id FROM Order o")

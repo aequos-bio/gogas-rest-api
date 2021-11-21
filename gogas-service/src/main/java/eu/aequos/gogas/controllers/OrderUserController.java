@@ -40,8 +40,20 @@ public class OrderUserController {
     }
 
     @GetMapping(value = "{orderId}")
-    public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws GoGasException {
-        return orderUserService.getOrderDetails(orderId);
+    public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId, @RequestParam(required = false, defaultValue = "false") boolean includeTotalAmount) throws GoGasException {
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        return orderUserService.getOrderDetails(currentUser.getId(), orderId, includeTotalAmount);
+    }
+
+    @GetMapping(value = "{orderId}/categories")
+    public List<CategoryDTO> getOrderDetails(@PathVariable String orderId) throws GoGasException {
+        return orderUserService.getOrderCategories(orderId);
+    }
+
+    @GetMapping(value = "{orderId}/categories/{categoryId}/not-ordered", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public CategoryDTO getNotOrderedItemsByCategory(@PathVariable String orderId, @PathVariable String categoryId) throws GoGasException {
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        return orderUserService.getNotOrderedItemsByCategory(currentUser.getId(), orderId, categoryId);
     }
 
     @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

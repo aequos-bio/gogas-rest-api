@@ -8,9 +8,11 @@ import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -18,25 +20,19 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static eu.aequos.gogas.converter.ListConverter.toMap;
+
+@RequiredArgsConstructor
 @Service
 public class OrderUserService {
 
-    private OrderItemService orderItemService;
-    private OrderManagerService orderManagerService;
-    private ProductService productService;
-    private UserService userService;
-    private OrderRepo orderRepo;
-    private UserRepo userRepo;
-
-    public OrderUserService(OrderItemService orderItemService, OrderManagerService orderManagerService,
-                            ProductService productService, UserService userService, OrderRepo orderRepo, UserRepo userRepo) {
-        this.orderItemService = orderItemService;
-        this.orderManagerService = orderManagerService;
-        this.productService = productService;
-        this.userService = userService;
-        this.orderRepo = orderRepo;
-        this.userRepo = userRepo;
-    }
+    private final OrderItemService orderItemService;
+    private final OrderManagerService orderManagerService;
+    private final ProductService productService;
+    private final UserService userService;
+    private final OrderRepo orderRepo;
+    private final UserRepo userRepo;
+    private final ProductCategoryRepo categoryRepo;
 
     public List<OpenOrderDTO> getOpenOrders(String userId) {
         List<Order> openOrders = orderRepo.getOpenOrders();
@@ -47,8 +43,8 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(openOrders)
                 .extractIds(Order::getId);
 
-        List<User> users = userRepo.findAll();
-        Map<String, User> userMap = ListConverter.fromList(users).toMap(User::getId);
+        Map<String, User> userMap = userRepo.findAll().stream()
+                .collect(toMap(User::getId));
 
         Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, orderIds).stream()
                 .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
@@ -176,8 +172,32 @@ public class OrderUserService {
                 .collect(Collectors.toList());
     }
 
-    public UserOrderDetailsDTO getOrderDetails(String orderId) throws ItemNotFoundException {
+    public UserOrderDetailsDTO getOrderDetails(String userId, String orderId, boolean includeTotalAmount) throws ItemNotFoundException {
         Order order = orderManagerService.getRequiredWithType(orderId);
-        return new UserOrderDetailsDTO().fromModel(order);
+        UserOrderDetailsDTO userOrderDetails = new UserOrderDetailsDTO().fromModel(order);
+
+        if (includeTotalAmount) {
+            Optional<UserOrderSummary> orderSummary = orderRepo.findFriendOrderSummary(userId, Collections.singleton(orderId)).stream()
+                    .findFirst();
+
+            userOrderDetails.withTotalAmount(orderSummary);
+        }
+
+        return userOrderDetails;
+    }
+
+    public List<CategoryDTO> getOrderCategories(String orderId) {
+        return categoryRepo.findByOrderId(orderId).stream()
+                .map(CategoryDTO::fromModel)
+                .collect(Collectors.toList());
+    }
+
+    public CategoryDTO getNotOrderedItemsByCategory(String userId, String orderId, String categoryId) {
+        ProductCategory category = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new ItemNotFoundException("Product category", categoryId));
+
+        List<Product> products = orderItemService.getNotOrderedProductsByCategory(userId, orderId, categoryId);
+
+        return CategoryDTO.fromModel(category, products);
     }
 }

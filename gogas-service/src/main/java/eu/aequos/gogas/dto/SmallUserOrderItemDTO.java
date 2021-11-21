@@ -32,7 +32,6 @@ public class SmallUserOrderItemDTO {
     @JsonProperty("qtaRitirata")
     BigDecimal orderDeliveredQty;
 
-    @JsonIgnore()
     BigDecimal productTotalOrderedQty;
 
     /** Derived values **/

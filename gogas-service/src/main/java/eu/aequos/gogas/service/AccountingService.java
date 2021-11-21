@@ -7,23 +7,20 @@ import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.repository.AccountingRepo;
-import eu.aequos.gogas.persistence.repository.UserBalanceEntryRepo;
-import eu.aequos.gogas.persistence.repository.UserBalanceRepo;
-import eu.aequos.gogas.persistence.repository.YearRepo;
+import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.persistence.specification.UserBalanceSpecs;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static eu.aequos.gogas.converter.ListConverter.toMap;
 
 @Service
 public class AccountingService extends CrudService<AccountingEntry, String> {
@@ -33,10 +30,11 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     private UserBalanceEntryRepo userBalanceEntryRepo;
     private UserService userService;
     private YearRepo yearRepo;
+    private OrderRepo orderRepo;
 
     public AccountingService(AccountingRepo accountingRepo, UserBalanceRepo userBalanceRepo,
                              UserBalanceEntryRepo userBalanceEntryRepo, UserService userService,
-                             YearRepo yearRepo) {
+                             YearRepo yearRepo, OrderRepo orderRepo) {
 
         super(accountingRepo, "accounting entry");
         this.accountingRepo = accountingRepo;
@@ -44,6 +42,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         this.userBalanceEntryRepo = userBalanceEntryRepo;
         this.userService = userService;
         this.yearRepo = yearRepo;
+        this.orderRepo = orderRepo;
     }
 
     public BigDecimal getBalance(String userId) {
@@ -144,20 +143,50 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .collect(Collectors.toList());
     }
 
-    public UserBalanceSummaryDTO getUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo, boolean dateAscending) {
+    public UserBalanceSummaryDTO getUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo,
+                                                boolean dateAscending) {
+        return getPaginatedUserBalance(userId, dateFrom, dateTo, dateAscending, null, null);
+    }
+
+    public UserBalanceSummaryDTO getPaginatedUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo,
+                                                boolean dateAscending, Integer skipItems, Integer maxItems) {
+
         Specification<UserBalanceEntry> filter = new SpecificationBuilder<UserBalanceEntry>()
                 .withBaseFilter(UserBalanceSpecs.user(userId, dateAscending))
                 .and(UserBalanceSpecs::fromDate, dateFrom)
                 .and(UserBalanceSpecs::toDate, dateTo)
                 .build();
 
-        List<UserBalanceEntryDTO> entries = userBalanceEntryRepo.findAll(filter).stream()
-                .map(entry -> new UserBalanceEntryDTO().fromModel(entry))
+        List<UserBalanceEntry> entries;
+        if (skipItems != null) {
+            entries = userBalanceEntryRepo.findAll(filter, PageRequest.of(skipItems / maxItems, maxItems)).getContent();
+        } else {
+            entries = userBalanceEntryRepo.findAll(filter);
+        }
+
+        Set<String> orderIds = entries.stream()
+                .map(UserBalanceEntry::getOrderId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<String, Order> relatedOrders = getRelatedOrders(orderIds);
+
+        List<UserBalanceEntryDTO> dtoEntries = entries.stream()
+                .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders))
                 .collect(Collectors.toList());
 
         BigDecimal balance = userBalanceRepo.getBalance(userId);
 
-        return new UserBalanceSummaryDTO(balance, entries);
+        return new UserBalanceSummaryDTO(balance, dtoEntries);
+    }
+
+    private Map<String, Order> getRelatedOrders(Set<String> orderIds) {
+        if (orderIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return orderRepo.findByIdIn(orderIds).stream()
+                .collect(toMap(Order::getId));
     }
 
     private boolean isYearClosed(AccountingEntry accountingEntry) {
