@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
+import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.service.OrderUserService;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Api("User order fill")
 @RestController
@@ -71,5 +73,15 @@ public class OrderUserController {
             throw new UserNotAuthorizedException();
 
         return orderUserService.updateUserOrder(orderId, orderItemUpdate);
+    }
+
+    @GetMapping(value = "{orderId}/product/{productId}/total")
+    public Optional<ProductTotalOrder> getProductTotalQuantity(@PathVariable String orderId, @PathVariable String productId) throws GoGasException {
+        return orderUserService.getTotalQuantityByProduct(orderId, productId);
+    }
+
+    @GetMapping(value = "{orderId}/product/total")
+    public List<ProductTotalOrder> getProductsTotalQuantity(@PathVariable String orderId) throws GoGasException {
+        return orderUserService.getTotalQuantityByProduct(orderId);
     }
 }

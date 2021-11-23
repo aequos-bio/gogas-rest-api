@@ -46,8 +46,10 @@ public class OrderSpecs {
 
     public static Specification<Order> select() {
         return (entry, cq, cb) -> {
-            //forcing fetching (inline join instead of n+1 queries)
-            entry.fetch("orderType");
+            //forcing fetching (inline join instead of n+1 queries) but only for "data" query
+            if (cq.getResultType().equals(Order.class)) {
+                entry.fetch("orderType");
+            }
 
             //ordering
             cq.orderBy(cb.desc(entry.get("dueDate")), cb.desc(entry.get("dueHour")));

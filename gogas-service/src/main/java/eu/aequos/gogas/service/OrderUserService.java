@@ -2,6 +2,7 @@ package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.dto.filter.FilterPagination;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.OrderClosedException;
@@ -12,7 +13,10 @@ import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import eu.aequos.gogas.service.OrderItemService.OrderItemUpdate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +85,7 @@ public class OrderUserService {
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
 
-        if (searchFilter.inDelivery != null && searchFilter.inDelivery)
+        if (searchFilter.getInDelivery() != null && searchFilter.getInDelivery())
             return orderRepo.getInDeliveryOrders(userId);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
@@ -94,7 +98,14 @@ public class OrderUserService {
                 .and(OrderSpecs::statusIn, searchFilter.getStatus())
                 .build();
 
-        return orderRepo.findAll(filter);
+        return orderRepo.findAll(filter, toPageable(searchFilter.getPagination())).getContent();
+    }
+
+    private Pageable toPageable(FilterPagination pagination) {
+        if (pagination == null)
+            return Pageable.unpaged();
+
+        return PageRequest.of(pagination.getPageNumber(), pagination.getPageSize());
     }
 
     public List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws ItemNotFoundException {
@@ -112,27 +123,27 @@ public class OrderUserService {
         Map<String, OpenOrderItem> userOrderMap = orderItemService.getUserOrderItems(userId, orderId, showGroupedOrderItems);
 
         Map<String, ProductTotalOrder> productOrderTotalMap = getProductOrderTotal(orderId, isOrderOpen).stream()
-                .collect(Collectors.toMap(ProductTotalOrder::getProduct, Function.identity()));
+                .collect(toMap(ProductTotalOrder::getProduct));
 
         List<Product> products = getProducts(showAllProductsOnPriceList, order.getOrderType().getId(), userOrderMap.values());
 
         return convertToDTO(userOrderMap, products, productOrderTotalMap);
     }
 
-    public SmallUserOrderItemDTO updateUserOrder(String orderId, OrderItemUpdateRequest orderItemUpdate) throws ItemNotFoundException, OrderClosedException {
+    public SmallUserOrderItemDTO updateUserOrder(String orderId, OrderItemUpdateRequest updateRequest) throws ItemNotFoundException, OrderClosedException {
         Order order = orderManagerService.getRequired(orderId);
 
         if (!order.getStatus().isOpen() || !order.isEditable())
             throw new OrderClosedException();
 
-        User user = userService.getRequired(orderItemUpdate.getUserId());
-        Product product = productService.getRequired(orderItemUpdate.getProductId());
-        OrderItem orderItem = orderItemService.updateOrDeleteItemByUser(user, product, orderId, orderItemUpdate);
+        User user = userService.getRequired(updateRequest.getUserId());
+        Product product = productService.getRequired(updateRequest.getProductId());
+        OrderItemUpdate orderItemUpdate = orderItemService.updateOrDeleteItemByUser(user, product, orderId, updateRequest);
 
         Optional<ProductTotalOrder> productTotalOrder = orderItemService.getTotalQuantityByProduct(orderId, product.getId());
 
         return new SmallUserOrderItemDTO()
-                .fromModel(product, orderItem, productTotalOrder.orElse(null));
+                .fromModel(product, orderItemUpdate.getOrderItem(), orderItemUpdate.getItemsAdded(), productTotalOrder.orElse(null));
     }
 
     private boolean showGroupedOrderItems(boolean isOrderOpen, OrderType orderType, User user) {
@@ -158,11 +169,25 @@ public class OrderUserService {
         return productService.getProducts(orderedProductIds);
     }
 
-    private List<ProductTotalOrder> getProductOrderTotal(String orderId, boolean isOrderOpen) {
-        if (isOrderOpen)
-            return orderItemService.getTotalQuantityByProduct(orderId, true);
+    public List<ProductTotalOrder> getTotalQuantityByProduct(String orderId) {
+        Order order = orderManagerService.getRequiredWithType(orderId);
+        return getProductOrderTotal(order.getId(), order.getStatus().isOpen());
+    }
 
-        return new ArrayList<>();
+    public Optional<ProductTotalOrder> getTotalQuantityByProduct(String orderId, String productId) {
+        Order order = orderManagerService.getRequiredWithType(orderId);
+
+        if (!order.getStatus().isOpen())
+            return Optional.empty();
+
+        return orderItemService.getTotalQuantityByProduct(order.getId(), productId);
+    }
+
+    private List<ProductTotalOrder> getProductOrderTotal(String orderId, boolean isOrderOpen) {
+        if (!isOrderOpen)
+            return Collections.emptyList();
+
+        return orderItemService.getTotalQuantityByProduct(orderId, true);
     }
 
     private List<UserOrderItemDTO> convertToDTO(Map<String, OpenOrderItem> userOrderMap, List<Product> products,
