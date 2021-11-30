@@ -102,7 +102,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t " +
             "WHERE function('DateAdd', hh, o.dueHour, o.dueDate) < CURRENT_TIMESTAMP AND o.deliveryDate >= function('convert', date, CURRENT_TIMESTAMP) " +
-            "AND (t.external = true OR EXISTS (SELECT i.id FROM OrderItem i WHERE i.user = ?1))")
+            "AND (t.external = true OR EXISTS (SELECT i.id FROM OrderItem i WHERE i.user = ?1 AND i.order = o.id))")
     List<Order> getInDeliveryOrders(String userId);
 
     @Query(value = "SELECT d.idDateOrdini AS orderId, o.idUtente as userId, " +
