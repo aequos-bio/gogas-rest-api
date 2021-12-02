@@ -35,7 +35,7 @@ public class OrderSpecs {
         return (entry, cq, cb) -> cb.equal(entry.get("orderType").get("id"), orderType);
     }
 
-    public static Specification<Order> user(String user) {
+    public static Specification<Order> orderedByUser(String user) {
         return (entry, cq, cb) -> {
             Subquery<OrderItem> userOrderItemExists = cq.subquery(OrderItem.class);
             Root<OrderItem> orderItemRoot = userOrderItemExists.from(OrderItem.class);

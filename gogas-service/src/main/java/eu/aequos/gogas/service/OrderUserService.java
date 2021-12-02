@@ -23,12 +23,18 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
+import static eu.aequos.gogas.persistence.entity.Order.OrderStatus.*;
 
 @RequiredArgsConstructor
 @Service
 public class OrderUserService {
+
+    public static final List<Integer> DEFAULT_ORDER_STATUS_LIST = Stream.of(Opened, Closed, Accounted)
+            .map(Order.OrderStatus::getStatusCode)
+            .collect(Collectors.toList());
 
     private final OrderItemService orderItemService;
     private final OrderManagerService orderManagerService;
@@ -88,14 +94,18 @@ public class OrderUserService {
         if (searchFilter.getInDelivery() != null && searchFilter.getInDelivery())
             return orderRepo.getInDeliveryOrders(userId);
 
+        List<Integer> status = Optional.ofNullable(searchFilter.getStatus())
+                .orElse(DEFAULT_ORDER_STATUS_LIST);
+
         Specification<Order> filter = new SpecificationBuilder<Order>()
                 .withBaseFilter(OrderSpecs.select())
+                .and(OrderSpecs::orderedByUser, userId)
                 .and(OrderSpecs::type, searchFilter.getOrderType())
                 .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())
                 .and(OrderSpecs::dueDateTo, searchFilter.getDueDateTo())
                 .and(OrderSpecs::deliveryDateFrom, searchFilter.getDeliveryDateFrom())
                 .and(OrderSpecs::deliveryDateTo, searchFilter.getDeliveryDateTo())
-                .and(OrderSpecs::statusIn, searchFilter.getStatus())
+                .and(OrderSpecs::statusIn, status)
                 .build();
 
         return orderRepo.findAll(filter, toPageable(searchFilter.getPagination())).getContent();
