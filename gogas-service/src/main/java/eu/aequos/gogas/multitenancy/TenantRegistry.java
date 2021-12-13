@@ -66,7 +66,7 @@ public class TenantRegistry {
                 DataSource tenantDataSource = createTenantDataSource(rs);
 
                 log.info("Migrating tenant {}", tenantId);
-                migrate(tenantId, tenantDataSource);
+                //migrate(tenantId, tenantDataSource);
 
                 dataSourceMap.put(tenantId, tenantDataSource);
                 log.info("### Added datasource for tenant key {}");

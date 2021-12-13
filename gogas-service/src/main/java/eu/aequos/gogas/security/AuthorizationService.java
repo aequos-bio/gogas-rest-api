@@ -1,10 +1,11 @@
 package eu.aequos.gogas.security;
 
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
+import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.OrderItemService;
-import eu.aequos.gogas.service.OrderManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,15 +18,15 @@ public class AuthorizationService implements UserDetailsService {
 
     private UserRepo userRepo;
     private OrderManagerRepo orderManagerRepo;
-    private OrderManagerService orderManagerService;
+    private OrderRepo orderRepo;
     private OrderItemService orderItemService;
 
     public AuthorizationService(UserRepo userRepo, OrderManagerRepo orderManagerRepo,
-                                OrderManagerService orderManagerService, OrderItemService orderItemService) {
+                                OrderRepo orderRepo, OrderItemService orderItemService) {
 
         this.userRepo = userRepo;
         this.orderManagerRepo = orderManagerRepo;
-        this.orderManagerService = orderManagerService;
+        this.orderRepo = orderRepo;
         this.orderItemService = orderItemService;
     }
 
@@ -64,8 +65,10 @@ public class AuthorizationService implements UserDetailsService {
     }
 
     public boolean isOrderManager(String orderId) throws ItemNotFoundException {
-        String orderTypeId = orderManagerService.getRequiredWithType(orderId).getOrderType().getId();
-        return isOrderTypeManager(orderTypeId);
+        Order order = orderRepo.findByIdWithType(orderId)
+                .orElseThrow(() -> new ItemNotFoundException("order", orderId));
+
+        return isOrderTypeManager(order.getOrderType().getId());
     }
 
     public boolean isOrderTypeManager(String orderTypeId) {
