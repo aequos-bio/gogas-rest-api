@@ -36,6 +36,7 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     <T> List<T> findByIdIn(Set<String> usrIds, Class<T> type);
 
+    List<UserCoreInfo> findByIdInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
     List<UserCoreInfo> findByIdNotInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
 
     boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
