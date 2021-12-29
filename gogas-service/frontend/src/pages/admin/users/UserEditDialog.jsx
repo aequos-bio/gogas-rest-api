@@ -57,7 +57,7 @@ const UserEditDialog = ({ open, onClose, user, enqueueSnackbar }) => {
   const [passwordCheck, setPasswordCheck] = useState('');
   const [role, setRole] = useState('U');
   const [friends, setFriends] = useState([]);
-  const [friendRef, setFriendRef] = useState(user?.idReferente);
+  const [friendRef, setFriendRef] = useState(user?.idReferente || '');
   const info = useSelector(state => state.info);
 
   useEffect(() => {
@@ -66,6 +66,7 @@ const UserEditDialog = ({ open, onClose, user, enqueueSnackbar }) => {
       setFriends(
         list
           .map(f => ({
+            id: f.idUtente,
             description:
               info['visualizzazione.utenti'] === 'NC'
                 ? `${f.nome} ${f.cognome}`
@@ -320,16 +321,21 @@ const UserEditDialog = ({ open, onClose, user, enqueueSnackbar }) => {
                 <Select
                   labelId="friend-ref-label"
                   value={friendRef}
-                  onChange={evt => setFriendRef(evt.target.value)}
+                  onChange={evt => {
+                    debugger;
+                    setFriendRef(evt.target.value);
+                  }}
                 >
-                  {friends.map(f => (
-                    <MenuItem key={`friend-ref-${f.id}`} value={f.id}>
-                      <ListItemIcon>
-                        {f.attivo ? null : <DisabledIcon />}
-                      </ListItemIcon>
-                      <ListItemText>{f.description}</ListItemText>
-                    </MenuItem>
-                  ))}
+                  {friends.map(f => {
+                    return (
+                      <MenuItem key={`friend-ref-${f.id}`} value={f.id}>
+                        <ListItemIcon>
+                          {f.attivo ? null : <DisabledIcon />}
+                        </ListItemIcon>
+                        <ListItemText>{f.description}</ListItemText>
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
             </Grid>
