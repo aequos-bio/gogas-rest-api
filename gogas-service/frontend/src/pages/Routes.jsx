@@ -14,7 +14,7 @@ import UserAccountingDetails from './accounting/UserAccountingDetails';
 import Years from './accounting/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
 import AccountingCodes from './accounting/accountingcodes/AccountingCodes';
-import Managers from './admin/Managers';
+import Managers from './admin/managers/Managers';
 import { init } from '../store/actions';
 import PrivateRoute from '../components/PrivateRoute';
 import GasMovements from './accounting/movements/GasMovements';
