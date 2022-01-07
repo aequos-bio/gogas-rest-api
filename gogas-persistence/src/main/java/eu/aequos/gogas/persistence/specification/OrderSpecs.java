@@ -4,12 +4,32 @@ import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Subquery;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrderSpecs {
+
+    public enum SortingType {
+        NONE,
+        DUE_DATE("dueDate", "dueHour"),
+        DELIVERY_DATE("deliveryDate");
+
+        SortingType(String... fields) {
+            this.fields = fields;
+        }
+
+        private final String[] fields;
+
+        public String[] getFields() {
+            return fields;
+        }
+    }
 
     public static Specification<Order> dueDateFrom(LocalDate from) {
         return (entry, cq, cb) -> cb.greaterThanOrEqualTo(entry.get("dueDate"), from);
@@ -65,7 +85,7 @@ public class OrderSpecs {
         return (entry, cq, cb) -> cb.equal(entry.get("paid"), paid);
     }
 
-    public static Specification<Order> select() {
+    public static Specification<Order> select(SortingType sortingType) {
         return (entry, cq, cb) -> {
             //forcing fetching (inline join instead of n+1 queries) but only for "data" query
             if (cq.getResultType().equals(Order.class)) {
@@ -73,10 +93,20 @@ public class OrderSpecs {
             }
 
             //ordering
-            cq.orderBy(cb.desc(entry.get("dueDate")), cb.desc(entry.get("dueHour")));
+            applyOrderBy(sortingType, entry, cq, cb);
 
             //no base filter
             return cb.conjunction();
         };
+    }
+
+    private static void applyOrderBy(SortingType sortingType, Root<Order> entry, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        List<javax.persistence.criteria.Order> orderBy = Arrays.stream(sortingType.getFields())
+                .map(field -> cb.desc(entry.get(field)))
+                .collect(Collectors.toList());
+
+        orderBy.add(cb.asc(entry.get("orderType").get("description")));
+
+        cq.orderBy(orderBy);
     }
 }

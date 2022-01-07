@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
 import static eu.aequos.gogas.persistence.entity.Order.OrderStatus.*;
+import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.DELIVERY_DATE;
 
 @RequiredArgsConstructor
 @Service
@@ -98,7 +99,7 @@ public class OrderUserService {
                 .orElse(DEFAULT_ORDER_STATUS_LIST);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select())
+                .withBaseFilter(OrderSpecs.select(DELIVERY_DATE))
                 .and(OrderSpecs::orderedByUser, userId)
                 .and(OrderSpecs::type, searchFilter.getOrderType())
                 .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())

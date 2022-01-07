@@ -97,7 +97,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("UPDATE Order o SET o.statusCode = ?2 WHERE o.id = ?1")
     int updateOrderStatus(String orderId, int status);
 
-    @Query("SELECT o FROM Order o WHERE o.statusCode = 0 AND o.openingDate <= CURRENT_TIMESTAMP AND function('DateAdd', hh, o.dueHour, o.dueDate) >= CURRENT_TIMESTAMP")
+    @Query("SELECT o FROM Order o WHERE o.statusCode = 0 AND o.openingDate <= CURRENT_TIMESTAMP AND function('DateAdd', hh, o.dueHour, o.dueDate) >= CURRENT_TIMESTAMP ORDER BY o.dueDate")
     List<Order> getOpenOrders();
 
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t " +

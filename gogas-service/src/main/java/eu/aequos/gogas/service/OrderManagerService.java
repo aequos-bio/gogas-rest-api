@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
+import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.DELIVERY_DATE;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -145,7 +146,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select())
+                .withBaseFilter(OrderSpecs.select(DELIVERY_DATE))
                 .and(OrderSpecs::managedByUser, managedOrderTypes)
                 .and(OrderSpecs::type, searchFilter.getOrderType())
                 .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())
