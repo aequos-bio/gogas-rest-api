@@ -18,7 +18,7 @@ public class OrderSpecs {
     public enum SortingType {
         NONE,
         DUE_DATE("dueDate", "dueHour"),
-        DELIVERY_DATE("deliveryDate");
+        DELIVERY_DATE("deliveryDate", "dueDate", "dueHour");
 
         SortingType(String... fields) {
             this.fields = fields;

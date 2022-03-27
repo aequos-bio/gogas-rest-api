@@ -5,6 +5,7 @@ import eu.aequos.gogas.persistence.entity.derived.OpenOrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
 import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -104,7 +105,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
             "WHERE function('DateAdd', hh, o.dueHour, o.dueDate) < CURRENT_TIMESTAMP AND o.deliveryDate >= function('convert', date, CURRENT_TIMESTAMP) " +
             "AND (t.external = true OR EXISTS (SELECT i.id FROM OrderItem i WHERE i.user = ?1 AND i.order = o.id)) " +
             "ORDER BY o.deliveryDate DESC, t.description ASC")
-    List<Order> getInDeliveryOrders(String userId);
+    List<Order> getInDeliveryOrders(String userId, Pageable pageable);
 
     @Query(value = "SELECT d.idDateOrdini AS orderId, o.idUtente as userId, " +
             "CASE " +

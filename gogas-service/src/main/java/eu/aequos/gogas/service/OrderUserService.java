@@ -91,9 +91,10 @@ public class OrderUserService {
     }
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
+        Pageable pageable = toPageable(searchFilter.getPagination());
 
         if (searchFilter.getInDelivery() != null && searchFilter.getInDelivery())
-            return orderRepo.getInDeliveryOrders(userId);
+            return orderRepo.getInDeliveryOrders(userId, pageable);
 
         List<Integer> status = Optional.ofNullable(searchFilter.getStatus())
                 .orElse(DEFAULT_ORDER_STATUS_LIST);
@@ -109,7 +110,7 @@ public class OrderUserService {
                 .and(OrderSpecs::statusIn, status)
                 .build();
 
-        return orderRepo.findAll(filter, toPageable(searchFilter.getPagination())).getContent();
+        return orderRepo.findAll(filter, pageable).getContent();
     }
 
     private Pageable toPageable(FilterPagination pagination) {
