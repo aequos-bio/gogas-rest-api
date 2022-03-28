@@ -2,11 +2,9 @@ package eu.aequos.gogas.converter;
 
 import eu.aequos.gogas.dto.SelectItemDTO;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +40,7 @@ public class ListConverter<T> {
                 .collect(Collectors.toSet());
     }
 
-    public Map<String, T> toMap(Function<T, String> keyGenerator) {
-        return items.collect(Collectors.toMap(keyGenerator, Function.identity()));
+    public static <T, K> Collector<T, ?, Map<K,T>> toMap(Function<? super T, ? extends K> keyMapper) {
+        return Collectors.toMap(keyMapper, Function.identity());
     }
 }

@@ -10,6 +10,7 @@ import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import io.swagger.annotations.Api;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -45,7 +46,8 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "authenticate")
-    public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp, @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException, IOException {
+    public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp,
+                                                      @RequestBody CredentialsDTO authenticationRequest) throws AuthenticationException {
         
         String tenantId = tenantRegistry.extractFromHostName(req);
 
@@ -66,6 +68,35 @@ public class AuthenticationController {
         resp.addCookie(ck);
 
         return new BasicResponseDTO(token);
+    }
+
+    @PostMapping(value = "authenticate/legacy")
+    public BasicResponseDTO createAuthenticationTokenFromLegacy(HttpServletRequest req, HttpServletResponse resp,
+                                                                @RequestBody String legacyJwtToken) throws AuthenticationException {
+
+        if (legacyJwtToken == null) {
+            throw new BadCredentialsException("Missing token");
+        }
+
+        String tenantId = tenantRegistry.extractFromHostName(req);
+        String userId = jwtTokenHandler.extractUserIdFromLegacyJWT(extractHost(req), legacyJwtToken);
+        GoGasUserDetails userDetails = userDetailsService.loadUserById(userId)
+                .withTenant(tenantId);
+
+        String token = jwtTokenHandler.generateToken(userDetails);
+        resp.setHeader("Authentication", "bearer " + token);
+        Cookie ck = new Cookie("jwt-token", token);
+        resp.addCookie(ck);
+
+        return new BasicResponseDTO(token);
+    }
+
+    private String extractHost(HttpServletRequest req) {
+        String address = req.getHeader("origin");
+        if (address == null) {
+            address = req.getServerName();
+        }
+        return address;
     }
 
     @GetMapping(value = "info")

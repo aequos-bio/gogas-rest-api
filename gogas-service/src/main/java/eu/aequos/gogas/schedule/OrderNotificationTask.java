@@ -17,6 +17,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Function;
 
+import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.NONE;
+
 @Slf4j
 @Component
 public class OrderNotificationTask {
@@ -49,7 +51,7 @@ public class OrderNotificationTask {
 
     private void sendNotifications(Function<LocalDate, Specification<Order>> orderDateFilter, OrderEvent event) {
         Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select())
+                .withBaseFilter(OrderSpecs.select(NONE))
                 .and(orderDateFilter, LocalDate.now())
                 .build();
 

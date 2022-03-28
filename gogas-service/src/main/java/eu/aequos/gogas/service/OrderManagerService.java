@@ -35,6 +35,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static eu.aequos.gogas.converter.ListConverter.toMap;
+import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.DELIVERY_DATE;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -97,16 +99,16 @@ public class OrderManagerService extends CrudService<Order, String> {
         boolean isOrderOpen = order.getStatus().isOpen();
 
         List<ProductTotalOrder> productOrderTotal = orderItemService.getTotalQuantityByProduct(order.getId(), isOrderOpen);
-        Map<String, ProductTotalOrder> productTotalOrders = ListConverter.fromList(productOrderTotal)
-                .toMap(ProductTotalOrder::getProduct);
+        Map<String, ProductTotalOrder> productTotalOrders = productOrderTotal.stream()
+                .collect(toMap(ProductTotalOrder::getProduct));
 
         if (productTotalOrders.isEmpty())
             return new ArrayList<>();
 
         List<Product> orderedProducts = productService.getProducts(productTotalOrders.keySet());
 
-        Map<String, SupplierOrderItem> supplierOrderItems = ListConverter.fromList(supplierOrderItemRepo.findByOrderId(order.getId()))
-                .toMap(SupplierOrderItem::getProductId);
+        Map<String, SupplierOrderItem> supplierOrderItems = supplierOrderItemRepo.findByOrderId(order.getId()).stream()
+                .collect(toMap(SupplierOrderItem::getProductId));
 
         return orderedProducts.stream()
                 .map(p -> new OrderByProductDTO().fromModel(p, productTotalOrders.get(p.getId()), supplierOrderItems.get(p.getId())))
@@ -144,7 +146,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
 
         Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select())
+                .withBaseFilter(OrderSpecs.select(DELIVERY_DATE))
                 .and(OrderSpecs::managedByUser, managedOrderTypes)
                 .and(OrderSpecs::type, searchFilter.getOrderType())
                 .and(OrderSpecs::dueDateFrom, searchFilter.getDueDateFrom())
@@ -301,8 +303,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         Map<String, BigDecimal> accountingEntries = accountingService.getOrderAccountingEntries(order.getId()).stream()
                 .collect(Collectors.toMap(entry -> entry.getUser().getId(), AccountingEntry::getAmount));
 
-        Map<String, ByUserOrderItem> userOrderItems = ListConverter.fromList(orderItemService.getItemsCountAndAmountByUser(order.getId()))
-                .toMap(ByUserOrderItem::getUserId);
+        Map<String, ByUserOrderItem> userOrderItems = orderItemService.getItemsCountAndAmountByUser(order.getId()).stream()
+                .collect(toMap(ByUserOrderItem::getUserId));
 
         Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()
                 .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
@@ -536,8 +538,8 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     private void updateSupplierOrderItems(String orderId, String orderTypeId, List<OrderSynchItem> aequosOrderItems) {
-        Map<String, OrderSynchItem> aequosItemsMap = ListConverter.fromList(aequosOrderItems)
-                .toMap(OrderSynchItem::getId);
+        Map<String, OrderSynchItem> aequosItemsMap = aequosOrderItems.stream()
+                .collect(toMap(OrderSynchItem::getId));
 
         List<SupplierOrderItem> existingSupplierOrderItems = supplierOrderItemRepo.findByOrderId(orderId);
         for (SupplierOrderItem supplierOrderItem : existingSupplierOrderItems) {

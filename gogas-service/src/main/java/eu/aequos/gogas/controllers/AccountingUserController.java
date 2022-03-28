@@ -8,6 +8,7 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
+import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import io.swagger.annotations.Api;
@@ -76,6 +77,7 @@ public class AccountingUserController {
         return new BasicResponseDTO("OK");
     }
 
+    @IsManager
     @GetMapping(value = "balance")
     public List<UserBalanceDTO> getUserBalanceList() {
         return accountingService.getUserBalanceList();
@@ -85,11 +87,13 @@ public class AccountingUserController {
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
                                                 @RequestParam(required = false) String dateFrom,
-                                                @RequestParam(required = false) String dateTo) {
+                                                @RequestParam(required = false) String dateTo,
+                                                @RequestParam(required = false) Integer skipItems,
+                                                @RequestParam(required = false) Integer maxItems) {
 
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo, false);
+        return accountingService.getPaginatedUserBalance(userId, parsedDateFrom, parsedDateTo, false, skipItems, maxItems);
     }
 }

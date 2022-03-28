@@ -32,8 +32,9 @@ public class SmallUserOrderItemDTO {
     @JsonProperty("qtaRitirata")
     BigDecimal orderDeliveredQty;
 
-    @JsonIgnore()
     BigDecimal productTotalOrderedQty;
+
+    Integer itemsAdded;
 
     /** Derived values **/
 
@@ -82,8 +83,12 @@ public class SmallUserOrderItemDTO {
         return productTotalOrderedQty == null || productTotalOrderedQty.equals(BigDecimal.ZERO);
     }
 
-    /** builder **/
     public SmallUserOrderItemDTO fromModel(Product p, OpenOrderItem userOrder, ProductTotalOrder totalProductOrder) {
+        return fromModel(p, userOrder, null, totalProductOrder);
+    }
+
+    /** builder **/
+    public SmallUserOrderItemDTO fromModel(Product p, OpenOrderItem userOrder, Integer itemsAdded, ProductTotalOrder totalProductOrder) {
         this.boxUnitOfMeasure = p.getBoxUm();
         this.unitPrice = p.getPrice();
         this.boxWeight = p.getBoxWeight();
@@ -97,6 +102,8 @@ public class SmallUserOrderItemDTO {
 
         if (totalProductOrder != null)
             this.productTotalOrderedQty = totalProductOrder.getTotalQuantity();
+
+        this.itemsAdded = itemsAdded;
 
         return this;
     }
