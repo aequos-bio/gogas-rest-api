@@ -83,7 +83,7 @@ public class OrderTypeController {
     @IsAdmin
     @GetMapping(value = "{orderTypeId}")
     public OrderTypeDTO getOrderType(@PathVariable String orderTypeId) {
-        return new OrderTypeDTO().fromModel(orderTypeService.getRequired(orderTypeId));
+        return orderTypeService.getById(orderTypeId);
     }
 
     @ApiOperation(
@@ -301,8 +301,8 @@ public class OrderTypeController {
     })
     @IsAdmin
     @PutMapping(value = "{orderTypeId}/accounting")
-    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody Map value) {
-        orderTypeService.updateAccountingCode(orderTypeId, value.get("accountingCode").toString());
+    public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody Map<String, String> value) {
+        orderTypeService.updateAccountingCode(orderTypeId, value.get("accountingCode"));
         return new BasicResponseDTO("OK");
     }
 }

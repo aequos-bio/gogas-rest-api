@@ -28,7 +28,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
 
-    @Query("SELECT DISTINCT o.orderType.id FROM Order o")
+    @Query("SELECT DISTINCT LOWER(o.orderType.id) FROM Order o")
     Set<String> findAllUsedOrderTypes();
 
     List<Order> findByOrderTypeIdInAndStatusCodeIn(Set<String> orderTypeId, Set<Integer> statusCodes);

@@ -2,17 +2,22 @@ package eu.aequos.gogas.mvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.aequos.gogas.dto.CredentialsDTO;
+import eu.aequos.gogas.mock.MockUsers;
 import eu.aequos.gogas.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import javax.servlet.http.Cookie;
-import java.io.IOException;
+import java.util.List;
 import java.util.function.Supplier;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Component
 public class MockMvcGoGas {
@@ -34,7 +39,7 @@ public class MockMvcGoGas {
     }
 
     public MockMvcGoGas loginAsSimpleUser() throws Exception {
-        return loginAs("user1", "user1");
+        return loginAs(MockUsers.SIMPLE_USER_USERNAME, MockUsers.SIMPLE_USER_PASSWORD);
     }
 
     public MockMvcGoGas loginAs(String username, String password) throws Exception {
@@ -51,20 +56,34 @@ public class MockMvcGoGas {
                 .content(objectMapper.writeValueAsString(credentialsDTO)))
                 .andReturn();
 
-        jwtTokenCookie = authResult.getResponse().getCookie("jwt-token");
+        MockHttpServletResponse response = authResult.getResponse();
+
+        if (response.getStatus() != 200) {
+            throw new Exception(String.format("Error while login with user %s. Response status: %s", username, response.getStatus()));
+        }
+
+        jwtTokenCookie = response.getCookie("jwt-token");
 
         return this;
     }
 
 
     public ResultActions get(String endpoint) throws Exception {
-        return mockMvc.perform(MockMvcRequestBuilders.post(endpoint)
+        return mockMvc.perform(MockMvcRequestBuilders.get(endpoint)
                 .with(req -> {
                     req.setServerName(tenantId + ".aequos.bio");
                     return req;
                 })
                 .contentType("application/json")
                 .cookie(jwtTokenCookie));
+    }
+
+    public <T> T getDTO(String endpoint, Class<T> dtoClass) throws Exception {
+        return extractDTO(get(endpoint), dtoClass);
+    }
+
+    public <T> List<T> getDTOList(String endpoint, Class<T> dtoClass) throws Exception {
+        return extractListDTO(get(endpoint), dtoClass);
     }
 
     public ResultActions post(String endpoint, Object dto) throws Exception {
@@ -78,17 +97,35 @@ public class MockMvcGoGas {
                 .content(objectMapper.writeValueAsString(dto)));
     }
 
+    public <T> T postDTO(String endpoint, Object dto, Class<T> dtoClass) throws Exception {
+        ResultActions callResult = post(endpoint, dto);
+        return extractDTO(callResult, dtoClass);
+    }
+
+    public ResultActions put(String endpoint) throws Exception {
+        return put(endpoint, null);
+    }
+
+    public <T> T putDTO(String endpoint, Class<T> dtoClass) throws Exception {
+        ResultActions callResult = put(endpoint, null);
+        return extractDTO(callResult, dtoClass);
+    }
+
     public ResultActions put(String endpoint, Object dto) throws Exception {
-        return mockMvc.perform(MockMvcRequestBuilders.put(endpoint)
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.put(endpoint)
                 .with(req -> {
                     req.setServerName(tenantId + ".aequos.bio");
                     return req;
                 })
                 .contentType("application/json")
-                .cookie(jwtTokenCookie)
-                .content(objectMapper.writeValueAsString(dto)));
-    }
+                .cookie(jwtTokenCookie);
 
+        if (dto != null) {
+            requestBuilder.content(objectMapper.writeValueAsString(dto));
+        }
+
+        return mockMvc.perform(requestBuilder);
+    }
 
     public ResultActions delete(String endpoint) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.delete(endpoint)
@@ -100,6 +137,10 @@ public class MockMvcGoGas {
                 .cookie(jwtTokenCookie));
     }
 
+    public <T> T deleteDTO(String endpoint, Class<T> dtoClass) throws Exception {
+        return extractDTO(delete(endpoint), dtoClass);
+    }
+
     public <T> T executeOnRepo(Supplier<T> s) {
         try {
             TenantContext.setTenantId(tenantId);
@@ -109,7 +150,23 @@ public class MockMvcGoGas {
         }
     }
 
-    public <T> T parseJSON(String content, Class<T> valueType) throws IOException {
-        return objectMapper.readValue(content, valueType);
+    private <T> T extractDTO(ResultActions callResult, Class<T> dtoClass) throws Exception {
+        String responseBody = callResult
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readValue(responseBody, dtoClass);
+    }
+
+    private <T> List<T> extractListDTO(ResultActions callResult, Class<T> dtoClass) throws Exception {
+        String responseBody = callResult
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readValue(responseBody, objectMapper.getTypeFactory().constructCollectionType(List.class, dtoClass));
     }
 }

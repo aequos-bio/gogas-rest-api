@@ -1125,7 +1125,7 @@ GO
 ALTER TABLE [utenti]  WITH CHECK ADD FOREIGN KEY([idReferente])
 REFERENCES [utenti] ([idUtente])
 GO
-CREATE UNIQUE CLUSTERED INDEX IDX_utenti_position
+CREATE UNIQUE INDEX IDX_utenti_position
 ON utenti ([position] ASC)
 GO
 /****** Object:  StoredProcedure [CalendarioInternet_Get]    Script Date: 11/12/2019 22:43:56 ******/
@@ -1439,7 +1439,7 @@ GO
 
 /**************** ADDITIONAL INDEXES **********************/
 
-CREATE INDEX IDX_dataOrdine_utente ON ordini (idDateOrdine ASC, idUtente ASC
+CREATE INDEX IDX_dataOrdine_utente ON ordini (idDateOrdine ASC, idUtente ASC)
 INCLUDE (riepilogoUtente, qtaRitirataKg, prezzoKg, idReferenteAmico, contabilizzato)
 
 CREATE INDEX IDX_spese_trasporto ON speseTrasporto (idDateOrdini ASC, idUtente ASC)
