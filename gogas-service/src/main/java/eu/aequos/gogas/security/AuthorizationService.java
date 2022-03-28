@@ -34,6 +34,12 @@ public class AuthorizationService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(username));
     }
 
+    public GoGasUserDetails loadUserById(String userId) throws UsernameNotFoundException {
+        return userRepo.findById(userId)
+                .map(u -> new GoGasUserDetails(u, !orderManagerRepo.findByUser(u.getId()).isEmpty()))
+                .orElseThrow(() -> new UsernameNotFoundException(userId));
+    }
+
     //TODO: retrieve info always from db???
     public GoGasUserDetails getCurrentUser() {
         return (GoGasUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

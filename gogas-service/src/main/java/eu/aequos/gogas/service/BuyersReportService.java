@@ -11,8 +11,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.NONE;
 
 @Service
 public class BuyersReportService {
@@ -50,7 +55,7 @@ public class BuyersReportService {
 
     private List<Order> searchOrdersBetweenDates(String orderTypeId, LocalDate dateFrom, LocalDate dateTo) {
         Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select())
+                .withBaseFilter(OrderSpecs.select(NONE))
                 .and(OrderSpecs::type, orderTypeId)
                 .and(OrderSpecs::deliveryDateFrom, dateFrom)
                 .and(OrderSpecs::deliveryDateTo, dateTo)

@@ -8,6 +8,8 @@ import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,15 +36,16 @@ public class OrderItemService {
         return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, false);
     }
 
-    public OrderItem updateOrDeleteItemByUser(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+    public OrderItemUpdate updateOrDeleteItemByUser(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
         Optional<OrderItem> existingOrderItem = orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), false, OrderItem.class);
 
         if (orderItemUpdate.getQuantity() == null || orderItemUpdate.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
             existingOrderItem.ifPresent(orderItemRepo::delete);
-            return null;
+            return new OrderItemUpdate(null, -1);
         }
 
-        return insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false, false);
+        OrderItem orderItem = insertOrUpdateItem(user, product, orderId, orderItemUpdate, existingOrderItem, false, false);
+        return new OrderItemUpdate(orderItem, existingOrderItem.isPresent() ? 0 : 1);
     }
 
     private OrderItem insertOrUpdateItem(User user, Product product, String orderId,
@@ -231,5 +234,16 @@ public class OrderItemService {
     public Map<String, List<String>> getBuyersInOrderIds(Set<String> orderIds) {
         return orderItemRepo.findDistinctByOrderIn(orderIds).stream()
                 .collect(groupingBy(OrderItemUserOnly::getUser, mapping(OrderItemUserOnly::getOrder, toList())));
+    }
+
+    public List<Product> getNotOrderedProductsByCategory(String userId, String orderId, String categoryId) {
+        return orderItemRepo.getNotOrderedProductsByCategory(userId, orderId, categoryId);
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class OrderItemUpdate {
+        private final OrderItem orderItem;
+        private final int itemsAdded;
     }
 }

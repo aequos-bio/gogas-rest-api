@@ -1,6 +1,7 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.OrderItem;
+import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.OrderItemUserOnly;
@@ -145,4 +146,7 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     Set<String> findUserOrderingBySummary(String orderId, boolean summary);
 
     List<OrderItemUserOnly> findDistinctByOrderIn(Set<String> orderIds);
+
+    @Query("SELECT p FROM Product p WHERE p.category.id = ?3 AND p.id NOT IN (SELECT o.product FROM OrderItem o WHERE o.user = ?1 AND o.order = ?2)")
+    List<Product> getNotOrderedProductsByCategory(String userId, String orderId, String categoryId);
 }

@@ -4,6 +4,7 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.UserNotAuthorizedException;
+import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.service.OrderUserService;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Api("User order fill")
 @RestController
@@ -40,8 +42,20 @@ public class OrderUserController {
     }
 
     @GetMapping(value = "{orderId}")
-    public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws GoGasException {
-        return orderUserService.getOrderDetails(orderId);
+    public UserOrderDetailsDTO getOrderDetails(@PathVariable String orderId, @RequestParam(required = false, defaultValue = "false") boolean includeTotalAmount) throws GoGasException {
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        return orderUserService.getOrderDetails(currentUser.getId(), orderId, includeTotalAmount);
+    }
+
+    @GetMapping(value = "{orderId}/categories")
+    public List<CategoryDTO> getOrderDetails(@PathVariable String orderId) throws GoGasException {
+        return orderUserService.getOrderCategories(orderId);
+    }
+
+    @GetMapping(value = "{orderId}/categories/{categoryId}/not-ordered", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public CategoryDTO getNotOrderedItemsByCategory(@PathVariable String orderId, @PathVariable String categoryId) throws GoGasException {
+        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
+        return orderUserService.getNotOrderedItemsByCategory(currentUser.getId(), orderId, categoryId);
     }
 
     @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -59,5 +73,15 @@ public class OrderUserController {
             throw new UserNotAuthorizedException();
 
         return orderUserService.updateUserOrder(orderId, orderItemUpdate);
+    }
+
+    @GetMapping(value = "{orderId}/product/{productId}/total")
+    public Optional<ProductTotalOrder> getProductTotalQuantity(@PathVariable String orderId, @PathVariable String productId) throws GoGasException {
+        return orderUserService.getTotalQuantityByProduct(orderId, productId);
+    }
+
+    @GetMapping(value = "{orderId}/product/total")
+    public List<ProductTotalOrder> getProductsTotalQuantity(@PathVariable String orderId) throws GoGasException {
+        return orderUserService.getTotalQuantityByProduct(orderId);
     }
 }

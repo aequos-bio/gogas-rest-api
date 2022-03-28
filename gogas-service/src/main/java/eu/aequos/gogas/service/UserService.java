@@ -7,8 +7,10 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.notification.mail.MailNotificationSender;
+import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
+import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.RandomPassword;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +32,11 @@ public class UserService extends CrudService<User, String> {
     private UserRepo userRepo;
     private PasswordEncoder passwordEncoder;
     private MailNotificationSender mailNotificationSender;
+    private PushTokenRepo pushTokenRepo;
 
     //TODO: cache users
 
-    public UserService(ConfigurationService configurationService, UserRepo userRepo,
+    public UserService(ConfigurationService configurationService, UserRepo userRepo, PushTokenRepo pushTokenRepo,
                        PasswordEncoder passwordEncoder, MailNotificationSender mailNotificationSender) {
         super(userRepo, "user");
 
@@ -41,6 +44,7 @@ public class UserService extends CrudService<User, String> {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
         this.mailNotificationSender = mailNotificationSender;
+        this.pushTokenRepo = pushTokenRepo;
     }
 
     public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll, String allLabel) {
@@ -220,5 +224,24 @@ public class UserService extends CrudService<User, String> {
 
     public boolean userAlreadyExists(String username) {
         return userRepo.findByUsername(username).isPresent();
+    }
+
+    @Transactional
+    public void storePushToken(String userId, PushTokenDTO pushTokenDTO) {
+        PushToken pushToken = new PushToken();
+        pushToken.setUserId(userId);
+        pushToken.setToken(pushTokenDTO.getToken());
+        pushToken.setDeviceId(pushTokenDTO.getDeviceId());
+
+        pushTokenRepo.save(pushToken);
+    }
+
+    @Transactional
+    public void deletePushToken(String userId, PushTokenDTO pushTokenDTO) {
+        int deletedRows = pushTokenRepo.deleteByUserIdAndToken(userId, pushTokenDTO.getToken());
+
+        if (deletedRows <= 0) {
+            throw new ItemNotFoundException("Push token", pushTokenDTO.getToken());
+        }
     }
 }

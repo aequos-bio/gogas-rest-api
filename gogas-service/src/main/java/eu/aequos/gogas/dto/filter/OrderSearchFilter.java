@@ -21,26 +21,29 @@ public class OrderSearchFilter {
 
     @ApiModelProperty("Due date starting from")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    public LocalDate dueDateFrom;
+    private LocalDate dueDateFrom;
 
     @ApiModelProperty("Due date until")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    public LocalDate dueDateTo;
+    private LocalDate dueDateTo;
 
     @ApiModelProperty("Delivery date starting from")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    public LocalDate deliveryDateFrom;
+    private LocalDate deliveryDateFrom;
 
     @ApiModelProperty("Delivery date until")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
-    public LocalDate deliveryDateTo;
+    private LocalDate deliveryDateTo;
 
     @ApiModelProperty("Special filter to retrieve order in delivery")
-    public Boolean inDelivery;
+    private Boolean inDelivery;
 
     @ApiModelProperty("List of status cods to search")
-    public List<Integer> status;
+    private List<Integer> status;
 
     @ApiModelProperty("Special filter to retrieve order that are paid")
-    public Boolean paid;
+    private Boolean paid;
+
+    @ApiModelProperty("Results pagination")
+    private FilterPagination pagination;
 }
