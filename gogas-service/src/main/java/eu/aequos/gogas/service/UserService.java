@@ -90,6 +90,10 @@ public class UserService extends CrudService<User, String> {
         return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true), false, null);
     }
 
+    public List<SelectItemDTO> getActiveUsersForSelectByListAndRoles(Set<String> list, Set<String> role) {
+        return toSelectItems(userRepo.findByIdInAndRoleInAndEnabled(list, role, true), false, null);
+    }
+
     public List<SelectItemDTO> getActiveUsersForSelectByBlackListAndRoles(Set<String> blackList, Set<String> role) {
         return toSelectItems(userRepo.findByIdNotInAndRoleInAndEnabled(blackList, role, true), false, null);
     }

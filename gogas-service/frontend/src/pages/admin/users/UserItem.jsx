@@ -10,6 +10,7 @@ import {
   Divider,
   Menu,
   MenuItem,
+  Chip,
 } from '@material-ui/core';
 import { MoreVert as MoreVertIcon } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
@@ -147,10 +148,13 @@ const UserItem = ({
             <>
               {getField('Username', user.username)}
               {getField('Email', user.email)}
-              {getField('Ruolo', user.ruololabel)}
+              {user.ruolo === 'U' ? null : (
+                <Chip size="small" label={user.ruololabel} color="secondary" />
+              )}
             </>
           }
           secondaryTypographyProps={{
+            component: 'div',
             className: classes.secondLine,
           }}
         />

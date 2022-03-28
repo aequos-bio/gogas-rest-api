@@ -169,7 +169,7 @@ public class OrderTypeController {
     })
     @IsAdmin
     @GetMapping(value = "{orderTypeId}/manager")
-    public List<SelectItemDTO> listManagers(@PathVariable String orderTypeId) {
+    public List<SelectItemDTO> listOrderTypeManagers(@PathVariable String orderTypeId) {
         List<OrderManager> orderManagerList = orderManagerRepo.findByOrderType(orderTypeId);
         Map<String, String> usersMap = userService.getUsersFullNameMap(orderManagerList.stream()
                 .map(OrderManager::getUser)
@@ -181,14 +181,15 @@ public class OrderTypeController {
     }
 
     @ApiOperation(
-        value = "Get managers of all order types",
+        value = "Get managers of all order types (and optionally filter by userId)",
         authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
     )
     @IsAdmin
     @GetMapping(value = "manager/list")
-    public List<ManagerDTO> listManagers() {
+    public List<ManagerDTO> listManagers(@RequestParam(name = "userId", required = false) String userId) {
         Iterable<OrderManager> orderManagerIterable = orderManagerRepo.findAll();
         List<OrderManager> orderManagerList = StreamSupport.stream(orderManagerIterable.spliterator(), false)
+            .filter(orderManager -> userId == null ? true : userId.equals(orderManager.getUser()))
                 .collect(Collectors.toList());
         Map<String, String> usersMap = userService.getUsersFullNameMap(orderManagerList.stream()
             .map(OrderManager::getUser)
@@ -204,6 +205,29 @@ public class OrderTypeController {
             managers.add(manager);
         }
         return managers;
+    }
+
+    @ApiOperation(
+        value = "Get users who are managers of order type",
+        authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
+    )
+    @ApiResponses({
+        @ApiResponse(code = 200, message = "OK", response = SelectItemDTO.class, responseContainer = "List"),
+        @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
+    })
+    @IsAdmin
+    @GetMapping(value = "{orderTypeId}/manager/list")
+    public List<SelectItemDTO> listOredrTypeManagers(@PathVariable String orderTypeId) {
+        Set<String> managers = orderManagerRepo.findByOrderType(orderTypeId).stream()
+                .map(OrderManager::getUser)
+                .collect(Collectors.toSet());
+
+        Set<String> roles = userService.getAllUserRolesAsString(true, false);
+
+        if (managers.isEmpty())
+            return new ArrayList<>();
+
+        return userService.getActiveUsersForSelectByListAndRoles(managers, roles);
     }
 
     @ApiOperation(
