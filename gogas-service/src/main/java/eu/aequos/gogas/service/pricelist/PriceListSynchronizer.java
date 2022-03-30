@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -107,8 +108,11 @@ public class PriceListSynchronizer {
         product.setAvailable(true);
         product.setNotes(externalProduct.getNotes());
         product.setFrequency(externalProduct.getFrequency());
-        product.setBoxOnly(externalProduct.isWholeBoxesOnly());
-        product.setMultiple(externalProduct.getMultiple());
+
+        externalProduct.getQuantityConstraints().ifPresent(constraints -> {
+            product.setBoxOnly(constraints.isWholeBoxesOnly());
+            product.setMultiple(constraints.getMultiple());
+        });
 
         return productRepo.save(product).getId();
     }

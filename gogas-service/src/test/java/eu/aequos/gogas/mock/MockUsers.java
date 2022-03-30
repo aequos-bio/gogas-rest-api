@@ -77,6 +77,7 @@ public class MockUsers {
     }
 
     public void init() {
+        deleteByUsername(SIMPLE_USER_USERNAME);
         createSimpleUser(SIMPLE_USER_USERNAME, SIMPLE_USER_PASSWORD, "Simple", "User");
     }
 

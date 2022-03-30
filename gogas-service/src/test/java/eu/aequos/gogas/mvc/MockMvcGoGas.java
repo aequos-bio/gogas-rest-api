@@ -12,9 +12,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import javax.servlet.http.Cookie;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -67,9 +71,13 @@ public class MockMvcGoGas {
         return this;
     }
 
-
     public ResultActions get(String endpoint) throws Exception {
+        return get(endpoint, new LinkedMultiValueMap<>());
+    }
+
+    public ResultActions get(String endpoint, MultiValueMap<String, String> params) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.get(endpoint)
+                .params(params)
                 .with(req -> {
                     req.setServerName(tenantId + ".aequos.bio");
                     return req;
@@ -79,11 +87,15 @@ public class MockMvcGoGas {
     }
 
     public <T> T getDTO(String endpoint, Class<T> dtoClass) throws Exception {
-        return extractDTO(get(endpoint), dtoClass);
+        return extractDTO(get(endpoint, new LinkedMultiValueMap<>()), dtoClass);
     }
 
     public <T> List<T> getDTOList(String endpoint, Class<T> dtoClass) throws Exception {
-        return extractListDTO(get(endpoint), dtoClass);
+        return extractListDTO(get(endpoint, new LinkedMultiValueMap<>()), dtoClass);
+    }
+
+    public <T> List<T> getDTOList(String endpoint, Class<T> dtoClass, Map<String, List<String>> requestParams) throws Exception {
+        return extractListDTO(get(endpoint, new LinkedMultiValueMap<>(requestParams)), dtoClass);
     }
 
     public ResultActions post(String endpoint, Object dto) throws Exception {

@@ -20,11 +20,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class AequosIntegrationTest extends BaseGoGasIntegrationTest {
+class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Autowired
     private MockOrders mockOrders;
@@ -68,9 +68,24 @@ class AequosIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAListOfNewAequosOrderType_whenRequestingAequosOrderTypeSynch_thenAllOrderTypeIsCreated() throws Exception {
-        mockOrders.createExistingOrderType("Fresco Settimanale", 0);
-        mockOrders.createExistingOrderType("Pane", 1);
-        mockOrders.createExistingOrderType("Carni Bianche", 2);
+        mockMvcGoGas.loginAsAdmin();
+
+        BasicResponseDTO basicResponseDTO = mockMvcGoGas.putDTO("/api/ordertype/aequos/sync", BasicResponseDTO.class);
+        assertEquals("OK", basicResponseDTO.getData());
+
+        Map<Integer, OrderTypeDTO> createdOrderTypes = getOrderTypesByAequosId();
+        assertEquals(3, createdOrderTypes.size());
+
+        checkCreatedAequosOrderType(createdOrderTypes.get(0), "Fresco Settimanale", true);
+        checkCreatedAequosOrderType(createdOrderTypes.get(1), "Pane", true);
+        checkCreatedAequosOrderType(createdOrderTypes.get(2), "Carni bianche", false);
+    }
+
+    @Test
+    void givenAListOfExistingAequosOrderType_whenRequestingAequosOrderTypeSynch_thenNoChangesArePerformed() throws Exception {
+        mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        mockOrders.createAequosOrderType("Pane", 1);
+        mockOrders.createAequosOrderType("Carni Bianche", 2);
 
         mockMvcGoGas.loginAsAdmin();
 
@@ -85,31 +100,35 @@ class AequosIntegrationTest extends BaseGoGasIntegrationTest {
     }
 
     @Test
-    void givenAListOfExistingAequosOrderType_whenRequestingAequosOrderTypeSynch_thenNoChangesArePerformed() throws Exception {
+    void givenAListOfPartiallyExistingAequosOrderType_whenRequestingAequosOrderTypeSynch_thenOnlyNewAreAdded() throws Exception {
+        mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        mockOrders.createAequosOrderType("Carni Bianche", 2);
+
         mockMvcGoGas.loginAsAdmin();
+
+        Map<Integer, OrderTypeDTO> existingOrderTypes = getOrderTypesByAequosId();;
 
         BasicResponseDTO basicResponseDTO = mockMvcGoGas.putDTO("/api/ordertype/aequos/sync", BasicResponseDTO.class);
         assertEquals("OK", basicResponseDTO.getData());
 
-        Map<Integer, OrderTypeDTO> createdOrderTypes = getOrderTypesByAequosId();
-        assertEquals(3, createdOrderTypes.size());
+        Map<Integer, OrderTypeDTO> updatedOrderTypes = getOrderTypesByAequosId();
 
-        checkCreatedAequosOrderType(createdOrderTypes.get(0), "Fresco Settimanale", true);
-        checkCreatedAequosOrderType(createdOrderTypes.get(1), "Pane", true);
-        checkCreatedAequosOrderType(createdOrderTypes.get(2), "Carni bianche", false);
+        assertEquals(updatedOrderTypes.get(0), existingOrderTypes.get(0));
+        assertEquals(updatedOrderTypes.get(2), existingOrderTypes.get(2));
+        checkCreatedAequosOrderType(updatedOrderTypes.get(1), "Pane", true);
     }
 
     private void checkCreatedAequosOrderType(OrderTypeDTO orderType, String description, boolean billedByAequos) {
         assertEquals(description, orderType.getDescription());
         assertEquals(billedByAequos, orderType.isBilledByAequos());
 
-        assertFalse(orderType.isExternal());
         assertTrue(orderType.isComputedAmount());
         assertTrue(orderType.isShowAdvance());
-        assertTrue(orderType.isSummaryRequired());
+        assertFalse(orderType.isSummaryRequired());
         assertFalse(orderType.isShowBoxCompletion());
         assertFalse(orderType.isExcelAllProducts());
         assertFalse(orderType.isExcelAllUsers());
+        assertFalse(orderType.isExternal());
         assertFalse(orderType.isHasTurns());
         assertFalse(orderType.isUsed());
         assertNull(orderType.getExternalLink());

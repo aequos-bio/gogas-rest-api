@@ -41,8 +41,8 @@ public class ProductController {
         @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
     })
     @GetMapping(value = "list/{productTypeId}/available", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<Product> getAvailableProducts(@PathVariable String productTypeId) {
-        return productRepo.findAvailableByTypeOrderByPriceList(productTypeId);
+    public List<ProductDTO> getAvailableProducts(@PathVariable String productTypeId) {
+        return productService.searchProducts(productTypeId, null, null, null);
     }
 
     @ApiOperation(
@@ -128,9 +128,9 @@ public class ProductController {
         @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
     })
     @IsOrderTypeManager
-    @PutMapping(value = "{productType}/sync")
-    public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
-        return productService.syncPriceList(productType);
+    @PutMapping(value = "{productTypeId}/sync")
+    public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productTypeId) throws GoGasException {
+        return productService.syncPriceList(productTypeId);
     }
 
     @ApiOperation(

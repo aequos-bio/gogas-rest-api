@@ -2,9 +2,11 @@ package eu.aequos.gogas.integration.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.service.pricelist.ExternalPriceListItem;
+import eu.aequos.gogas.service.pricelist.QuantityConstraints;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Data
 public class AequosPriceListItem implements ExternalPriceListItem {
@@ -48,9 +50,8 @@ public class AequosPriceListItem implements ExternalPriceListItem {
     @JsonProperty("cadenza")
     String frequency;
 
-    @JsonProperty("solo_collo")
-    boolean wholeBoxesOnly;
-
-    @JsonProperty("multiplo")
-    BigDecimal multiple;
+    @Override
+    public Optional<QuantityConstraints> getQuantityConstraints() {
+        return Optional.empty();
+    }
 }

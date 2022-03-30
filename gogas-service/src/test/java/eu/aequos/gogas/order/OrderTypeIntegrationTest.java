@@ -60,7 +60,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotUsedOrderTypeAndASimpleUser_whenDeletingOrderType_thenUnauthorizedIsReturned() throws Exception {
-        OrderType testOrder = mockOrders.createExistingOrderType("Test Order", null);
+        OrderType testOrder = mockOrders.createAequosOrderType("Test Order", null);
         mockMvcGoGas.loginAsSimpleUser();
 
         mockMvcGoGas.delete("/api/ordertype/" + testOrder.getId())
@@ -69,7 +69,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotUsedOrderType_whenDeletingOrderType_thenOrderTypeIsCorrectlyDeleted() throws Exception {
-        OrderType testOrder = mockOrders.createExistingOrderType("Test Order", null);
+        OrderType testOrder = mockOrders.createAequosOrderType("Test Order", null);
         mockMvcGoGas.loginAsAdmin();
 
         BasicResponseDTO basicResponseDTO = mockMvcGoGas.deleteDTO("/api/ordertype/" + testOrder.getId(), BasicResponseDTO.class);
@@ -81,7 +81,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAUsedOrderType_whenDeletingOrderType_thenOrderTypeCannotBeDeleted() throws Exception {
-        OrderType testOrderType = mockOrders.createExistingOrderType("Test Order", null);
+        OrderType testOrderType = mockOrders.createAequosOrderType("Test Order", null);
         mockOrders.createExistingOrder(testOrderType);
         mockMvcGoGas.loginAsAdmin();
 

@@ -43,10 +43,10 @@ public class AequosIntegrationService {
         orderType.setAequosOrderId(aequosOrderType.getId());
         orderType.setDescription(aequosOrderType.getDescription());
         orderType.setBilledByAequos(aequosOrderType.isBilledByAequos());
-        orderType.setHasTurns(false);
-        orderType.setSummaryRequired(true);
         orderType.setComputedAmount(true);
         orderType.setShowAdvance(true);
+        orderType.setHasTurns(false);
+        orderType.setSummaryRequired(false);
         orderType.setShowBoxCompletion(false);
         orderType.setExcelAllUsers(false);
         orderType.setExcelAllProducts(false);
