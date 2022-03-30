@@ -105,7 +105,7 @@ public class AequosIntegrationService {
         OrderSynchResponse response = aequosApiClient.synchOrder(formParams);
 
         if (response.isError())
-            throw new GoGasException("Errore durante l'invio dei pesi per l'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
+            throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
 
         return response;
     }

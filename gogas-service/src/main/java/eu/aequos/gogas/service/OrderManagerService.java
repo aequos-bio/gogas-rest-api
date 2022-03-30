@@ -425,9 +425,9 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .map(o -> createOrderDTO(aequosOrderTypeMapping.get(o.getId()), o))
                 .filter(Objects::nonNull);
 
-        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
-        if (!managedOrderTypes.isEmpty())
-            aequosOpenOrders = aequosOpenOrders.filter(managedOrderTypes::contains);
+        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId, userRole);
+        if (!managedOrderTypeIds.isEmpty())
+            aequosOpenOrders = aequosOpenOrders.filter(aequosOrder -> managedOrderTypeIds.contains(aequosOrder.getOrderTypeId()));
 
         return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
@@ -483,6 +483,10 @@ public class OrderManagerService extends CrudService<Order, String> {
             throw new GoGasException("Order type is not linked to Aequos");
 
         List<SupplierOrderBoxes> supplierOrderBoxes = supplierOrderItemRepo.findBoxesCountByOrderId(order.getId());
+
+        if (supplierOrderBoxes.isEmpty())
+            throw new GoGasException("Order cannot be sent: no products found");
+
         String aequosOrderId = aequosIntegrationService.createOrUpdateOrder(aequosOrderType, order.getExternalOrderId(), supplierOrderBoxes);
         orderRepo.updateOrderExternalId(orderId, aequosOrderId, true);
 
@@ -550,9 +554,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                 aequosItemsMap.remove(productExternalCode);
         }
 
-        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap
-            .values()
-            .stream()
+        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap.values().stream()
             .map(aequosItem -> createSupplierOrderItem(orderId, orderTypeId, aequosItem))
             .collect(toList());
 
@@ -601,7 +603,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         Optional<Product> product = productService.getByExternalId(orderTypeId, aequosOrderItem.getId());
 
         // Necessario per evitare errori di sincronia con l'ordine del fresco di novembre 2020 in cui compare un item TRASPORTO0000 inesistente (Trasporto Cartizze?)
-        if (!product.isPresent()) {
+        if (product.isEmpty()) {
+            log.warn("Product wih external code {} not found, skipping it", aequosOrderItem.getId());
             return null;
         }
 

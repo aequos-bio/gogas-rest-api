@@ -5,7 +5,7 @@ import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosOrderType;
-import eu.aequos.gogas.mock.MockOrders;
+import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,9 +26,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
-    @Autowired
-    private MockOrders mockOrders;
-
     @MockBean
     private AequosApiClient aequosApiClient;
 
@@ -43,7 +40,7 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        mockOrders.deleteAllOrderTypes();
+        mockOrdersData.deleteAllOrderTypes();
     }
 
     @Test
@@ -83,9 +80,9 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAListOfExistingAequosOrderType_whenRequestingAequosOrderTypeSynch_thenNoChangesArePerformed() throws Exception {
-        mockOrders.createAequosOrderType("Fresco Settimanale", 0);
-        mockOrders.createAequosOrderType("Pane", 1);
-        mockOrders.createAequosOrderType("Carni Bianche", 2);
+        mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
+        mockOrdersData.createAequosOrderType("Pane", 1);
+        mockOrdersData.createAequosOrderType("Carni Bianche", 2);
 
         mockMvcGoGas.loginAsAdmin();
 
@@ -101,8 +98,8 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAListOfPartiallyExistingAequosOrderType_whenRequestingAequosOrderTypeSynch_thenOnlyNewAreAdded() throws Exception {
-        mockOrders.createAequosOrderType("Fresco Settimanale", 0);
-        mockOrders.createAequosOrderType("Carni Bianche", 2);
+        mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
+        mockOrdersData.createAequosOrderType("Carni Bianche", 2);
 
         mockMvcGoGas.loginAsAdmin();
 

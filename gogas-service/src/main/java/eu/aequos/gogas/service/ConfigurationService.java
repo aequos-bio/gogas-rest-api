@@ -71,8 +71,8 @@ public class ConfigurationService {
         Optional<String> usernameConf = configurationRepo.findValueByKey("aequos.username");
         Optional<String> passwordConf = configurationRepo.findValueByKey("aequos.password");
 
-        if (!usernameConf.isPresent() || !passwordConf.isPresent())
-            throw new GoGasException("Credenziali per Aequos non trovate, controllare la configurazione");
+        if (usernameConf.isEmpty() || passwordConf.isEmpty() || usernameConf.get().isEmpty() || passwordConf.get().isEmpty())
+            throw new GoGasException("Credenziali per Aequos non trovate o non valide, controllare la configurazione");
 
         CredentialsDTO credentials = new CredentialsDTO();
         credentials.setUsername(usernameConf.get());

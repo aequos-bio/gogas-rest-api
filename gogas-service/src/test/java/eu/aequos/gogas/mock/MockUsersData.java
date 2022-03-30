@@ -16,7 +16,7 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 @WithTenant("integration-test")
-public class MockUsers {
+public class MockUsersData implements MockDataLifeCycle {
 
     public static final String SIMPLE_USER_USERNAME = "simple_user";
     public static final String SIMPLE_USER_PASSWORD = "simple_user";
@@ -74,13 +74,16 @@ public class MockUsers {
     public void deleteUsers() {
         createdUsers.sort(Comparator.comparing(User::getRole).reversed());
         createdUsers.forEach(userRepo::delete);
+        createdUsers.clear();
     }
 
+    @Override
     public void init() {
         deleteByUsername(SIMPLE_USER_USERNAME);
         createSimpleUser(SIMPLE_USER_USERNAME, SIMPLE_USER_PASSWORD, "Simple", "User");
     }
 
+    @Override
     public void destroy() {
         deleteUsers();
     }

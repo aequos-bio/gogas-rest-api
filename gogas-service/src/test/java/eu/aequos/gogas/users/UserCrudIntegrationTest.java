@@ -29,7 +29,7 @@ class UserCrudIntegrationTest extends BaseGoGasIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        mockUsers.deleteByUsername("test-admin");
+        mockUsersData.deleteByUsername("test-admin");
     }
 
     @Test

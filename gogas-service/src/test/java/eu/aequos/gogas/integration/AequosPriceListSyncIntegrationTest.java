@@ -7,7 +7,7 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.SupplierDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosPriceList;
-import eu.aequos.gogas.mock.MockOrders;
+import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.persistence.entity.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -34,9 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Autowired
-    private MockOrders mockOrders;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @MockBean
@@ -50,7 +46,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        mockOrders.deleteAllOrderTypes();
+        mockOrdersData.deleteAllOrderTypes();
     }
 
     @Test
@@ -71,7 +67,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotAequosOrderType_whenRequestingAequosPriceListSynch_thenNotFoundIsReturned() throws Exception {
-        OrderType orderType = mockOrders.createOrderType("Fresco Settimanale");
+        OrderType orderType = mockOrdersData.createOrderType("Fresco Settimanale");
 
         mockMvcGoGas.loginAsAdmin();
 
@@ -82,11 +78,11 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotValidOrderManagerForOrderType_whenRequestingAequosPriceListSynch_thenForbiddenIsReturned() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
-        OrderType otherOrderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType otherOrderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
 
-        User simpleUser = mockUsers.createSimpleUser("manager", "password", "manager", "manager");
-        mockOrders.addManager(simpleUser, otherOrderType);
+        User simpleUser = mockUsersData.createSimpleUser("manager", "password", "manager", "manager");
+        mockOrdersData.addManager(simpleUser, otherOrderType);
 
         mockMvcGoGas.loginAs("manager", "password");
 
@@ -96,9 +92,9 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAValidOrderManagerForOrderType_whenRequestingAequosPriceListSynch_thenSyncIsPerformed() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
-        User simpleUser = mockUsers.createSimpleUser("manager2", "password", "manager", "manager");
-        mockOrders.addManager(simpleUser, orderType);
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
+        User simpleUser = mockUsersData.createSimpleUser("manager2", "password", "manager", "manager");
+        mockOrdersData.addManager(simpleUser, orderType);
 
         mockMvcGoGas.loginAs("manager2", "password");
 
@@ -110,7 +106,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAnEmptyAequosOrderType_whenRequestingAequosPriceListSynch_thenAllProductsAreCreated() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
 
         mockMvcGoGas.loginAsAdmin();
 
@@ -155,28 +151,28 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAllExistingAequosProductsForOrderType_whenRequestingAequosPriceListSynch_thenAllProductsAreUpdatedAndCustomFlagsKept() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
 
         mockMvcGoGas.loginAsAdmin();
 
         Map<String, ProductCategory> expectedCategories = Map.ofEntries(
-                entry("Birra", mockOrders.createCategory("Birra", orderType.getId())),
-                entry("Frutta", mockOrders.createCategory("Frutta", orderType.getId())),
-                entry("Ortaggi", mockOrders.createCategory("Ortaggi", orderType.getId()))
+                entry("Birra", mockOrdersData.createCategory("Birra", orderType.getId())),
+                entry("Frutta", mockOrdersData.createCategory("Frutta", orderType.getId())),
+                entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", orderType.getId()))
         );
 
         Map<String, Supplier> expectedSuppliers = Map.ofEntries(
-                entry("1041", mockOrders.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
-                entry("1054", mockOrders.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)")),
-                entry("1131", mockOrders.createSupplier("1131", "ABBIATE VALERIO"))
+                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
+                entry("1054", mockOrdersData.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)")),
+                entry("1131", mockOrdersData.createSupplier("1131", "ABBIATE VALERIO"))
         );
 
         Map<String, String> productsByExternalId = Stream.of(
-                mockOrders.createProduct(orderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
-                mockOrders.createProduct(orderType.getId(), "BIRRSOLE1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, false, "KG", "Cassa", 6.0, 0.2, 3.0, null, "f"),
-                mockOrders.createProduct(orderType.getId(), "FRMECRCR1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "PZ", null, 2.4, 0.2, null, "n", "f"),
-                mockOrders.createProduct(orderType.getId(), "FRMEOPAL1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
-                mockOrders.createProduct(orderType.getId(), "ORPATGIA1131", "d", expectedSuppliers.get("1131"), expectedCategories.get("Ortaggi"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f")
+                mockOrdersData.createProduct(orderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(orderType.getId(), "BIRRSOLE1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, false, "KG", "Cassa", 6.0, 0.2, 3.0, null, "f"),
+                mockOrdersData.createProduct(orderType.getId(), "FRMECRCR1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "PZ", null, 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(orderType.getId(), "FRMEOPAL1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(orderType.getId(), "ORPATGIA1131", "d", expectedSuppliers.get("1131"), expectedCategories.get("Ortaggi"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f")
         ).collect(Collectors.toMap(Product::getExternalId, Product::getId));
 
         mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
@@ -216,24 +212,24 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenExistingAequosProductsForOrderTypeNoMoreInPriceList_whenRequestingAequosPriceListSynch_thenProductsNotInPriceListBecomeNotAvailable() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
 
         mockMvcGoGas.loginAsAdmin();
 
         Map<String, ProductCategory> expectedCategories = Map.ofEntries(
-                entry("Birra", mockOrders.createCategory("Birra", orderType.getId())),
-                entry("Frutta", mockOrders.createCategory("Frutta", orderType.getId()))
+                entry("Birra", mockOrdersData.createCategory("Birra", orderType.getId())),
+                entry("Frutta", mockOrdersData.createCategory("Frutta", orderType.getId()))
         );
 
         Map<String, Supplier> expectedSuppliers = Map.ofEntries(
-                entry("1041", mockOrders.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
-                entry("1054", mockOrders.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)"))
+                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
+                entry("1054", mockOrdersData.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)"))
         );
 
         Map<String, String> productsByExternalId = Stream.of(
-                mockOrders.createProduct(orderType.getId(), "NOT_IN_PRICELIST_1", "d1", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), true, false, true, "KG", "Cassa", 2.4, 0.2, null, "n1", "f1"),
-                mockOrders.createProduct(orderType.getId(), "NOT_IN_PRICELIST_2", "d2", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), true, false, false, "KG", "Cassa", 2.5, 0.3, 3.0, null, "f2"),
-                mockOrders.createProduct(orderType.getId(), "NOT_IN_PRICELIST_3", "d3", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), true, false, true, "PZ", null, 1.0, 0.4, null, "n3", "f3")
+                mockOrdersData.createProduct(orderType.getId(), "NOT_IN_PRICELIST_1", "d1", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), true, false, true, "KG", "Cassa", 2.4, 0.2, null, "n1", "f1"),
+                mockOrdersData.createProduct(orderType.getId(), "NOT_IN_PRICELIST_2", "d2", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), true, false, false, "KG", "Cassa", 2.5, 0.3, 3.0, null, "f2"),
+                mockOrdersData.createProduct(orderType.getId(), "NOT_IN_PRICELIST_3", "d3", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), true, false, true, "PZ", null, 1.0, 0.4, null, "n3", "f3")
         ).collect(Collectors.toMap(Product::getExternalId, Product::getId));
 
         mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
@@ -283,21 +279,21 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAnotherProductWithSameExternalIdOfDifferentOrderType_whenRequestingAequosPriceListSynch_thenTheOtherProductIsNotUpdated() throws Exception {
-        OrderType orderType = mockOrders.createAequosOrderType("Fresco Settimanale", 0);
-        OrderType otherOrderType = mockOrders.createOrderType("Altro");
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
+        OrderType otherOrderType = mockOrdersData.createOrderType("Altro");
 
         mockMvcGoGas.loginAsAdmin();
 
-        ProductCategory birra = mockOrders.createCategory("Birra", orderType.getId());
-        ProductCategory birraOther = mockOrders.createCategory("Birra", otherOrderType.getId());
+        ProductCategory birra = mockOrdersData.createCategory("Birra", orderType.getId());
+        ProductCategory birraOther = mockOrdersData.createCategory("Birra", otherOrderType.getId());
 
         Map<String, Supplier> expectedSuppliers = Map.ofEntries(
-                entry("1041", mockOrders.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
-                entry("other", mockOrders.createSupplier("other", "BIRRIFICIO"))
+                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
+                entry("other", mockOrdersData.createSupplier("other", "BIRRIFICIO"))
         );
 
-        Product productToSync = mockOrders.createProduct(orderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("1041"), birra, false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f");
-        Product otherProduct = mockOrders.createProduct(otherOrderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("other"), birraOther, false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f");
+        Product productToSync = mockOrdersData.createProduct(orderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("1041"), birra, false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f");
+        Product otherProduct = mockOrdersData.createProduct(otherOrderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("other"), birraOther, false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f");
 
         mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
                 .andExpect(status().isOk())

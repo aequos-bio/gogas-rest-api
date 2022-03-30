@@ -4,18 +4,17 @@ import eu.aequos.gogas.mvc.WithTenant;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 @Component
 @WithTenant("integration-test")
-public class MockOrders {
+public class MockOrdersData implements MockDataLifeCycle {
 
     private final OrderTypeRepo orderTypeRepo;
     private final ProductRepo productRepo;
@@ -24,6 +23,7 @@ public class MockOrders {
     private final ProductCategoryRepo productCategoryRepo;
     private final SupplierRepo supplierRepo;
     private final OrderManagerRepo orderManagerRepo;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
 
     public OrderType createAequosOrderType(String name, Integer aequosId) {
         OrderType orderType = new OrderType();
@@ -91,24 +91,72 @@ public class MockOrders {
     }
 
     public Order createExistingOrder(OrderType orderType) {
+        return createOrder(orderType, LocalDate.now().minusDays(2), LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
+                Order.OrderStatus.Opened.getStatusCode(), BigDecimal.ZERO);
+    }
+
+    public Order createOrder(OrderType orderType, String openingDate, String dueDate, String deliveryDate, Order.OrderStatus orderStatus) {
+        return createOrder(orderType, LocalDate.parse(openingDate), LocalDate.parse(dueDate), LocalDate.parse(deliveryDate),
+                orderStatus.getStatusCode(), BigDecimal.ZERO);
+    }
+
+    public Order createOrder(OrderType orderType, LocalDate openingDate, LocalDate dueDate, LocalDate deliveryDate,
+                             int status, BigDecimal shippingCost) {
+
         Order order = new Order();
         order.setOrderType(orderType);
-        order.setStatusCode(Order.OrderStatus.Opened.getStatusCode());
-        order.setOpeningDate(LocalDate.now().minusDays(2));
-        order.setDueDate(LocalDate.now().plusDays(1));
-        order.setDeliveryDate(LocalDate.now().plusDays(2));
-        order.setShippingCost(BigDecimal.ZERO);
+        order.setStatusCode(status);
+        order.setOpeningDate(openingDate);
+        order.setDueDate(dueDate);
+        order.setDeliveryDate(deliveryDate);
+        order.setShippingCost(shippingCost);
         return orderRepo.save(order);
     }
 
+    public void updateExternalOrderId(Order order, String externalOrderId) {
+        order.setExternalOrderId(externalOrderId);
+        order.setSent(true);
+        orderRepo.save(order);
+    }
+
+    public SupplierOrderItem createSupplierOrderItem(Order order, Product product, int boxCount) {
+
+        SupplierOrderItem orderItem = new SupplierOrderItem();
+        orderItem.setOrderId(order.getId());
+        orderItem.setProductId(product.getId());
+        orderItem.setBoxesCount(BigDecimal.valueOf(boxCount));
+        orderItem.setBoxWeight(product.getBoxWeight());
+        orderItem.setTotalQuantity(BigDecimal.valueOf(boxCount).multiply(product.getBoxWeight()));
+        orderItem.setProductExternalCode(product.getExternalId());
+        orderItem.setUnitPrice(product.getPrice());
+
+        return supplierOrderItemRepo.save(orderItem);
+    }
+
+    public void createDeliveredUserOrderItem(String orderId, String userId, Product product, double quantity) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(orderId);
+        orderItem.setUser(userId);
+        orderItem.setProduct(product.getId());
+        orderItem.setOrderedQuantity(BigDecimal.valueOf(quantity));
+        orderItem.setDeliveredQuantity(BigDecimal.valueOf(quantity));
+        orderItem.setPrice(product.getPrice());
+        orderItem.setUm(product.getUm());
+        orderItem.setSummary(true);
+        orderItemRepo.save(orderItem);
+    }
+
+    @Transactional
     public void deleteOrder(String orderId) {
         orderItemRepo.deleteByOrderAndSummary(orderId, false);
         orderItemRepo.deleteByOrderAndSummary(orderId, true);
+        supplierOrderItemRepo.deleteByOrderId(orderId);
         orderRepo.deleteById(orderId);
     }
 
     public void deleteAllOrderTypes() {
         orderItemRepo.deleteAll();
+        supplierOrderItemRepo.deleteAll();
         orderRepo.deleteAll();
         productRepo.deleteAll();
         supplierRepo.deleteAll();
@@ -117,6 +165,10 @@ public class MockOrders {
         orderTypeRepo.deleteAll();
     }
 
+    @Override
+    public void init() {}
+
+    @Override
     public void destroy() {
         deleteAllOrderTypes();
     }

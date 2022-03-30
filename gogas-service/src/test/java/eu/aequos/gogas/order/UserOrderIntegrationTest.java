@@ -21,14 +21,14 @@ class UserOrderIntegrationTest extends BaseGoGasIntegrationTest {
     @Disabled("da sistemare")
     @Test
     void givenAValidOrder_whenAddingUserOrderItem_itemIsAdded() throws Exception {
-        Order openedOrder = mockOrders.createOrder("Fresco settimanale");
+        Order openedOrder = mockOrdersData.createOrder("Fresco settimanale");
         mockMvcGoGas.loginAsSimpleUser();
 
         OrderItemUpdateRequest request = new OrderItemUpdateRequest();
         request.setProductId(PRODUCT_ID);
         request.setQuantity(BigDecimal.ONE);
         request.setUnitOfMeasure("KG");
-        request.setUserId(mockUsers.getSimpleUserId());
+        request.setUserId(mockUsersData.getSimpleUserId());
 
         mockMvcGoGas.post("/api/order/user/" + openedOrder.getId() + "/item", request)
                 .andExpect(status().isOk())
