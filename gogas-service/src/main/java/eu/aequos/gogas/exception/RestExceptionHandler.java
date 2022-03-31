@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.validation.ConstraintViolationException;
+
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
@@ -65,6 +67,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleGoGasException(GoGasException ex) {
         log.warn("An exception occurred while processing the request", ex);
         return buildResponseEntity(new RestApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<Object> handleItemNotDeletable(ConstraintViolationException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
     private ResponseEntity<Object> buildResponseEntity(RestApiError apiError) {

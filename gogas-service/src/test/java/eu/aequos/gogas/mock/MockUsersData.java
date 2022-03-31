@@ -71,6 +71,13 @@ public class MockUsersData implements MockDataLifeCycle {
         return createdUsers.get(0).getId();
     }
 
+    public String getAdminId() {
+        return userRepo.findByUsername("admin").stream()
+                .findFirst()
+                .map(User::getId)
+                .orElse(null);
+    }
+
     public void deleteUsers() {
         createdUsers.sort(Comparator.comparing(User::getRole).reversed());
         createdUsers.forEach(userRepo::delete);

@@ -247,6 +247,12 @@ public class OrderManagerService extends CrudService<Order, String> {
         supplierOrderItemRepo.updateBoxesByOrderIdAndProductId(orderId, productId, new BigDecimal(boxes));
     }
 
+    @Transactional
+    public void cancelProductOrder(String orderId, String productId) {
+        orderItemService.cancelOrderItemByOrderAndProduct(orderId, productId);
+        supplierOrderItemRepo.updateBoxesByOrderIdAndProductId(orderId, productId, BigDecimal.ZERO);
+    }
+
     public void replaceOrderItemWithProduct(String orderId, String orderItemId, String productId) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
 

@@ -1,6 +1,7 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
@@ -29,6 +30,9 @@ public class OrderItemService {
     }
 
     public OrderItem insertItemByManager(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+        orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), true, OrderItem.class)
+                .ifPresent(item -> { throw new GoGasException("User item already existing for order and product"); });
+
         return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, true);
     }
 
@@ -145,12 +149,12 @@ public class OrderItemService {
         return orderItemRepo.findUserOrderingBySummary(orderId, false);
     }
 
-    public void cancelProductOrder(String orderId, String productId) {
-        orderItemRepo.cancelByOrderAndProduct(orderId, productId);
-    }
-
     public void restoreProductOrder(String orderId, String productId) {
         orderItemRepo.restoreByOrderAndProduct(orderId, productId);
+    }
+
+    public int cancelOrderItemByOrderAndProduct(String orderId, String productId) {
+        return orderItemRepo.cancelByOrderAndProduct(orderId, productId);
     }
 
     public void cancelOrderItem(String orderItemId) {
@@ -168,12 +172,15 @@ public class OrderItemService {
         OrderItem selectedOrder = orderItemRepo.findById(orderItemId)
                 .orElseThrow(() -> new ItemNotFoundException("orderItem", orderItemId));
 
+        if (targetProduct.equalsIgnoreCase(selectedOrder.getProduct())) {
+            throw new GoGasException("Cannot replace a product with the same product");
+        }
+
         int updated = orderItemRepo.addDeliveredQtyToOrderItem(selectedOrder.getUser(), selectedOrder.getOrder(),
                                                                 targetProduct, selectedOrder.getDeliveredQuantity());
 
         if (updated == 0) {
-            List<OrderItem> originalOrderItems = new ArrayList<>();
-            originalOrderItems.addAll(getOriginalOrders(selectedOrder.getUser(), selectedOrder.getOrder(),
+            List<OrderItem> originalOrderItems = new ArrayList<>(getOriginalOrders(selectedOrder.getUser(), selectedOrder.getOrder(),
                     selectedOrder.getProduct(), summaryRequired));
             originalOrderItems.add(selectedOrder);
 

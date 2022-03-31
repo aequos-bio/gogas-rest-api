@@ -33,8 +33,13 @@ public class MockOrdersData implements MockDataLifeCycle {
     }
 
     public OrderType createOrderType(String name) {
+        return createOrderType(name, false);
+    }
+
+    public OrderType createOrderType(String name, boolean computedAmount) {
         OrderType orderType = new OrderType();
         orderType.setDescription(name);
+        orderType.setComputedAmount(computedAmount);
         return orderTypeRepo.save(orderType);
     }
 
@@ -50,6 +55,14 @@ public class MockOrdersData implements MockDataLifeCycle {
         supplier.setExternalId(id);
         supplier.setName(name);
         return supplierRepo.save(supplier);
+    }
+
+    public Product createProduct(String orderTypeId, String externalId,
+                                 String description, Supplier supplier, ProductCategory category,
+                                 String um, String boxUm, Double boxWeight, Double price) {
+
+        return createProduct(orderTypeId, externalId, description, supplier, category, true,
+                false, false, um, boxUm, boxWeight, price, null, null, null);
     }
 
     public Product createProduct(String orderTypeId, String externalId,

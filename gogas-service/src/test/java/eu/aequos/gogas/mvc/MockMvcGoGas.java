@@ -1,5 +1,6 @@
 package eu.aequos.gogas.mvc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.mock.MockUsersData;
@@ -141,10 +142,17 @@ public class MockMvcGoGas {
                 .cookie(jwtTokenCookie);
 
         if (dto != null) {
-            requestBuilder.content(objectMapper.writeValueAsString(dto));
+            requestBuilder.content(serializeDTO(dto));
         }
 
         return mockMvc.perform(requestBuilder);
+    }
+
+    private String serializeDTO(Object dto) throws JsonProcessingException {
+        if (dto instanceof String)
+            return dto.toString();
+
+        return objectMapper.writeValueAsString(dto);
     }
 
     public ResultActions delete(String endpoint) throws Exception {

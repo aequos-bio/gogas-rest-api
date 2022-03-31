@@ -91,7 +91,6 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
     @Query("UPDATE OrderItem o SET o.cancelled = ?2 WHERE o.summary = false AND order = ?1")
     int setCancelledByOrderId(String orderId, boolean cancelled);
 
-    @Transactional
     @Modifying
     @Query("UPDATE OrderItem o SET o.cancelled = true, o.deliveredQuantity = 0 WHERE o.summary = true AND order = ?1 AND product = ?2")
     int cancelByOrderAndProduct(String orderId, String productId);
