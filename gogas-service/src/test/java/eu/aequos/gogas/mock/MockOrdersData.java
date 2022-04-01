@@ -24,6 +24,8 @@ public class MockOrdersData implements MockDataLifeCycle {
     private final SupplierRepo supplierRepo;
     private final OrderManagerRepo orderManagerRepo;
     private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final AccountingRepo accountingRepo;
+    private final ShippingCostRepo shippingCostRepo;
 
     public OrderType createAequosOrderType(String name, Integer aequosId) {
         OrderType orderType = new OrderType();
@@ -33,13 +35,22 @@ public class MockOrdersData implements MockDataLifeCycle {
     }
 
     public OrderType createOrderType(String name) {
-        return createOrderType(name, false);
+        return createOrderType(name, false, false);
+    }
+
+    public OrderType createExternalOrderType(String name) {
+        return createOrderType(name, false, true);
     }
 
     public OrderType createOrderType(String name, boolean computedAmount) {
+        return createOrderType(name, computedAmount, true);
+    }
+
+    private OrderType createOrderType(String name, boolean computedAmount, boolean external) {
         OrderType orderType = new OrderType();
         orderType.setDescription(name);
         orderType.setComputedAmount(computedAmount);
+        orderType.setExternal(external);
         return orderTypeRepo.save(orderType);
     }
 
@@ -164,12 +175,16 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderItemRepo.deleteByOrderAndSummary(orderId, false);
         orderItemRepo.deleteByOrderAndSummary(orderId, true);
         supplierOrderItemRepo.deleteByOrderId(orderId);
+        accountingRepo.findByOrderId(orderId).forEach(accountingRepo::delete);
+        shippingCostRepo.findByOrderId(orderId).forEach(shippingCostRepo::delete);
         orderRepo.deleteById(orderId);
     }
 
     public void deleteAllOrderTypes() {
         orderItemRepo.deleteAll();
         supplierOrderItemRepo.deleteAll();
+        accountingRepo.deleteAll();
+        shippingCostRepo.deleteAll();
         orderRepo.deleteAll();
         productRepo.deleteAll();
         supplierRepo.deleteAll();

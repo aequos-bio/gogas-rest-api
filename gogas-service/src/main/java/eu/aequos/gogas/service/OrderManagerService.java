@@ -288,11 +288,17 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderItemService.increaseDeliveredQtyByProduct(orderId, productId, remainingQuantityRatio);
     }
 
+    @Transactional
     public String updateUserCost(String orderId, String userId, BigDecimal cost) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
         User user = userService.getRequired(userId);
 
-        return accountingService.createOrUpdateEntryForOrder(order, user, cost); //TODO: ricalcolare costo trasporto
+        String entryId = accountingService.createOrUpdateEntryForOrder(order, user, cost);
+
+        if (order.getShippingCost() != null && order.getShippingCost().doubleValue() > 0)
+            distributeShippingCostsOnUserOrders(order);
+
+        return entryId;
     }
 
     public boolean deleteUserCost(String orderId, String userId) {
@@ -350,6 +356,10 @@ public class OrderManagerService extends CrudService<Order, String> {
         Order order = getRequiredWithType(orderId);
         order.setShippingCost(shippingCost);
 
+        return distributeShippingCostsOnUserOrders(order);
+    }
+
+    private List<OrderByUserDTO> distributeShippingCostsOnUserOrders(Order order) {
         List<OrderByUserDTO> userOrders = getOrderDetailByUser(order);
         BigDecimal totalOrderAmount = userOrders.stream()
                 .map(OrderByUserDTO::getNetAmount)
@@ -361,16 +371,16 @@ public class OrderManagerService extends CrudService<Order, String> {
             BigDecimal userShippingCost = BigDecimal.ZERO;
 
             if (totalOrderAmount.compareTo(BigDecimal.ZERO) > 0 && userOrder.getNetAmount() != null)
-                userShippingCost = shippingCost.multiply(userOrder.getNetAmount().divide(totalOrderAmount, RoundingMode.HALF_UP));
+                userShippingCost = order.getShippingCost().multiply(userOrder.getNetAmount().divide(totalOrderAmount, 3, RoundingMode.HALF_UP));
 
             if (userShippingCost.compareTo(BigDecimal.ZERO) > 0) {
                 ShippingCost shippingCostEntity = new ShippingCost();
-                shippingCostEntity.setOrderId(orderId);
+                shippingCostEntity.setOrderId(order.getId());
                 shippingCostEntity.setUserId(userOrder.getUserId());
                 shippingCostEntity.setAmount(userShippingCost);
                 shippingCostRepo.save(shippingCostEntity);
             } else {
-                shippingCostRepo.deleteByOrderIdAndUserId(orderId, userOrder.getUserId());
+                shippingCostRepo.deleteByOrderIdAndUserId(order.getId(), userOrder.getUserId());
             }
 
             userOrder.setShippingCost(userShippingCost);

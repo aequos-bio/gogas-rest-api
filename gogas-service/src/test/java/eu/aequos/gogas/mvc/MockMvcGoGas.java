@@ -118,6 +118,11 @@ public class MockMvcGoGas {
         return extractDTO(callResult, dtoClass);
     }
 
+    public <T> List<T> postDTOList(String endpoint, Object dto, Class<T> dtoClass) throws Exception {
+        ResultActions callResult = post(endpoint, dto);
+        return extractListDTO(callResult, dtoClass);
+    }
+
     public ResultActions put(String endpoint) throws Exception {
         return put(endpoint, null);
     }

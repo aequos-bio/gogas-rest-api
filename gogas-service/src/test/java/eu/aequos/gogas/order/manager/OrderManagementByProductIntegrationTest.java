@@ -9,7 +9,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.notification.Failure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -28,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class OrderManagementIntegrationTest extends BaseGoGasIntegrationTest {
+class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
     @MockBean
     private ConfigurationRepo configurationRepo;
@@ -477,7 +476,7 @@ class OrderManagementIntegrationTest extends BaseGoGasIntegrationTest {
 
         mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(-2.65))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("updateProductPrice.price: must be greater than or equal to 0")));;
+                .andExpect(jsonPath("$.message", is("updateProductPrice.price: must be greater than or equal to 0")));
     }
 
     @Test

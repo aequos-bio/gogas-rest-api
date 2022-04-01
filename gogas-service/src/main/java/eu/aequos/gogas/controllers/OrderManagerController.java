@@ -106,8 +106,8 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/action/{actionCode}")
-    public BasicResponseDTO update(@PathVariable String orderId, @PathVariable String actionCode,
-                                   @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
+    public BasicResponseDTO changeStatus(@PathVariable String orderId, @PathVariable String actionCode,
+                                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         orderManagerService.changeStatus(orderId, actionCode, roundType);
         return new BasicResponseDTO("OK");

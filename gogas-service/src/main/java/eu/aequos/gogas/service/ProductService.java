@@ -64,6 +64,10 @@ public class ProductService extends CrudService<Product, String> {
     }
 
     public List<Product> getProducts(Set<String> productIds) {
+        if (productIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         return productRepo.findByIdInOrderByPriceList(productIds);
     }
 
