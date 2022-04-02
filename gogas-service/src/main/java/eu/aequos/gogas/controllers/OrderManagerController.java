@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import javax.validation.constraints.PositiveOrZero;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -87,7 +88,7 @@ public class OrderManagerController {
 
     @PreAuthorize("hasRole('A') OR @authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
-    public BasicResponseDTO create(@RequestBody OrderDTO orderDTO) throws GoGasException {
+    public BasicResponseDTO create(@RequestBody @Valid OrderDTO orderDTO) throws GoGasException {
         String orderId = orderManagerService.create(orderDTO).getId();
         // TODO creare nuovo anno contabile al primo ordine dell'anno
         return new BasicResponseDTO(orderId);

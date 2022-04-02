@@ -58,6 +58,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere creato perché già esistente", ex));
     }
 
+    @ExceptionHandler(OrderAlreadyExistsException.class)
+    protected ResponseEntity<Object> handleDuplicatedItem(OrderAlreadyExistsException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "Esiste già un ordine nello stesso periodo", ex));
+    }
+
     @ExceptionHandler(ItemNotDeletableException.class)
     protected ResponseEntity<Object> handleItemNotDeletable(ItemNotDeletableException ex) {
         return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere eliminato", ex));

@@ -115,18 +115,11 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(toList());
     }
 
-
-
     public synchronized Order create(OrderDTO dto) throws GoGasException {
-        log.info("Creating order for type {}", dto.getOrderTypeId());
         OrderType orderType = orderTypeService.getRequired(dto.getOrderTypeId());
+        log.info("Creating order for type {} ({})", orderType.getDescription(), orderType.getId());
 
-        List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
-
-        if (!duplicateOrders.isEmpty()) {
-            log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
-            throw new OrderAlreadyExistsException();
-        }
+        validateOrder(dto, orderType);
 
         Order createdOrder = super.create(dto);
 
@@ -139,6 +132,23 @@ public class OrderManagerService extends CrudService<Order, String> {
             productService.syncPriceList(orderType);
 
         return createdOrder;
+    }
+
+    private void validateOrder(OrderDTO dto, OrderType orderType) {
+        List<Order> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
+
+        if (!duplicateOrders.isEmpty()) {
+            log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
+            throw new OrderAlreadyExistsException();
+        }
+
+        if (dto.getDueDate().isBefore(LocalDate.now())) {
+            throw new MissingOrInvalidParameterException("Data di chiusura non valida");
+        }
+
+        if (!dto.getOpeningDate().isBefore(dto.getDueDate()) || !dto.getDueDate().isBefore(dto.getDeliveryDate())) {
+            throw new MissingOrInvalidParameterException("Date ordine non valide");
+        }
     }
 
     public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, User.Role userRole) {

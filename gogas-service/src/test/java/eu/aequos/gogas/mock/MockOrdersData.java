@@ -43,7 +43,7 @@ public class MockOrdersData implements MockDataLifeCycle {
     }
 
     public OrderType createOrderType(String name, boolean computedAmount) {
-        return createOrderType(name, computedAmount, true);
+        return createOrderType(name, computedAmount, false);
     }
 
     private OrderType createOrderType(String name, boolean computedAmount, boolean external) {
