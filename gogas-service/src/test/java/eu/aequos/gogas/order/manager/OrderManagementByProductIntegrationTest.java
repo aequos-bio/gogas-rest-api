@@ -1,16 +1,10 @@
 package eu.aequos.gogas.order.manager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.*;
-import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
+import eu.aequos.gogas.persistence.entity.Order;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,78 +16,17 @@ import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
+class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegrationTest {
 
-    @MockBean
-    private ConfigurationRepo configurationRepo;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private OrderType orderType;
     private Order order;
-
-    private Map<String, Product> productsByCode;
-
-    private String userId1;
-    private String userId2;
-    private String userId3;
-
-    @BeforeAll
-    void createOrderTypeAndUsers() {
-        orderType = mockOrdersData.createOrderType("Fresco Settimanale", true);
-
-        Map<String, ProductCategory> categories = Map.ofEntries(
-                entry("Birra", mockOrdersData.createCategory("Birra", orderType.getId())),
-                entry("Frutta", mockOrdersData.createCategory("Frutta", orderType.getId())),
-                entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", orderType.getId()))
-        );
-
-        Map<String, Supplier> suppliers = Map.ofEntries(
-                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
-                entry("1054", mockOrdersData.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)")),
-                entry("1131", mockOrdersData.createSupplier("1131", "ABBIATE VALERIO"))
-        );
-
-        List<Product> products = List.of(
-                mockOrdersData.createProduct(orderType.getId(), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA- GRAD. ALC. 6 - 500 ML  - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), "PZ", null, 1.0, 3.65),
-
-                mockOrdersData.createProduct(orderType.getId(), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), "PZ", null, 1.0, 3.65),
-
-                mockOrdersData.createProduct(orderType.getId(), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), "KG", "Cassa", 8.5, 1.55),
-
-                mockOrdersData.createProduct(orderType.getId(), "MELE2", "MELE OPAL - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), "KG", "Cassa", 8.5, 1.70),
-
-                mockOrdersData.createProduct(orderType.getId(), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
-                        suppliers.get("1131"), categories.get("Ortaggi"), "KG", "Cassa", 11.0, 1.45)
-        );
-
-        productsByCode = products.stream().collect(Collectors.toMap(Product::getExternalId, Function.identity()));
-
-        userId1 = mockUsersData.createSimpleUser("user1", "password", "user1", "user1").getId().toUpperCase();
-        userId2 = mockUsersData.createSimpleUser("user2", "password", "user2", "user2").getId().toUpperCase();
-        userId3 = mockUsersData.createSimpleUser("user3", "password", "user3", "user3").getId().toUpperCase();
-
-        User orderManager = mockUsersData.createSimpleUser("manager", "password", "manager", "manager");
-        mockOrdersData.addManager(orderManager, orderType);
-
-        OrderType otherOrderType = mockOrdersData.createOrderType("Altro");
-        User otherManager = mockUsersData.createSimpleUser("manager2", "password", "manager2", "manager2");
-        mockOrdersData.addManager(otherManager, otherOrderType);
-    }
 
     @BeforeEach
     void setUp() {
-        order = mockOrdersData.createOrder(orderType, "2022-03-20", "2022-03-30", "2022-04-05", Order.OrderStatus.Closed);
+        order = mockOrdersData.createOrder(orderTypeComputed, "2022-03-20", "2022-03-30", "2022-04-05", Order.OrderStatus.Closed);
 
         Map<String, Integer> boxQuantities = Map.ofEntries(
                 entry("BIRRA1", 10),
@@ -104,7 +37,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         );
 
         boxQuantities
-                .forEach((productCode, quantity) -> mockOrdersData.createSupplierOrderItem(order, productsByCode.get(productCode), quantity));
+                .forEach((productCode, quantity) -> mockOrdersData.createSupplierOrderItem(order, productsByCodeComputed.get(productCode), quantity));
 
         Map<String, Map<String, Double>> userQuantities = Map.of(
                 userId1,
@@ -158,8 +91,8 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
         OrderDetailsDTO orderDetails = mockMvcGoGas.getDTO("/api/order/manage/" + order.getId(), OrderDetailsDTO.class);
         assertNotNull(orderDetails);
-        assertEquals(orderType.getId().toUpperCase(), orderDetails.getOrderTypeId());
-        assertEquals(orderType.getDescription(), orderDetails.getOrderTypeName());
+        assertEquals(orderTypeComputed.getId().toUpperCase(), orderDetails.getOrderTypeId());
+        assertEquals(orderTypeComputed.getDescription(), orderDetails.getOrderTypeName());
         assertEquals(order.getDeliveryDate(), orderDetails.getDeliveryDate());
         assertNull(orderDetails.getAequosId());
         assertTrue(orderDetails.isEditable());
@@ -211,7 +144,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         Map<String, OrderByProductDTO> products = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product", OrderByProductDTO.class).stream()
                 .collect(Collectors.toMap(OrderByProductDTO::getProductId, Function.identity()));
 
-        verifyProductDTO(products, "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA- GRAD. ALC. 6 - 500 ML  - Birrificio Gedeone",  "Birra",
+        verifyProductDTO(products, "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",  "Birra",
                 "PZ", 1.0, 3.65, 3.65, 36.5, -32.85, 3.65, 1.0, 1.0, 10.0, 10.0, 1);
 
         verifyProductDTO(products, "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",  "Birra",
@@ -241,7 +174,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnOrderToManageAndAValidProduct_whenGettingProductOrderItems_thenItemsAreReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, items.size());
 
@@ -254,7 +187,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenGettingProductOrderItems_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.get("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("MELE1").getId())
+        mockMvcGoGas.get("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isNotFound());
     }
 
@@ -270,7 +203,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenGettingProductOrderItems_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId())
+        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isForbidden());
     }
 
@@ -278,7 +211,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenGettingProductOrderItems_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId())
+        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isForbidden());
     }
 
@@ -286,7 +219,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnAdmin_whenGettingProductOrderItems_thenItemsAreReturned() throws Exception {
         mockMvcGoGas.loginAsAdmin();
 
-        List<OrderItemByProductDTO> items = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId(), OrderItemByProductDTO.class);
+        List<OrderItemByProductDTO> items = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId(), OrderItemByProductDTO.class);
         assertEquals(3, items.size());
     }
 
@@ -294,10 +227,10 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnOrderToManageAndAValidProduct_whenCancellingProductOrder_thenAllItemsAreCancelled() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/cancel", BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertTrue(productResponse.isCancelled());
@@ -308,7 +241,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(0.0, productResponse.getOrderedQty().doubleValue(), 0.001);
         assertEquals(0.0, productResponse.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, items.size());
 
@@ -316,7 +249,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         verifyOrderItem(items.get(userId2), 2.0, 0.0, "KG", true);
         verifyOrderItem(items.get(userId3), 4.0, 0.0, "KG", true);
 
-        Map<String, OrderItemByProductDTO> otherProductItems = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> otherProductItems = getProductItems(order.getId(), "MELE2");
 
         assertEquals(2, otherProductItems.size());
 
@@ -328,7 +261,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenCancellingProductOrder_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("MELE1").getId() + "/cancel")
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/cancel")
                 .andExpect(status().isNotFound());
     }
 
@@ -336,7 +269,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenCancellingProductOrder_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/cancel")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/cancel")
                 .andExpect(status().isForbidden());
     }
 
@@ -344,7 +277,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenCancellingProductOrder_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/cancel")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/cancel")
                 .andExpect(status().isForbidden());
     }
 
@@ -352,13 +285,13 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenACancelledProductOrder_whenRestoringProductOrder_thenAllItemsAreRestoredToPreviousQuantities() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/cancel", BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/restore", BasicResponseDTO.class);
+        BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/restore", BasicResponseDTO.class);
         assertEquals("OK", restoreResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertFalse(productResponse.isCancelled());
@@ -368,7 +301,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(0.0, productResponse.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(8.5, productResponse.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, items.size());
 
@@ -381,7 +314,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAModifiedProductOrder_whenRestoringProductOrder_thenAllItemsAreRestoredToPreviousQuantities() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + items.get(userId1).getOrderItemId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
@@ -389,7 +322,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         BasicResponseDTO updateQtaResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + items.get(userId2).getOrderItemId(), BigDecimal.valueOf(3.0), BasicResponseDTO.class);
         assertEquals("OK", updateQtaResponse.getData());
 
-        OrderByProductDTO productBefore = getProductOrder("MELE1");
+        OrderByProductDTO productBefore = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productBefore);
         assertFalse(productBefore.isCancelled());
@@ -399,7 +332,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productBefore.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(7.0, productBefore.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsBefore.size());
 
@@ -407,10 +340,10 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         verifyOrderItem(itemsBefore.get(userId2), 2.0, 3.0, "KG", false);
         verifyOrderItem(itemsBefore.get(userId3), 4.0, 4.0, "KG", false);
 
-        BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/restore", BasicResponseDTO.class);
+        BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/restore", BasicResponseDTO.class);
         assertEquals("OK", restoreResponse.getData());
 
-        OrderByProductDTO productAfter = getProductOrder("MELE1");
+        OrderByProductDTO productAfter = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productAfter);
         assertEquals(13.175, productAfter.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -419,7 +352,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productAfter.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(8.5, productAfter.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsAfter.size());
 
@@ -432,7 +365,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenRestoringProductOrder_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("MELE1").getId() + "/restore")
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/restore")
                 .andExpect(status().isNotFound());
     }
 
@@ -440,7 +373,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenRestoringProductOrder_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/restore")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/restore")
                 .andExpect(status().isForbidden());
     }
 
@@ -448,7 +381,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenRestoringProductOrder_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/restore")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/restore")
                 .andExpect(status().isForbidden());
     }
 
@@ -456,10 +389,10 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnOrderToManageAndAValidProduct_whenChangingPriceOfProduct_thenAllItemsAreUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(2.0), BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/price", BigDecimal.valueOf(2.0), BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertEquals(17.0, productResponse.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -474,7 +407,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANegativeQuantity_whenChangingPriceOfProduct_thenBadRequestIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(-2.65))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/price", BigDecimal.valueOf(-2.65))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("updateProductPrice.price: must be greater than or equal to 0")));
     }
@@ -483,7 +416,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenChangingPriceOfProduct_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
                 .andExpect(status().isNotFound());
     }
 
@@ -491,7 +424,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenChangingPriceOfProduct_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
                 .andExpect(status().isForbidden());
     }
 
@@ -499,7 +432,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenChangingPriceOfProduct_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/price", BigDecimal.valueOf(1.0))
                 .andExpect(status().isForbidden());
     }
 
@@ -507,10 +440,10 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnOrderToManageAndAValidProduct_whenChangingOrderedBoxes_thenProductIsUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(5.0), BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(5.0), BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertEquals(13.175, productResponse.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -525,7 +458,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANegativeQuantity_whenChangingOrderedBoxes_thenBadRequestIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(-1.0))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(-1.0))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("updateSupplierOrderQty.boxes: must be greater than or equal to 0")));;
     }
@@ -534,7 +467,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenChangingOrderedBoxes_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
                 .andExpect(status().isNotFound());
     }
 
@@ -542,7 +475,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenChangingOrderedBoxes_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
                 .andExpect(status().isForbidden());
     }
 
@@ -550,7 +483,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenChangingOrderedBoxes_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/supplier", BigDecimal.valueOf(1.0))
                 .andExpect(status().isForbidden());
     }
 
@@ -558,12 +491,9 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAUserOrderItem_whenChangingQuantity_thenItemAndProductAreUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        changeUserOrderItemQuantity(order.getId(), "MELE1", userId2, 3.0);
 
-        BasicResponseDTO updateQtaResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + items.get(userId2).getOrderItemId(), BigDecimal.valueOf(3.0), BasicResponseDTO.class);
-        assertEquals("OK", updateQtaResponse.getData());
-
-        OrderByProductDTO product = getProductOrder("MELE1");
+        OrderByProductDTO product = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(product);
         assertFalse(product.isCancelled());
@@ -571,7 +501,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(14.725, product.getTotalAmount().doubleValue(), 0.001);
         assertEquals(9.5, product.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsBefore.size());
 
@@ -584,7 +514,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANegativeQuantity_whenChangingQuantity_thenBadRequestIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + items.get(userId2).getOrderItemId(), BigDecimal.valueOf(-3.0))
                 .andExpect(status().isBadRequest())
@@ -595,7 +525,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAnEmptyQuantity_whenChangingQuantity_thenBadRequestIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + items.get(userId2).getOrderItemId(), null)
                 .andExpect(status().isBadRequest())
@@ -606,7 +536,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenChangingQuantity_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> items = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> items = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/item/" + items.get(userId2).getOrderItemId(), BigDecimal.valueOf(3.0))
                 .andExpect(status().isNotFound());
@@ -640,7 +570,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenMoreOrderedQtyThanDeliveredQty_whenDistributingQuantities_thenAllItemsAreUpdatedCorrectly() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        OrderByProductDTO productBefore = getProductOrder("MELE2");
+        OrderByProductDTO productBefore = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productBefore);
         assertEquals(5.1, productBefore.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -649,17 +579,17 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productBefore.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(3.0, productBefore.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE2");
 
         assertEquals(2, itemsBefore.size());
 
         verifyOrderItem(itemsBefore.get(userId1), 1.5, 1.5, "KG", false);
         verifyOrderItem(itemsBefore.get(userId3), 1.5, 1.5, "KG", false);
 
-        BasicResponseDTO distributeResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE2").getId() + "/distribute", BasicResponseDTO.class);
+        BasicResponseDTO distributeResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE2").getId() + "/distribute", BasicResponseDTO.class);
         assertEquals("OK", distributeResponse.getData());
 
-        OrderByProductDTO productAfter = getProductOrder("MELE2");
+        OrderByProductDTO productAfter = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productAfter);
         assertEquals(43.35, productAfter.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -668,7 +598,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productAfter.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(25.5, productAfter.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE2");
 
         assertEquals(2, itemsAfter.size());
 
@@ -680,7 +610,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenLessOrderedQtyThanDeliveredQty_whenDistributingQuantities_thenAllItemsAreUpdatedCorrectly() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        OrderByProductDTO productBefore = getProductOrder("PATATE");
+        OrderByProductDTO productBefore = getProductOrder(order.getId(), "PATATE");
 
         assertNotNull(productBefore);
         assertEquals(22.475, productBefore.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -689,17 +619,17 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productBefore.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(15.5, productBefore.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("PATATE");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "PATATE");
 
         assertEquals(2, itemsBefore.size());
 
         verifyOrderItem(itemsBefore.get(userId1), 10.8, 10.8, "KG", false);
         verifyOrderItem(itemsBefore.get(userId2), 4.7, 4.7, "KG", false);
 
-        BasicResponseDTO distributeResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("PATATE").getId() + "/distribute", BasicResponseDTO.class);
+        BasicResponseDTO distributeResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("PATATE").getId() + "/distribute", BasicResponseDTO.class);
         assertEquals("OK", distributeResponse.getData());
 
-        OrderByProductDTO productAfter = getProductOrder("PATATE");
+        OrderByProductDTO productAfter = getProductOrder(order.getId(), "PATATE");
 
         assertNotNull(productAfter);
         assertEquals(15.95725, productAfter.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -708,7 +638,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productAfter.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(11.005, productAfter.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("PATATE");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "PATATE");
 
         assertEquals(2, itemsAfter.size());
 
@@ -720,7 +650,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenDistributingQuantity_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCode.get("PATATE").getId() + "/distribute")
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/product/" + productsByCodeComputed.get("PATATE").getId() + "/distribute")
                 .andExpect(status().isNotFound());
     }
 
@@ -736,7 +666,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenDistributingQuantity_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("PATATE").getId() + "/distribute")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("PATATE").getId() + "/distribute")
                 .andExpect(status().isForbidden());
     }
 
@@ -744,7 +674,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenDistributingQuantity_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("PATATE").getId() + "/distribute")
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("PATATE").getId() + "/distribute")
                 .andExpect(status().isForbidden());
     }
 
@@ -752,7 +682,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANewUserOrderItem_whenAddingUserQuantity_thenItemIsAddedCorrectly() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        OrderByProductDTO productBefore = getProductOrder("MELE2");
+        OrderByProductDTO productBefore = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productBefore);
         assertEquals(5.1, productBefore.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -761,7 +691,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productBefore.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(3.0, productBefore.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE2");
 
         assertEquals(2, itemsBefore.size());
 
@@ -770,14 +700,14 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
         OrderItemUpdateRequest orderItemUpdateRequest = new OrderItemUpdateRequest();
         orderItemUpdateRequest.setUserId(userId2);
-        orderItemUpdateRequest.setProductId(productsByCode.get("MELE2").getId());
+        orderItemUpdateRequest.setProductId(productsByCodeComputed.get("MELE2").getId());
         orderItemUpdateRequest.setQuantity(BigDecimal.valueOf(2.456));
         orderItemUpdateRequest.setUnitOfMeasure("KG");
 
         BasicResponseDTO distributeResponse = mockMvcGoGas.postDTO("/api/order/manage/" + order.getId() + "/item", orderItemUpdateRequest, BasicResponseDTO.class);
         assertEquals("OK", distributeResponse.getData());
 
-        OrderByProductDTO productAfter = getProductOrder("MELE2");
+        OrderByProductDTO productAfter = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productAfter);
         assertEquals(9.2752, productAfter.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -786,7 +716,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productAfter.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(5.456, productAfter.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE2");
 
         assertEquals(3, itemsAfter.size());
 
@@ -801,7 +731,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
         OrderItemUpdateRequest orderItemUpdateRequest = new OrderItemUpdateRequest();
         orderItemUpdateRequest.setUserId(userId1);
-        orderItemUpdateRequest.setProductId(productsByCode.get("MELE2").getId());
+        orderItemUpdateRequest.setProductId(productsByCodeComputed.get("MELE2").getId());
         orderItemUpdateRequest.setQuantity(BigDecimal.valueOf(2.456));
         orderItemUpdateRequest.setUnitOfMeasure("KG");
 
@@ -816,7 +746,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
         OrderItemUpdateRequest orderItemUpdateRequest = new OrderItemUpdateRequest();
         orderItemUpdateRequest.setUserId(userId1);
-        orderItemUpdateRequest.setProductId(productsByCode.get("MELE2").getId());
+        orderItemUpdateRequest.setProductId(productsByCodeComputed.get("MELE2").getId());
         orderItemUpdateRequest.setQuantity(BigDecimal.valueOf(2.456));
         orderItemUpdateRequest.setUnitOfMeasure("KG");
 
@@ -860,7 +790,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
 
         OrderItemUpdateRequest orderItemUpdateRequest = new OrderItemUpdateRequest();
         orderItemUpdateRequest.setUserId(UUID.randomUUID().toString());
-        orderItemUpdateRequest.setProductId(productsByCode.get("MELE2").getId());
+        orderItemUpdateRequest.setProductId(productsByCodeComputed.get("MELE2").getId());
         orderItemUpdateRequest.setQuantity(BigDecimal.valueOf(2.456));
         orderItemUpdateRequest.setUnitOfMeasure("KG");
 
@@ -872,12 +802,12 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAUserProductItem_whenCancellingUserOrderItem_thenItemAndProductAreUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertEquals(9.3, productResponse.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -886,7 +816,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productResponse.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(6.0, productResponse.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsAfter.size());
 
@@ -899,7 +829,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenCancellingUserOrderItem_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/cancel")
                 .andExpect(status().isNotFound());
@@ -925,7 +855,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenACancelledItem_whenRestoringProductOrder_thenItemAndProductAreUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
@@ -933,7 +863,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/restore", BasicResponseDTO.class);
         assertEquals("OK", restoreResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertEquals(13.175, productResponse.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -942,7 +872,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productResponse.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(8.5, productResponse.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsAfter.size());
 
@@ -955,7 +885,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAModifiedItem_whenRestoringProductOrder_thenItemAndProductAreUpdated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         BasicResponseDTO updateQtaResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId(), BigDecimal.valueOf(3.0), BasicResponseDTO.class);
         assertEquals("OK", updateQtaResponse.getData());
@@ -963,7 +893,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         BasicResponseDTO restoreResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/restore", BasicResponseDTO.class);
         assertEquals("OK", restoreResponse.getData());
 
-        OrderByProductDTO productResponse = getProductOrder("MELE1");
+        OrderByProductDTO productResponse = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponse);
         assertEquals(13.175, productResponse.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -972,7 +902,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productResponse.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(8.5, productResponse.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsAfter = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsAfter.size());
 
@@ -985,7 +915,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenRestoringUserOrderItem_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/restore")
                 .andExpect(status().isNotFound());
@@ -1011,12 +941,12 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAUserProductItemReplacedWithNotOrderedOne_whenReplacingProduct_thenItemIsCancelledAndNewOneIsCreated() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCode.get("MELE2").getId(), BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCodeComputed.get("MELE2").getId(), BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponseCancelled = getProductOrder("MELE1");
+        OrderByProductDTO productResponseCancelled = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponseCancelled);
         assertEquals(10.075, productResponseCancelled.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -1025,7 +955,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productResponseCancelled.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(6.5, productResponseCancelled.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsCancelled = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsCancelled = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsCancelled.size());
 
@@ -1033,7 +963,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         verifyOrderItem(itemsCancelled.get(userId2), 2.0, 0.0, "KG", true);
         verifyOrderItem(itemsCancelled.get(userId3), 4.0, 4.0, "KG", false);
 
-        OrderByProductDTO productResponseAdded = getProductOrder("MELE2");
+        OrderByProductDTO productResponseAdded = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productResponseAdded);
         assertEquals(8.5, productResponseAdded.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -1042,7 +972,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productResponseAdded.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(5.0, productResponseAdded.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAdded = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsAdded = getProductItems(order.getId(), "MELE2");
 
         assertEquals(3, itemsAdded.size());
 
@@ -1055,12 +985,12 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAUserProductItemReplacedWithOrderedOne_whenReplacingProduct_thenItemIsCancelledAndExistingIsIncreased() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
-        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/replace", productsByCode.get("MELE2").getId(), BasicResponseDTO.class);
+        BasicResponseDTO cancelResponse = mockMvcGoGas.putDTO("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/replace", productsByCodeComputed.get("MELE2").getId(), BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
 
-        OrderByProductDTO productResponseCancelled = getProductOrder("MELE1");
+        OrderByProductDTO productResponseCancelled = getProductOrder(order.getId(), "MELE1");
 
         assertNotNull(productResponseCancelled);
         assertEquals(9.3, productResponseCancelled.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -1069,7 +999,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(1.0, productResponseCancelled.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(6.0, productResponseCancelled.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsCancelled = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsCancelled = getProductItems(order.getId(), "MELE1");
 
         assertEquals(3, itemsCancelled.size());
 
@@ -1077,7 +1007,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         verifyOrderItem(itemsCancelled.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(itemsCancelled.get(userId3), 4.0, 4.0, "KG", false);
 
-        OrderByProductDTO productResponseAdded = getProductOrder("MELE2");
+        OrderByProductDTO productResponseAdded = getProductOrder(order.getId(), "MELE2");
 
         assertNotNull(productResponseAdded);
         assertEquals(9.35, productResponseAdded.getDeliverdTotalAmount().doubleValue(), 0.001);
@@ -1086,7 +1016,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(3.0, productResponseAdded.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(5.5, productResponseAdded.getDeliveredQty().doubleValue(), 0.001);
 
-        Map<String, OrderItemByProductDTO> itemsAdded = getProductItems("MELE2");
+        Map<String, OrderItemByProductDTO> itemsAdded = getProductItems(order.getId(), "MELE2");
 
         assertEquals(2, itemsAdded.size());
 
@@ -1098,9 +1028,9 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAUserProductItemReplacedWithTheSameProduct_whenReplacingProduct_thenErrorIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCode.get("MELE1").getId())
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message", is("Cannot replace a product with the same product")));
     }
@@ -1109,9 +1039,9 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingOrder_whenReplacingProduct_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
-        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCode.get("MELE1").getId())
+        mockMvcGoGas.put("/api/order/manage/" + UUID.randomUUID() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isNotFound());
     }
 
@@ -1119,7 +1049,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingItem_whenReplacingProduct_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + UUID.randomUUID() + "/replace", productsByCode.get("MELE1").getId())
+        mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + UUID.randomUUID() + "/replace", productsByCodeComputed.get("MELE1").getId())
                 .andExpect(status().isNotFound());
     }
 
@@ -1127,7 +1057,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenANotExistingProduct_whenReplacingProduct_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems("MELE1");
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
 
         mockMvcGoGas.put("/api/order/manage/" + order.getId() + "/item/" + itemsBefore.get(userId2).getOrderItemId() + "/replace", UUID.randomUUID().toString())
                 .andExpect(status().isNotFound());
@@ -1153,7 +1083,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAProductWithUserWithoutOrderItem_whenGettingUsersNotOrdering_thenUsersAreReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Set<String> userIds = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("BIRRA1").getId() + "/availableUsers", SelectItemDTO.class).stream()
+        Set<String> userIds = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("BIRRA1").getId() + "/availableUsers", SelectItemDTO.class).stream()
                 .map(SelectItemDTO::getId)
                 .collect(Collectors.toSet());
 
@@ -1165,7 +1095,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAProductWithAllUserWithOrderItem_whenGettingUsersNotOrdering_thenNoUsersAreReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
-        Set<String> userIds = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/availableUsers", SelectItemDTO.class).stream()
+        Set<String> userIds = mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/availableUsers", SelectItemDTO.class).stream()
                 .map(SelectItemDTO::getId)
                 .collect(Collectors.toSet());
 
@@ -1177,7 +1107,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenAManagerOfOtherOrderType_whenGettingUsersNotOrdering_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager2", "password");
 
-        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/availableUsers")
+        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/availableUsers")
                 .andExpect(status().isForbidden());
     }
 
@@ -1185,27 +1115,8 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
     void givenASimpleUser_whenGettingUsersNotOrdering_thenUnauthorizedIsReturned() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
-        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get("MELE1").getId() + "/availableUsers")
+        mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/availableUsers")
                 .andExpect(status().isForbidden());
-    }
-
-    private Map<String, OrderItemByProductDTO> getProductItems(String productCode) throws Exception {
-        return mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product/" + productsByCode.get(productCode).getId(), OrderItemByProductDTO.class).stream()
-                .collect(Collectors.toMap(OrderItemByProductDTO::getUserId, Function.identity()));
-    }
-
-    private OrderByProductDTO getProductOrder(String productCode) throws Exception {
-        return mockMvcGoGas.getDTOList("/api/order/manage/" + order.getId() + "/product", OrderByProductDTO.class).stream()
-                .filter(product -> product.getProductId().equals(productsByCode.get(productCode).getId().toUpperCase()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private void verifyOrderItem(OrderItemByProductDTO item, double requestedQty, double deliveredQty, String um, boolean cancelled) {
-        assertEquals(um, item.getUnitOfMeasure());
-        assertEquals(requestedQty, item.getRequestedQty().doubleValue(), 0.001);
-        assertEquals(deliveredQty, item.getDeliveredQty().doubleValue(), 0.001);
-        assertEquals(cancelled, item.isCancelled());
     }
 
     private void verifyProductDTO(Map<String, OrderByProductDTO> products, String productCode,
@@ -1213,7 +1124,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
                                   double deliveredAmount, double orderedAmount, double amountDifference, double totalAmount,
                                   double deliveredBoxes, double deliveredQty, double orderedBoxes, double orderedQty, int usersCount) {
 
-        OrderByProductDTO productDTO = products.get(productsByCode.get(productCode).getId().toUpperCase());
+        OrderByProductDTO productDTO = products.get(productsByCodeComputed.get(productCode).getId().toUpperCase());
         assertEquals(price, productDTO.getPrice().doubleValue(), 0.001);
         assertEquals(description, productDTO.getProductName());
         assertEquals(category, productDTO.getCategory());
@@ -1234,7 +1145,7 @@ class OrderManagementByProductIntegrationTest extends BaseGoGasIntegrationTest {
         userQuantities
                 .forEach((userId, quantities) -> quantities
                         .forEach((productCode, quantity) ->
-                                mockOrdersData.createDeliveredUserOrderItem(order.getId(), userId, productsByCode.get(productCode), quantity)
+                                mockOrdersData.createDeliveredUserOrderItem(order.getId(), userId, productsByCodeComputed.get(productCode), quantity)
                         )
                 );
     }

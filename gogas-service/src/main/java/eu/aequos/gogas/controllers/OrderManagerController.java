@@ -10,7 +10,10 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
-import eu.aequos.gogas.service.*;
+import eu.aequos.gogas.service.BuyersReportService;
+import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.OrderItemService;
+import eu.aequos.gogas.service.OrderManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
@@ -95,7 +98,7 @@ public class OrderManagerController {
     }
 
     @PutMapping(value = "{orderId}")
-    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody @Valid OrderDTO orderDTO) throws ItemNotFoundException {
         String updatedOrderId = orderManagerService.update(orderId, orderDTO).getId();
         return new BasicResponseDTO(updatedOrderId);
     }

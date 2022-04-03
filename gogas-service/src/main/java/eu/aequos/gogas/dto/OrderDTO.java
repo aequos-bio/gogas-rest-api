@@ -9,7 +9,6 @@ import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
-import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,7 +23,6 @@ public class OrderDTO implements ConvertibleDTO<Order> {
 
     private String id;
 
-    @NotNull
     @JsonProperty("idtipoordine")
     private String orderTypeId;
 

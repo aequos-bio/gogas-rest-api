@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @WithTenant("integration-test")
 public class MockUsersData implements MockDataLifeCycle {
 
+    public static final String ADMIN_USERNAME = "admin";
     public static final String SIMPLE_USER_USERNAME = "simple_user";
     public static final String SIMPLE_USER_PASSWORD = "simple_user";
 
@@ -71,23 +73,32 @@ public class MockUsersData implements MockDataLifeCycle {
         return createdUsers.get(0).getId();
     }
 
-    public String getAdminId() {
-        return userRepo.findByUsername("admin").stream()
+    public String getDefaultAdminId() {
+        return userRepo.findByUsername(ADMIN_USERNAME).stream()
                 .findFirst()
                 .map(User::getId)
                 .orElse(null);
     }
 
     public void deleteUsers() {
-        createdUsers.sort(Comparator.comparing(User::getRole).reversed());
+        createdUsers.sort(Comparator.comparing(User::getRole));
         createdUsers.forEach(userRepo::delete);
         createdUsers.clear();
     }
 
     @Override
     public void init() {
-        deleteByUsername(SIMPLE_USER_USERNAME);
+        deleteNotDefaultAdmin();
         createSimpleUser(SIMPLE_USER_USERNAME, SIMPLE_USER_PASSWORD, "Simple", "User");
+    }
+
+    private void deleteNotDefaultAdmin() {
+        List<User> collect = userRepo.findAll().stream()
+                .sorted(Comparator.comparing(User::getRole))
+                .filter(user -> !ADMIN_USERNAME.equals(user.getUsername()))
+                .collect(Collectors.toList());
+
+        collect.forEach(userRepo::delete);
     }
 
     @Override

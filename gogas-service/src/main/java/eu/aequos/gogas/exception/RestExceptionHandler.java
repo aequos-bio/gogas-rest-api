@@ -35,6 +35,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
+    @ExceptionHandler(InvalidOrderActionException.class)
+    protected ResponseEntity<Object> handleInvalidParameter(InvalidOrderActionException ex) {
+        log.warn("Invalid order action", ex);
+        return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
+    }
+
     @ExceptionHandler(ItemNotFoundException.class)
     protected ResponseEntity<Object> handleItemNotFound(ItemNotFoundException ex) {
         log.warn("Item of type {} with id {} not found", ex.getItemType(), ex.getItemId());

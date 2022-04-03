@@ -119,7 +119,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         OrderType orderType = orderTypeService.getRequired(dto.getOrderTypeId());
         log.info("Creating order for type {} ({})", orderType.getDescription(), orderType.getId());
 
-        validateOrder(dto, orderType);
+        checkForDuplicates(dto, orderType);
+        validateOrderDates(dto);
 
         Order createdOrder = super.create(dto);
 
@@ -134,14 +135,22 @@ public class OrderManagerService extends CrudService<Order, String> {
         return createdOrder;
     }
 
-    private void validateOrder(OrderDTO dto, OrderType orderType) {
+    public Order update(String orderId, OrderDTO dto) throws ItemNotFoundException {
+        validateOrderDates(dto);
+
+        return super.update(orderId, dto);
+    }
+
+    private void checkForDuplicates(OrderDTO dto, OrderType orderType) {
         List<Order> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
 
         if (!duplicateOrders.isEmpty()) {
             log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
             throw new OrderAlreadyExistsException();
         }
+    }
 
+    private void validateOrderDates(OrderDTO dto) {
         if (dto.getDueDate().isBefore(LocalDate.now())) {
             throw new MissingOrInvalidParameterException("Data di chiusura non valida");
         }

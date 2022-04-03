@@ -103,7 +103,12 @@ public class MockMvcGoGas {
     }
 
     public ResultActions post(String endpoint, Object dto) throws Exception {
+        return post(endpoint, dto, new LinkedMultiValueMap<>());
+    }
+
+    public ResultActions post(String endpoint, Object dto, MultiValueMap<String, String> params) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.post(endpoint)
+                .params(params)
                 .with(req -> {
                     req.setServerName(tenantId + ".aequos.bio");
                     return req;
@@ -115,6 +120,11 @@ public class MockMvcGoGas {
 
     public <T> T postDTO(String endpoint, Object dto, Class<T> dtoClass) throws Exception {
         ResultActions callResult = post(endpoint, dto);
+        return extractDTO(callResult, dtoClass);
+    }
+
+    public <T> T postDTO(String endpoint, Object dto, Class<T> dtoClass, Map<String, List<String>> requestParams) throws Exception {
+        ResultActions callResult = post(endpoint, dto, new LinkedMultiValueMap<>(requestParams));
         return extractDTO(callResult, dtoClass);
     }
 

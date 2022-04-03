@@ -1,19 +1,20 @@
 package eu.aequos.gogas.order.manager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.aequos.gogas.BaseGoGasIntegrationTest;
-import eu.aequos.gogas.dto.*;
-import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
+import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.OrderByUserDTO;
+import eu.aequos.gogas.dto.OrderItemByUserDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.Product;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,106 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class OrderManagementByUserIntegrationTest extends BaseGoGasIntegrationTest {
+public class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegrationTest {
 
-    @MockBean
-    private ConfigurationRepo configurationRepo;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private OrderType orderTypeComputed;
-    private OrderType orderTypeNotComputed;
-    private OrderType orderTypeExternal;
     private Order orderComputed;
     private Order orderNotComputed;
     private Order orderExternal;
-
-    private Map<String, Product> productsByCodeComputed;
-    private Map<String, Product> productsByCodeNotComputed;
-
-    private String userId1;
-    private String userId2;
-    private String userId3;
-
-    @BeforeAll
-    void createOrderTypeAndUsers() {
-        orderTypeComputed = mockOrdersData.createOrderType("Fresco Settimanale", true);
-
-        Map<String, ProductCategory> categories = Map.ofEntries(
-                entry("Birra", mockOrdersData.createCategory("Birra", orderTypeComputed.getId())),
-                entry("Frutta", mockOrdersData.createCategory("Frutta", orderTypeComputed.getId())),
-                entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", orderTypeComputed.getId()))
-        );
-
-        Map<String, Supplier> suppliers = Map.ofEntries(
-                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL")),
-                entry("1054", mockOrdersData.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)")),
-                entry("1131", mockOrdersData.createSupplier("1131", "ABBIATE VALERIO"))
-        );
-
-        List<Product> products = List.of(
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), "PZ", null, 1.0, 3.65),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), "PZ", null, 1.0, 3.65),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), "KG", "Cassa", 8.5, 1.55),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "MELE2", "MELE OPAL - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), "KG", "Cassa", 8.5, 1.70),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
-                        suppliers.get("1131"), categories.get("Ortaggi"), "KG", "Cassa", 11.0, 1.45)
-        );
-
-        productsByCodeComputed = products.stream().collect(Collectors.toMap(Product::getExternalId, Function.identity()));
-
-        orderTypeNotComputed = mockOrdersData.createOrderType("Cirenaica", false);
-
-        Map<String, ProductCategory> categoriesNotComputed = Map.ofEntries(
-                entry("Carne Fresca", mockOrdersData.createCategory("Carne Fresca", orderTypeNotComputed.getId())),
-                entry("Bovino", mockOrdersData.createCategory("Bovino", orderTypeNotComputed.getId())),
-                entry("Affettati", mockOrdersData.createCategory("Affettati", orderTypeNotComputed.getId()))
-        );
-
-        Supplier supplierNotComputed = mockOrdersData.createSupplier("1111", "Cirenaica");
-
-
-        List<Product> productsNotComputed = List.of(
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "COSTINE", "Costine",
-                        supplierNotComputed, categoriesNotComputed.get("Carne Fresca"), "KG", null, 1.0, 5.0),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "FILETTO", "Filetto di maiale",
-                        supplierNotComputed, categoriesNotComputed.get("Carne Fresca"), "KG", null, 1.0, 4.5),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "FEGATO", "MFegato di Bovino",
-                        supplierNotComputed, categoriesNotComputed.get("Bovino"), "KG", null, 1.0, 10.6),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "FETTINE", "Fettine",
-                        supplierNotComputed, categoriesNotComputed.get("Bovino"), "KG", null, 1.0, 4.85),
-
-                mockOrdersData.createProduct(orderTypeComputed.getId(), "COPPA", "Coppa stagionata",
-                        supplierNotComputed, categoriesNotComputed.get("Affettati"), "PZ", null, 1.0, 8.3)
-        );
-
-        productsByCodeNotComputed = productsNotComputed.stream().collect(Collectors.toMap(Product::getExternalId, Function.identity()));
-
-        orderTypeExternal = mockOrdersData.createExternalOrderType("Tomasoni");
-
-        userId1 = mockUsersData.createSimpleUser("user1", "password", "user1", "user1").getId().toUpperCase();
-        userId2 = mockUsersData.createSimpleUser("user2", "password", "user2", "user2").getId().toUpperCase();
-        userId3 = mockUsersData.createSimpleUser("user3", "password", "user3", "user3").getId().toUpperCase();
-
-        User orderManager = mockUsersData.createSimpleUser("manager", "password", "manager", "manager");
-        mockOrdersData.addManager(orderManager, orderTypeComputed);
-        mockOrdersData.addManager(orderManager, orderTypeExternal);
-
-        User otherManager = mockUsersData.createSimpleUser("manager2", "password", "manager2", "manager2");
-        mockOrdersData.addManager(otherManager, orderTypeNotComputed);
-    }
 
     @BeforeEach
     void setUp() {

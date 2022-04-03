@@ -4,13 +4,12 @@ import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosOpenOrder;
-import eu.aequos.gogas.mock.MockOrdersData;
+import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.time.LocalDate;
@@ -119,6 +118,54 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
         );
 
         assertEquals(expectedOrders, availableOrders);
+    }
+
+    @Test
+    void givenSomeOrdersAlreadyOpened_whenRequestingAequosAvailableOrders_thenOnlyOrderNotOpenedAreReturned() throws Exception {
+        Map<Integer, OrderType> existingOrderTypes = Stream.of(
+                mockOrdersData.createAequosOrderType("Fresco Settimanale", 0),
+                mockOrdersData.createAequosOrderType("Pane", 1),
+                mockOrdersData.createAequosOrderType("Carni", 2),
+                mockOrdersData.createAequosOrderType("Mozzarelle", 10)
+        ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
+
+        User orderManager = mockUsersData.createSimpleUser("manager2", "password", "manager2", "manager2");
+        mockOrdersData.addManager(orderManager, existingOrderTypes.get(0));
+        mockOrdersData.addManager(orderManager, existingOrderTypes.get(1));
+        mockOrdersData.addManager(orderManager, existingOrderTypes.get(2));
+
+        mockOrdersData.createOrder(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30", Order.OrderStatus.Opened);
+        mockOrdersData.createOrder(existingOrderTypes.get(1), "2022-03-21", "2022-03-30", "2022-04-10", Order.OrderStatus.Opened);
+
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
+
+        List<OrderDTO> expectedOrders = List.of(
+                buildExpectedOrderDTO(existingOrderTypes.get(2), "2022-03-21", "2022-03-26", "2022-04-05")
+        );
+
+        assertEquals(expectedOrders, availableOrders);
+    }
+
+    @Test
+    void givenAllOrdersAlreadyOpened_whenRequestingAequosAvailableOrders_thenNoOrderIsReturned() throws Exception {
+        Map<Integer, OrderType> existingOrderTypes = Stream.of(
+                mockOrdersData.createAequosOrderType("Fresco Settimanale", 0),
+                mockOrdersData.createAequosOrderType("Pane", 1),
+                mockOrdersData.createAequosOrderType("Carni", 2),
+                mockOrdersData.createAequosOrderType("Mozzarelle", 10)
+        ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
+
+        mockOrdersData.createOrder(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30", Order.OrderStatus.Opened);
+        mockOrdersData.createOrder(existingOrderTypes.get(1), "2022-03-21", "2022-03-30", "2022-04-10", Order.OrderStatus.Opened);
+        mockOrdersData.createOrder(existingOrderTypes.get(2), "2022-03-21", "2022-03-26", "2022-04-05", Order.OrderStatus.Opened);
+
+        mockMvcGoGas.loginAsAdmin();
+
+        List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
+
+        assertTrue(availableOrders.isEmpty());
     }
 
     private AequosOpenOrder buildOpenOrder(int id, String name, String openingDate,

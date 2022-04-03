@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -52,6 +53,11 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderType.setComputedAmount(computedAmount);
         orderType.setExternal(external);
         return orderTypeRepo.save(orderType);
+    }
+
+    public void forceSummaryRequired(OrderType orderType, boolean summaryRequired) {
+        orderType.setSummaryRequired(summaryRequired);
+        orderTypeRepo.save(orderType);
     }
 
     public ProductCategory createCategory(String name, String orderTypeId) {
@@ -135,6 +141,15 @@ public class MockOrdersData implements MockDataLifeCycle {
         order.setDeliveryDate(deliveryDate);
         order.setShippingCost(shippingCost);
         return orderRepo.save(order);
+    }
+
+    public void forceOrderDates(String orderId, LocalDate openingDate, LocalDateTime dueDateTime, LocalDate deliveryDate) {
+        Order order = orderRepo.findById(orderId).get();
+        order.setOpeningDate(openingDate);
+        order.setDueDate(dueDateTime.toLocalDate());
+        order.setDueHour(dueDateTime.getHour());
+        order.setDeliveryDate(deliveryDate);
+        orderRepo.save(order);
     }
 
     public void updateExternalOrderId(Order order, String externalOrderId) {

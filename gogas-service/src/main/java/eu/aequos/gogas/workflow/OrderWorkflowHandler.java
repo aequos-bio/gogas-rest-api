@@ -4,10 +4,14 @@ import eu.aequos.gogas.exception.InvalidOrderActionException;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.repository.*;
+import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ProductRepo;
+import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ConfigurationService.RoundingMode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,32 +19,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 public class OrderWorkflowHandler {
 
-    private OrderManagerRepo orderManagerRepo;
-    private OrderItemRepo orderItemRepo;
-    private OrderRepo orderRepo;
-    private SupplierOrderItemRepo supplierOrderItemRepo;
-    private AccountingService accountingService;
-    private ProductRepo productRepo;
-    private ConfigurationService configurationService;
-    private PushNotificationSender pushNotificationSender;
-
-    public OrderWorkflowHandler(OrderManagerRepo orderManagerRepo, OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                                SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService,
-                                ProductRepo productRepo, ConfigurationService configurationService,
-                                PushNotificationSender pushNotificationSender) {
-
-        this.orderManagerRepo = orderManagerRepo;
-        this.orderItemRepo = orderItemRepo;
-        this.orderRepo = orderRepo;
-        this.supplierOrderItemRepo = supplierOrderItemRepo;
-        this.accountingService = accountingService;
-        this.productRepo = productRepo;
-        this.configurationService = configurationService;
-        this.pushNotificationSender = pushNotificationSender;
-    }
+    private final OrderItemRepo orderItemRepo;
+    private final OrderRepo orderRepo;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final AccountingService accountingService;
+    private final ProductRepo productRepo;
+    private final ConfigurationService configurationService;
+    private final PushNotificationSender pushNotificationSender;
 
     @Transactional
     public void changeStatus(Order order, String changeAction, int roundType) throws InvalidOrderActionException {
@@ -70,7 +59,7 @@ public class OrderWorkflowHandler {
                 return new UndoCancelAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
 
             default:
-                return null; //TODO throw exception
+                throw new InvalidOrderActionException(String.format("Invalid action: %s", changeAction));
         }
     }
 
@@ -86,7 +75,7 @@ public class OrderWorkflowHandler {
                 return getAccountedAction(userRole);
 
             case Cancelled :
-                return Arrays.asList("undocancel");
+                return List.of("undocancel");
 
             default:
                 return new ArrayList<>();
