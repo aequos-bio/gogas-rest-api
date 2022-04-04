@@ -25,9 +25,9 @@ import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class CloseAction extends OrderStatusAction {
 
-    private ConfigurationService.RoundingMode roundingMode;
-    private ConfigurationService configurationService;
-    private ProductRepo productRepo;
+    private final ConfigurationService.RoundingMode roundingMode;
+    private final ConfigurationService configurationService;
+    private final ProductRepo productRepo;
 
     private Map<String, Product> productMap;
 

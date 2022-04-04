@@ -11,7 +11,7 @@ import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class UndoAccountAction extends OrderStatusAction {
 
-    private AccountingService accountingService;
+    private final AccountingService accountingService;
 
     public UndoAccountAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                              SupplierOrderItemRepo supplierOrderItemRepo, Order order,

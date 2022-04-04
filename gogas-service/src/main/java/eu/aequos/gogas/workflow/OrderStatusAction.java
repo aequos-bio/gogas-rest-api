@@ -5,16 +5,15 @@ import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
-import org.springframework.transaction.annotation.Transactional;
 
 public abstract class OrderStatusAction {
 
-    protected OrderItemRepo orderItemRepo;
-    protected OrderRepo orderRepo;
-    protected SupplierOrderItemRepo supplierOrderItemRepo;
+    protected final OrderItemRepo orderItemRepo;
+    protected final OrderRepo orderRepo;
+    protected final SupplierOrderItemRepo supplierOrderItemRepo;
 
-    protected Order order;
-    private Order.OrderStatus targetStatus;
+    protected final Order order;
+    private final Order.OrderStatus targetStatus;
 
     public OrderStatusAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                              SupplierOrderItemRepo supplierOrderItemRepo, Order order,
