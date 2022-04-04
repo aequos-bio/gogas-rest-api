@@ -637,40 +637,40 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
     private void addUserOrdersNoFriends(String orderId) throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
-        addUserOrder(orderId, userId1, "MELE1", 3.0, "KG");
-        addUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
-        addUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
+        addComputedUserOrder(orderId, userId1, "MELE1", 3.0, "KG");
+        addComputedUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
+        addComputedUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
 
         mockMvcGoGas.loginAs("user2", "password");
-        addUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
-        addUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
-        addUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
+        addComputedUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
+        addComputedUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
+        addComputedUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
 
         mockMvcGoGas.loginAs("user3", "password");
-        addUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
-        addUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
+        addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
+        addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
     }
 
     private void addUserOrdersWithFriends(String orderId) throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
-        addUserOrder(orderId, userId1, "MELE1", 3.0, "KG");
-        addUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
-        addUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
-        addUserOrder(orderId, friendId1a, "BIRRA1", 2.0, "PZ");
-        addUserOrder(orderId, friendId1a, "MELE2", 4.0, "KG");
-        addUserOrder(orderId, friendId1b, "MELE1", 2.0, "KG");
-        addUserOrder(orderId, friendId1b, "PATATE", 2.5, "KG");
+        addComputedUserOrder(orderId, userId1, "MELE1", 3.0, "KG");
+        addComputedUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
+        addComputedUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
+        addComputedUserOrder(orderId, friendId1a, "BIRRA1", 2.0, "PZ");
+        addComputedUserOrder(orderId, friendId1a, "MELE2", 4.0, "KG");
+        addComputedUserOrder(orderId, friendId1b, "MELE1", 2.0, "KG");
+        addComputedUserOrder(orderId, friendId1b, "PATATE", 2.5, "KG");
 
         mockMvcGoGas.loginAs("user2", "password");
-        addUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
-        addUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
-        addUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
-        addUserOrder(orderId, friendId2, "MELE2", 1.0, "Cassa");
-        addUserOrder(orderId, friendId2, "BIRRA1", 1.0, "PZ");
+        addComputedUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
+        addComputedUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
+        addComputedUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
+        addComputedUserOrder(orderId, friendId2, "MELE2", 1.0, "Cassa");
+        addComputedUserOrder(orderId, friendId2, "BIRRA1", 1.0, "PZ");
 
         mockMvcGoGas.loginAs("user3", "password");
-        addUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
-        addUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
+        addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
+        addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
     }
 
     private void verifyProductDTO(Map<String, OrderByProductDTO> products, String productCode,

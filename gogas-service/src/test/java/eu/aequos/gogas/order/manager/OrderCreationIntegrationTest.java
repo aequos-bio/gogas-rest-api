@@ -157,7 +157,7 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
 
         String orderId = createOrder(orderDTO);
 
-        addUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
+        addComputedUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
 
         mockMvcGoGas.delete("/api/order/manage/" + orderId)
                 .andExpect(status().isConflict())

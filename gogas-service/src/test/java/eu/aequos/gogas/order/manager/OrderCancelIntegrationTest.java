@@ -73,8 +73,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
 
         String orderId = createOrder(orderDTO);
 
-        addUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
-        addUserOrder(orderId, orderManagerId1, "MELE2", 2.0, "KG");
+        addComputedUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
+        addComputedUserOrder(orderId, orderManagerId1, "MELE2", 2.0, "KG");
 
         List<UserOrderItemDTO> userItemsBefore = getUserOpenOrderItems(orderId, orderManagerId1);
         assertEquals(2, userItemsBefore.size());
@@ -177,8 +177,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
 
         String orderId = createOrder(orderDTO);
 
-        addUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
-        addUserOrder(orderId, orderManagerId1, "MELE2", 2.0, "KG");
+        addComputedUserOrder(orderId, orderManagerId1, "MELE1", 1.0, "KG");
+        addComputedUserOrder(orderId, orderManagerId1, "MELE2", 2.0, "KG");
 
         performAction(orderId, "cancel");
         performAction(orderId, "undocancel");

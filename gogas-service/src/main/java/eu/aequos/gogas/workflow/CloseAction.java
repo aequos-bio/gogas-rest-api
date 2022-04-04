@@ -179,6 +179,7 @@ public class CloseAction extends OrderStatusAction {
                 return boxesCount.setScale(0, RoundingMode.FLOOR);
 
             case Threshold:
+            default:
                 BigDecimal intPart = boxesCount.setScale(0, RoundingMode.FLOOR);
                 BigDecimal decimalPart = boxesCount.remainder(BigDecimal.ONE);
 
@@ -186,9 +187,6 @@ public class CloseAction extends OrderStatusAction {
                     return intPart.add(BigDecimal.ONE);
 
                 return intPart;
-
-            default:
-                return boxesCount;
         }
     }
 
@@ -200,8 +198,8 @@ public class CloseAction extends OrderStatusAction {
     }
 
     @Value
-    private static final class OrderItemsKey {
-        private final String product;
-        private final String user;
+    private static class OrderItemsKey {
+        String product;
+        String user;
     }
 }

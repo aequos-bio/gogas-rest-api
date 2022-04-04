@@ -43,22 +43,22 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
 
-    private OrderRepo orderRepo;
-    private OrderManagerRepo orderManagerRepo;
-    private OrderItemService orderItemService;
-    private SupplierOrderItemRepo supplierOrderItemRepo;
-    private ShippingCostRepo shippingCostRepo;
+    private final OrderRepo orderRepo;
+    private final OrderManagerRepo orderManagerRepo;
+    private final OrderItemService orderItemService;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final ShippingCostRepo shippingCostRepo;
 
-    private OrderWorkflowHandler orderWorkflowHandler;
+    private final OrderWorkflowHandler orderWorkflowHandler;
 
-    private UserService userService;
-    private OrderTypeService orderTypeService;
-    private ProductService productService;
-    private AccountingService accountingService;
-    private AequosIntegrationService aequosIntegrationService;
-    private PushNotificationSender pushNotificationSender;
-    private AttachmentService attachmentService;
-    private ExcelGenerationService reportService;
+    private final UserService userService;
+    private final OrderTypeService orderTypeService;
+    private final ProductService productService;
+    private final AccountingService accountingService;
+    private final AequosIntegrationService aequosIntegrationService;
+    private final PushNotificationSender pushNotificationSender;
+    private final AttachmentService attachmentService;
+    private final ExcelGenerationService reportService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
