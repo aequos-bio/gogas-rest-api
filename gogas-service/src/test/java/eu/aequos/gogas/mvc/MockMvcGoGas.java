@@ -7,6 +7,7 @@ import eu.aequos.gogas.mock.MockUsersData;
 import eu.aequos.gogas.multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -17,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import javax.servlet.http.Cookie;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -118,8 +120,24 @@ public class MockMvcGoGas {
                 .content(objectMapper.writeValueAsString(dto)));
     }
 
+    public ResultActions post(String endpoint, InputStream contentStream, String originalFileName, String contentType) throws Exception {
+        return mockMvc.perform(MockMvcRequestBuilders.multipart(endpoint)
+                .file(new MockMultipartFile("file", "", contentType, contentStream))
+                .with(req -> {
+                    req.setServerName(tenantId + ".aequos.bio");
+                    return req;
+                })
+                .contentType(contentType)
+                .cookie(jwtTokenCookie));
+    }
+
     public <T> T postDTO(String endpoint, Object dto, Class<T> dtoClass) throws Exception {
         ResultActions callResult = post(endpoint, dto);
+        return extractDTO(callResult, dtoClass);
+    }
+
+    public <T> T postDTO(String endpoint, InputStream contentStream, String originalFileName, String contentType, Class<T> dtoClass) throws Exception {
+        ResultActions callResult = post(endpoint, contentStream, originalFileName, contentType);
         return extractDTO(callResult, dtoClass);
     }
 

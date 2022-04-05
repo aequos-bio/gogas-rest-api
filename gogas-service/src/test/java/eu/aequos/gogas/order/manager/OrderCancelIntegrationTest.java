@@ -124,6 +124,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         performAction(orderId, "close");
 
         invalidAction(orderId, "cancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 1);
     }
 
     @Test
@@ -140,6 +142,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         performAction(orderId, "contabilizza");
 
         invalidAction(orderId, "cancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 2);
     }
 
     @Test
@@ -153,6 +157,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         performAction(orderId, "cancel");
 
         invalidAction(orderId, "cancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 3);
     }
 
     @Test
@@ -228,6 +234,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         performAction(orderId, "close");
 
         invalidAction(orderId, "undocancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 1);
     }
 
     @Test
@@ -246,6 +254,8 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         performAction(orderId, "contabilizza");
 
         invalidAction(orderId, "undocancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 2);
     }
 
     @Test
@@ -257,5 +267,7 @@ public class OrderCancelIntegrationTest extends OrderManagementBaseIntegrationTe
         String orderId = createOrder(orderDTO);
 
         invalidAction(orderId, "undocancel");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 0);
     }
 }

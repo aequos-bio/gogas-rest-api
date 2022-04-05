@@ -1,11 +1,12 @@
 package eu.aequos.gogas.order.manager;
 
-import eu.aequos.gogas.dto.OrderByUserDTO;
-import eu.aequos.gogas.dto.OrderDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.persistence.repository.YearRepo;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.io.File;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,9 +17,9 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest {
 
@@ -620,6 +621,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         performAction(orderId, "cancel");
         invalidAction(orderId, "contabilizza");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 3);
     }
 
     @Test
@@ -632,6 +635,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
         invalidAction(orderId, "contabilizza");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 0);
     }
 
     @Test
@@ -647,6 +652,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         performAction(orderId, "contabilizza");
 
         invalidAction(orderId, "contabilizza");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 2);
     }
 
     @Test
@@ -850,6 +857,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         performAction(orderId, "cancel");
         invalidAction(orderId, "tornachiuso");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 3);
     }
 
     @Test
@@ -862,6 +871,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
         invalidAction(orderId, "tornachiuso");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 0);
     }
 
     @Test
@@ -875,6 +886,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         performAction(orderId, "close");
         invalidAction(orderId, "tornachiuso");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 1);
     }
 
     @Test
@@ -891,6 +904,316 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         performAction(orderId, "close");
 
         invalidAction(orderId, "contabilizza", "L'ordine non può essere contabilizzato, l'anno contabile è chiuso");
+    }
+
+    @Test
+    void givenAnAccountedOrder_whenAddingInvoiceInformation_thenInformationIsAdded() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/data", invoiceData, BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        OrderDetailsDTO orderDetails = mockMvcGoGas.getDTO("/api/order/manage/" + orderId, OrderDetailsDTO.class);
+        assertEquals(123.45, orderDetails.getInvoiceAmount().doubleValue(), 0.001);
+        assertEquals(LocalDate.now().minusDays(5), orderDetails.getInvoiceDate());
+        assertEquals("2022-01", orderDetails.getInvoiceNumber());
+        assertEquals(LocalDate.now(), orderDetails.getPaymentDate());
+        assertTrue(orderDetails.isPaid());
+    }
+
+    @Test
+    void givenASimpleUserLogin_whenAddingInvoiceInformation_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        mockMvcGoGas.loginAs("user1", "password");
+        mockMvcGoGas.post("/api/order/manage/" + orderId + "/invoice/data", invoiceData)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAManagerOfOtherOrderType_whenAddingInvoiceInformation_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        mockMvcGoGas.post("/api/order/manage/" + orderId + "/invoice/data", invoiceData)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAnInvalidOrderType_whenAddingInvoiceInformation_thenNotFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        mockMvcGoGas.post("/api/order/manage/" + UUID.randomUUID() + "/invoice/data", invoiceData)
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenANegativeInvoiceAmount_whenAddingInvoiceInformation_thenErrorIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(-123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        mockMvcGoGas.post("/api/order/manage/" + orderId + "/invoice/data", invoiceData)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("L'importo fattura deve essere un valore maggiore di zero")));
+    }
+
+    @Test
+    void givenAnInvoiceDocument_whenAttachingInvoiceDocument_thenFileIsStoredInTheRightFolder() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf", BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        File invoice = repoFolder.resolve("integration-test")
+                .resolve("invoice")
+                .resolve(orderId)
+                .toFile();
+
+        assertTrue(invoice.exists());
+        assertTrue(invoice.length() > 0);
+    }
+
+    @Test
+    void givenAnInvalidOrderId_whenAttachingInvoiceDocument_thenNotFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        mockMvcGoGas.post("/api/order/manage/" + UUID.randomUUID() + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenASimpleUserLogin_whenAttachingInvoiceDocument_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        mockMvcGoGas.loginAs("user1", "password");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        mockMvcGoGas.post("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAManagerOfOtherOrderType_whenAttachingInvoiceDocument_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        mockMvcGoGas.loginAs("manager", "password");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        mockMvcGoGas.post("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAnInvoiceDocumentAttached_whenDownloadingInvoiceDocument_thenAttachmentIsRetrievedCorrectly() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf", BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        byte[] contentAsByteArray = mockMvcGoGas.get("/api/order/manage/" + orderId + "/invoice/attachment")
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andReturn()
+                .getResponse()
+                .getContentAsByteArray();
+
+        assertTrue(contentAsByteArray.length > 0);
+    }
+
+    @Test
+    void givenAContentTypeImage_whenDownloadingInvoiceDocument_thenAttachmentIsRetrievedCorrectly() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.png", "image/png", BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        byte[] contentAsByteArray = mockMvcGoGas.get("/api/order/manage/" + orderId + "/invoice/attachment")
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("image/png"))
+                .andReturn()
+                .getResponse()
+                .getContentAsByteArray();
+
+        assertTrue(contentAsByteArray.length > 0);
+    }
+
+    @Test
+    void givenNoInvoiceDocumentAttached_whenDownloadingInvoiceDocument_thenNotFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        mockMvcGoGas.get("/api/order/manage/" + orderId + "/invoice/attachment")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenAnInvalidOrderId_whenDownloadingInvoiceDocument_thenNotFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        mockMvcGoGas.get("/api/order/manage/" + UUID.randomUUID() + "/invoice/attachment")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenASimpleUserLogin_whenDownloadingInvoiceDocument_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf", BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/order/manage/" + orderId + "/invoice/attachment")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAManagerOfOtherOrderType_whenDownloadingInvoiceDocument_thenUnauthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeNotComputed.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        InputStream invoiceInputStream = getClass().getResourceAsStream("attachment.pdf");
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/attachment", invoiceInputStream, "invoice.pdf", "application/pdf", BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        mockMvcGoGas.loginAs("manager", "password");
+
+        mockMvcGoGas.get("/api/order/manage/" + orderId + "/invoice/attachment")
+                .andExpect(status().isForbidden());
     }
 
     private void closeOrder(String orderId) throws Exception {

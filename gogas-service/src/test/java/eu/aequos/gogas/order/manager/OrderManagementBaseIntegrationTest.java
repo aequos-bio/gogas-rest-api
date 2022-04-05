@@ -225,6 +225,19 @@ public class OrderManagementBaseIntegrationTest extends BaseGoGasIntegrationTest
         return orderId;
     }
 
+    void verifyOrderStatus(String orderId, String orderTypeId, int statusCode) throws Exception {
+        OrderSearchFilter searchFilter = new OrderSearchFilter();
+        searchFilter.setOrderType(orderTypeId);
+
+        Optional<OrderDTO> orderFromSearch = mockMvcGoGas.postDTOList("/api/order/manage/list", searchFilter, OrderDTO.class).stream()
+                .filter(orderDTO -> orderDTO.getId().equals(orderId.toUpperCase()))
+                .findFirst();
+
+        assertTrue(orderFromSearch.isPresent());
+        OrderDTO orderDTO = orderFromSearch.get();
+        assertEquals(statusCode, orderDTO.getStatusCode());
+    }
+
     void verifyOrderStatusAndActions(String orderId, String orderTypeId, int statusCode, String statusName, String actions,
                              boolean editable, boolean accounted) throws Exception {
 

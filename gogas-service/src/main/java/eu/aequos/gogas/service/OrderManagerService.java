@@ -422,7 +422,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
 
         if (invoiceData.getInvoiceAmount() != null && invoiceData.getInvoiceAmount().compareTo(BigDecimal.ZERO) <= 0)
-            throw new GoGasException("L'importo fattura deve essere un valore maggiore di zero");
+            throw new MissingOrInvalidParameterException("L'importo fattura deve essere un valore maggiore di zero");
 
         Order order = getRequiredWithType(orderId);
         order.setInvoiceNumber(invoiceData.getInvoiceNumber());

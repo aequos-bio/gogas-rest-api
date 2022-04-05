@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Api("Products")
@@ -56,9 +55,9 @@ public class ProductController {
     @IsOrderTypeManager
     @GetMapping(value = "list/{productTypeId}")
     public List<ProductDTO> listProducts(@PathVariable String productTypeId,
-                                         @RequestParam String category,
-                                         @RequestParam Boolean available,
-                                         @RequestParam Boolean cancelled) throws ItemNotFoundException {
+                                         @RequestParam(required = false) String category,
+                                         @RequestParam(required = false) Boolean available,
+                                         @RequestParam(required = false) Boolean cancelled) throws ItemNotFoundException {
 
         return productService.searchProducts(productTypeId, category, available, cancelled);
     }

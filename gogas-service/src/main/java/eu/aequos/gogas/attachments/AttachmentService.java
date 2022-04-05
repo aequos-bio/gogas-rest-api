@@ -5,10 +5,10 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.multitenancy.TenantContext;
 import eu.aequos.gogas.persistence.entity.Order;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,11 +19,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class AttachmentService {
 
-    @Value("${attachments.rootfolder}")
-    String rootFolder;
+    private final AttachmentRepo attachmentRepo;
 
     public void storeAttachment(byte[] attachmentContent, AttachmentType type, String fileName) throws GoGasException {
         try {
@@ -90,7 +90,7 @@ public class AttachmentService {
         String tenantId = TenantContext.getTenantId()
                 .orElseThrow(() -> new GoGasException("Invalid tenant"));
 
-        Path folderPath = Paths.get(rootFolder, tenantId, type.getFolderName());
+        Path folderPath = Paths.get(attachmentRepo.getRootFolder(), tenantId, type.getFolderName());
 
         if (Files.notExists(folderPath))
             Files.createDirectories(folderPath);

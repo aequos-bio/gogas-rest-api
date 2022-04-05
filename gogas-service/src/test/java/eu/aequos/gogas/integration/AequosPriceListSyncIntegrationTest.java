@@ -7,7 +7,6 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.SupplierDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosPriceList;
-import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.persistence.entity.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +17,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -142,7 +143,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         verifyExpectedProduct(createdProducts.get("FRMEOPAL1054"), null, orderType.getId(), "", "MELE OPAL - Roncaglia",
                 suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, false, "KG",
-                "Cassa", 8.5, 1.7, null, "Pezzatura più piccola");
+                "Cassa", 8.5, 1.7, null, "Pezzatura piu piccola");
 
         verifyExpectedProduct(createdProducts.get("ORPATGIA1131"), null, orderType.getId(), "", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
                 suppliers.get("1131").getId(), suppliers.get("1131").getName(), categories.get("Ortaggi"), "Ortaggi", true, false, false, "KG",
@@ -203,7 +204,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         verifyExpectedProduct(createdProducts.get("FRMEOPAL1054"), productsByExternalId.get("FRMEOPAL1054"), orderType.getId(), "", "MELE OPAL - Roncaglia",
                 suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, true, "KG",
-                "Cassa", 8.5, 1.7, null, "Pezzatura più piccola");
+                "Cassa", 8.5, 1.7, null, "Pezzatura piu piccola");
 
         verifyExpectedProduct(createdProducts.get("ORPATGIA1131"), productsByExternalId.get("ORPATGIA1131"), orderType.getId(), "", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
                 suppliers.get("1131").getId(), suppliers.get("1131").getName(), categories.get("Ortaggi"), "Ortaggi", true, false, true, "KG",
@@ -258,7 +259,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         verifyExpectedProduct(allProducts.get("FRMEOPAL1054"), productsByExternalId.get("FRMEOPAL1054"), orderType.getId(), "", "MELE OPAL - Roncaglia",
                 suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, false, "KG",
-                "Cassa", 8.5, 1.7, null, "Pezzatura più piccola");
+                "Cassa", 8.5, 1.7, null, "Pezzatura piu piccola");
 
         verifyExpectedProduct(allProducts.get("ORPATGIA1131"), productsByExternalId.get("ORPATGIA1131"), orderType.getId(), "", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
                 suppliers.get("1131").getId(), suppliers.get("1131").getName(), categories.get("Ortaggi"), "Ortaggi", true, false, false, "KG",
@@ -321,7 +322,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         verifyExpectedProduct(createdProducts.get("FRMEOPAL1054"), null, orderType.getId(), "", "MELE OPAL - Roncaglia",
                 suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, false, "KG",
-                "Cassa", 8.5, 1.7, null, "Pezzatura più piccola");
+                "Cassa", 8.5, 1.7, null, "Pezzatura piu piccola");
 
         verifyExpectedProduct(createdProducts.get("ORPATGIA1131"), null, orderType.getId(), "", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
                 suppliers.get("1131").getId(), suppliers.get("1131").getName(), categories.get("Ortaggi"), "Ortaggi", true, false, false, "KG",
@@ -347,7 +348,7 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
     }
 
     private List<ProductDTO> searchAllProducts(OrderType orderType) throws Exception {
-        Map<String, List<String>> requestParams = Map.of("category", List.of(""), "available", List.of(""), "cancelled", List.of(""));
+        Map<String, List<String>> requestParams = Map.of();//"category", List.of(""), "available", List.of(""), "cancelled", List.of(""));
         return mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, requestParams);
     }
 

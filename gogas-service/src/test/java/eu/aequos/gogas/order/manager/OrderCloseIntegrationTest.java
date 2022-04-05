@@ -336,6 +336,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         performAction(orderId, "cancel");
         invalidAction(orderId, "close");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 3);
     }
 
     @Test
@@ -351,6 +353,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         performAction(orderId, "contabilizza");
 
         invalidAction(orderId, "close");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 2);
     }
 
     @Test
@@ -364,6 +368,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         performAction(orderId, "close");
         invalidAction(orderId, "close");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 1);
     }
 
     @Test
@@ -606,6 +612,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         performAction(orderId, "cancel");
         invalidAction(orderId, "reopen");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 3);
     }
 
     @Test
@@ -621,6 +629,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         performAction(orderId, "contabilizza");
 
         invalidAction(orderId, "reopen");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 2);
     }
 
     @Test
@@ -633,6 +643,8 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
         invalidAction(orderId, "reopen");
+
+        verifyOrderStatus(orderId, orderTypeComputed.getId(), 0);
     }
 
     private void addUserOrdersNoFriends(String orderId) throws Exception {

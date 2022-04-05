@@ -1,19 +1,22 @@
 package eu.aequos.gogas;
 
+import eu.aequos.gogas.attachments.AttachmentRepo;
 import eu.aequos.gogas.mock.MockDataLifeCycle;
 import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.mock.MockUsersData;
 import eu.aequos.gogas.mvc.MockMvcGoGas;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.nio.file.Path;
 import java.util.stream.Stream;
+
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @SuppressWarnings("squid:S2187")
@@ -21,6 +24,12 @@ import java.util.stream.Stream;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class BaseGoGasIntegrationTest {
+
+    @TempDir
+    protected Path repoFolder;
+
+    @MockBean
+    private AttachmentRepo attachmentRepo;
 
     @Autowired
     protected MockMvcGoGas mockMvcGoGas;
@@ -34,6 +43,11 @@ public class BaseGoGasIntegrationTest {
     @BeforeAll
     void init() {
         Stream.of(mockUsersData).forEach(this::initMockData);
+    }
+
+    @BeforeEach
+    void mockRepo() {
+        when(attachmentRepo.getRootFolder()).thenReturn(repoFolder.toFile().getAbsolutePath());
     }
 
     private void initMockData(MockDataLifeCycle mockData) {
