@@ -9,26 +9,24 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.service.OrderUserService;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 @Api("User order fill")
 @RestController
 @RequestMapping("api/order/user")
+@Validated
+@RequiredArgsConstructor
 public class OrderUserController {
 
-    private OrderUserService orderUserService;
-    private AuthorizationService authorizationService;
-
-    public OrderUserController(OrderUserService orderUserService,
-                               AuthorizationService authorizationService) {
-
-        this.orderUserService = orderUserService;
-        this.authorizationService = authorizationService;
-    }
+    private final OrderUserService orderUserService;
+    private final AuthorizationService authorizationService;
 
     @GetMapping(value = "open")
     public List<OpenOrderDTO> getOpenOrders() {
@@ -52,13 +50,13 @@ public class OrderUserController {
         return orderUserService.getOrderCategories(orderId);
     }
 
-    @GetMapping(value = "{orderId}/categories/{categoryId}/not-ordered", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "{orderId}/categories/{categoryId}/not-ordered", produces = MediaType.APPLICATION_JSON_VALUE)
     public CategoryDTO getNotOrderedItemsByCategory(@PathVariable String orderId, @PathVariable String categoryId) throws GoGasException {
         GoGasUserDetails currentUser = authorizationService.getCurrentUser();
         return orderUserService.getNotOrderedItemsByCategory(currentUser.getId(), orderId, categoryId);
     }
 
-    @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @GetMapping(value = "{orderId}/items", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UserOrderItemDTO> getUserOrderItems(@PathVariable String orderId, @RequestParam String userId) throws GoGasException {
         if (!authorizationService.isUserOrFriend(userId))
             throw new UserNotAuthorizedException();
@@ -66,8 +64,8 @@ public class OrderUserController {
         return orderUserService.getUserOrderItems(orderId, userId);
     }
 
-    @PostMapping(value = "{orderId}/item", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public SmallUserOrderItemDTO updateUserOrder(@PathVariable String orderId, @RequestBody OrderItemUpdateRequest orderItemUpdate) throws GoGasException {
+    @PostMapping(value = "{orderId}/item", produces = MediaType.APPLICATION_JSON_VALUE)
+    public SmallUserOrderItemDTO updateUserOrder(@PathVariable String orderId, @RequestBody @Valid OrderItemUpdateRequest orderItemUpdate) throws GoGasException {
 
         if (!authorizationService.isUserOrFriend(orderItemUpdate.getUserId()))
             throw new UserNotAuthorizedException();

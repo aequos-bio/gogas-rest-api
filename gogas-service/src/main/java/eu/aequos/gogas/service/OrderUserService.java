@@ -5,6 +5,7 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.filter.FilterPagination;
 import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
@@ -143,19 +144,68 @@ public class OrderUserService {
     }
 
     public SmallUserOrderItemDTO updateUserOrder(String orderId, OrderItemUpdateRequest updateRequest) throws ItemNotFoundException, OrderClosedException {
-        Order order = orderManagerService.getRequired(orderId);
+        Order order = orderManagerService.getRequiredWithType(orderId);
 
         if (!order.getStatus().isOpen() || !order.isEditable())
             throw new OrderClosedException();
 
         User user = userService.getRequired(updateRequest.getUserId());
         Product product = productService.getRequired(updateRequest.getProductId());
+
+        validateUpdateRequest(updateRequest, order, product);
+
         OrderItemUpdate orderItemUpdate = orderItemService.updateOrDeleteItemByUser(user, product, orderId, updateRequest);
 
         Optional<ProductTotalOrder> productTotalOrder = orderItemService.getTotalQuantityByProduct(orderId, product.getId());
 
         return new SmallUserOrderItemDTO()
                 .fromModel(product, orderItemUpdate.getOrderItem(), orderItemUpdate.getItemsAdded(), productTotalOrder.orElse(null));
+    }
+
+    private void validateUpdateRequest(OrderItemUpdateRequest updateRequest, Order order, Product product) {
+        if (!isValidProduct(order, product)) {
+            throw new MissingOrInvalidParameterException("Product not available for given order");
+        }
+
+        if (!isValidUnitOfMeasure(updateRequest.getUnitOfMeasure(), product)) {
+            throw new MissingOrInvalidParameterException("Unit of measure not valid");
+        }
+
+        if (!isCompliantWithMultiple(updateRequest, product)) {
+            throw new MissingOrInvalidParameterException(String.format("Prodotto ordinabile a multipli di %s", product.getMultiple()));
+        }
+
+        if (!isCompliantWithBoxOnly(updateRequest, product)) {
+            throw new MissingOrInvalidParameterException("Prodotto ordinabile solo a collo intero");
+        }
+    }
+
+    private boolean isCompliantWithBoxOnly(OrderItemUpdateRequest updateRequest, Product product) {
+        if (!product.isBoxOnly() || product.getBoxUm() == null)
+            return true;
+
+        return updateRequest.getUnitOfMeasure().equals(product.getBoxUm());
+    }
+
+    private boolean isValidUnitOfMeasure(String requestedUnitOfMeasure, Product product) {
+        return requestedUnitOfMeasure.equals(product.getUm()) || requestedUnitOfMeasure.equals(product.getBoxUm());
+    }
+
+    private boolean isValidProduct(Order order, Product product) {
+        return product.getType().equals(order.getOrderType().getId()) && product.isAvailable();
+    }
+
+    private boolean isCompliantWithMultiple(OrderItemUpdateRequest updateRequest, Product product) {
+        if (product.getMultiple() == null || updateRequest.getQuantity() == null)
+            return true;
+
+        if (updateRequest.getUnitOfMeasure().equals(product.getBoxUm()))
+            return true;
+
+        double requestedQuantity = updateRequest.getQuantity().doubleValue();
+        double multiple = product.getMultiple().doubleValue();
+
+        return requestedQuantity > 0 && requestedQuantity % multiple == 0.0;
     }
 
     private boolean showGroupedOrderItems(boolean isOrderOpen, OrderType orderType, User user) {
@@ -214,7 +264,7 @@ public class OrderUserService {
         UserOrderDetailsDTO userOrderDetails = new UserOrderDetailsDTO().fromModel(order);
 
         if (includeTotalAmount) {
-            Optional<UserOrderSummary> orderSummary = orderRepo.findFriendOrderSummary(userId, Collections.singleton(orderId)).stream()
+            Optional<UserOrderSummary> orderSummary = orderRepo.findUserOrderSummary(userId, Collections.singleton(orderId)).stream()
                     .findFirst();
 
             userOrderDetails.withTotalAmount(orderSummary);

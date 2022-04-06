@@ -82,7 +82,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
     @Test
     void givenAUsedOrderType_whenDeletingOrderType_thenOrderTypeCannotBeDeleted() throws Exception {
         OrderType testOrderType = mockOrdersData.createAequosOrderType("Test Order", null);
-        mockOrdersData.createExistingOrder(testOrderType);
+        mockOrdersData.createOpenOrder(testOrderType);
         mockMvcGoGas.loginAsAdmin();
 
         OrderTypeDTO createdOrderType = mockMvcGoGas.getDTO("/api/ordertype/" + testOrderType.getId(), OrderTypeDTO.class);

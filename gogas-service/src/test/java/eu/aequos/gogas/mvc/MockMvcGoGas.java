@@ -96,6 +96,10 @@ public class MockMvcGoGas {
         return extractDTO(get(endpoint, new LinkedMultiValueMap<>()), dtoClass);
     }
 
+    public <T> T getDTO(String endpoint, Class<T> dtoClass, Map<String, List<String>> requestParams) throws Exception {
+        return extractDTO(get(endpoint, new LinkedMultiValueMap<>(requestParams)), dtoClass);
+    }
+
     public <T> List<T> getDTOList(String endpoint, Class<T> dtoClass) throws Exception {
         return extractListDTO(get(endpoint, new LinkedMultiValueMap<>()), dtoClass);
     }
@@ -122,7 +126,7 @@ public class MockMvcGoGas {
 
     public ResultActions post(String endpoint, InputStream contentStream, String originalFileName, String contentType) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.multipart(endpoint)
-                .file(new MockMultipartFile("file", "", contentType, contentStream))
+                .file(new MockMultipartFile("file", originalFileName, contentType, contentStream))
                 .with(req -> {
                     req.setServerName(tenantId + ".aequos.bio");
                     return req;

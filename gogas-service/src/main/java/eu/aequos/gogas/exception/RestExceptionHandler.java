@@ -41,6 +41,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
+    @ExceptionHandler(OrderClosedException.class)
+    protected ResponseEntity<Object> handleInvalidParameter(OrderClosedException ex) {
+        log.warn("The operation is not allowed, order closed", ex);
+        return buildResponseEntity(new RestApiError(HttpStatus.NOT_ACCEPTABLE, "The operation is not allowed, order closed", ex));
+    }
+
     @ExceptionHandler(ItemNotFoundException.class)
     protected ResponseEntity<Object> handleItemNotFound(ItemNotFoundException ex) {
         log.warn("Item of type {} with id {} not found", ex.getItemType(), ex.getItemId());
@@ -49,6 +55,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied: {} ", ex.getMessage());
+        return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
+    }
+
+    @ExceptionHandler(UserNotAuthorizedException.class)
+    protected ResponseEntity<Object> handleNotAuthorized(UserNotAuthorizedException ex) {
         log.warn("Access denied: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
     }

@@ -1,6 +1,5 @@
 package eu.aequos.gogas.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
@@ -26,7 +25,7 @@ public class SmallUserOrderItemDTO {
     @JsonProperty("qta")
     BigDecimal orderRequestedQty;
 
-    @JsonIgnore()
+    @JsonProperty("um")
     String orderUnitOfMeasure;
 
     @JsonProperty("qtaRitirata")

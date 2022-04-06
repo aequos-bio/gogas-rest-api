@@ -1293,7 +1293,7 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         addNotComputedUserOrder(orderId, userId2, "FEGATO", 0.4, "KG");
         addNotComputedUserOrder(orderId, userId2, "COPPA", 0.35, "KG");
         addNotComputedUserOrder(orderId, friendId2, "COSTINE", 0.4, "KG");
-        addNotComputedUserOrder(orderId, friendId2, "FEGATO", 0.65, "PZ");
+        addNotComputedUserOrder(orderId, friendId2, "FEGATO", 0.65, "KG");
 
         mockMvcGoGas.loginAs("user3", "password");
         addNotComputedUserOrder(orderId, userId3, "COSTINE", 1.0, "KG");

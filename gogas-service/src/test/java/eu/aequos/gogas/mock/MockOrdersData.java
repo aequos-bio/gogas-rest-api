@@ -60,17 +60,38 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderTypeRepo.save(orderType);
     }
 
+    public void forceShowAdvance(OrderType orderType, boolean showAdvance) {
+        orderType.setShowAdvance(showAdvance);
+        orderTypeRepo.save(orderType);
+    }
+
+    public void forceShowBoxCompletion(OrderType orderType, boolean showBoxCompletion) {
+        orderType.setShowBoxCompletion(showBoxCompletion);
+        orderTypeRepo.save(orderType);
+    }
+
     public ProductCategory createCategory(String name, String orderTypeId) {
+        return createCategory(name, orderTypeId, 0, null);
+    }
+
+    public ProductCategory createCategory(String name, String orderTypeId, int position, String color) {
         ProductCategory category = new ProductCategory();
         category.setDescription(name);
         category.setOrderTypeId(orderTypeId);
+        category.setPriceListPosition(position);
+        category.setPriceListColor(color);
         return productCategoryRepo.save(category);
     }
 
     public Supplier createSupplier(String id, String name) {
+        return createSupplier(id, name, null);
+    }
+
+    public Supplier createSupplier(String id, String name, String prov) {
         Supplier supplier = new Supplier();
         supplier.setExternalId(id);
         supplier.setName(name);
+        supplier.setProvince(prov);
         return supplierRepo.save(supplier);
     }
 
@@ -114,13 +135,7 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderManagerRepo.save(orderManager);
     }
 
-    public Order createOrder(String orderTypeId) {
-        OrderType orderType = new OrderType();
-        orderType.setId(orderTypeId);
-        return createExistingOrder(orderType);
-    }
-
-    public Order createExistingOrder(OrderType orderType) {
+    public Order createOpenOrder(OrderType orderType) {
         return createOrder(orderType, LocalDate.now().minusDays(2), LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
                 Order.OrderStatus.Opened.getStatusCode(), BigDecimal.ZERO);
     }
