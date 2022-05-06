@@ -46,7 +46,7 @@ public class OrderUserController {
     }
 
     @GetMapping(value = "{orderId}/categories")
-    public List<CategoryDTO> getOrderDetails(@PathVariable String orderId) throws GoGasException {
+    public List<CategoryDTO> getOrderCategories(@PathVariable String orderId) throws GoGasException {
         return orderUserService.getOrderCategories(orderId);
     }
 

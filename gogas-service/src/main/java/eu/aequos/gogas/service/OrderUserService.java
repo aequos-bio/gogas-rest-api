@@ -274,13 +274,17 @@ public class OrderUserService {
     }
 
     public List<CategoryDTO> getOrderCategories(String orderId) {
-        return categoryRepo.findByOrderId(orderId).stream()
+        Order order = orderManagerService.getRequired(orderId);
+
+        return categoryRepo.findByOrderId(order.getId()).stream()
                 .map(CategoryDTO::fromModel)
                 .collect(Collectors.toList());
     }
 
     public CategoryDTO getNotOrderedItemsByCategory(String userId, String orderId, String categoryId) {
-        ProductCategory category = categoryRepo.findById(categoryId)
+        Order order = orderManagerService.getRequiredWithType(orderId);
+
+        ProductCategory category = categoryRepo.findByIdAndOrderTypeId(categoryId, order.getOrderType().getId())
                 .orElseThrow(() -> new ItemNotFoundException("Product category", categoryId));
 
         List<Product> products = orderItemService.getNotOrderedProductsByCategory(userId, orderId, categoryId);

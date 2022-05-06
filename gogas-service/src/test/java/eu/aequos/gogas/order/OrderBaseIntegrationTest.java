@@ -24,6 +24,9 @@ public class OrderBaseIntegrationTest extends BaseGoGasIntegrationTest {
     protected Map<String, Product> productsByCodeComputed;
     protected Map<String, Product> productsByCodeNotComputed;
 
+    protected Map<String, ProductCategory> categoriesComputed;
+    protected Map<String, ProductCategory> categoriesNotComputed;
+
     protected String userId1;
     protected String userId2;
     protected String userId3;
@@ -39,7 +42,7 @@ public class OrderBaseIntegrationTest extends BaseGoGasIntegrationTest {
     void createOrderTypeAndUsers() {
         orderTypeComputed = mockOrdersData.createOrderType("Fresco Settimanale", true);
 
-        Map<String, ProductCategory> categories = Map.ofEntries(
+        categoriesComputed = Map.ofEntries(
                 entry("Birra", mockOrdersData.createCategory("Birra", orderTypeComputed.getId(), 3, "white")),
                 entry("Frutta", mockOrdersData.createCategory("Frutta", orderTypeComputed.getId(), 1, "green")),
                 entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", orderTypeComputed.getId(), 2, "red"))
@@ -53,32 +56,32 @@ public class OrderBaseIntegrationTest extends BaseGoGasIntegrationTest {
 
         List<Product> products = List.of(
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), true, false, false, "PZ", null, 1.0, 3.65, null, null, "Mensile"),
+                        suppliers.get("1041"), categoriesComputed.get("Birra"), true, false, false, "PZ", null, 1.0, 3.65, null, null, "Mensile"),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
-                        suppliers.get("1041"), categories.get("Birra"), true, false, false, "PZ", null, 1.0, 3.65, null, null, "Settimanale"),
+                        suppliers.get("1041"), categoriesComputed.get("Birra"), true, false, false, "PZ", null, 1.0, 3.65, null, null, "Settimanale"),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), true, false, false, "KG", "Cassa", 8.5, 1.55, null, null, null),
+                        suppliers.get("1054"), categoriesComputed.get("Frutta"), true, false, false, "KG", "Cassa", 8.5, 1.55, null, null, null),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "MELE2", "MELE OPAL - Roncaglia",
-                        suppliers.get("1054"), categories.get("Frutta"), true, false, false, "KG", "Cassa", 8.5, 1.70, 2.0, null, null),
+                        suppliers.get("1054"), categoriesComputed.get("Frutta"), true, false, false, "KG", "Cassa", 8.5, 1.70, 2.0, null, null),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "ARANCE", "ARANCE - Agrinova Bio",
-                        suppliers.get("1054"), categories.get("Frutta"), true, false, true, "KG", "Cassa", 8.0, 1.10, null, "Ordinabili solo a cassa", null),
+                        suppliers.get("1054"), categoriesComputed.get("Frutta"), true, false, true, "KG", "Cassa", 8.0, 1.10, null, "Ordinabili solo a cassa", null),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
-                        suppliers.get("1131"), categories.get("Ortaggi"), true, false, false, "KG", "Cassa", 11.0, 1.45, null, null, null),
+                        suppliers.get("1131"), categoriesComputed.get("Ortaggi"), true, false, false, "KG", "Cassa", 11.0, 1.45, null, null, null),
 
                 mockOrdersData.createProduct(orderTypeComputed.getId(), "CIPOLLE", "CIPOLLE ROSSE - Abbiate Valerio",
-                        suppliers.get("1131"), categories.get("Ortaggi"), false, false, false, "KG", "Cassa", 5.0, 1.30, null, null, null)
+                        suppliers.get("1131"), categoriesComputed.get("Ortaggi"), false, false, false, "KG", "Cassa", 5.0, 1.30, null, null, null)
         );
 
         productsByCodeComputed = products.stream().collect(Collectors.toMap(Product::getExternalId, Function.identity()));
 
         orderTypeNotComputed = mockOrdersData.createOrderType("Cirenaica", false);
 
-        Map<String, ProductCategory> categoriesNotComputed = Map.ofEntries(
+        categoriesNotComputed = Map.ofEntries(
                 entry("Carne Fresca", mockOrdersData.createCategory("Carne Fresca", orderTypeNotComputed.getId())),
                 entry("Bovino", mockOrdersData.createCategory("Bovino", orderTypeNotComputed.getId())),
                 entry("Affettati", mockOrdersData.createCategory("Affettati", orderTypeNotComputed.getId()))

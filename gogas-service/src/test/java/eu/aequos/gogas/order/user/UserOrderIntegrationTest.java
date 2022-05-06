@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -118,32 +120,224 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
         mockMvcGoGas.loginAs("user1", "password");
         List<UserOrderItemDTO> userItems = getUserOrderItems(computedOrder.getId(), userId1);
 
-
-        extracted(userItems.get(0), "ARANCE", "ARANCE - Agrinova Bio",
+        checkUserItemOpenOrder(userItems.get(0), "ARANCE", "ARANCE - Agrinova Bio",
                 "Frutta", "green", "KG", "Cassa", 8.0, 1.10, true, null, "Ordinabili solo a cassa", "MN");
 
-        extracted(userItems.get(1), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
+        checkUserItemOpenOrder(userItems.get(1), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
                 "Frutta", "green", "KG", "Cassa", 8.5, 1.55, false, null, null, "MN");
 
-        extracted(userItems.get(2), "MELE2", "MELE OPAL - Roncaglia",
+        checkUserItemOpenOrder(userItems.get(2), "MELE2", "MELE OPAL - Roncaglia",
                 "Frutta", "green", "KG", "Cassa", 8.5, 1.7, false, 2.0, null, "MN");
 
-        extracted(userItems.get(3), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
+        checkUserItemOpenOrder(userItems.get(3), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
                 "Ortaggi", "red", "KG", "Cassa", 11.0, 1.45, false, null, null, "BO");
 
-        extracted(userItems.get(4), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+        checkUserItemOpenOrder(userItems.get(4), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
                 "Birra", "white", "PZ", null, 1.0, 3.65, false, null, null, "TN");
 
-        extracted(userItems.get(5), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+        checkUserItemOpenOrder(userItems.get(5), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
                 "Birra", "white", "PZ", null, 1.0, 3.65, false, null, null, "TN");
     }
 
-    private void extracted(UserOrderItemDTO userItem, String productCode, String productName,
-                           String categoryName, String categoryColor, String um, String boxUm, double boxWeight,
-                           double price, boolean boxOnly, Double orderMultiple, String productNotes, String productProvince) {
+    @Test
+    void givenAnOpenOrder_whenGettingCategories_allInfoIsProvided() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        List<CategoryDTO> categories = mockMvcGoGas.getDTOList("/api/order/user/" + computedOrder.getId() + "/categories", CategoryDTO.class);
+
+        assertEquals(3, categories.size());
+
+        CategoryDTO category1 = categories.get(0);
+        assertNotNull(category1.getId());
+        assertEquals("Frutta", category1.getName());
+        assertEquals("green", category1.getColor());
+        assertNull(category1.getProducts());
+
+        CategoryDTO category2 = categories.get(1);
+        assertNotNull(category2.getId());
+        assertEquals("Ortaggi", category2.getName());
+        assertEquals("red", category2.getColor());
+        assertNull(category2.getProducts());
+
+        CategoryDTO category3 = categories.get(2);
+        assertNotNull(category3.getId());
+        assertEquals("Birra", category3.getName());
+        assertEquals("white", category3.getColor());
+        assertNull(category3.getProducts());
+    }
+
+    @Test
+    void givenAnOpenOrderAndNoUserOrder_whenGettingProductNotOrderedByCategories_allProductsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        CategoryDTO categoryDTO = mockMvcGoGas.getDTO("/api/order/user/" + computedOrder.getId() + "/categories/" + categoriesComputed.get("Frutta").getId() + "/not-ordered", CategoryDTO.class);
+
+        assertNotNull(categoryDTO.getId());
+        assertEquals("Frutta", categoryDTO.getName());
+        assertEquals("green", categoryDTO.getColor());
+        assertEquals(3, categoryDTO.getProducts().size());
+
+        Map<String, CategoryDTO.SmallProductDTO> products = categoryDTO.getProducts().stream()
+                .collect(Collectors.toMap(CategoryDTO.SmallProductDTO::getName, Function.identity()));
+
+        CategoryDTO.SmallProductDTO product1 = products.get("ARANCE - Agrinova Bio");
+        assertNotNull(product1.getId());
+        assertEquals("KG", product1.getUm());
+        assertEquals("Cassa", product1.getBoxUm());
+        assertEquals(1.10, product1.getPrice().doubleValue(), 0.001);
+
+        CategoryDTO.SmallProductDTO product2 = products.get("MELE CRIMSON CRISP - Roncaglia");
+        assertNotNull(product2.getId());
+        assertEquals("KG", product2.getUm());
+        assertEquals("Cassa", product2.getBoxUm());
+        assertEquals(1.55, product2.getPrice().doubleValue(), 0.001);
+
+        CategoryDTO.SmallProductDTO product3 = products.get("MELE OPAL - Roncaglia");
+        assertNotNull(product3.getId());
+        assertEquals("KG", product3.getUm());
+        assertEquals("Cassa", product3.getBoxUm());
+        assertEquals(1.70, product3.getPrice().doubleValue(), 0.001);
+    }
+
+    @Test
+    void givenAnOpenOrderAndOneUserOrder_whenGettingProductNotOrderedByCategories_allOtherProductsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        sendUserOrderItem(computedOrder.getId(), userId1, productsByCodeComputed.get("ARANCE").getId(), 1.0, "Cassa");
+
+        CategoryDTO categoryDTO = mockMvcGoGas.getDTO("/api/order/user/" + computedOrder.getId() + "/categories/" + categoriesComputed.get("Frutta").getId() + "/not-ordered", CategoryDTO.class);
+
+        assertNotNull(categoryDTO.getId());
+        assertEquals("Frutta", categoryDTO.getName());
+        assertEquals("green", categoryDTO.getColor());
+        assertEquals(2, categoryDTO.getProducts().size());
+
+        Map<String, CategoryDTO.SmallProductDTO> products = categoryDTO.getProducts().stream()
+                .collect(Collectors.toMap(CategoryDTO.SmallProductDTO::getName, Function.identity()));
+
+        //check products category
+        CategoryDTO.SmallProductDTO product2 = products.get("MELE CRIMSON CRISP - Roncaglia");
+        assertNotNull(product2.getId());
+        assertEquals("KG", product2.getUm());
+        assertEquals("Cassa", product2.getBoxUm());
+        assertEquals(1.55, product2.getPrice().doubleValue(), 0.001);
+
+        CategoryDTO.SmallProductDTO product3 = products.get("MELE OPAL - Roncaglia");
+        assertNotNull(product3.getId());
+        assertEquals("KG", product3.getUm());
+        assertEquals("Cassa", product3.getBoxUm());
+        assertEquals(1.70, product3.getPrice().doubleValue(), 0.001);
+    }
+
+    @Test
+    void givenAnInvalidOrder_whenGettingCategories_notFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/order/user/" + UUID.randomUUID() + "/categories")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenAnInvalidOrder_whenGettingProductNotOrderedByCategories_notFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/order/user/" + UUID.randomUUID() + "/categories/" + categoriesComputed.get("Frutta").getId() + "/not-ordered")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenACategoryBelongingToAnotherOrderType_whenGettingProductNotOrderedByCategories_notFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/order/user/" + computedOrder.getId() + "/categories/" + categoriesNotComputed.get("Carne Fresca").getId() + "/not-ordered")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void givenAnInvalidCategory_whenGettingProductNotOrderedByCategories_notFoundIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/order/user/" + computedOrder.getId() + "/categories/" + UUID.randomUUID() + "/not-ordered")
+                .andExpect(status().isNotFound());
+    }
+
+    private void checkUserItemOpenOrder(UserOrderItemDTO userItem, String productCode, String productName,
+                                        String categoryName, String categoryColor, String um, String boxUm, double boxWeight,
+                                        double price, boolean boxOnly, Double orderMultiple, String productNotes, String productProvince) {
 
         assertEquals(productsByCodeComputed.get(productCode).getId().toUpperCase(), userItem.getProductId());
         assertEquals(productName, userItem.getProductName());
+        assertEquals(categoryName, userItem.getCategory());
+        assertEquals(categoryColor, userItem.getCategoryColor());
+        assertEquals(um, userItem.getUnitOfMeasure());
+        assertEquals(boxUm, userItem.getBoxUnitOfMeasure());
+        assertEquals(boxWeight, userItem.getBoxWeight().doubleValue(), 0.001);
+        assertEquals(price, userItem.getUnitPrice().doubleValue(), 0.001);
+        assertEquals(boxOnly, userItem.isBoxesOnly());
+        assertEquals(orderMultiple, Optional.ofNullable(userItem.getOrderMultiple()).map(BigDecimal::doubleValue).orElse(null));
+        assertEquals(productNotes, userItem.getProductNotes());
+        assertEquals(productProvince, userItem.getProductProvince());
+    }
+
+    @Test
+    void givenAClosedOrder_whenGettingUserOrderItem_onlyOrderedItemsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+        sendUserOrderItem(computedOrder.getId(), userId1, productsByCodeComputed.get("ARANCE").getId(), 1.0, "Cassa");
+        sendUserOrderItem(computedOrder.getId(), userId1, productsByCodeComputed.get("MELE1").getId(), 1.5, "KG");
+
+        mockMvcGoGas.loginAs("user2", "password");
+        sendUserOrderItem(computedOrder.getId(), userId2, productsByCodeComputed.get("MELE2").getId(), 1.0, "Cassa");
+        sendUserOrderItem(computedOrder.getId(), userId2, productsByCodeComputed.get("PATATE").getId(), 3.0, "KG");
+
+        mockMvcGoGas.loginAs("user3", "password");
+        sendUserOrderItem(computedOrder.getId(), userId3, productsByCodeComputed.get("MELE1").getId(), 4.0, "KG");
+        sendUserOrderItem(computedOrder.getId(), userId3, productsByCodeComputed.get("PATATE").getId(), 5.0, "KG");
+
+        closeOrder(computedOrder.getId());
+
+        mockMvcGoGas.loginAs("user1", "password");
+        List<UserOrderItemDTO> userItems1 = getUserOrderItems(computedOrder.getId(), userId1);
+
+        assertEquals(2, userItems1.size());
+
+        checkUserItemClosedOrder(userItems1.get(0), "ARANCE", "ARANCE - Agrinova Bio", 8.0, "KG",
+                "Frutta", "green", "KG", "Cassa", 8.0, 1.10, true, null, "Ordinabili solo a cassa", "MN");
+
+        checkUserItemClosedOrder(userItems1.get(1), "MELE1", "MELE CRIMSON CRISP - Roncaglia", 1.5, "KG",
+                "Frutta", "green", "KG", "Cassa", 8.5, 1.55, false, null, null, "MN");
+
+        mockMvcGoGas.loginAs("user2", "password");
+        List<UserOrderItemDTO> userItems2 = getUserOrderItems(computedOrder.getId(), userId2);
+
+        assertEquals(2, userItems2.size());
+
+        checkUserItemClosedOrder(userItems2.get(0), "MELE2", "MELE OPAL - Roncaglia", 8.5, "KG",
+                "Frutta", "green", "KG", "Cassa", 8.5, 1.7, false, 2.0, null, "MN");
+
+        checkUserItemClosedOrder(userItems2.get(1), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio", 3.0, "KG",
+                "Ortaggi", "red", "KG", "Cassa", 11.0, 1.45, false, null, null, "BO");
+
+        mockMvcGoGas.loginAs("user3", "password");
+        List<UserOrderItemDTO> userItems3 = getUserOrderItems(computedOrder.getId(), userId3);
+
+        assertEquals(2, userItems3.size());
+
+        checkUserItemClosedOrder(userItems3.get(0), "MELE1", "MELE CRIMSON CRISP - Roncaglia", 4.0, "KG",
+                "Frutta", "green", "KG", "Cassa", 8.5, 1.55, false, null, null, "MN");
+
+        checkUserItemClosedOrder(userItems3.get(1), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio", 5.0, "KG",
+                "Ortaggi", "red", "KG", "Cassa", 11.0, 1.45, false, null, null, "BO");
+    }
+
+    private void checkUserItemClosedOrder(UserOrderItemDTO userItem, String productCode, String productName, double qta, String orderUm,
+                                          String categoryName, String categoryColor, String um, String boxUm, double boxWeight,
+                                          double price, boolean boxOnly, Double orderMultiple, String productNotes, String productProvince) {
+
+        assertEquals(productsByCodeComputed.get(productCode).getId().toUpperCase(), userItem.getProductId());
+        assertEquals(productName, userItem.getProductName());
+        assertEquals(qta, userItem.getOrderRequestedQty().doubleValue(), 0.001);
+        assertEquals(qta, userItem.getOrderDeliveredQty().doubleValue(), 0.001);
+        assertEquals(orderUm, userItem.getOrderUnitOfMeasure());
         assertEquals(categoryName, userItem.getCategory());
         assertEquals(categoryColor, userItem.getCategoryColor());
         assertEquals(um, userItem.getUnitOfMeasure());
