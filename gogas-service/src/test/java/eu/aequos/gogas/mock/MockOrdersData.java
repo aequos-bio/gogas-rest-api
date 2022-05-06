@@ -148,6 +148,12 @@ public class MockOrdersData implements MockDataLifeCycle {
     public Order createOrder(OrderType orderType, LocalDate openingDate, LocalDate dueDate, LocalDate deliveryDate,
                              int status, BigDecimal shippingCost) {
 
+        return createOrder(orderType, openingDate, dueDate, deliveryDate, status, shippingCost, null);
+    }
+
+    public Order createOrder(OrderType orderType, LocalDate openingDate, LocalDate dueDate, LocalDate deliveryDate,
+                             int status, BigDecimal shippingCost, String externalLink) {
+
         Order order = new Order();
         order.setOrderType(orderType);
         order.setStatusCode(status);
@@ -155,6 +161,7 @@ public class MockOrdersData implements MockDataLifeCycle {
         order.setDueDate(dueDate);
         order.setDeliveryDate(deliveryDate);
         order.setShippingCost(shippingCost);
+        order.setExternaLlink(externalLink);
         return orderRepo.save(order);
     }
 

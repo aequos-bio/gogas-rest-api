@@ -1,6 +1,7 @@
 package eu.aequos.gogas;
 
 import eu.aequos.gogas.attachments.AttachmentRepo;
+import eu.aequos.gogas.mock.MockAccountingData;
 import eu.aequos.gogas.mock.MockDataLifeCycle;
 import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.mock.MockUsersData;
@@ -40,9 +41,12 @@ public class BaseGoGasIntegrationTest {
     @Autowired
     protected MockOrdersData mockOrdersData;
 
+    @Autowired
+    protected MockAccountingData mockAccountingData;
+
     @BeforeAll
     void init() {
-        Stream.of(mockUsersData).forEach(this::initMockData);
+        Stream.of(mockOrdersData, mockUsersData, mockAccountingData).forEach(this::initMockData);
     }
 
     @BeforeEach
@@ -65,7 +69,7 @@ public class BaseGoGasIntegrationTest {
 
     @AfterAll
     void destroy() {
-        Stream.of(mockOrdersData, mockUsersData).forEach(this::destroyMockData);
+        Stream.of(mockOrdersData, mockUsersData, mockAccountingData).forEach(this::destroyMockData);
     }
 
     private void destroyMockData(MockDataLifeCycle mock) {

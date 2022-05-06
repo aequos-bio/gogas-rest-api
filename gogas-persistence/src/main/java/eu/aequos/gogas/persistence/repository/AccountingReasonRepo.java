@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface AccountingReasonRepo extends CrudRepository<AccountingEntryReason, String> {
     List<AccountingEntryReason> findAllByOrderByDescription();
+    AccountingEntryReason findByReasonCode(String reasonCode);
 }
