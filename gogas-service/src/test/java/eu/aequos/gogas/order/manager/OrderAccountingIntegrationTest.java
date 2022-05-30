@@ -89,7 +89,7 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         performAction(orderId, "contabilizza");
 
-        checkBalance(userId1, -16.75);
+        checkBalance(userId1, -5.8);
         checkBalance(userId2, -17.45);
         checkBalance(userId3, 0.0);
     }

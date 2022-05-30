@@ -158,6 +158,18 @@ public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest
         assertEquals("OK", updateQtaResponse.getData());
     }
 
+    void addNewUserOrderItem(String orderId, String productCode, String userId, double quantity, String um) throws Exception {
+        OrderItemUpdateRequest orderItemUpdateRequest = new OrderItemUpdateRequest();
+        orderItemUpdateRequest.setUserId(userId);
+        orderItemUpdateRequest.setProductId(productsByCodeComputed.get(productCode).getId());
+        orderItemUpdateRequest.setQuantity(BigDecimal.valueOf(quantity));
+        orderItemUpdateRequest.setUnitOfMeasure(um);
+
+        BasicResponseDTO distributeResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/item", orderItemUpdateRequest, BasicResponseDTO.class);
+        assertEquals("OK", distributeResponse.getData());
+
+    }
+
     void changeUserOrderItemQuantityNotComputed(String orderId, String productCode, String userId, double quantity) throws Exception {
         Map<String, OrderItemByProductDTO> items = getNotComputedProductItems(orderId, productCode);
 
@@ -173,7 +185,7 @@ public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest
     void cancelUserOrder(String orderId, String userId, String productCode) throws Exception {
         Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(orderId, productCode);
 
-        BasicResponseDTO updateQtaResponse = mockMvcGoGas.putDTO("/api/order/manage/" + orderId + "/item/" + itemsBefore.get(userId).getOrderItemId(), BigDecimal.valueOf(3.0), BasicResponseDTO.class);
+        BasicResponseDTO updateQtaResponse = mockMvcGoGas.putDTO("/api/order/manage/" + orderId + "/item/" + itemsBefore.get(userId).getOrderItemId() + "/cancel", BasicResponseDTO.class);
         assertEquals("OK", updateQtaResponse.getData());
     }
 

@@ -278,7 +278,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         SupplierOrderItem supplierOrderItem = supplierOrderItemRepo.findByOrderIdAndProductId(orderId, productId)
                 .orElseThrow(() -> new ItemNotFoundException("SupplierOrder", Arrays.asList(orderId, productId)));
 
-        orderItemService.replaceOrderItemsProduct(orderItemId, order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
+        orderItemService.replaceOrderItemsProduct(orderItemId, order.getId(), order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
     }
 
     @Transactional

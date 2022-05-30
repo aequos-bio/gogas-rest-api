@@ -236,7 +236,7 @@ public class OrderManagerController {
 
     @PutMapping(value = "{orderId}/item/{orderItemId}/cancel")
     public BasicResponseDTO cancelOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) {
-        orderItemService.cancelOrderItem(orderItemId);
+        orderItemService.cancelOrderItem(orderItemId, orderId);
         return new BasicResponseDTO("OK");
     }
 

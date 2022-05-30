@@ -8,11 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.function.Predicate.not;
 
 @Component
 @RequiredArgsConstructor
@@ -84,6 +83,13 @@ public class MockUsersData implements MockDataLifeCycle {
         createdUsers.sort(Comparator.comparing(User::getRole));
         createdUsers.forEach(userRepo::delete);
         createdUsers.clear();
+    }
+
+    public Set<String> getAllUsers(boolean excludeFriends) {
+        return createdUsers.stream()
+                .filter(not(user -> excludeFriends && user.getRoleEnum() == User.Role.S))
+                .map(User::getUsername)
+                .collect(Collectors.toSet());
     }
 
     @Override

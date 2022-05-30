@@ -826,6 +826,18 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
     }
 
     @Test
+    void givenAUserProductItemOfOtherOrder_whenCancellingUserOrderItem_thenErrorIsReturned() throws Exception {
+        Order otherOrder = mockOrdersData.createOrder(orderTypeComputed, "2022-02-20", "2022-02-28", "2022-03-01", Order.OrderStatus.Closed);
+
+        mockMvcGoGas.loginAs("manager", "password");
+
+        Map<String, OrderItemByProductDTO> itemsBefore = getProductItems(order.getId(), "MELE1");
+
+        mockMvcGoGas.put("/api/order/manage/" + otherOrder.getId() + "/item/" + itemsBefore.get(userId1).getOrderItemId() + "/cancel")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void givenANotExistingOrder_whenCancellingUserOrderItem_thenNotFoundIsReturned() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
