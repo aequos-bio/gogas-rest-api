@@ -6,32 +6,25 @@ import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsCurrentUserFriend;
-import eu.aequos.gogas.service.AccountingService;
-import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.UserService;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @Api("Friends management")
+@RequiredArgsConstructor
+@Validated
 @RestController
 @RequestMapping("api/friend")
 public class FriendController {
 
-    private UserService userService;
-    private AuthorizationService authorizationService;
-    private AccountingService accountingService;
-    private ConfigurationService configurationService;
-
-    public FriendController(UserService userService, AuthorizationService authorizationService,
-                            AccountingService accountingService, ConfigurationService configurationService) {
-        this.userService = userService;
-        this.authorizationService = authorizationService;
-        this.accountingService = accountingService;
-        this.configurationService = configurationService;
-    }
+    private final UserService userService;
+    private final AuthorizationService authorizationService;
 
     @GetMapping(value = "select", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<SelectItemDTO> listFriendsForSelect(@RequestParam(required = false) boolean withAll,
@@ -52,7 +45,7 @@ public class FriendController {
     }
 
     @PostMapping()
-    public BasicResponseDTO create(@RequestBody UserDTO userDTO) {
+    public BasicResponseDTO create(@RequestBody @Valid UserDTO userDTO) {
         String userId = userService.createFriend(userDTO, authorizationService.getCurrentUser().getId())
                 .getId();
 
@@ -61,7 +54,7 @@ public class FriendController {
 
     @IsCurrentUserFriend
     @PutMapping(value = "{userId}")
-    public BasicResponseDTO update(@PathVariable String userId, @RequestBody UserDTO userDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String userId, @RequestBody @Valid UserDTO userDTO) throws ItemNotFoundException {
         String updatedUserId = userService.update(userId, userDTO)
                 .getId();
 

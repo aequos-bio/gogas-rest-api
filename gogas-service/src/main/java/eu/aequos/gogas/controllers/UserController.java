@@ -10,24 +10,23 @@ import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.UserService;
 import io.swagger.annotations.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
 
 @Api("Users")
+@RequiredArgsConstructor
+@Validated
 @RestController
 @RequestMapping("api/user")
 public class UserController {
 
-    private UserService userService;
-    private AuthorizationService authorizationService;
-
-    public UserController(UserService userService, AuthorizationService authorizationService) {
-        this.userService = userService;
-        this.authorizationService = authorizationService;
-    }
+    private final UserService userService;
+    private final AuthorizationService authorizationService;
 
     @ApiOperation(
         value = "List for dropdown selection",
