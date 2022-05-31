@@ -7,11 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface UserBalanceRepo extends CrudRepository<UserBalance, String> {
 
     @Procedure(name = "User.balance")
-    BigDecimal getBalance(@Param("idUtente") String userId);
+    Optional<BigDecimal> getBalance(@Param("idUtente") String userId);
 
     List<UserBalance> findAllByRole(String role);
 

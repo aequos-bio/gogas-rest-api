@@ -46,7 +46,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public BigDecimal getBalance(String userId) {
-        return Optional.ofNullable(userBalanceRepo.getBalance(userId))
+        return userBalanceRepo.getBalance(userId)
                 .orElse(BigDecimal.ZERO);
     }
 
@@ -191,7 +191,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders))
                 .collect(Collectors.toList());
 
-        BigDecimal balance = userBalanceRepo.getBalance(userId);
+        BigDecimal balance = userBalanceRepo.getBalance(userId)
+                .orElse(BigDecimal.ZERO);
 
         return new UserBalanceSummaryDTO(balance, dtoEntries);
     }

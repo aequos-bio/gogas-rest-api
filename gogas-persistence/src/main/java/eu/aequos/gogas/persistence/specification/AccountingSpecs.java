@@ -24,7 +24,7 @@ public class AccountingSpecs {
     }
 
     public static Specification<AccountingEntry> isFriendOf(String userId) {
-        return (entry, cq, cb) -> cb.like(entry.get("friendReferralId"), "%" + userId +"%");
+        return (entry, cq, cb) -> cb.equal(entry.get("friendReferralId"), userId);
     }
 
     public static Specification<AccountingEntry> reason(String reasonCode) {

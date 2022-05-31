@@ -13,12 +13,15 @@ import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import io.swagger.annotations.Api;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
 @Api("Friends accounting")
+@Validated
 @RestController
 @RequestMapping("api/accounting/friend")
 public class AccountingFriendController {
@@ -49,8 +52,18 @@ public class AccountingFriendController {
         return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, currentUserId);
     }
 
+    @GetMapping(value = "entry/{accountingEntryId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public AccountingEntryDTO getAccountingEntry(@PathVariable String accountingEntryId) {
+        AccountingEntryDTO accountingEntryDTO = accountingService.get(accountingEntryId);
+
+        if (!authorizationService.isFriend(accountingEntryDTO.getUserId()))
+            throw new UserNotAuthorizedException();
+
+        return accountingEntryDTO;
+    }
+
     @PostMapping(value = "entry")
-    public BasicResponseDTO createAccountingEntry(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
+    public BasicResponseDTO createAccountingEntry(@RequestBody @Valid AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         if (!authorizationService.isFriend(accountingEntryDTO.getUserId()))
             throw new UserNotAuthorizedException();
 
@@ -62,7 +75,7 @@ public class AccountingFriendController {
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
+    public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody @Valid AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         if (!isFriendAccountingEntry(accountingEntryId))
             throw new UserNotAuthorizedException();
 
@@ -91,12 +104,14 @@ public class AccountingFriendController {
     @GetMapping(value = "balance/{userId}")
     public UserBalanceSummaryDTO getUserBalance(@PathVariable String userId,
                                                 @RequestParam(required = false) String dateFrom,
-                                                @RequestParam(required = false) String dateTo) {
+                                                @RequestParam(required = false) String dateTo,
+                                                @RequestParam(required = false) Integer skipItems,
+                                                @RequestParam(required = false) Integer maxItems) {
 
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getUserBalance(userId, parsedDateFrom, parsedDateTo, false);
+        return accountingService.getPaginatedUserBalance(userId, parsedDateFrom, parsedDateTo, false, skipItems, maxItems);
     }
 
     private boolean isFriendAccountingEntry(@PathVariable String accountingEntryId) {
