@@ -7,12 +7,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
-@FeignClient(name = "excelservice", url = "http://localhost:5000")
-@RequestMapping(value = "api/excel")
+@FeignClient(name = "excelservice", url = "http://localhost:5000", path = "/api/excel")
 public interface ExcelServiceClient {
 
     @PostMapping(value = "order")

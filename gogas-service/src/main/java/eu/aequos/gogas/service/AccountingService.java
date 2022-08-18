@@ -46,7 +46,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public BigDecimal getBalance(String userId) {
-        return Optional.ofNullable(userBalanceRepo.getBalance(userId))
+        return userBalanceRepo.getBalance(userId)
                 .orElse(BigDecimal.ZERO);
     }
 
@@ -59,16 +59,32 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
 
     public AccountingEntryDTO get(String entryId) {
         AccountingEntry existingEntry = getRequired(entryId);
-        return new AccountingEntryDTO().fromModel2(existingEntry);
+        return new AccountingEntryDTO().fromModel(existingEntry);
     }
 
     public AccountingEntry update(String entryId, AccountingEntryDTO dto) throws ItemNotFoundException, GoGasException {
         AccountingEntry existingEntry = getRequired(entryId);
 
+        if (existingEntry.getOrderId() != null)
+            throw new GoGasException("Movimento relativo ad un ordine, non può essere modificato");
+
         if (isYearClosed(existingEntry) || isYearClosed(dto))
             throw new GoGasException("Il movimento non può essere modificato, l'anno contabile è chiuso");
 
         return super.createOrUpdate(existingEntry, dto);
+    }
+
+    @Override
+    public void delete(String entryId) {
+        AccountingEntry existingEntry = getRequired(entryId);
+
+        if (existingEntry.getOrderId() != null)
+            throw new GoGasException("Movimento relativo ad un ordine, non può essere eliminato");
+
+        if (isYearClosed(existingEntry) || isYearClosed(existingEntry))
+            throw new GoGasException("Il movimento non può essere eliminato, l'anno contabile è chiuso");
+
+        super.delete(entryId);
     }
 
     public List<AccountingEntryDTO> getAccountingEntries(String userId, String reasonCode,
@@ -175,7 +191,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders))
                 .collect(Collectors.toList());
 
-        BigDecimal balance = userBalanceRepo.getBalance(userId);
+        BigDecimal balance = userBalanceRepo.getBalance(userId)
+                .orElse(BigDecimal.ZERO);
 
         return new UserBalanceSummaryDTO(balance, dtoEntries);
     }

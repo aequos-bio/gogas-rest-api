@@ -2,7 +2,6 @@ package eu.aequos.gogas.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.OrderByProductDTO;
 import eu.aequos.gogas.dto.UserDTO;
@@ -12,11 +11,9 @@ import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.push.PushNotificationSender;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.OrderType;
-import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,26 +27,17 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.mapping;
 
 @Service
+@RequiredArgsConstructor
 public class DeliveryService {
 
     private static final DateTimeFormatter FILE_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    private OrderManagerService orderManagerService;
-    private OrderItemRepo orderItemRepo;
-    private UserService userService;
-    private PushNotificationSender pushNotificationSender;
-    private ObjectMapper objectMapper;
-
-    public DeliveryService(OrderManagerService orderManagerService, OrderItemRepo orderItemRepo,
-                           UserService userService, PushNotificationSender pushNotificationSender,
-                           ObjectMapper objectMapper) {
-
-        this.orderManagerService = orderManagerService;
-        this.orderItemRepo = orderItemRepo;
-        this.userService = userService;
-        this.pushNotificationSender = pushNotificationSender;
-        this.objectMapper = objectMapper;
-    }
+    private final OrderManagerService orderManagerService;
+    private final OrderItemRepo orderItemRepo;
+    private final UserService userService;
+    private final ProductService productService;
+    private final PushNotificationSender pushNotificationSender;
+    private final ObjectMapper objectMapper;
 
     public DeliveryOrderDTO getOrderForDelivery(String orderId) {
         Order order = orderManagerService.getRequiredWithType(orderId);
@@ -145,6 +133,12 @@ public class DeliveryService {
                 .collect(Collectors.toMap(UserDTO::getId, UserDTO::getFriendReferralId));
 
         for (DeliveryProductDTO productDTO : deliveredOrder.getProducts()) {
+            Product product = productService.getRequired(productDTO.getProductId());
+
+            if (!product.getType().equals(order.getOrderType().getId())) {
+                throw new GoGasException("Product id " + productDTO.getProductId() + " is not valid");
+            }
+
             for (DeliveryOrderItemDTO deliveredItem : productDTO.getOrderItems()) {
                 Optional<OrderItem> createdOrderItem = updateOrCreateQuantity(orderId, usersReferralMap, productDTO, deliveredItem);
                 createdOrderItem.ifPresent(itemsCreated::add);
@@ -181,9 +175,11 @@ public class DeliveryService {
     private OrderItem createOrderItem(String orderId, DeliveryProductDTO product,
                                       DeliveryOrderItemDTO deliveredItem, String referralId) {
 
+        User user = userService.getRequired(deliveredItem.getUserId());
+
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(orderId);
-        orderItem.setUser(deliveredItem.getUserId());
+        orderItem.setUser(user.getId());
         orderItem.setProduct(product.getProductId());
         orderItem.setUm(product.getUnitOfMeasure());
         orderItem.setPrice(product.getPrice());

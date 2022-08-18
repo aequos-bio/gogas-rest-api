@@ -3,21 +3,21 @@ package eu.aequos.gogas.order;
 import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
-import eu.aequos.gogas.mock.MockOrders;
+import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Autowired
-    private MockOrders mockOrders;
+    private MockOrdersData mockOrdersData;
 
     @BeforeEach
     void setUp() {
@@ -25,7 +25,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        mockOrders.deleteAllOrderTypes();
+        mockOrdersData.deleteAllOrderTypes();
     }
 
     @Test
@@ -60,7 +60,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotUsedOrderTypeAndASimpleUser_whenDeletingOrderType_thenUnauthorizedIsReturned() throws Exception {
-        OrderType testOrder = mockOrders.createExistingOrderType("Test Order", null);
+        OrderType testOrder = mockOrdersData.createAequosOrderType("Test Order", null);
         mockMvcGoGas.loginAsSimpleUser();
 
         mockMvcGoGas.delete("/api/ordertype/" + testOrder.getId())
@@ -69,7 +69,7 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotUsedOrderType_whenDeletingOrderType_thenOrderTypeIsCorrectlyDeleted() throws Exception {
-        OrderType testOrder = mockOrders.createExistingOrderType("Test Order", null);
+        OrderType testOrder = mockOrdersData.createAequosOrderType("Test Order", null);
         mockMvcGoGas.loginAsAdmin();
 
         BasicResponseDTO basicResponseDTO = mockMvcGoGas.deleteDTO("/api/ordertype/" + testOrder.getId(), BasicResponseDTO.class);
@@ -81,8 +81,8 @@ class OrderTypeIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAUsedOrderType_whenDeletingOrderType_thenOrderTypeCannotBeDeleted() throws Exception {
-        OrderType testOrderType = mockOrders.createExistingOrderType("Test Order", null);
-        mockOrders.createExistingOrder(testOrderType);
+        OrderType testOrderType = mockOrdersData.createAequosOrderType("Test Order", null);
+        mockOrdersData.createOpenOrder(testOrderType);
         mockMvcGoGas.loginAsAdmin();
 
         OrderTypeDTO createdOrderType = mockMvcGoGas.getDTO("/api/ordertype/" + testOrderType.getId(), OrderTypeDTO.class);

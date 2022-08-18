@@ -13,15 +13,6 @@ import java.util.Optional;
 @Data
 public class UserOrderItemDTO extends SmallUserOrderItemDTO {
 
-    @JsonProperty("idOrdine")
-    String orderId;
-
-    @JsonProperty("utente")
-    String userName;
-
-    @JsonProperty("idUtente")
-    String userId;
-
     @JsonProperty("idProdotto")
     String productId;
 

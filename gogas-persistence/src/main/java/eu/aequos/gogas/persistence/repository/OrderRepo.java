@@ -26,7 +26,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     List<Order> findByIdIn(Set<String> orderIds);
 
-    List<String> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
+    List<Order> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
 
     @Query("SELECT DISTINCT LOWER(o.orderType.id) FROM Order o")
     Set<String> findAllUsedOrderTypes();

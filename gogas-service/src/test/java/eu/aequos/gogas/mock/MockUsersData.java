@@ -8,16 +8,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.function.Predicate.not;
 
 @Component
 @RequiredArgsConstructor
 @WithTenant("integration-test")
-public class MockUsers {
+public class MockUsersData implements MockDataLifeCycle {
 
+    public static final String ADMIN_USERNAME = "admin";
     public static final String SIMPLE_USER_USERNAME = "simple_user";
     public static final String SIMPLE_USER_PASSWORD = "simple_user";
 
@@ -71,15 +72,42 @@ public class MockUsers {
         return createdUsers.get(0).getId();
     }
 
-    public void deleteUsers() {
-        createdUsers.sort(Comparator.comparing(User::getRole).reversed());
-        createdUsers.forEach(userRepo::delete);
+    public String getDefaultAdminId() {
+        return userRepo.findByUsername(ADMIN_USERNAME).stream()
+                .findFirst()
+                .map(User::getId)
+                .orElse(null);
     }
 
+    public void deleteUsers() {
+        createdUsers.sort(Comparator.comparing(User::getRole));
+        createdUsers.forEach(userRepo::delete);
+        createdUsers.clear();
+    }
+
+    public Set<String> getAllUsers(boolean excludeFriends) {
+        return createdUsers.stream()
+                .filter(not(user -> excludeFriends && user.getRoleEnum() == User.Role.S))
+                .map(User::getUsername)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public void init() {
+        deleteNotDefaultAdmin();
         createSimpleUser(SIMPLE_USER_USERNAME, SIMPLE_USER_PASSWORD, "Simple", "User");
     }
 
+    private void deleteNotDefaultAdmin() {
+        List<User> collect = userRepo.findAll().stream()
+                .sorted(Comparator.comparing(User::getRole))
+                .filter(user -> !ADMIN_USERNAME.equals(user.getUsername()))
+                .collect(Collectors.toList());
+
+        collect.forEach(userRepo::delete);
+    }
+
+    @Override
     public void destroy() {
         deleteUsers();
     }

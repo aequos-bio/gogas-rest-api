@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.validation.ConstraintViolationException;
+
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
@@ -33,6 +35,18 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
+    @ExceptionHandler(InvalidOrderActionException.class)
+    protected ResponseEntity<Object> handleInvalidParameter(InvalidOrderActionException ex) {
+        log.warn("Invalid order action", ex);
+        return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
+    }
+
+    @ExceptionHandler(OrderClosedException.class)
+    protected ResponseEntity<Object> handleInvalidParameter(OrderClosedException ex) {
+        log.warn("The operation is not allowed, order closed", ex);
+        return buildResponseEntity(new RestApiError(HttpStatus.NOT_ACCEPTABLE, "The operation is not allowed, order closed", ex));
+    }
+
     @ExceptionHandler(ItemNotFoundException.class)
     protected ResponseEntity<Object> handleItemNotFound(ItemNotFoundException ex) {
         log.warn("Item of type {} with id {} not found", ex.getItemType(), ex.getItemId());
@@ -41,6 +55,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Access denied: {} ", ex.getMessage());
+        return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
+    }
+
+    @ExceptionHandler(UserNotAuthorizedException.class)
+    protected ResponseEntity<Object> handleNotAuthorized(UserNotAuthorizedException ex) {
         log.warn("Access denied: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.FORBIDDEN, "utente non autorizzato", ex));
     }
@@ -56,6 +76,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere creato perché già esistente", ex));
     }
 
+    @ExceptionHandler(OrderAlreadyExistsException.class)
+    protected ResponseEntity<Object> handleDuplicatedItem(OrderAlreadyExistsException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "Esiste già un ordine nello stesso periodo", ex));
+    }
+
     @ExceptionHandler(ItemNotDeletableException.class)
     protected ResponseEntity<Object> handleItemNotDeletable(ItemNotDeletableException ex) {
         return buildResponseEntity(new RestApiError(HttpStatus.CONFLICT, "L'elemento non può essere eliminato", ex));
@@ -65,6 +90,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleGoGasException(GoGasException ex) {
         log.warn("An exception occurred while processing the request", ex);
         return buildResponseEntity(new RestApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<Object> handleItemNotDeletable(ConstraintViolationException ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
     private ResponseEntity<Object> buildResponseEntity(RestApiError apiError) {

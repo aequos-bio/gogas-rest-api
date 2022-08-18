@@ -10,17 +10,23 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
-import eu.aequos.gogas.service.*;
+import eu.aequos.gogas.service.BuyersReportService;
+import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.OrderItemService;
+import eu.aequos.gogas.service.OrderManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.AuthorizationScope;
 import org.apache.commons.io.IOUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.PositiveOrZero;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,8 +34,9 @@ import java.util.List;
 
 @Api("Order manager operations")
 @RestController
-@RequestMapping("api/order/manage")
+@Validated
 @IsOrderManager
+@RequestMapping("api/order/manage")
 public class OrderManagerController {
 
     private OrderManagerService orderManagerService;
@@ -84,14 +91,14 @@ public class OrderManagerController {
 
     @PreAuthorize("hasRole('A') OR @authorizationService.isOrderTypeManager(#orderDTO.orderTypeId)")
     @PostMapping()
-    public BasicResponseDTO create(@RequestBody OrderDTO orderDTO) throws GoGasException {
+    public BasicResponseDTO create(@RequestBody @Valid OrderDTO orderDTO) throws GoGasException {
         String orderId = orderManagerService.create(orderDTO).getId();
         // TODO creare nuovo anno contabile al primo ordine dell'anno
         return new BasicResponseDTO(orderId);
     }
 
     @PutMapping(value = "{orderId}")
-    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody OrderDTO orderDTO) throws ItemNotFoundException {
+    public BasicResponseDTO update(@PathVariable String orderId, @RequestBody @Valid OrderDTO orderDTO) throws ItemNotFoundException {
         String updatedOrderId = orderManagerService.update(orderId, orderDTO).getId();
         return new BasicResponseDTO(updatedOrderId);
     }
@@ -103,16 +110,15 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/action/{actionCode}")
-    public BasicResponseDTO update(@PathVariable String orderId, @PathVariable String actionCode,
-                                   @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
+    public BasicResponseDTO changeStatus(@PathVariable String orderId, @PathVariable String actionCode,
+                                         @RequestParam(required = false, defaultValue = "0") int roundType) throws ItemNotFoundException, InvalidOrderActionException {
 
         orderManagerService.changeStatus(orderId, actionCode, roundType);
         return new BasicResponseDTO("OK");
     }
 
-    @IsOrderManager
     @PutMapping(value = "{orderId}/item/{itemId}")
-    public BasicResponseDTO updateQty(@PathVariable String orderId, @PathVariable String itemId, @RequestBody BigDecimal qty) throws ItemNotFoundException {
+    public BasicResponseDTO updateQty(@PathVariable String orderId, @PathVariable String itemId, @RequestBody @PositiveOrZero BigDecimal qty) throws ItemNotFoundException {
         if (!orderManagerService.updateItemDeliveredQty(orderId, itemId, qty))
              throw new ItemNotFoundException("orderItem", itemId);
 
@@ -146,7 +152,7 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/byUser/{userId}")
-    public BasicResponseDTO updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+    public BasicResponseDTO updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody  @PositiveOrZero BigDecimal cost) throws ItemNotFoundException {
         String accountingEntryId = orderManagerService.updateUserCost(orderId, userId, cost);
         return new BasicResponseDTO(accountingEntryId);
     }
@@ -159,7 +165,7 @@ public class OrderManagerController {
     }
 
     @PostMapping(value = "{orderId}/shippingCost")
-    public List<OrderByUserDTO> updateShippingCost(@PathVariable String orderId, @RequestBody BigDecimal cost) throws ItemNotFoundException {
+    public List<OrderByUserDTO> updateShippingCost(@PathVariable String orderId, @RequestBody  @PositiveOrZero BigDecimal cost) throws ItemNotFoundException {
         return orderManagerService.updateShippingCost(orderId, cost);
     }
 
@@ -211,14 +217,14 @@ public class OrderManagerController {
     /********************************/
 
     @PutMapping(value = "{orderId}/product/{productId}/supplier")
-    public BasicResponseDTO updateSupplierOrderQty(@PathVariable String orderId, @PathVariable String productId, @RequestBody int boxes) {
+    public BasicResponseDTO updateSupplierOrderQty(@PathVariable String orderId, @PathVariable String productId, @RequestBody  @PositiveOrZero int boxes) {
         orderManagerService.updateSupplierOrderQty(orderId, productId, boxes);
         return new BasicResponseDTO("OK");
     }
 
     @PutMapping(value = "{orderId}/product/{productId}/cancel")
     public BasicResponseDTO cancelProductOrder(@PathVariable String orderId, @PathVariable String productId) {
-        orderItemService.cancelProductOrder(orderId, productId);
+        orderManagerService.cancelProductOrder(orderId, productId);
         return new BasicResponseDTO("OK");
     }
 
@@ -230,7 +236,7 @@ public class OrderManagerController {
 
     @PutMapping(value = "{orderId}/item/{orderItemId}/cancel")
     public BasicResponseDTO cancelOrderItem(@PathVariable String orderId, @PathVariable String orderItemId) {
-        orderItemService.cancelOrderItem(orderItemId);
+        orderItemService.cancelOrderItem(orderItemId, orderId);
         return new BasicResponseDTO("OK");
     }
 
@@ -253,7 +259,7 @@ public class OrderManagerController {
     }
 
     @PutMapping(value = "{orderId}/product/{productId}/price")
-    public BasicResponseDTO updateProductPrice(@PathVariable String orderId, @PathVariable String productId, @RequestBody BigDecimal price) throws GoGasException {
+    public BasicResponseDTO updateProductPrice(@PathVariable String orderId, @PathVariable String productId, @RequestBody  @PositiveOrZero BigDecimal price) throws GoGasException {
         orderManagerService.updateProductPrice(orderId, productId, price);
         return new BasicResponseDTO("OK");
     }

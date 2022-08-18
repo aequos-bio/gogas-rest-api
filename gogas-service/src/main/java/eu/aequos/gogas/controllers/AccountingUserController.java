@@ -12,9 +12,12 @@ import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,24 +25,19 @@ import java.util.List;
 @Api("Users accounting")
 @RestController
 @RequestMapping("api/accounting/user")
+@Validated
 @IsAdmin
+@RequiredArgsConstructor
 public class AccountingUserController {
 
-    private AccountingService accountingService;
-    private ConfigurationService configurationService;
-
-    public AccountingUserController(AccountingService accountingService, ConfigurationService configurationService) {
-        this.accountingService = accountingService;
-        this.configurationService = configurationService;
-    }
+    private final AccountingService accountingService;
+    private final ConfigurationService configurationService;
 
     @CanViewBalance
     @GetMapping(value = "{userId}/balance", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public BigDecimal getBalance(@PathVariable String userId) {
         return accountingService.getBalance(userId);
     }
-
-
 
     @GetMapping(value = "entry/{accountingEntryId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public AccountingEntryDTO getAccountingEntry(@PathVariable String accountingEntryId) {
@@ -60,13 +58,13 @@ public class AccountingUserController {
     }
 
     @PostMapping(value = "entry")
-    public BasicResponseDTO create(@RequestBody AccountingEntryDTO accountingEntryDTO) throws GoGasException {
+    public BasicResponseDTO create(@RequestBody @Valid AccountingEntryDTO accountingEntryDTO) throws GoGasException {
         String entryId =  accountingService.create(accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
 
     @PutMapping(value = "entry/{accountingEntryId}")
-    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
+    public BasicResponseDTO update(@PathVariable String accountingEntryId, @RequestBody @Valid AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         String entryId =  accountingService.update(accountingEntryId, accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }

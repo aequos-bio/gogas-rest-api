@@ -1,6 +1,7 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.dto.OrderItemUpdateRequest;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
@@ -29,6 +30,9 @@ public class OrderItemService {
     }
 
     public OrderItem insertItemByManager(User user, Product product, String orderId, OrderItemUpdateRequest orderItemUpdate) {
+        orderItemRepo.findByUserAndOrderAndProductAndSummary(user.getId(), orderId, product.getId(), true, OrderItem.class)
+                .ifPresent(item -> { throw new GoGasException("User item already existing for order and product"); });
+
         return insertOrUpdateItem(user, product, orderId, orderItemUpdate, Optional.empty(), true, true);
     }
 
@@ -145,16 +149,20 @@ public class OrderItemService {
         return orderItemRepo.findUserOrderingBySummary(orderId, false);
     }
 
-    public void cancelProductOrder(String orderId, String productId) {
-        orderItemRepo.cancelByOrderAndProduct(orderId, productId);
-    }
-
     public void restoreProductOrder(String orderId, String productId) {
         orderItemRepo.restoreByOrderAndProduct(orderId, productId);
     }
 
-    public void cancelOrderItem(String orderItemId) {
-        orderItemRepo.cancelByOrderItem(orderItemId);
+    public int cancelOrderItemByOrderAndProduct(String orderId, String productId) {
+        return orderItemRepo.cancelByOrderAndProduct(orderId, productId);
+    }
+
+    public void cancelOrderItem(String orderItemId, String orderId) {
+        int updatedRows = orderItemRepo.cancelByOrderItem(orderItemId, orderId);
+
+        if (updatedRows == 0) {
+            throw new ItemNotFoundException("orderItem", orderItemId);
+        }
     }
 
     public void restoreOrderItem(String orderItemId) {
@@ -162,20 +170,27 @@ public class OrderItemService {
     }
 
     @Transactional
-    public void replaceOrderItemsProduct(String orderItemId, boolean summaryRequired,
+    public void replaceOrderItemsProduct(String orderItemId, String orderId, boolean summaryRequired,
                                          String targetProduct, SupplierOrderItem supplierOrderItem) throws ItemNotFoundException {
 
-        OrderItem selectedOrder = orderItemRepo.findById(orderItemId)
+        OrderItem selectedOrderItem = orderItemRepo.findById(orderItemId)
                 .orElseThrow(() -> new ItemNotFoundException("orderItem", orderItemId));
 
-        int updated = orderItemRepo.addDeliveredQtyToOrderItem(selectedOrder.getUser(), selectedOrder.getOrder(),
-                                                                targetProduct, selectedOrder.getDeliveredQuantity());
+        if (!selectedOrderItem.getOrder().equalsIgnoreCase(orderId)) {
+            throw new ItemNotFoundException("orderItem", orderItemId);
+        }
+
+        if (targetProduct.equalsIgnoreCase(selectedOrderItem.getProduct())) {
+            throw new GoGasException("Cannot replace a product with the same product");
+        }
+
+        int updated = orderItemRepo.addDeliveredQtyToOrderItem(selectedOrderItem.getUser(), selectedOrderItem.getOrder(),
+                                                                targetProduct, selectedOrderItem.getDeliveredQuantity());
 
         if (updated == 0) {
-            List<OrderItem> originalOrderItems = new ArrayList<>();
-            originalOrderItems.addAll(getOriginalOrders(selectedOrder.getUser(), selectedOrder.getOrder(),
-                    selectedOrder.getProduct(), summaryRequired));
-            originalOrderItems.add(selectedOrder);
+            List<OrderItem> originalOrderItems = new ArrayList<>(getOriginalOrders(selectedOrderItem.getUser(), selectedOrderItem.getOrder(),
+                    selectedOrderItem.getProduct(), summaryRequired));
+            originalOrderItems.add(selectedOrderItem);
 
             List<OrderItem> clonedOrderItems = originalOrderItems.stream()
                     .map(o -> cloneForProductReplacement(o, targetProduct, supplierOrderItem))
@@ -184,7 +199,7 @@ public class OrderItemService {
             orderItemRepo.saveAll(clonedOrderItems);
         }
 
-        cancelOrderItem(orderItemId);
+        cancelOrderItem(orderItemId, orderId);
     }
 
     private OrderItem cloneForProductReplacement(OrderItem original, String targetProduct, SupplierOrderItem supplierOrderItem) {

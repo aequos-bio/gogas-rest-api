@@ -1,6 +1,7 @@
 package eu.aequos.gogas.service.pricelist;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 public interface ExternalPriceListItem {
 
@@ -15,6 +16,5 @@ public interface ExternalPriceListItem {
     String getCategory();
     String getNotes();
     String getFrequency();
-    boolean isWholeBoxesOnly();
-    BigDecimal getMultiple();
+    Optional<QuantityConstraints> getQuantityConstraints();
 }

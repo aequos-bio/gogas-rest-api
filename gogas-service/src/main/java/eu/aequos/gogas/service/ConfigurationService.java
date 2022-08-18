@@ -3,8 +3,9 @@ package eu.aequos.gogas.service;
 import eu.aequos.gogas.dto.ConfigurationItemDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
-import eu.aequos.gogas.persistence.entity.Configuration;
+import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class ConfigurationService {
 
@@ -38,15 +40,15 @@ public class ConfigurationService {
         Floor;
 
         public static RoundingMode getRoundingMode(int code) {
-            return RoundingMode.values()[code];
+            try {
+                return RoundingMode.values()[code];
+            } catch (Exception ex) {
+                throw new MissingOrInvalidParameterException(String.format("Invalid rounding mode: %s", code));
+            }
         }
     }
 
-    private ConfigurationRepo configurationRepo;
-
-    public ConfigurationService(ConfigurationRepo configurationRepo) {
-        this.configurationRepo = configurationRepo;
-    }
+    private final ConfigurationRepo configurationRepo;
 
     public UserSorting getUserSorting() {
         String sortingConf = configurationRepo.findValueByKey(USER_SORTING_KEY)
@@ -71,8 +73,8 @@ public class ConfigurationService {
         Optional<String> usernameConf = configurationRepo.findValueByKey("aequos.username");
         Optional<String> passwordConf = configurationRepo.findValueByKey("aequos.password");
 
-        if (!usernameConf.isPresent() || !passwordConf.isPresent())
-            throw new GoGasException("Credenziali per Aequos non trovate, controllare la configurazione");
+        if (usernameConf.isEmpty() || passwordConf.isEmpty() || usernameConf.get().isEmpty() || passwordConf.get().isEmpty())
+            throw new GoGasException("Credenziali per Aequos non trovate o non valide, controllare la configurazione");
 
         CredentialsDTO credentials = new CredentialsDTO();
         credentials.setUsername(usernameConf.get());

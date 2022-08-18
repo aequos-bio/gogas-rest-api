@@ -21,6 +21,7 @@ import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,13 +64,17 @@ public class ProductService extends CrudService<Product, String> {
     }
 
     public List<Product> getProducts(Set<String> productIds) {
+        if (productIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         return productRepo.findByIdInOrderByPriceList(productIds);
     }
 
-    public List<ProductDTO> searchProducts(String productType, String category,
+    public List<ProductDTO> searchProducts(String orderTypeId, String category,
                                            Boolean available, Boolean cancelled) throws ItemNotFoundException {
 
-        OrderType orderType = orderTypeService.getRequired(productType);
+        OrderType orderType = orderTypeService.getRequired(orderTypeId);
 
         return fetchProducts(orderType.getId(), category, available, cancelled, false).stream()
                 .map(p -> new ProductDTO().fromModel(p, orderType))

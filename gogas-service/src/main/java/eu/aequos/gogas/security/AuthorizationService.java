@@ -5,11 +5,13 @@ import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.OrderItemService;
 import eu.aequos.gogas.service.OrderManagerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AuthorizationService implements UserDetailsService {
 
@@ -70,8 +72,13 @@ public class AuthorizationService implements UserDetailsService {
         if (orderTypeId == null)
             return false;
 
-        String currentUserId = getCurrentUser().getId();
-        return !orderManagerRepo.findByUserAndOrderType(currentUserId, orderTypeId).isEmpty();
+        try {
+            String currentUserId = getCurrentUser().getId();
+            return !orderManagerRepo.findByUserAndOrderType(currentUserId, orderTypeId).isEmpty();
+        } catch (Exception ex) {
+            log.error("Error while checking order manager permission", ex);
+            return false;
+        }
     }
 
     public boolean isOrderItemOwner(String orderItem) {

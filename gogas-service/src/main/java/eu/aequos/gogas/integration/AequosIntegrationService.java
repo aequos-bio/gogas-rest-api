@@ -43,10 +43,10 @@ public class AequosIntegrationService {
         orderType.setAequosOrderId(aequosOrderType.getId());
         orderType.setDescription(aequosOrderType.getDescription());
         orderType.setBilledByAequos(aequosOrderType.isBilledByAequos());
-        orderType.setHasTurns(false);
-        orderType.setSummaryRequired(true);
         orderType.setComputedAmount(true);
         orderType.setShowAdvance(true);
+        orderType.setHasTurns(false);
+        orderType.setSummaryRequired(false);
         orderType.setShowBoxCompletion(false);
         orderType.setExcelAllUsers(false);
         orderType.setExcelAllProducts(false);
@@ -105,7 +105,7 @@ public class AequosIntegrationService {
         OrderSynchResponse response = aequosApiClient.synchOrder(formParams);
 
         if (response.isError())
-            throw new GoGasException("Errore durante l'invio dei pesi per l'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
+            throw new GoGasException("Errore durante la sincronizzazione dell'ordine aequos " + aequosOrderId + ": " + response.getErrorMessage());
 
         return response;
     }

@@ -12,9 +12,6 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 @Data
 public class OrderInvoiceDataDTO {
 
-    @JsonProperty("idDataOrdine")
-    String orderId;
-
     @JsonProperty("numeroFattura")
     String invoiceNumber;
 

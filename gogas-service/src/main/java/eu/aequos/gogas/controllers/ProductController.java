@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Api("Products")
@@ -41,8 +40,8 @@ public class ProductController {
         @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
     })
     @GetMapping(value = "list/{productTypeId}/available", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public List<Product> getAvailableProducts(@PathVariable String productTypeId) {
-        return productRepo.findAvailableByTypeOrderByPriceList(productTypeId);
+    public List<ProductDTO> getAvailableProducts(@PathVariable String productTypeId) {
+        return productService.searchProducts(productTypeId, null, null, null);
     }
 
     @ApiOperation(
@@ -56,9 +55,9 @@ public class ProductController {
     @IsOrderTypeManager
     @GetMapping(value = "list/{productTypeId}")
     public List<ProductDTO> listProducts(@PathVariable String productTypeId,
-                                         @RequestParam String category,
-                                         @RequestParam Boolean available,
-                                         @RequestParam Boolean cancelled) throws ItemNotFoundException {
+                                         @RequestParam(required = false) String category,
+                                         @RequestParam(required = false) Boolean available,
+                                         @RequestParam(required = false) Boolean cancelled) throws ItemNotFoundException {
 
         return productService.searchProducts(productTypeId, category, available, cancelled);
     }
@@ -128,9 +127,9 @@ public class ProductController {
         @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
     })
     @IsOrderTypeManager
-    @PutMapping(value = "{productType}/sync")
-    public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productType) throws GoGasException {
-        return productService.syncPriceList(productType);
+    @PutMapping(value = "{productTypeId}/sync")
+    public OrderSynchroInfoDTO syncExternalProducts(@PathVariable String productTypeId) throws GoGasException {
+        return productService.syncPriceList(productTypeId);
     }
 
     @ApiOperation(

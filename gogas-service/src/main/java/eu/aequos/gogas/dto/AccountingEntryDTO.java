@@ -7,6 +7,8 @@ import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.User;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -18,16 +20,19 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
 
     private String id;
 
+    @NotNull
     @JsonProperty(value = "data")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate date;
 
+    @NotNull
     @JsonProperty(value = "idutente")
     private String userId;
 
     @JsonProperty(value = "nomeutente")
     private String userName;
 
+    @NotNull
     @JsonProperty(value = "codicecausale")
     private String reasonCode;
 
@@ -37,6 +42,8 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
     @JsonProperty(value = "descrizione")
     private String description;
 
+    @NotNull
+    @Positive
     @JsonProperty(value = "importo")
     private BigDecimal amount;
 
@@ -56,19 +63,6 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         reasonDescription = model.getReason().getDescription();
         sign = model.getReason().getSign();
         amount = model.getAmount();
-        return this;
-    }
-
-    public AccountingEntryDTO fromModel2(AccountingEntry model) {
-        id = model.getId();
-        date = model.getDate();
-        userId = model.getUser().getId();
-        userName = model.getUser().getFirstName() + " " + model.getUser().getLastName();
-        description = model.getDescription();
-        reasonCode = model.getReason().getReasonCode();
-        reasonDescription = model.getReason().getDescription();
-        amount = model.getAmount();
-        sign = model.getReason().getSign();
         return this;
     }
 

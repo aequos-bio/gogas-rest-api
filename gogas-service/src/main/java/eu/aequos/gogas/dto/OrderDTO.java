@@ -9,6 +9,7 @@ import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,17 +29,21 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     @JsonProperty("tipoordine")
     private String orderTypeName;
 
+    @NotNull
     @JsonProperty("dataapertura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate openingDate;
 
+    @NotNull
     @JsonProperty("datachiusura")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate dueDate;
 
+    @NotNull
     @JsonProperty("orachiusura")
     private int dueHour;
 
+    @NotNull
     @JsonProperty("dataconsegna")
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate deliveryDate;

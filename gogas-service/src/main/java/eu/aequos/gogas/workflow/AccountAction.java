@@ -14,8 +14,8 @@ import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class AccountAction extends OrderStatusAction {
 
-    private PushNotificationSender pushNotificationSender;
-    private AccountingService accountingService;
+    private final PushNotificationSender pushNotificationSender;
+    private final AccountingService accountingService;
 
     public AccountAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                          SupplierOrderItemRepo supplierOrderItemRepo, Order order,

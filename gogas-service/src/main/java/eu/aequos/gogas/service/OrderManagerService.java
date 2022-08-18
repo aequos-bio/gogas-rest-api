@@ -43,22 +43,22 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class OrderManagerService extends CrudService<Order, String> {
 
-    private OrderRepo orderRepo;
-    private OrderManagerRepo orderManagerRepo;
-    private OrderItemService orderItemService;
-    private SupplierOrderItemRepo supplierOrderItemRepo;
-    private ShippingCostRepo shippingCostRepo;
+    private final OrderRepo orderRepo;
+    private final OrderManagerRepo orderManagerRepo;
+    private final OrderItemService orderItemService;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final ShippingCostRepo shippingCostRepo;
 
-    private OrderWorkflowHandler orderWorkflowHandler;
+    private final OrderWorkflowHandler orderWorkflowHandler;
 
-    private UserService userService;
-    private OrderTypeService orderTypeService;
-    private ProductService productService;
-    private AccountingService accountingService;
-    private AequosIntegrationService aequosIntegrationService;
-    private PushNotificationSender pushNotificationSender;
-    private AttachmentService attachmentService;
-    private ExcelGenerationService reportService;
+    private final UserService userService;
+    private final OrderTypeService orderTypeService;
+    private final ProductService productService;
+    private final AccountingService accountingService;
+    private final AequosIntegrationService aequosIntegrationService;
+    private final PushNotificationSender pushNotificationSender;
+    private final AttachmentService attachmentService;
+    private final ExcelGenerationService reportService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
@@ -115,18 +115,12 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(toList());
     }
 
-
-
     public synchronized Order create(OrderDTO dto) throws GoGasException {
-        log.info("Creating order for type {}", dto.getOrderTypeId());
         OrderType orderType = orderTypeService.getRequired(dto.getOrderTypeId());
+        log.info("Creating order for type {} ({})", orderType.getDescription(), orderType.getId());
 
-        List<String> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
-
-        if (!duplicateOrders.isEmpty()) {
-            log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
-            throw new OrderAlreadyExistsException();
-        }
+        checkForDuplicates(dto, orderType);
+        validateOrderDates(dto);
 
         Order createdOrder = super.create(dto);
 
@@ -139,6 +133,31 @@ public class OrderManagerService extends CrudService<Order, String> {
             productService.syncPriceList(orderType);
 
         return createdOrder;
+    }
+
+    public Order update(String orderId, OrderDTO dto) throws ItemNotFoundException {
+        validateOrderDates(dto);
+
+        return super.update(orderId, dto);
+    }
+
+    private void checkForDuplicates(OrderDTO dto, OrderType orderType) {
+        List<Order> duplicateOrders = orderRepo.findByOrderTypeIdAndDueDateAndDeliveryDate(orderType.getId(), dto.getDueDate(), dto.getDeliveryDate());
+
+        if (!duplicateOrders.isEmpty()) {
+            log.warn("An order already exists with due date {} and delivery date {}", dto.getDueDate(), dto.getDeliveryDate());
+            throw new OrderAlreadyExistsException();
+        }
+    }
+
+    private void validateOrderDates(OrderDTO dto) {
+        if (dto.getDueDate().isBefore(LocalDate.now())) {
+            throw new MissingOrInvalidParameterException("Data di chiusura non valida");
+        }
+
+        if (!dto.getOpeningDate().isBefore(dto.getDueDate()) || !dto.getDueDate().isBefore(dto.getDeliveryDate())) {
+            throw new MissingOrInvalidParameterException("Date ordine non valide");
+        }
     }
 
     public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, User.Role userRole) {
@@ -247,13 +266,19 @@ public class OrderManagerService extends CrudService<Order, String> {
         supplierOrderItemRepo.updateBoxesByOrderIdAndProductId(orderId, productId, new BigDecimal(boxes));
     }
 
+    @Transactional
+    public void cancelProductOrder(String orderId, String productId) {
+        orderItemService.cancelOrderItemByOrderAndProduct(orderId, productId);
+        supplierOrderItemRepo.updateBoxesByOrderIdAndProductId(orderId, productId, BigDecimal.ZERO);
+    }
+
     public void replaceOrderItemWithProduct(String orderId, String orderItemId, String productId) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
 
         SupplierOrderItem supplierOrderItem = supplierOrderItemRepo.findByOrderIdAndProductId(orderId, productId)
                 .orElseThrow(() -> new ItemNotFoundException("SupplierOrder", Arrays.asList(orderId, productId)));
 
-        orderItemService.replaceOrderItemsProduct(orderItemId, order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
+        orderItemService.replaceOrderItemsProduct(orderItemId, order.getId(), order.getOrderType().isSummaryRequired(), productId, supplierOrderItem);
     }
 
     @Transactional
@@ -282,11 +307,17 @@ public class OrderManagerService extends CrudService<Order, String> {
         orderItemService.increaseDeliveredQtyByProduct(orderId, productId, remainingQuantityRatio);
     }
 
+    @Transactional
     public String updateUserCost(String orderId, String userId, BigDecimal cost) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
         User user = userService.getRequired(userId);
 
-        return accountingService.createOrUpdateEntryForOrder(order, user, cost); //TODO: ricalcolare costo trasporto
+        String entryId = accountingService.createOrUpdateEntryForOrder(order, user, cost);
+
+        if (order.getShippingCost() != null && order.getShippingCost().doubleValue() > 0)
+            distributeShippingCostsOnUserOrders(order);
+
+        return entryId;
     }
 
     public boolean deleteUserCost(String orderId, String userId) {
@@ -344,6 +375,10 @@ public class OrderManagerService extends CrudService<Order, String> {
         Order order = getRequiredWithType(orderId);
         order.setShippingCost(shippingCost);
 
+        return distributeShippingCostsOnUserOrders(order);
+    }
+
+    private List<OrderByUserDTO> distributeShippingCostsOnUserOrders(Order order) {
         List<OrderByUserDTO> userOrders = getOrderDetailByUser(order);
         BigDecimal totalOrderAmount = userOrders.stream()
                 .map(OrderByUserDTO::getNetAmount)
@@ -355,16 +390,16 @@ public class OrderManagerService extends CrudService<Order, String> {
             BigDecimal userShippingCost = BigDecimal.ZERO;
 
             if (totalOrderAmount.compareTo(BigDecimal.ZERO) > 0 && userOrder.getNetAmount() != null)
-                userShippingCost = shippingCost.multiply(userOrder.getNetAmount().divide(totalOrderAmount, RoundingMode.HALF_UP));
+                userShippingCost = order.getShippingCost().multiply(userOrder.getNetAmount().divide(totalOrderAmount, 3, RoundingMode.HALF_UP));
 
             if (userShippingCost.compareTo(BigDecimal.ZERO) > 0) {
                 ShippingCost shippingCostEntity = new ShippingCost();
-                shippingCostEntity.setOrderId(orderId);
+                shippingCostEntity.setOrderId(order.getId());
                 shippingCostEntity.setUserId(userOrder.getUserId());
                 shippingCostEntity.setAmount(userShippingCost);
                 shippingCostRepo.save(shippingCostEntity);
             } else {
-                shippingCostRepo.deleteByOrderIdAndUserId(orderId, userOrder.getUserId());
+                shippingCostRepo.deleteByOrderIdAndUserId(order.getId(), userOrder.getUserId());
             }
 
             userOrder.setShippingCost(userShippingCost);
@@ -387,7 +422,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     public void updateInvoiceData(String orderId, OrderInvoiceDataDTO invoiceData) throws GoGasException {
 
         if (invoiceData.getInvoiceAmount() != null && invoiceData.getInvoiceAmount().compareTo(BigDecimal.ZERO) <= 0)
-            throw new GoGasException("L'importo fattura deve essere un valore maggiore di zero");
+            throw new MissingOrInvalidParameterException("L'importo fattura deve essere un valore maggiore di zero");
 
         Order order = getRequiredWithType(orderId);
         order.setInvoiceNumber(invoiceData.getInvoiceNumber());
@@ -425,9 +460,9 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .map(o -> createOrderDTO(aequosOrderTypeMapping.get(o.getId()), o))
                 .filter(Objects::nonNull);
 
-        List<String> managedOrderTypes = getOrderTypesManagedBy(userId, userRole);
-        if (!managedOrderTypes.isEmpty())
-            aequosOpenOrders = aequosOpenOrders.filter(managedOrderTypes::contains);
+        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId, userRole);
+        if (!managedOrderTypeIds.isEmpty())
+            aequosOpenOrders = aequosOpenOrders.filter(aequosOrder -> managedOrderTypeIds.contains(aequosOrder.getOrderTypeId()));
 
         return aequosOpenOrders
                 .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
@@ -483,6 +518,10 @@ public class OrderManagerService extends CrudService<Order, String> {
             throw new GoGasException("Order type is not linked to Aequos");
 
         List<SupplierOrderBoxes> supplierOrderBoxes = supplierOrderItemRepo.findBoxesCountByOrderId(order.getId());
+
+        if (supplierOrderBoxes.isEmpty())
+            throw new GoGasException("Order cannot be sent: no products found");
+
         String aequosOrderId = aequosIntegrationService.createOrUpdateOrder(aequosOrderType, order.getExternalOrderId(), supplierOrderBoxes);
         orderRepo.updateOrderExternalId(orderId, aequosOrderId, true);
 
@@ -550,9 +589,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                 aequosItemsMap.remove(productExternalCode);
         }
 
-        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap
-            .values()
-            .stream()
+        List<SupplierOrderItem> newSupplierOrderItems = aequosItemsMap.values().stream()
             .map(aequosItem -> createSupplierOrderItem(orderId, orderTypeId, aequosItem))
             .collect(toList());
 
@@ -601,7 +638,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         Optional<Product> product = productService.getByExternalId(orderTypeId, aequosOrderItem.getId());
 
         // Necessario per evitare errori di sincronia con l'ordine del fresco di novembre 2020 in cui compare un item TRASPORTO0000 inesistente (Trasporto Cartizze?)
-        if (!product.isPresent()) {
+        if (product.isEmpty()) {
+            log.warn("Product wih external code {} not found, skipping it", aequosOrderItem.getId());
             return null;
         }
 

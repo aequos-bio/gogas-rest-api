@@ -178,6 +178,7 @@ public class UserService extends CrudService<User, String> {
 
     public User createFriend(UserDTO userDTO, String friendReferral) {
         userDTO.setFriendReferralId(friendReferral);
+        userDTO.setRole(User.Role.S.name());
         return create(userDTO);
     }
 

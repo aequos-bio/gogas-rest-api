@@ -15,7 +15,7 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 @Data
 public class OrderDetailsDTO {
 
-    private static final Integer AEQUOS_FRESCO_ORDER_ID = new Integer(0);
+    private static final Integer AEQUOS_FRESCO_ORDER_ID = 0;
     private static final int DAYS_MILLIS = 24 * 3600 * 1000;
 
     private String id;

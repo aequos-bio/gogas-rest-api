@@ -4,13 +4,19 @@ import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.entity.SupplierOrderItem;
-import eu.aequos.gogas.persistence.repository.*;
+import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ProductRepo;
+import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.service.ConfigurationService;
 import lombok.Value;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,9 +25,9 @@ import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class CloseAction extends OrderStatusAction {
 
-    private ConfigurationService.RoundingMode roundingMode;
-    private ConfigurationService configurationService;
-    private ProductRepo productRepo;
+    private final ConfigurationService.RoundingMode roundingMode;
+    private final ConfigurationService configurationService;
+    private final ProductRepo productRepo;
 
     private Map<String, Product> productMap;
 
@@ -41,6 +47,9 @@ public class CloseAction extends OrderStatusAction {
     protected ActionValidity isActionValid() {
         if (!order.getStatus().isOpen())
             return notValid("Invalid order status");
+
+        if (!order.isExpired())
+            return notValid("Order is not expired");
 
         return valid();
     }
@@ -170,6 +179,7 @@ public class CloseAction extends OrderStatusAction {
                 return boxesCount.setScale(0, RoundingMode.FLOOR);
 
             case Threshold:
+            default:
                 BigDecimal intPart = boxesCount.setScale(0, RoundingMode.FLOOR);
                 BigDecimal decimalPart = boxesCount.remainder(BigDecimal.ONE);
 
@@ -177,9 +187,6 @@ public class CloseAction extends OrderStatusAction {
                     return intPart.add(BigDecimal.ONE);
 
                 return intPart;
-
-            default:
-                return boxesCount;
         }
     }
 
@@ -191,8 +198,8 @@ public class CloseAction extends OrderStatusAction {
     }
 
     @Value
-    private static final class OrderItemsKey {
-        private final String product;
-        private final String user;
+    private static class OrderItemsKey {
+        String product;
+        String user;
     }
 }
