@@ -444,7 +444,37 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
     }
 
     @Test
+    void givenAOrderUpdateWithZeroQuantityAndNoUnitOfMeasure_whenUpdatingUserOrderItem_itemIsRemoved() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        String productId = productsByCodeComputed.get("MELE1").getId();
+
+        SmallUserOrderItemDTO addOrderItem = sendUserOrderItem(computedOrder.getId(), userId1, productId, 2.0, "KG");
+        assertEquals(1, addOrderItem.getItemsAdded());
+
+        SmallUserOrderItemDTO updatedOrderItem = sendUserOrderItem(computedOrder.getId(), userId1, productId, 0.0, null);
+        assertEquals(-1, updatedOrderItem.getItemsAdded());
+        assertNull(updatedOrderItem.getOrderRequestedQty());
+        assertNull(updatedOrderItem.getOrderTotalAmount());
+    }
+
+    @Test
     void givenAnEmptyQuantity_whenUpdatingUserOrderItem_itemIsRemoved() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        String productId = productsByCodeComputed.get("MELE1").getId();
+
+        SmallUserOrderItemDTO addOrderItem = sendUserOrderItem(computedOrder.getId(), userId1, productId, 2.0, "KG");
+        assertEquals(1, addOrderItem.getItemsAdded());
+
+        SmallUserOrderItemDTO updatedOrderItem = sendUserOrderItem(computedOrder.getId(), userId1, productId, null, "KG");
+        assertEquals(-1, updatedOrderItem.getItemsAdded());
+        assertNull(updatedOrderItem.getOrderRequestedQty());
+        assertNull(updatedOrderItem.getOrderTotalAmount());
+    }
+
+    @Test
+    void givenAnEmptyQuantityAndEmptyUnitOfMeasure_whenUpdatingUserOrderItem_itemIsRemoved() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
 
         String productId = productsByCodeComputed.get("MELE1").getId();

@@ -14,7 +14,6 @@ public class OrderItemUpdateRequest {
     @JsonProperty("idUtente")
     String userId;
 
-    @NotNull
     @JsonProperty("um")
     String unitOfMeasure;
 
