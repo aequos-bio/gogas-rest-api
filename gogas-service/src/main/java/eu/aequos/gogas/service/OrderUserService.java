@@ -167,7 +167,7 @@ public class OrderUserService {
             throw new MissingOrInvalidParameterException("Product not available for given order");
         }
 
-        if (!isValidUnitOfMeasure(updateRequest.getUnitOfMeasure(), product)) {
+        if (hasPositiveQuantity(updateRequest) && !isValidUnitOfMeasure(updateRequest.getUnitOfMeasure(), product)) {
             throw new MissingOrInvalidParameterException("Unit of measure not valid");
         }
 
@@ -180,6 +180,10 @@ public class OrderUserService {
         }
     }
 
+    private boolean hasPositiveQuantity(OrderItemUpdateRequest updateRequest) {
+        return updateRequest.getQuantity() != null && updateRequest.getQuantity().doubleValue() > 0;
+    }
+
     private boolean isCompliantWithBoxOnly(OrderItemUpdateRequest updateRequest, Product product) {
         if (!product.isBoxOnly() || product.getBoxUm() == null)
             return true;
@@ -188,6 +192,10 @@ public class OrderUserService {
     }
 
     private boolean isValidUnitOfMeasure(String requestedUnitOfMeasure, Product product) {
+        if (requestedUnitOfMeasure == null) {
+            return false;
+        }
+
         return requestedUnitOfMeasure.equals(product.getUm()) || requestedUnitOfMeasure.equals(product.getBoxUm());
     }
 
