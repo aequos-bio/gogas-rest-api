@@ -1,0 +1,111 @@
+{
+  "articoli": {
+    "1041": [
+      {
+        "codice": "BIRRAMBR1041",
+        "descrizione": "BIRRA AMBRATA - BRAMA ROSSA- GRAD. ALC. 6 - 500 ML  - Birrificio Gedeone",
+        "cod_forn": "1041",
+        "rag": "BIRRIFICIO ARTIGIANALE GEDEONE SRL",
+        "piva": "02242280069",
+        "provincia": "AL",
+        "disponibile": "Y",
+        "peso_collo": "1.00000",
+        "prezzo": "3.65",
+        "um": "PZ",
+        "categoria": "Birra",
+        "note": "",
+        "cadenza": ""
+      },
+      {
+        "codice": "BIRRSOLE1041",
+        "descrizione": "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+        "cod_forn": "1041",
+        "rag": "BIRRIFICIO ARTIGIANALE GEDEONE SRL",
+        "piva": "02242280069",
+        "provincia": "AL",
+        "disponibile": "Y",
+        "peso_collo": "1.00000",
+        "prezzo": "3.65",
+        "um": "PZ",
+        "categoria": "birra",
+        "note": "A bassa gradazione alcolica",
+        "cadenza": "Mensile"
+      }
+    ],
+    "1054": [
+      {
+        "codice": "FRMECRCR1054",
+        "descrizione": "MELE CRIMSON CRISP - Roncaglia",
+        "cod_forn": "1054",
+        "rag": "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)",
+        "piva": "05013100010",
+        "provincia": "TO",
+        "disponibile": "Y",
+        "peso_collo": "8.50000",
+        "prezzo": "1.55",
+        "um": "KG",
+        "categoria": "Frutta",
+        "note": "",
+        "cadenza": ""
+      },
+      {
+        "codice": "FRMEOPAL1054",
+        "descrizione": "MELE OPAL - Roncaglia",
+        "cod_forn": "1054",
+        "rag": "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)",
+        "piva": "05013100010",
+        "provincia": "TO",
+        "disponibile": "Y",
+        "peso_collo": "8.50000",
+        "prezzo": "1.70",
+        "um": "KG",
+        "categoria": "frutta",
+        "note": "Pezzatura piu piccola",
+        "cadenza": ""
+      }
+    ],
+    "1131": [
+      {
+        "codice": "ORPATGIA1131",
+        "descrizione": "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
+        "cod_forn": "1131",
+        "rag": "ABBIATE VALERIO",
+        "piva": "01825130360",
+        "provincia": "MO",
+        "disponibile": "Y",
+        "peso_collo": "11.50000",
+        "prezzo": "1.45",
+        "um": "KG",
+        "categoria": "Ortaggi",
+        "note": "",
+        "cadenza": ""
+      }
+    ]
+  },
+  "categorie": {
+    "Frutta": [
+      {
+        "id": "0",
+        "descrizione": "frutta",
+        "colore_listino": "FFFF33",
+        "ordine_listino": "1"
+      }
+    ],
+    "frutta": [
+      {
+        "id": "0",
+        "descrizione": "frutta",
+        "colore_listino": "FFFF33",
+        "ordine_listino": "1"
+      }
+    ],
+    "Ortaggi": [
+      {
+        "id": "4",
+        "descrizione": "Ortaggi",
+        "colore_listino": "62D900",
+        "ordine_listino": "3"
+      }
+    ]
+  }
+}
