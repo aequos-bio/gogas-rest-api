@@ -236,6 +236,9 @@ class AequosUpdateWeightsIntegrationTest extends BaseGoGasIntegrationTest {
         if (!"pwd".equals(params.get("password")))
             return false;
 
+        if (!"0".equals(params.get("tipo_ordine")))
+            return false;
+
         return boxQuantities.equals(parseOrderCreationItems(params.get("rows")));
     }
 

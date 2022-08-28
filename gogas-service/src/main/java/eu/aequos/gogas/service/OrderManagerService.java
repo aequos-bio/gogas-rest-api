@@ -539,7 +539,7 @@ public class OrderManagerService extends CrudService<Order, String> {
             throw new GoGasException("Missing Aequos order id");
 
         List<SupplierOrderBoxes> supplierOrderBoxes = supplierOrderItemRepo.findBoxesCountByOrderId(order.getId());
-        List<String> updatedItems = aequosIntegrationService.sendUpdatedWeights(order.getExternalOrderId(), supplierOrderBoxes);
+        List<String> updatedItems = aequosIntegrationService.sendUpdatedWeights(order.getExternalOrderId(), order.getOrderType().getAequosOrderId(), supplierOrderBoxes);
 
         supplierOrderItemRepo.updateItemsAsWeightSentByOrderAndProduct(orderId, updatedItems);
         orderRepo.updateWeightSentDate(orderId, LocalDateTime.now());

@@ -85,9 +85,10 @@ public class AequosIntegrationService {
         return response.getOrderId();
     }
 
-    public List<String> sendUpdatedWeights(String aequosOrderId, List<SupplierOrderBoxes> orderBoxes) throws GoGasException {
+    public List<String> sendUpdatedWeights(String aequosOrderId, int aequosOrderType, List<SupplierOrderBoxes> orderBoxes) throws GoGasException {
         Map<String, String> formParams = initParamsWithCredentials();
         formParams.put("order_id", aequosOrderId);
+        formParams.put("tipo_ordine", Integer.toString(aequosOrderType));
         formParams.put("rows", extractAndSerializeOrderItems(orderBoxes));
 
         WeightsUpdatedResponse response = aequosApiClient.updateWeight(formParams);
