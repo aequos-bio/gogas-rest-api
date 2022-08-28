@@ -18,12 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
@@ -55,9 +57,9 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
         aequosOrderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
 
         Map<String, ProductCategory> expectedCategories = Map.ofEntries(
-                entry("Birra", mockOrdersData.createCategory("Birra", aequosOrderType.getId())),
-                entry("Frutta", mockOrdersData.createCategory("Frutta", aequosOrderType.getId())),
-                entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", aequosOrderType.getId()))
+                entry("Ortaggi", mockOrdersData.createCategory("Ortaggi", aequosOrderType.getId(), 1)),
+                entry("Frutta", mockOrdersData.createCategory("Frutta", aequosOrderType.getId(), 2)),
+                entry("Birra", mockOrdersData.createCategory("Birra", aequosOrderType.getId(), 3))
         );
 
         Map<String, Supplier> expectedSuppliers = Map.ofEntries(
@@ -67,11 +69,11 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
         );
 
         productsByExternalId = Stream.of(
-                mockOrdersData.createProduct(aequosOrderType.getId(), "BIRRAMBR1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
-                mockOrdersData.createProduct(aequosOrderType.getId(), "BIRRSOLE1041", "d", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, false, "KG", "Cassa", 6.0, 0.2, 3.0, null, "f"),
-                mockOrdersData.createProduct(aequosOrderType.getId(), "FRMECRCR1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "PZ", null, 2.4, 0.2, null, "n", "f"),
-                mockOrdersData.createProduct(aequosOrderType.getId(), "FRMEOPAL1054", "d", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
-                mockOrdersData.createProduct(aequosOrderType.getId(), "ORPATGIA1131", "d", expectedSuppliers.get("1131"), expectedCategories.get("Ortaggi"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f")
+                mockOrdersData.createProduct(aequosOrderType.getId(), "BIRRAMBR1041", "d0", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(aequosOrderType.getId(), "BIRRSOLE1041", "d1", expectedSuppliers.get("1041"), expectedCategories.get("Birra"), false, false, false, "KG", "Cassa", 6.0, 0.2, 3.0, null, "f"),
+                mockOrdersData.createProduct(aequosOrderType.getId(), "FRMECRCR1054", "d2", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "PZ", null, 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(aequosOrderType.getId(), "FRMEOPAL1054", "d3", expectedSuppliers.get("1054"), expectedCategories.get("Frutta"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f"),
+                mockOrdersData.createProduct(aequosOrderType.getId(), "ORPATGIA1131", "d4", expectedSuppliers.get("1131"), expectedCategories.get("Ortaggi"), false, false, true, "KG", "Cassa", 2.4, 0.2, null, "n", "f")
         ).collect(Collectors.toMap(Product::getExternalId, Function.identity()));
     }
 
@@ -136,12 +138,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenMissingAequosCredentials_whenSendingAequosOrder_thenOrderIsCorrectlySent() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 10),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 2),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 2),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 10),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -161,12 +163,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAValidOrderNotYetSent_whenSendingAequosOrder_thenOrderIsCorrectlySent() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 10),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 2),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 2),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 10),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -196,12 +198,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenABoxWithZeroQuantity_whenSendingAequosOrder_thenBoxQuantityIsSentAnyway() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 0),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 0),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 0),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 0),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -231,12 +233,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAnOrderManagerLogin_whenSendingAequosOrder_thenOrderIsSent() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 10),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 2),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 2),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 10),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -261,12 +263,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenANotMatchingNumberOfBoxes_whenSendingAequosOrder_thenErrorIsReturned() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 10),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 2),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 2),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 10),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -297,12 +299,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAValidOrderAlreadySent_whenSendingAequosOrder_thenOrderIsSentWithId() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 0),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 0),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 0),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 0),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -331,12 +333,12 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAnErrorInAequosResponse_whenSendingAequosOrder_thenErrorIsReturned() throws Exception {
-        Map<String, Integer> boxQuantities = Map.ofEntries(
-                entry("BIRRAMBR1041", 10),
-                entry("BIRRSOLE1041", 8),
-                entry("FRMECRCR1054", 2),
-                entry("FRMEOPAL1054", 3),
-                entry("ORPATGIA1131", 1)
+        List<OrderCreationItem> boxQuantities = List.of(
+                orderCreationItem("ORPATGIA1131", 1),
+                orderCreationItem("FRMECRCR1054", 2),
+                orderCreationItem("FRMEOPAL1054", 3),
+                orderCreationItem("BIRRAMBR1041", 10),
+                orderCreationItem("BIRRSOLE1041", 8)
         );
 
         createSupplierOrderItems(boxQuantities);
@@ -365,7 +367,7 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
         assertNull(orderDetailsAfter.getExternalOrderId());
     }
 
-    private boolean hasParams(Map<String, ?> params, Map<String, Integer> boxQuantities, String orderId) {
+    private boolean hasParams(Map<String, ?> params, List<OrderCreationItem> expectedBoxQuantities, String orderId) {
         if (orderId != null && !orderId.equals(params.get("order_id")))
             return false;
 
@@ -378,27 +380,46 @@ class AequosSendOrderIntegrationTest extends BaseGoGasIntegrationTest {
         if (!"0".equals(params.get("tipo_ordine")))
             return false;
 
-        return boxQuantities.equals(parseOrderCreationItems(params.get("rows")));
+        List<OrderCreationItem> actualRows = parseOrderCreationItems(params.get("rows"));
+        return equals(expectedBoxQuantities, actualRows);
     }
 
-    private Map<String, Integer> parseOrderCreationItems(Object rows) {
+    private boolean equals(List<OrderCreationItem> items1, List<OrderCreationItem> items2) {
+        if (items1.size() != items2.size()) {
+            return false;
+        }
+
+        return IntStream.range(0, items1.size())
+                .mapToObj(index -> equals(items1.get(index), items2.get(index)))
+                .allMatch(equals -> equals);
+    }
+
+    private boolean equals(OrderCreationItem item1, OrderCreationItem item2) {
+        return item1.getId().equals(item2.getId()) &&
+                (item1.getBoxesCount().doubleValue() - item2.getBoxesCount().doubleValue() < 0.0001);
+    }
+
+    private List<OrderCreationItem> parseOrderCreationItems(Object rows) {
         if (rows == null)
             return null;
 
         try {
-            List<OrderCreationItem> items = objectMapper.readValue(rows.toString(), new TypeReference<List<OrderCreationItem>>() {});
-
-            return items.stream()
-                    .collect(Collectors.toMap(OrderCreationItem::getId, item -> item.getBoxesCount().intValue()));
-
+            return objectMapper.readValue(rows.toString(), new TypeReference<>() {});
         } catch (IOException ex) {
             ex.printStackTrace();
             return null;
         }
     }
 
-    private void createSupplierOrderItems(Map<String, Integer> boxQuantities) {
+    private void createSupplierOrderItems(List<OrderCreationItem> boxQuantities) {
         boxQuantities
-                .forEach((productCode, quantity) -> mockOrdersData.createSupplierOrderItem(aequosOrder, productsByExternalId.get(productCode), quantity));
+                .forEach(boxQuantity -> mockOrdersData.createSupplierOrderItem(aequosOrder, productsByExternalId.get(boxQuantity.getId()), boxQuantity.getBoxesCount().intValue()));
+    }
+
+    private OrderCreationItem orderCreationItem(String code, int quantity) {
+        OrderCreationItem item = new OrderCreationItem();
+        item.setId(code);
+        item.setBoxesCount(BigDecimal.valueOf(quantity));
+        return item;
     }
 }

@@ -29,7 +29,10 @@ public interface SupplierOrderItemRepo extends CrudRepository<SupplierOrderItem,
     @Modifying
     int deleteByOrderId(String orderId);
 
-    @Query("SELECT s.productExternalCode as supplierCode, s.boxesCount as boxesCount FROM SupplierOrderItem s WHERE s.orderId = ?1")
+    @Query("SELECT s.productExternalCode as supplierCode, s.boxesCount as boxesCount " +
+            "FROM SupplierOrderItem s, Product p " +
+            "WHERE s.orderId = ?1 and s.productId = p.id " +
+            "ORDER BY p.category.priceListPosition, p.description")
     List<SupplierOrderBoxes> findBoxesCountByOrderId(String orderId);
 
     @Modifying

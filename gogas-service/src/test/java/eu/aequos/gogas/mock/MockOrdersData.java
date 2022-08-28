@@ -74,6 +74,10 @@ public class MockOrdersData implements MockDataLifeCycle {
         return createCategory(name, orderTypeId, 0, null);
     }
 
+    public ProductCategory createCategory(String name, String orderTypeId, int position) {
+        return createCategory(name, orderTypeId, position, null);
+    }
+
     public ProductCategory createCategory(String name, String orderTypeId, int position, String color) {
         ProductCategory category = new ProductCategory();
         category.setDescription(name);
