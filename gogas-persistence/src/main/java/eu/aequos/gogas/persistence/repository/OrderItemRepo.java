@@ -56,7 +56,7 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
             "FROM ordini o " +
             "INNER JOIN prodotti p ON o.idProdotto = p.idProdotto " +
             "WHERE o.idDateOrdine = ?1 and o.riepilogoUtente = 0 " +
-            "GROUP BY o.idProdotto, p.externalId", nativeQuery = true)
+            "GROUP BY o.idProdotto, p.idesterno", nativeQuery = true)
     List<ProductTotalOrder> totalQuantityAndUsersByProductForOpenOrder(String orderId);
 
     @Query(value = "SELECT o.idProdotto as product, " +
