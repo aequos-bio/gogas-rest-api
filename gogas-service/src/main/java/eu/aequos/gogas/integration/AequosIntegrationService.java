@@ -6,11 +6,11 @@ import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.integration.api.*;
 import eu.aequos.gogas.persistence.entity.OrderType;
+import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.SupplierOrderBoxes;
 import eu.aequos.gogas.service.ConfigurationService;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -85,11 +85,11 @@ public class AequosIntegrationService {
         return response.getOrderId();
     }
 
-    public List<String> sendUpdatedWeights(String aequosOrderId, int aequosOrderType, List<SupplierOrderBoxes> orderBoxes) throws GoGasException {
+    public List<String> sendUpdatedWeights(String aequosOrderId, int aequosOrderType, List<ProductTotalOrder> totalDeliveredQuantityByProduct) throws GoGasException {
         Map<String, String> formParams = initParamsWithCredentials();
         formParams.put("order_id", aequosOrderId);
         formParams.put("tipo_ordine", Integer.toString(aequosOrderType));
-        formParams.put("rows", extractAndSerializeOrderItems(orderBoxes));
+        formParams.put("rows", extractAndSerializeDeliveredOrderItems(totalDeliveredQuantityByProduct));
 
         WeightsUpdatedResponse response = aequosApiClient.updateWeight(formParams);
 
@@ -127,6 +127,25 @@ public class AequosIntegrationService {
         OrderCreationItem orderCreationItem = new OrderCreationItem();
         orderCreationItem.setId(supplierOrderBoxes.getSupplierCode());
         orderCreationItem.setBoxesCount(supplierOrderBoxes.getBoxesCount());
+        return orderCreationItem;
+    }
+
+    private String extractAndSerializeDeliveredOrderItems(List<ProductTotalOrder> totalDeliveredQuantityByProduct) throws GoGasException {
+        List<OrderCreationItem> orderItems = totalDeliveredQuantityByProduct.stream()
+                .map(this::convertToCreationItem)
+                .collect(Collectors.toList());
+
+        try {
+            return objectMapper.writeValueAsString(orderItems);
+        } catch (JsonProcessingException e) {
+            throw new GoGasException("Errore durante l'invio dell'ordine ad Aequos:" + e.getClass() + " - " + e.getMessage());
+        }
+    }
+
+    private OrderCreationItem convertToCreationItem(ProductTotalOrder totalDeliveredQuantity) {
+        OrderCreationItem orderCreationItem = new OrderCreationItem();
+        orderCreationItem.setId(totalDeliveredQuantity.getProductExternalId());
+        orderCreationItem.setBoxesCount(totalDeliveredQuantity.getTotalQuantity());
         return orderCreationItem;
     }
 
