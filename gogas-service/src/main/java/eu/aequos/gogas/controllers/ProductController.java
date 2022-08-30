@@ -4,10 +4,11 @@ import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
+import eu.aequos.gogas.security.annotations.IsProductManager;
 import eu.aequos.gogas.service.ProductService;
 import io.swagger.annotations.*;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
@@ -18,18 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
+@RequiredArgsConstructor
 @Api("Products")
 @RestController
 @RequestMapping("api/products")
 public class ProductController {
 
-    private ProductRepo productRepo;
-    private ProductService productService;
-
-    public ProductController(ProductRepo productRepo, ProductService productService) {
-        this.productRepo = productRepo;
-        this.productService = productService;
-    }
+    private final ProductService productService;
 
     @ApiOperation(
         value = "Get available products by order type",
@@ -66,7 +62,7 @@ public class ProductController {
         value = "Create product",
         authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
     )
-    @IsOrderTypeManager
+    @IsProductManager
     @PostMapping()
     public BasicResponseDTO createProduct(@RequestBody ProductDTO productDTO) {
         String productId = productService.create(productDTO).getId();
@@ -81,7 +77,7 @@ public class ProductController {
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
     })
-    @IsOrderTypeManager
+    @IsProductManager
     @PutMapping(value = "{productId}")
     public BasicResponseDTO updateProduct(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
         String updatedProductId = productService.update(productId, productDTO).getId();
@@ -96,7 +92,7 @@ public class ProductController {
         @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
         @ApiResponse(code = 404, message = "Item not found. Type: product, Id: <productId>")
     })
-    @IsOrderTypeManager
+    @IsProductManager
     @DeleteMapping(value = "{productId}")
     public BasicResponseDTO deleteProduct(@PathVariable String productId) {
         productService.delete(productId);

@@ -216,8 +216,8 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderItemRepo.deleteByOrderAndSummary(orderId, false);
         orderItemRepo.deleteByOrderAndSummary(orderId, true);
         supplierOrderItemRepo.deleteByOrderId(orderId);
-        accountingRepo.findByOrderId(orderId).forEach(accountingRepo::delete);
-        shippingCostRepo.findByOrderId(orderId).forEach(shippingCostRepo::delete);
+        accountingRepo.deleteAll(accountingRepo.findByOrderId(orderId));
+        shippingCostRepo.deleteAll(shippingCostRepo.findByOrderId(orderId));
         orderRepo.deleteById(orderId);
     }
 
@@ -232,6 +232,10 @@ public class MockOrdersData implements MockDataLifeCycle {
         productCategoryRepo.deleteAll();
         orderManagerRepo.deleteAll();
         orderTypeRepo.deleteAll();
+    }
+
+    public void deleteProduct(String productId) {
+        productRepo.deleteById(productId);
     }
 
     @Override
