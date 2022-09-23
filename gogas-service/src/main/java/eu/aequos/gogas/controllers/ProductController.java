@@ -137,11 +137,11 @@ public class ProductController {
         @ApiResponse(code = 404, message = "Item not found. Type: productType, Id: <productTypeId>")
     })
     @IsOrderTypeManager
-    @PostMapping(value = "{productType}/import")
-    public OrderSynchroInfoDTO importProductsFromExcel(@PathVariable String productType, @RequestParam("file") MultipartFile excelFile) throws IOException, GoGasException {
+    @PostMapping(value = "{productTypeId}/import")
+    public OrderSynchroInfoDTO importProductsFromExcel(@PathVariable String productTypeId, @RequestParam("file") MultipartFile excelFile) throws IOException, GoGasException {
         byte[] excelFileContent = IOUtils.toByteArray(excelFile.getInputStream());
         String excelType = FilenameUtils.getExtension(excelFile.getOriginalFilename());
-        return productService.loadProductsFromExcel(productType, excelFileContent, excelType);
+        return productService.loadProductsFromExcel(productTypeId, excelFileContent, excelType);
     }
 
     @ApiOperation(
