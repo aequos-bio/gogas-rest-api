@@ -41,31 +41,33 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
             "GROUP BY o.product")
     List<FriendTotalOrder> totalQuantityNotSummaryByUserOrReferral(String userId, String orderId);
 
-    @Query("SELECT o.product AS product, SUM(o.deliveredQuantity) AS totalQuantity, COUNT(DISTINCT o.user) AS userCount, " +
+    @Query("SELECT o.product AS product, p.externalId AS productExternalId, SUM(o.deliveredQuantity) AS totalQuantity, COUNT(DISTINCT o.user) AS userCount, " +
             "CASE WHEN SUM(1 - o.cancelled) = 0 THEN true ELSE false END AS cancelled " +
-            "FROM OrderItem o " +
-            "WHERE o.order = ?1 and o.summary = true " +
-            "GROUP BY o.product")
+            "FROM OrderItem o, Product p " +
+            "WHERE o.product = p.id AND o.order = ?1 and o.summary = true " +
+            "GROUP BY o.product, p.externalId")
     List<ProductTotalOrder> totalQuantityAndUsersByProductForClosedOrder(String orderId);
 
     @Query(value = "SELECT o.idProdotto as product, " +
+            "p.idesterno as productExternalId, " +
             "SUM(CASE WHEN o.um = p.umCollo THEN o.qtaOrdinata * p.pesoCassa ELSE o.qtaOrdinata END) as totalQuantity, " +
             "COUNT(DISTINCT o.idUtente) as userCount, " +
             "CAST(0 as bit) AS cancelled " +
             "FROM ordini o " +
             "INNER JOIN prodotti p ON o.idProdotto = p.idProdotto " +
             "WHERE o.idDateOrdine = ?1 and o.riepilogoUtente = 0 " +
-            "GROUP BY o.idProdotto", nativeQuery = true)
+            "GROUP BY o.idProdotto, p.idesterno", nativeQuery = true)
     List<ProductTotalOrder> totalQuantityAndUsersByProductForOpenOrder(String orderId);
 
     @Query(value = "SELECT o.idProdotto as product, " +
+            "p.idesterno as productExternalId, " +
             "SUM(CASE WHEN o.um = p.umCollo THEN o.qtaOrdinata * p.pesoCassa ELSE o.qtaOrdinata END) as totalQuantity, " +
             "COUNT(DISTINCT o.idUtente) as userCount, " +
             "CAST(0 as bit) AS cancelled " +
             "FROM ordini o " +
             "INNER JOIN prodotti p ON o.idProdotto = p.idProdotto " +
             "WHERE o.idDateOrdine = ?1 and o.riepilogoUtente = 0 AND o.idProdotto = ?2 " +
-            "GROUP BY o.idProdotto", nativeQuery = true)
+            "GROUP BY o.idProdotto, p.idesterno", nativeQuery = true)
     Optional<ProductTotalOrder> totalQuantityAndUsersByProductForOpenOrder(String orderId, String productId);
 
     @Query("SELECT COUNT(DISTINCT o.user) " +

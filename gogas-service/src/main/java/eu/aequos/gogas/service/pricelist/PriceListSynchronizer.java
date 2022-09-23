@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -79,14 +78,9 @@ public class PriceListSynchronizer {
     private ProductCategory createOrUpdateCategory(Map<String, ProductCategory> categoriesMap,
                                                    String orderTypeId, String description) {
 
-        ProductCategory category = categoriesMap.get(description);
-
-        if (category == null) {
-            category = productCategoryRepo.save(new ProductCategory(orderTypeId, description));
-            categoriesMap.put(description, category);
-        }
-
-        return category;
+        return categoriesMap.computeIfAbsent(description,
+                key -> productCategoryRepo.findByOrderTypeIdAndDescription(orderTypeId, key)
+                            .orElseGet(() -> productCategoryRepo.save(new ProductCategory(orderTypeId, description))));
     }
 
     private String createOrUpdateProduct(ExternalPriceListItem externalProduct, Supplier supplier,

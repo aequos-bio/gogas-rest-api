@@ -34,7 +34,7 @@ import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.D
 @Service
 public class OrderUserService {
 
-    public static final List<Integer> DEFAULT_ORDER_STATUS_LIST = Stream.of(Opened, Closed, Accounted)
+    private static final List<Integer> DEFAULT_ORDER_STATUS_LIST = Stream.of(Opened, Closed, Accounted)
             .map(Order.OrderStatus::getStatusCode)
             .collect(Collectors.toList());
 
@@ -167,7 +167,12 @@ public class OrderUserService {
             throw new MissingOrInvalidParameterException("Product not available for given order");
         }
 
-        if (hasPositiveQuantity(updateRequest) && !isValidUnitOfMeasure(updateRequest.getUnitOfMeasure(), product)) {
+        if (!hasPositiveQuantity(updateRequest)) {
+            //No checks required when quantity is empty (delete order item)
+            return;
+        }
+
+        if (!isValidUnitOfMeasure(updateRequest.getUnitOfMeasure(), product)) {
             throw new MissingOrInvalidParameterException("Unit of measure not valid");
         }
 

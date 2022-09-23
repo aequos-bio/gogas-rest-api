@@ -43,6 +43,9 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
     void setUp() throws IOException {
         AequosPriceList aequosPriceList = objectMapper.readValue(getClass().getResourceAsStream("priceList.json"), AequosPriceList.class);
         when(aequosApiClient.getPriceList(0)).thenReturn(aequosPriceList);
+
+        AequosPriceList malformedAequosPriceList = objectMapper.readValue(getClass().getResourceAsStream("malformedPriceList.json"), AequosPriceList.class);
+        when(aequosApiClient.getPriceList(1)).thenReturn(malformedAequosPriceList);
     }
 
     @AfterEach
@@ -335,6 +338,58 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
         verifyExpectedProduct(otherProducts.get("BIRRAMBR1041"), otherProduct.getId(), otherOrderType.getId(), "f", "d",
                 suppliers.get("other").getId(), suppliers.get("other").getName(), otherCategories.get("Birra"), "Birra", false, false, true, "KG",
                 "Cassa", 2.4, 0.2, null, "n");
+    }
+
+    @Test
+    void givenTheSameCategoryFromAequosWithDifferentUpperLowerCase_whenRequestingAequosPriceListSynch_thenTheCategoryisNotDuplicated() throws Exception {
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 1);
+
+        mockMvcGoGas.loginAsAdmin();
+
+        ProductCategory birra = mockOrdersData.createCategory("birra", orderType.getId());
+        ProductCategory frutta = mockOrdersData.createCategory("Frutta", orderType.getId());
+
+        Map<String, Supplier> expectedSuppliers = Map.ofEntries(
+                entry("1041", mockOrdersData.createSupplier("1041", "BIRRIFICIO ARTIGIANALE GEDEONE SRL"))
+        );
+
+        Product productWithSimilaCategory = mockOrdersData.createProduct(orderType.getId(), "BIRRAMBR1041_2", "d", expectedSuppliers.get("1041"), birra, false, false, true, "PZ", null, 1.0, 0.2, null, "n", "f");
+
+        mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aequosOrderId", is(1)))
+                .andExpect(jsonPath("$.lastSynchro", is(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))));
+
+        Map<String, String> categories = searchAllCategories(orderType);
+        Map<String, SupplierDTO> suppliers = searchAllSuppliers();
+        Map<String, ProductDTO> allProducts = searchAllProducts(orderType).stream()
+                .collect(Collectors.toMap(ProductDTO::getExternalId, Function.identity()));
+
+        assertEquals(6, allProducts.size());
+
+        verifyExpectedProduct(allProducts.get("BIRRAMBR1041_2"), productWithSimilaCategory.getId(), orderType.getId(), "f", "d",
+                suppliers.get("1041").getId(), suppliers.get("1041").getName(), categories.get("birra"), "birra", false, false, true, "PZ",
+                null, 1.00, 0.2, null, "n");
+
+        verifyExpectedProduct(allProducts.get("BIRRAMBR1041"), null, orderType.getId(), "", "BIRRA AMBRATA - BRAMA ROSSA- GRAD. ALC. 6 - 500 ML  - Birrificio Gedeone",
+                suppliers.get("1041").getId(), suppliers.get("1041").getName(), categories.get("birra"), "birra", true, false, false, "PZ",
+                null, 1.00, 3.65, null, "");
+
+        verifyExpectedProduct(allProducts.get("BIRRSOLE1041"), null, orderType.getId(), "Mensile", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+                suppliers.get("1041").getId(), suppliers.get("1041").getName(), categories.get("birra"), "birra", true, false, false, "PZ",
+                null, 1.00, 3.65, null, "A bassa gradazione alcolica");
+
+        verifyExpectedProduct(allProducts.get("FRMECRCR1054"), null, orderType.getId(), "", "MELE CRIMSON CRISP - Roncaglia",
+                suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, false, "KG",
+                "Cassa", 8.5, 1.55, null, "");
+
+        verifyExpectedProduct(allProducts.get("FRMEOPAL1054"), null, orderType.getId(), "", "MELE OPAL - Roncaglia",
+                suppliers.get("1054").getId(), suppliers.get("1054").getName(), categories.get("Frutta"), "Frutta", true, false, false, "KG",
+                "Cassa", 8.5, 1.7, null, "Pezzatura piu piccola");
+
+        verifyExpectedProduct(allProducts.get("ORPATGIA1131"), null, orderType.getId(), "", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
+                suppliers.get("1131").getId(), suppliers.get("1131").getName(), categories.get("Ortaggi"), "Ortaggi", true, false, false, "KG",
+                "Cassa", 11.5, 1.45, null, "");
     }
 
     private Map<String, SupplierDTO> searchAllSuppliers() throws Exception {

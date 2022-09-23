@@ -1,34 +1,33 @@
 package eu.aequos.gogas.security;
 
+import eu.aequos.gogas.dto.ProductDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.service.OrderItemService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthorizationService implements UserDetailsService {
 
-    private UserRepo userRepo;
-    private OrderManagerRepo orderManagerRepo;
-    private OrderRepo orderRepo;
-    private OrderItemService orderItemService;
-
-    public AuthorizationService(UserRepo userRepo, OrderManagerRepo orderManagerRepo,
-                                OrderRepo orderRepo, OrderItemService orderItemService) {
-
-        this.userRepo = userRepo;
-        this.orderManagerRepo = orderManagerRepo;
-        this.orderRepo = orderRepo;
-        this.orderItemService = orderItemService;
-    }
+    private final UserRepo userRepo;
+    private final OrderManagerRepo orderManagerRepo;
+    private final OrderRepo orderRepo;
+    private final OrderItemService orderItemService;
+    private final ProductRepo productRepo;
 
     @Override
     public GoGasUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -82,6 +81,30 @@ public class AuthorizationService implements UserDetailsService {
             log.error("Error while checking order manager permission", ex);
             return false;
         }
+    }
+
+    public boolean isProductManager(String productId, ProductDTO product) {
+        Optional<String> orderTypeId = extractOrderTypeId(productId, product);
+
+        try {
+            return orderTypeId
+                    .map(type -> !orderManagerRepo.findByUserAndOrderType(getCurrentUser().getId(), type).isEmpty())
+                    .orElse(false);
+
+        } catch (Exception ex) {
+            log.error("Error while checking order manager permission", ex);
+            return false;
+        }
+    }
+
+    private Optional<String> extractOrderTypeId(String productId, ProductDTO product) {
+        if (productId != null) {
+            return productRepo.findById(productId)
+                    .map(Product::getType);
+        }
+
+        return Optional.ofNullable(product)
+                .map(ProductDTO::getTypeId);
     }
 
     public boolean isOrderItemOwner(String orderItem) {
