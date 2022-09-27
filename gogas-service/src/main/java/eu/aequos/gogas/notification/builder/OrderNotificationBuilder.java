@@ -15,14 +15,16 @@ public abstract class OrderNotificationBuilder {
 
     public abstract String getMultipleNotificationsHeading();
 
-    protected abstract String getMessageTemplate();
-
     public abstract Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences);
 
-    public String formatOrderMessage(Order order) {
+    protected abstract String getPushTemplate();
+
+    public String getPushMessage(Order order) {
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
-        String messageTemplate = getMessageTemplate();
+        String messageTemplate = getPushTemplate();
 
         return String.format(messageTemplate, order.getOrderType().getDescription(), formattedDeliveryDate);
     }
+
+    public abstract String getTelegramMessage(Order order);
 }

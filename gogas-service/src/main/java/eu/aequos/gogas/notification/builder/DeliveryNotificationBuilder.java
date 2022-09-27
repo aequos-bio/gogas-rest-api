@@ -27,13 +27,22 @@ public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getPushTemplate() {
         return "Oggi è in consegna l'ordine '%s' del %s";
     }
 
     @Override
     public String getMultipleNotificationsHeading() {
         return "ordini in consegna";
+    }
+
+    @Override
+    public String getTelegramMessage(Order order) {
+        String template = "L'ordine *%s* è in consegna oggi.\\n\uD83D\uDE9A Controlla gli avvisi del referente \uD83D\uDE9A";
+
+        String orderType = order.getOrderType().getDescription();
+
+        return String.format(template, orderType);
     }
 
     @Override

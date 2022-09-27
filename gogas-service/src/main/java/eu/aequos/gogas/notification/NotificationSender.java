@@ -36,7 +36,7 @@ public class NotificationSender {
             try {
                 channel.sendOrderNotification(order, notificationBuilder, targetUserIds);
             } catch (Exception ex) {
-                log.error("Error while sending order notification through channel {}", channel.getClass());
+                log.error("Error while sending order notification through channel " + channel.getClass().getSimpleName(), ex);
             }
         });
     }

@@ -19,12 +19,24 @@ public class TelegramClient {
     }
 
     public boolean sendMessage(long chatId, String message) {
-        SendMessage sendMessage = new SendMessage(chatId, message)
+        String escapedMessage = escapeMessage(message);
+
+        SendMessage sendMessage = new SendMessage(chatId, escapedMessage)
                 .parseMode(ParseMode.MarkdownV2);
 
         SendResponse execute = bot.execute(sendMessage);
         log.info("message sent {}", execute);
 
+        if (!execute.isOk()) {
+            log.error("Error while sending message: {}", execute.description());
+        }
+
         return execute.isOk();
+    }
+
+    private String escapeMessage(String message) {
+        return message
+                .replace(".", "\\.")
+                .replace("!", "\\!");
     }
 }

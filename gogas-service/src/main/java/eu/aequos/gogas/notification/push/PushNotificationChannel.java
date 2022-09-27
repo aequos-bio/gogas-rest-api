@@ -57,7 +57,7 @@ public class PushNotificationChannel implements NotificationChannel {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
         request.setHeadings(notificationBuilder.getHeading());
-        request.setContents(notificationBuilder.formatOrderMessage(order));
+        request.setContents(notificationBuilder.getPushMessage(order));
         request.setTargetTokens(targetTokens);
         request.setOrderId(order.getId());
         request.setAndroidGroup("order_" + notificationBuilder.getEventName());
