@@ -2,7 +2,7 @@ package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.exception.InvalidOrderActionException;
 import eu.aequos.gogas.notification.OrderEvent;
-import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.notification.NotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
@@ -14,16 +14,16 @@ import static eu.aequos.gogas.workflow.ActionValidity.valid;
 
 public class AccountAction extends OrderStatusAction {
 
-    private final PushNotificationSender pushNotificationSender;
+    private final NotificationSender notificationSender;
     private final AccountingService accountingService;
 
     public AccountAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                          SupplierOrderItemRepo supplierOrderItemRepo, Order order,
-                         PushNotificationSender pushNotificationSender,
+                         NotificationSender notificationSender,
                          AccountingService accountingService) {
 
         super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Accounted);
-        this.pushNotificationSender = pushNotificationSender;
+        this.notificationSender = notificationSender;
         this.accountingService = accountingService;
     }
 
@@ -45,7 +45,7 @@ public class AccountAction extends OrderStatusAction {
         else
             updateAccountingEntries();
 
-        pushNotificationSender.sendOrderNotification(order, OrderEvent.Accounted);
+        notificationSender.sendOrderNotification(order, OrderEvent.Accounted);
     }
 
     private void updateAccountingEntries() throws InvalidOrderActionException {

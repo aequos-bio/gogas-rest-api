@@ -1,7 +1,7 @@
 package eu.aequos.gogas.workflow;
 
 import eu.aequos.gogas.exception.InvalidOrderActionException;
-import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.notification.NotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
@@ -29,7 +29,7 @@ public class OrderWorkflowHandler {
     private final AccountingService accountingService;
     private final ProductRepo productRepo;
     private final ConfigurationService configurationService;
-    private final PushNotificationSender pushNotificationSender;
+    private final NotificationSender notificationSender;
 
     @Transactional
     public void changeStatus(Order order, String changeAction, int roundType) throws InvalidOrderActionException {
@@ -47,7 +47,7 @@ public class OrderWorkflowHandler {
                 return new ReopenAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
 
             case "contabilizza":
-                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, pushNotificationSender, accountingService);
+                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, notificationSender, accountingService);
 
             case "tornachiuso":
                 return new UndoAccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingService);

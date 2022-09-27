@@ -1,4 +1,4 @@
-package eu.aequos.gogas.notification.push.builder;
+package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class DeliveryNotificationBuilder extends OrderPushNotificationBuilder {
+public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
 
     private OrderItemService orderItemService;
 
@@ -17,7 +17,7 @@ public class DeliveryNotificationBuilder extends OrderPushNotificationBuilder {
     }
 
     @Override
-    protected String getEventName() {
+    public String getEventName() {
         return "delivery";
     }
 

@@ -7,7 +7,6 @@ import bio.aequos.gogas.telegram.service.TelegramClient;
 import bio.aequos.gogas.telegram.service.TokenHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,11 +31,13 @@ public class WebHookController {
         TelegramUpdateDTO.TelegramMessage message = updateMessage.getMessage();
         if (message == null) {
             log.warn("No message found, skipping update");
+            return;
         }
 
         String messageBody = message.getText();
         if (messageBody == null) {
             log.warn("Empty message found, skipping update");
+            return;
         }
 
         if (messageBody.startsWith("/start")) {
@@ -62,7 +63,6 @@ public class WebHookController {
         telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go\\!Gas_\\. Riceverai aggiornamenti sui tuoi ordini\\.", message.getChat().getFirstName()));
     }
 
-    @NotNull
     private UserChatEntity buildUserChat(TelegramUpdateDTO.TelegramMessage message, TokenHandler.TokenInfo userByToken) {
         UserChatEntity userChatEntity = new UserChatEntity();
         userChatEntity.setChatId(message.getChat().getId());
