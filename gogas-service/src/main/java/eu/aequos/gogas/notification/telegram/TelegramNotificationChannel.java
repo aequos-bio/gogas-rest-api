@@ -22,7 +22,7 @@ public class TelegramNotificationChannel implements NotificationChannel {
     public void sendOrderNotification(Order order, OrderNotificationBuilder notificationBuilder, Set<String> targetUserIds) {
         TelegramNotificationRequestDTO requestDTO = TelegramNotificationRequestDTO.builder()
                 .userIds(targetUserIds)
-                .text(notificationBuilder.getPushMessage(order))
+                .text(notificationBuilder.getTelegramMessage(order))
                 .build();
 
         String tenantId = TenantContext.getTenantId()
