@@ -1,5 +1,6 @@
 package eu.aequos.gogas.notification.mail;
 
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.notification.NotificationChannel;
 import eu.aequos.gogas.notification.builder.OrderNotificationBuilder;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -56,21 +58,26 @@ public class MailNotificationChannel implements NotificationChannel {
                 user.getFirstName(), user.getLastName(), newPassword);
 
         try {
-            sendMail(to, cc, subject, body);
+            sendMail(to, cc, null, subject, body, null);
         } catch (MessagingException e) {
             throw new GoGasException("Unable to send email message to " + user.getEmail());
         }
     }
 
-    private void sendMail(String[] to, String cc[], String subject, String body) throws MessagingException {
+    public void sendMail(String[] to, String cc[], String replyTo, String subject, String body, List<AttachmentDTO> attachments) throws MessagingException {
         MimeMessage msg = javaMailSender.createMimeMessage();
 
         MimeMessageHelper helper = new MimeMessageHelper(msg, true);
         helper.setFrom("noreply@aequos.bio");
         helper.setTo(to);
         helper.setCc(cc);
+        helper.setReplyTo(replyTo);
         helper.setSubject(subject);
         helper.setText(body, true);
+
+        if (attachments != null) {
+            attachments.forEach(attachment -> attachment.addToMail(helper));
+        }
 
         javaMailSender.send(msg);
     }

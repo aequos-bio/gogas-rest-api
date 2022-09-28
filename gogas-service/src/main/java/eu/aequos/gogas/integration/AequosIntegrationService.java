@@ -2,13 +2,18 @@ package eu.aequos.gogas.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.integration.api.*;
+import eu.aequos.gogas.notification.mail.MailNotificationChannel;
+import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.SupplierOrderBoxes;
 import eu.aequos.gogas.service.ConfigurationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,16 +23,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class AequosIntegrationService {
 
-    private AequosApiClient aequosApiClient;
-    private ConfigurationService configurationService;
-    private ObjectMapper objectMapper;
+    private final AequosApiClient aequosApiClient;
+    private final ConfigurationService configurationService;
+    private final ObjectMapper objectMapper;
+    private final MailNotificationChannel mailNotificationSender;
+    private final int sendExcelOrderType;
+    private final String sendExcelMailAddress;
 
-    public AequosIntegrationService(AequosApiClient aequosApiClient, ConfigurationService configurationService) {
+    public AequosIntegrationService(AequosApiClient aequosApiClient, ConfigurationService configurationService,
+                                    MailNotificationChannel mailNotificationSender,
+                                    @Value("${aequos.send.excel.order.type}") int sendExcelOrderType,
+                                    @Value("${aequos.send.excel.mail.address}") String sendExcelMailAddress) {
+
         this.aequosApiClient = aequosApiClient;
         this.configurationService = configurationService;
+        this.mailNotificationSender = mailNotificationSender;
+        this.sendExcelOrderType = sendExcelOrderType;
+        this.sendExcelMailAddress = sendExcelMailAddress;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -157,5 +173,23 @@ public class AequosIntegrationService {
         formParams.put("password", credentials.getPassword());
 
         return formParams;
+    }
+
+    public boolean requiresWeightColumns(Order order) {
+        Integer aequosOrderId = order.getOrderType().getAequosOrderId();
+        return aequosOrderId != null && aequosOrderId == sendExcelOrderType;
+    }
+
+    public void sendExcelToSupplier(Order order, String senderEmail, AttachmentDTO reportAttachment) {
+        try {
+            String gasName = configurationService.getGasName().toUpperCase();
+            String subject = "Ordine Carni Bianche - " + gasName;
+            String body = "Buonasera Simona,\n\nin allegato l'ordine di carni bianche in consegna il " +
+                    ConfigurationService.formatDate(order.getDeliveryDate()) + " per " + gasName + ".";
+
+            mailNotificationSender.sendMail(new String[] {sendExcelMailAddress}, new String[] { senderEmail }, senderEmail, subject, body, List.of(reportAttachment));
+        } catch (Exception ex) {
+            log.error("Unable to send excel report to supplier", ex);
+        }
     }
 }

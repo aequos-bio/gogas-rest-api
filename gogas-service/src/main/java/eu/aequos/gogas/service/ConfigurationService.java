@@ -29,6 +29,8 @@ public class ConfigurationService {
     private static final String BOX_ROUNDING_THRESOLD_DEFAULT_STRING = "0.5";
     private static final BigDecimal BOX_ROUNDING_THRESOLD_DEFAULT = new BigDecimal(BOX_ROUNDING_THRESOLD_DEFAULT_STRING);
 
+    private static final String GAS_NAME_KEY = "gas.nome";
+
     public enum UserSorting {
         NameFirst,
         SurnameFirst;
@@ -80,6 +82,11 @@ public class ConfigurationService {
         credentials.setUsername(usernameConf.get());
         credentials.setPassword(passwordConf.get());
         return credentials;
+    }
+
+    public String getGasName() {
+        return configurationRepo.findValueByKey(GAS_NAME_KEY)
+                .orElse("");
     }
 
     public LocalDate parseLocalDate(String date) {

@@ -8,18 +8,24 @@ import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.excel.generic.ColumnDefinition;
 import eu.aequos.gogas.excel.generic.ExcelDocumentBuilder;
 import eu.aequos.gogas.excel.order.*;
+import eu.aequos.gogas.excel.products.ExcelPriceListItem;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.repository.*;
-import eu.aequos.gogas.excel.products.ExcelPriceListItem;
+import eu.aequos.gogas.persistence.repository.OrderItemRepo;
+import eu.aequos.gogas.persistence.repository.ProductRepo;
+import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
+import eu.aequos.gogas.persistence.repository.UserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
@@ -27,8 +33,6 @@ import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 @Slf4j
 @Service
 public class ExcelGenerationService {
-
-    private static final int CARNI_BIANCHE_AEQUOS_ORDER_TYPE = 26;
 
     private ExcelServiceClient excelServiceClient;
 
@@ -83,7 +87,7 @@ public class ExcelGenerationService {
         return exp;
     }
 
-    public byte[] extractOrderDetails(Order order) throws ItemNotFoundException, GoGasException {
+    public byte[] extractOrderDetails(Order order, boolean requiresWeightColumns) throws ItemNotFoundException, GoGasException {
         List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true).stream()
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
@@ -107,7 +111,7 @@ public class ExcelGenerationService {
         orderExportRequest.setUserOrder(orderItems);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
-        orderExportRequest.setAddWeightColumns(requiresWeightColumns(order));
+        orderExportRequest.setAddWeightColumns(requiresWeightColumns);
 
         try {
             return excelServiceClient.order(orderExportRequest);
@@ -115,11 +119,6 @@ public class ExcelGenerationService {
             log.error("Error while calling excel service", ex);
             throw new GoGasException("Error while generating excel file");
         }
-    }
-
-    private boolean requiresWeightColumns(Order order) {
-        Integer aequosOrderId = order.getOrderType().getAequosOrderId();
-        return aequosOrderId != null && aequosOrderId.intValue() == CARNI_BIANCHE_AEQUOS_ORDER_TYPE;
     }
 
     public byte[] extractFriendsOrderDetails(Order order, String userId) throws ItemNotFoundException, GoGasException {

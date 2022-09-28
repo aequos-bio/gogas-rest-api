@@ -31,7 +31,7 @@ public class QuantityUpdatedNotificationBuilder extends OrderNotificationBuilder
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "Sono state le quantità aggiornate per l'ordine *%s* consegnato il *%s*.\\n\u2714 Verifica se hai ricevuto tutto! \u2714";
+        String template = "Sono state le quantità aggiornate per l'ordine *%s* consegnato il *%s*.\n\u2714 Verifica se hai ricevuto tutto! \u2714";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());

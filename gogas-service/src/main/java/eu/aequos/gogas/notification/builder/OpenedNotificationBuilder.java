@@ -31,7 +31,7 @@ public class OpenedNotificationBuilder extends OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "È aperto l'ordine *%s*:\\n \u23F0 chiusura il *%s* alle %s\\n \uD83D\uDE9A consegna il *%s*";
+        String template = "È aperto l'ordine *%s*:\n \u23F0 chiusura il *%s* alle %s\n \uD83D\uDE9A consegna il *%s*";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDueDate = ConfigurationService.formatDate(order.getDueDate());
