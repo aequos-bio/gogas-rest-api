@@ -10,8 +10,8 @@ import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.integration.api.AequosOpenOrder;
 import eu.aequos.gogas.integration.api.OrderSynchItem;
 import eu.aequos.gogas.integration.api.OrderSynchResponse;
-import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.NotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -204,7 +204,6 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
-
         Order order = this.getRequiredWithType(orderId);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
     }
@@ -505,12 +504,16 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public AttachmentDTO extractExcelReport(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
-        byte[] excelReportContent = reportService.extractOrderDetails(order);
+        return extractExcelReport(order);
+    }
+
+    private AttachmentDTO extractExcelReport(Order order) {
+        byte[] excelReportContent = reportService.extractOrderDetails(order, aequosIntegrationService.requiresWeightColumns(order));
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
     }
 
-    public String sendOrderToAequos(String orderId) throws GoGasException {
+    public String sendOrderToAequos(String orderId, String currentUserId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
 
         Integer aequosOrderType = order.getOrderType().getAequosOrderId();
@@ -525,7 +528,20 @@ public class OrderManagerService extends CrudService<Order, String> {
         String aequosOrderId = aequosIntegrationService.createOrUpdateOrder(aequosOrderType, order.getExternalOrderId(), supplierOrderBoxes);
         orderRepo.updateOrderExternalId(orderId, aequosOrderId, true);
 
+        if (aequosIntegrationService.requiresWeightColumns(order)) {
+            String currentUserEmail = userService.getRequired(currentUserId).getEmail();
+            aequosIntegrationService.sendExcelToSupplier(order, currentUserEmail, extractExcelReport(order));
+        }
+
         return aequosOrderId;
+    }
+
+    public void sendOrderToAequosMail(String orderId, String currentUserId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+        if (aequosIntegrationService.requiresWeightColumns(order)) {
+            String currentUserEmail = userService.getRequired(currentUserId).getEmail();
+            aequosIntegrationService.sendExcelToSupplier(order, currentUserEmail, extractExcelReport(order));
+        }
     }
 
     @Transactional
