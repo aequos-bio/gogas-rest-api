@@ -54,13 +54,13 @@ public class WebHookController {
         }
 
         String activationCode = messgeTokens[1];
-        log.info("The activation code is {}", activationCode);
+        log.info("Activation code {}, chat id {}", activationCode, message.getChat().getId());
         TokenHandler.TokenInfo userByToken = tokenHandler.getUserByToken(activationCode);
 
         UserChatEntity userChatEntity = buildUserChat(message, userByToken);
         userChatRepo.save(userChatEntity);
 
-        telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go\\!Gas_\\. Riceverai aggiornamenti sui tuoi ordini\\.", message.getChat().getFirstName()));
+        telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go!Gas_. Riceverai aggiornamenti sui tuoi ordini.", message.getChat().getFirstName()));
     }
 
     private UserChatEntity buildUserChat(TelegramUpdateDTO.TelegramMessage message, TokenHandler.TokenInfo userByToken) {
