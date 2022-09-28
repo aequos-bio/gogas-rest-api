@@ -1,15 +1,16 @@
-package eu.aequos.gogas.notification.push.builder;
+package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.service.ConfigurationService;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-public class QuantityUpdatedNotificationBuilder extends OrderPushNotificationBuilder {
+public class QuantityUpdatedNotificationBuilder extends OrderNotificationBuilder {
 
     @Override
-    protected String getEventName() {
+    public String getEventName() {
         return "updatedquantity";
     }
 
@@ -19,13 +20,23 @@ public class QuantityUpdatedNotificationBuilder extends OrderPushNotificationBui
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getPushTemplate() {
         return "Sono state aggiornate le quantità per l'ordine '%s' consegnato il %s";
     }
 
     @Override
     public String getMultipleNotificationsHeading () {
         return "ordini con quantità aggiornate";
+    }
+
+    @Override
+    public String getTelegramMessage(Order order) {
+        String template = "Sono state le quantità aggiornate per l'ordine *%s* consegnato il *%s*.\\n\u2714 Verifica se hai ricevuto tutto! \u2714";
+
+        String orderType = order.getOrderType().getDescription();
+        String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
+
+        return String.format(template, orderType, formattedDeliveryDate);
     }
 
     @Override

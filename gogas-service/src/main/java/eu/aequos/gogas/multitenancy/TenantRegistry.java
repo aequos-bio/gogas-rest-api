@@ -69,7 +69,7 @@ public class TenantRegistry {
                 //migrate(tenantId, tenantDataSource);
 
                 dataSourceMap.put(tenantId, tenantDataSource);
-                log.info("### Added datasource for tenant key {}");
+                log.info("### Added datasource for tenant key {}", tenantId);
             }
         } catch (Exception ex) {
             log.error("Error while creating tenants data source map", ex);

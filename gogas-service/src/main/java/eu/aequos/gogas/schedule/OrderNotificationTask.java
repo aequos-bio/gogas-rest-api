@@ -3,7 +3,7 @@ package eu.aequos.gogas.schedule;
 import eu.aequos.gogas.multitenancy.TenantContext;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
 import eu.aequos.gogas.notification.OrderEvent;
-import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.notification.NotificationSender;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
@@ -25,13 +25,13 @@ public class OrderNotificationTask {
 
     private TenantRegistry tenantRegistry;
     private OrderRepo orderRepo;
-    private PushNotificationSender pushNotificationSender;
+    private NotificationSender notificationSender;
 
     public OrderNotificationTask(TenantRegistry tenantRegistry, OrderRepo orderRepo,
-                                 PushNotificationSender pushNotificationSender) {
+                                 NotificationSender notificationSender) {
         this.tenantRegistry = tenantRegistry;
         this.orderRepo = orderRepo;
-        this.pushNotificationSender = pushNotificationSender;
+        this.notificationSender = notificationSender;
     }
 
     @Scheduled(cron = "${notification.task.cron}")
@@ -58,7 +58,7 @@ public class OrderNotificationTask {
         List<Order> orderList = orderRepo.findAll(filter);
 
         for (Order order : orderList) {
-            pushNotificationSender.sendOrderNotification(order, event);
+            notificationSender.sendOrderNotification(order, event);
         }
     }
 }
