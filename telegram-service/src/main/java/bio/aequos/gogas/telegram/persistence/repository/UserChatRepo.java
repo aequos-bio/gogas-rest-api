@@ -9,7 +9,5 @@ public interface UserChatRepo extends CrudRepository<UserChatEntity, String> {
 
     List<UserChatEntity> findByTenantIdAndUserId(String tenantId, String userId);
 
-    List<UserChatEntity> findByTenantId(String tenantId);
-
     List<UserChatEntity> findByTenantIdAndUserIdIn(String tenantId, List<String> userId);
 }

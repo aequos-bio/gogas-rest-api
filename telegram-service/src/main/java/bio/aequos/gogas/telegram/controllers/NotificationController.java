@@ -1,5 +1,6 @@
 package bio.aequos.gogas.telegram.controllers;
 
+import bio.aequos.gogas.telegram.annotation.ValidTenant;
 import bio.aequos.gogas.telegram.dto.ActivationDTO;
 import bio.aequos.gogas.telegram.dto.NotificationDTO;
 import bio.aequos.gogas.telegram.dto.NotificationResponseDTO;
@@ -25,9 +26,8 @@ public class NotificationController {
     private final TokenHandler tokenHandler;
 
     @PostMapping("{tenantId}/send")
-    public NotificationResponseDTO sendNotification(@PathVariable String tenantId, @RequestBody NotificationDTO notification) {
-        List<Long> chatIds = notification.getUserIds().stream()
-                .flatMap(userId -> userChatRepo.findByTenantIdAndUserId(tenantId, userId).stream())
+    public NotificationResponseDTO sendNotification(@PathVariable @ValidTenant String tenantId, @RequestBody NotificationDTO notification) {
+        List<Long> chatIds = userChatRepo.findByTenantIdAndUserIdIn(tenantId, notification.getUserIds()).stream()
                 .map(UserChatEntity::getChatId)
                 .collect(Collectors.toList());
 
@@ -46,7 +46,7 @@ public class NotificationController {
     }
 
     @GetMapping("{tenantId}/{userId}/activation")
-    public ActivationDTO generateToken(@PathVariable String tenantId, @PathVariable String userId) {
+    public ActivationDTO generateToken(@PathVariable @ValidTenant String tenantId, @PathVariable String userId) {
         String code = tokenHandler.generateToken(tenantId, userId);
         return new ActivationDTO(code);
     }
