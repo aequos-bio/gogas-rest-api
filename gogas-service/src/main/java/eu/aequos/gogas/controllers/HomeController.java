@@ -5,6 +5,7 @@ import eu.aequos.gogas.dto.MenuDTO;
 import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.multitenancy.TenantContext;
+import eu.aequos.gogas.notification.telegram.client.TelegramActivationDTO;
 import eu.aequos.gogas.notification.telegram.client.TelegramNotificationClient;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.UserRepo;
@@ -51,14 +52,14 @@ public class HomeController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping(value = "telegram/activate", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "telegram/activation", produces = MediaType.APPLICATION_JSON_VALUE)
     public BasicResponseDTO generateTelegramToken() {
         String tenantId = TenantContext.getTenantId()
                 .orElseThrow(() -> new GoGasException("Invalid tenant"));
 
         GoGasUserDetails currentUser = authorizationService.getCurrentUser();
 
-        String token = telegramNotificationClient.activateUser(tenantId, currentUser.getId());
-        return new BasicResponseDTO(token);
+        TelegramActivationDTO telegramActivationDTO = telegramNotificationClient.activateUser(tenantId, currentUser.getId());
+        return new BasicResponseDTO("DarthLoruBot?start=" + telegramActivationDTO.getCode());
     }
 }

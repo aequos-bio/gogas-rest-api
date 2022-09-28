@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface TelegramNotificationClient {
 
     @GetMapping(value = "notification/{tenantId}/{userId}/activation")
-    String activateUser(@PathVariable String tenantId, @PathVariable String userId);
+    TelegramActivationDTO activateUser(@PathVariable String tenantId, @PathVariable String userId);
 
     @PostMapping(value = "notification/{tenantId}/send")
     TelegramNotificationResponseDTO sendNotifications(@PathVariable String tenantId, @RequestBody TelegramNotificationRequestDTO request);
