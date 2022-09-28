@@ -6,7 +6,7 @@ import eu.aequos.gogas.exception.DuplicatedItemException;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
-import eu.aequos.gogas.notification.mail.MailNotificationSender;
+import eu.aequos.gogas.notification.mail.MailNotificationChannel;
 import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
@@ -31,19 +31,19 @@ public class UserService extends CrudService<User, String> {
     private ConfigurationService configurationService;
     private UserRepo userRepo;
     private PasswordEncoder passwordEncoder;
-    private MailNotificationSender mailNotificationSender;
+    private MailNotificationChannel mailNotificationChannel;
     private PushTokenRepo pushTokenRepo;
 
     //TODO: cache users
 
     public UserService(ConfigurationService configurationService, UserRepo userRepo, PushTokenRepo pushTokenRepo,
-                       PasswordEncoder passwordEncoder, MailNotificationSender mailNotificationSender) {
+                       PasswordEncoder passwordEncoder, MailNotificationChannel mailNotificationChannel) {
         super(userRepo, "user");
 
         this.configurationService = configurationService;
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
-        this.mailNotificationSender = mailNotificationSender;
+        this.mailNotificationChannel = mailNotificationChannel;
         this.pushTokenRepo = pushTokenRepo;
     }
 
@@ -207,7 +207,7 @@ public class UserService extends CrudService<User, String> {
         userRepo.updatePassword(user.getId(), encodedPassword);
 
         log.info("Sending mail message for password reset to user {} ({})", user.getUsername(), user.getEmail());
-        mailNotificationSender.sendResetPasswordMessage(user, randomPassword);
+        mailNotificationChannel.sendResetPasswordMessage(user, randomPassword);
     }
 
     @Transactional

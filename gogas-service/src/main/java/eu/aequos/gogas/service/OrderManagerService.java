@@ -11,7 +11,7 @@ import eu.aequos.gogas.integration.api.AequosOpenOrder;
 import eu.aequos.gogas.integration.api.OrderSynchItem;
 import eu.aequos.gogas.integration.api.OrderSynchResponse;
 import eu.aequos.gogas.notification.OrderEvent;
-import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.notification.NotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.*;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
@@ -56,7 +56,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     private final ProductService productService;
     private final AccountingService accountingService;
     private final AequosIntegrationService aequosIntegrationService;
-    private final PushNotificationSender pushNotificationSender;
+    private final NotificationSender notificationSender;
     private final AttachmentService attachmentService;
     private final ExcelGenerationService reportService;
 
@@ -65,7 +65,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                                ShippingCostRepo shippingCostRepo, OrderWorkflowHandler orderWorkflowHandler,
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
-                               PushNotificationSender pushNotificationSender, AttachmentService attachmentService,
+                               NotificationSender notificationSender, AttachmentService attachmentService,
                                ExcelGenerationService reportService) {
 
         super(orderRepo, "order");
@@ -80,7 +80,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.productService = productService;
         this.accountingService = accountingService;
         this.aequosIntegrationService = aequosIntegrationService;
-        this.pushNotificationSender = pushNotificationSender;
+        this.notificationSender = notificationSender;
         this.attachmentService = attachmentService;
         this.reportService = reportService;
     }
@@ -127,7 +127,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         //this is required to have order type description in push notification
         createdOrder.getOrderType().setDescription(orderType.getDescription());
 
-        pushNotificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
+        notificationSender.sendOrderNotification(createdOrder, OrderEvent.Opened);
 
         if (dto.isUpdateProductList())
             productService.syncPriceList(orderType);

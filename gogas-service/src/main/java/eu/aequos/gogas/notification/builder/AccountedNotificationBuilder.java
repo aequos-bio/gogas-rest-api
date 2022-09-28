@@ -1,15 +1,16 @@
-package eu.aequos.gogas.notification.push.builder;
+package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.AccountingService;
+import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.OrderItemService;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
+public class AccountedNotificationBuilder extends OrderNotificationBuilder {
 
     private OrderItemService orderItemService;
     private AccountingService accountingService;
@@ -20,7 +21,7 @@ public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
     }
 
     @Override
-    protected String getEventName() {
+    public String getEventName() {
         return "accounted";
     }
 
@@ -30,13 +31,23 @@ public class AccountedNotificationBuilder extends OrderPushNotificationBuilder {
     }
 
     @Override
-    public String getMessageTemplate() {
+    public String getPushTemplate() {
         return "E' stato contabilizzato l'ordine '%s' consegnato il %s";
     }
 
     @Override
     public String getMultipleNotificationsHeading() {
         return "ordini contabilizzati";
+    }
+
+    @Override
+    public String getTelegramMessage(Order order) {
+        String template = "L'ordine *%s* consegnato il *%s* ti è stato addebitato.\\n\uD83D\uDCB0 Controlla il tuo saldo! \uD83D\uDCB0";
+
+        String orderType = order.getOrderType().getDescription();
+        String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
+
+        return String.format(template, orderType, formattedDeliveryDate);
     }
 
     @Override

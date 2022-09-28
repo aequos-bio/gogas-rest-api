@@ -1,4 +1,4 @@
-package eu.aequos.gogas.notification.push.builder;
+package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.service.AccountingService;
@@ -6,17 +6,17 @@ import eu.aequos.gogas.service.OrderItemService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PushNotificationBuilderSelector {
+public class OrderNotificationBuilderSelector {
 
     private OrderItemService orderItemService;
     private AccountingService accountingService;
 
-    public PushNotificationBuilderSelector(OrderItemService orderItemService, AccountingService accountingService) {
+    public OrderNotificationBuilderSelector(OrderItemService orderItemService, AccountingService accountingService) {
         this.orderItemService = orderItemService;
         this.accountingService = accountingService;
     }
 
-    public OrderPushNotificationBuilder select(OrderEvent orderEvent) {
+    public OrderNotificationBuilder select(OrderEvent orderEvent) {
         switch (orderEvent) {
             case Opened: return new OpenedNotificationBuilder();
             case Expiration: return new ExpirationNotificationBuilder();

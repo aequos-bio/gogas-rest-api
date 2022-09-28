@@ -10,7 +10,7 @@ import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.notification.OrderEvent;
-import eu.aequos.gogas.notification.push.PushNotificationSender;
+import eu.aequos.gogas.notification.NotificationSender;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class DeliveryService {
     private final OrderItemRepo orderItemRepo;
     private final UserService userService;
     private final ProductService productService;
-    private final PushNotificationSender pushNotificationSender;
+    private final NotificationSender notificationSender;
     private final ObjectMapper objectMapper;
 
     public DeliveryOrderDTO getOrderForDelivery(String orderId) {
@@ -148,7 +148,7 @@ public class DeliveryService {
         if (!itemsCreated.isEmpty())
             orderItemRepo.saveAll(itemsCreated);
 
-        pushNotificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
+        notificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
 
     private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap, DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem) {
