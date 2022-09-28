@@ -22,6 +22,8 @@ public interface OrderTypeRepo extends CrudRepository<OrderType, String> {
     @Query("SELECT DISTINCT t.accountingCode FROM OrderType t WHERE t.billedByAequos = true")
     String findAequosAccountingCode();
 
+    List<OrderType> findByHasTurns(boolean hasTurns);
+
     @Modifying
     @Query("UPDATE OrderType t SET t.accountingCode = ?1 WHERE t.billedByAequos = true")
     int updateAequosAccountingCode(String accountingCode);

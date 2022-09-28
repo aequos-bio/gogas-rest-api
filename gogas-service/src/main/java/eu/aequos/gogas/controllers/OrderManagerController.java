@@ -194,7 +194,7 @@ public class OrderManagerController {
     public List<OrderDTO> getAequosAvailableOpenOrders() {
         String userId = authorizationService.getCurrentUser().getId();
         User.Role userRole = User.Role.valueOf(authorizationService.getCurrentUser().getRole());
-        return orderManagerService.getAequosAvailableOpenOrders(userId, userRole);
+        return orderManagerService.getAvailableOrdersNotYetOpened(userId, userRole);
     }
 
     @PostMapping(value = "{orderId}/aequos/order/send")

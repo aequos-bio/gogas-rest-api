@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
+import static eu.aequos.gogas.persistence.entity.Order.OrderStatus.Closed;
+import static eu.aequos.gogas.persistence.entity.Order.OrderStatus.Opened;
 import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.DELIVERY_DATE;
 import static java.util.stream.Collectors.toList;
 
@@ -59,6 +61,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     private final NotificationSender notificationSender;
     private final AttachmentService attachmentService;
     private final ExcelGenerationService reportService;
+    private final OrderPlaningService orderPlaningService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
                                OrderItemService orderItemService, SupplierOrderItemRepo supplierOrderItemRepo,
@@ -66,7 +69,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
                                NotificationSender notificationSender, AttachmentService attachmentService,
-                               ExcelGenerationService reportService) {
+                               ExcelGenerationService reportService, OrderPlaningService orderPlaningService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -83,6 +86,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.notificationSender = notificationSender;
         this.attachmentService = attachmentService;
         this.reportService = reportService;
+        this.orderPlaningService = orderPlaningService;
     }
 
     public Order getRequiredWithType(String id) throws ItemNotFoundException {
@@ -233,7 +237,7 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         Order order = getRequired(orderId);
 
-        if (order.getStatus() != Order.OrderStatus.Closed)
+        if (order.getStatus() != Closed)
             throw new OrderClosedException();
 
         User user = userService.getRequired(orderItem.getUserId());
@@ -441,31 +445,33 @@ public class OrderManagerService extends CrudService<Order, String> {
             throw new ItemNotFoundException("Order", orderId);
     }
 
-    public List<OrderDTO> getAequosAvailableOpenOrders(String userId, User.Role userRole) {
+    public List<OrderDTO> getAvailableOrdersNotYetOpened(String userId, User.Role userRole) {
+        List<OrderDTO> availableOrders = Stream.concat(getAequosAvailableOpenOrders(), orderPlaningService.getWeeklyOrders())
+                .collect(toList());
 
-        Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
-
-        Set<Integer> statusCodes = Stream.of(Order.OrderStatus.Opened, Order.OrderStatus.Closed)
-                .map(Order.OrderStatus::getStatusCode)
+        Set<String> availableOrderTypeIds = availableOrders.stream()
+                .map(OrderDTO::getOrderTypeId)
                 .collect(Collectors.toSet());
 
-        Set<String> aequosOrderTypeIds = ListConverter.fromList(aequosOrderTypeMapping.values())
-                .extractIds(OrderType::getId);
+        Set<Integer> statusCodes = Set.of(Opened.getStatusCode(), Closed.getStatusCode());
 
-        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(aequosOrderTypeIds, statusCodes)
+        Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(availableOrderTypeIds, statusCodes)
                 .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), toList()));
 
-        Stream<OrderDTO> aequosOpenOrders = aequosIntegrationService.getOpenOrders().stream()
+        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId, userRole);
+
+        return availableOrders.stream()
+                .filter(order -> managedOrderTypeIds.isEmpty() || managedOrderTypeIds.contains(order.getOrderTypeId()))
+                .filter(order -> orderNotYetOpened(order, openOrders.get(order.getOrderTypeId())))
+                .collect(toList());
+    }
+
+    private Stream<OrderDTO> getAequosAvailableOpenOrders() {
+        Map<Integer, OrderType> aequosOrderTypeMapping = orderTypeService.getAequosOrderTypesMapping();
+
+        return aequosIntegrationService.getOpenOrders().stream()
                 .map(o -> createOrderDTO(aequosOrderTypeMapping.get(o.getId()), o))
                 .filter(Objects::nonNull);
-
-        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId, userRole);
-        if (!managedOrderTypeIds.isEmpty())
-            aequosOpenOrders = aequosOpenOrders.filter(aequosOrder -> managedOrderTypeIds.contains(aequosOrder.getOrderTypeId()));
-
-        return aequosOpenOrders
-                .filter(o -> orderNotYetOpened(o, openOrders.get(o.getOrderTypeId())))
-                .collect(toList());
     }
 
     private OrderDTO createOrderDTO(OrderType type, AequosOpenOrder o) {
@@ -482,12 +488,12 @@ public class OrderManagerService extends CrudService<Order, String> {
         return orderDTO;
     }
 
-    private boolean orderNotYetOpened(OrderDTO aequosOpenOrder, List<Order> gogasOrders) {
-        if (gogasOrders == null || gogasOrders.isEmpty())
+    private boolean orderNotYetOpened(OrderDTO availableOrder, List<Order> existingOrders) {
+        if (existingOrders == null || existingOrders.isEmpty())
             return true;
 
-        return gogasOrders.stream()
-                .noneMatch(o -> o.getDeliveryDate().isEqual(aequosOpenOrder.getDeliveryDate()));
+        return existingOrders.stream()
+                .noneMatch(o -> o.getDeliveryDate().isEqual(availableOrder.getDeliveryDate()));
     }
 
     public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
