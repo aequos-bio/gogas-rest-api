@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "excelservice", url = "http://localhost:5000", path = "/api/excel")
+@FeignClient(name = "excelservice", url = "${excel.service.url}", path = "/api/excel")
 public interface ExcelServiceClient {
 
     @PostMapping(value = "order")
