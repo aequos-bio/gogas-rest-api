@@ -26,6 +26,14 @@ import static org.mockito.Mockito.when;
 @AutoConfigureMockMvc
 public class BaseGoGasIntegrationTest {
 
+    /*@DynamicPropertySource
+    static void postgresqlProperties(DynamicPropertyRegistry registry) {
+        GoGasDatabaseContainer databaseContainer = GoGasDatabaseContainer.getInstance();
+        registry.add("spring.datasource.url", databaseContainer::getJdbcUrl);
+        registry.add("spring.datasource.password", databaseContainer::getPassword);
+        registry.add("spring.datasource.username", databaseContainer::getUsername);
+    }*/
+
     @TempDir
     protected Path repoFolder;
 

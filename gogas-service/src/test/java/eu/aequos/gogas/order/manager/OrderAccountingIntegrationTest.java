@@ -16,8 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -932,6 +931,36 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         assertEquals(123.45, orderDetails.getInvoiceAmount().doubleValue(), 0.001);
         assertEquals(LocalDate.now().minusDays(5), orderDetails.getInvoiceDate());
         assertEquals("2022-01", orderDetails.getInvoiceNumber());
+        assertEquals(LocalDate.now(), orderDetails.getPaymentDate());
+        assertTrue(orderDetails.isPaid());
+    }
+
+    @Test
+    void givenAnAccountedOrderBilledByAequos_whenAddingInvoiceInformation_thenOnlyPaymentInformationIsAdded() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeAequos.getId());
+        String orderId = createOrder(orderDTO);
+
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
+
+        performAction(orderId, "close");
+        performAction(orderId, "contabilizza");
+
+        OrderInvoiceDataDTO invoiceData = new OrderInvoiceDataDTO();
+        invoiceData.setInvoiceAmount(BigDecimal.valueOf(123.45));
+        invoiceData.setInvoiceDate(LocalDate.now().minusDays(5));
+        invoiceData.setInvoiceNumber("2022-01");
+        invoiceData.setPaymentDate(LocalDate.now());
+        invoiceData.setPaid(true);
+
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/invoice/data", invoiceData, BasicResponseDTO.class);
+        assertEquals("OK", updateResponse.getData());
+
+        OrderDetailsDTO orderDetails = mockMvcGoGas.getDTO("/api/order/manage/" + orderId, OrderDetailsDTO.class);
+        assertNull(orderDetails.getInvoiceAmount());
+        assertNull(orderDetails.getInvoiceDate());
+        assertNull(orderDetails.getInvoiceNumber());
         assertEquals(LocalDate.now(), orderDetails.getPaymentDate());
         assertTrue(orderDetails.isPaid());
     }

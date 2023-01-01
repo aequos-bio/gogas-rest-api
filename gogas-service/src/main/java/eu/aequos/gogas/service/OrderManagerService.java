@@ -428,11 +428,15 @@ public class OrderManagerService extends CrudService<Order, String> {
             throw new MissingOrInvalidParameterException("L'importo fattura deve essere un valore maggiore di zero");
 
         Order order = getRequiredWithType(orderId);
-        order.setInvoiceNumber(invoiceData.getInvoiceNumber());
-        order.setInvoiceDate(invoiceData.getInvoiceDate());
-        order.setInvoiceAmount(invoiceData.getInvoiceAmount());
         order.setPaymentDate(invoiceData.getPaymentDate());
         order.setPaid(invoiceData.isPaid());
+
+        //if billed by aequos this information should not be modified by the user
+        if (!order.getOrderType().isBilledByAequos()) {
+            order.setInvoiceAmount(invoiceData.getInvoiceAmount());
+            order.setInvoiceNumber(invoiceData.getInvoiceNumber());
+            order.setInvoiceDate(invoiceData.getInvoiceDate());
+        }
 
         orderRepo.save(order);
     }
