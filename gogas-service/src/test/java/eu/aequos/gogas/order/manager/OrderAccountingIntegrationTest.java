@@ -1074,6 +1074,8 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
                 .resolve(orderId)
                 .toFile();
 
+        System.out.println("INVOICE: " + invoice.getAbsolutePath());
+
         assertTrue(invoice.exists());
         assertTrue(invoice.length() > 0);
     }
