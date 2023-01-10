@@ -13,7 +13,6 @@ jobs:
     executor: machine_executor_amd64
     steps:
       - maven/test:
-          executor: machine_executor_amd64
           command: 'package'
       - store_artifacts:
           path: /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar
