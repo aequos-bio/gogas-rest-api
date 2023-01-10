@@ -28,7 +28,6 @@ public class AttachmentService {
     public void storeAttachment(byte[] attachmentContent, AttachmentType type, String fileName) throws GoGasException {
         try {
             Path attachmentFilePath = resolveFilePath(type, fileName);
-            log.info("SAVING: {}", attachmentFilePath.toFile().getAbsolutePath());
             Files.write(attachmentFilePath, attachmentContent);
         } catch (IOException ex) {
             log.error("Error while saving attachment {} of type {}", fileName, type, ex);

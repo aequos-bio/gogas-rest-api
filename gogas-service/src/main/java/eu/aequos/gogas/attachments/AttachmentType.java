@@ -1,7 +1,7 @@
 package eu.aequos.gogas.attachments;
 
 public enum AttachmentType {
-    Invoice("Invoice");
+    Invoice("invoice");
 
     private String folderName;
 
