@@ -25,3 +25,5 @@ workflows:
           executor: machine_executor_amd64
           command: 'package -Dmaven.test.skip=true'
       - deploy
+          requires:
+            - maven/test
