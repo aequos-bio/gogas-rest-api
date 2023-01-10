@@ -8,19 +8,20 @@ executors:
     environment:
       architecture: "amd64"
       platform: "linux/amd64"
+jobs:
+  deploy:
+    executor: machine_executor_amd64
+    steps:
+      - store_artifacts:
+          path: /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar
+          destination: gogas-service-1.0.jar
+      - store_artifacts:
+          path: /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar
+          destination: telegram-service-1.0.jar
 workflows:
   maven_test:
     jobs:
       - maven/test:
           executor: machine_executor_amd64
           command: 'package -Dmaven.test.skip=true'
-      - deploy:
-          executor: machine_executor_amd64
-          steps:
-            - store_artifacts:
-                path: /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar
-                destination: gogas-service-1.0.jar
-            - store_artifacts:
-                path: /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar
-                destination: telegram-service-1.0.jar
-
+      - deploy
