@@ -36,10 +36,6 @@ public class GoGasDatabaseContainer extends MSSQLServerContainer<GoGasDatabaseCo
     public void start() {
         super.start();
 
-        /*System.setProperty("DB_URL", container.getJdbcUrl());
-        System.setProperty("DB_USERNAME", container.getUsername());
-        System.setProperty("DB_PASSWORD", container.getPassword());*/
-
         Properties connectionProps = new Properties();
         connectionProps.put("user", getUsername());
         connectionProps.put("password", getPassword());
