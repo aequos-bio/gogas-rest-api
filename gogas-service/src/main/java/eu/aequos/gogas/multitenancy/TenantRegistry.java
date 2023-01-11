@@ -3,6 +3,7 @@ package eu.aequos.gogas.multitenancy;
 import eu.aequos.gogas.configuration.MasterDatasetConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Component;
 
@@ -30,9 +31,9 @@ public class TenantRegistry {
     private DriverManagerDataSource masterDataSource;
     private Map<Object, Object> tenantDataSourceMap;
 
-    public TenantRegistry(MasterDatasetConfig masterConfig) {
-        masterDataSource = createMasterDataSource(masterConfig);
-        tenantDataSourceMap = createDataSourceMap();
+    public TenantRegistry(MasterDatasetConfig masterConfig, @Value("${spring.flyway.enabled:true}") boolean flywayEnabled) {
+        this.masterDataSource = createMasterDataSource(masterConfig);
+        this.tenantDataSourceMap = createDataSourceMap(flywayEnabled);
     }
 
     public Map<Object, Object> getDataSourceMap() {
@@ -53,7 +54,7 @@ public class TenantRegistry {
         return dataSource;
     }
 
-    private Map<Object, Object> createDataSourceMap() {
+    private Map<Object, Object> createDataSourceMap(boolean flywayEnabled) {
         Map<Object, Object> dataSourceMap = new HashMap<>();
 
         try (
@@ -65,8 +66,12 @@ public class TenantRegistry {
                 String tenantId = rs.getString("tenant_id");
                 DataSource tenantDataSource = createTenantDataSource(rs);
 
-                log.info("Migrating tenant {}", tenantId);
-                migrate(tenantId, tenantDataSource);
+                if (flywayEnabled) {
+                    log.info("Migrating tenant {}", tenantId);
+                    migrate(tenantId, tenantDataSource);
+                } else {
+                    log.info("NOT Migrating tenant {} (flyway disabled)", tenantId);
+                }
 
                 dataSourceMap.put(tenantId, tenantDataSource);
                 log.info("### Added datasource for tenant key {}", tenantId);
