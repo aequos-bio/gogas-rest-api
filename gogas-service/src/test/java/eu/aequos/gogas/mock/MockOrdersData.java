@@ -32,6 +32,7 @@ public class MockOrdersData implements MockDataLifeCycle {
         OrderType orderType = new OrderType();
         orderType.setDescription(name);
         orderType.setAequosOrderId(aequosId);
+        orderType.setBilledByAequos(true);
         return orderTypeRepo.save(orderType);
     }
 

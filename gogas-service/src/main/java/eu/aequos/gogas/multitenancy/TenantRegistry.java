@@ -65,8 +65,8 @@ public class TenantRegistry {
                 String tenantId = rs.getString("tenant_id");
                 DataSource tenantDataSource = createTenantDataSource(rs);
 
-                log.info("NOT Migrating tenant {} (temporarily disabled)", tenantId);
-                //migrate(tenantId, tenantDataSource);
+                log.info("Migrating tenant {}", tenantId);
+                migrate(tenantId, tenantDataSource);
 
                 dataSourceMap.put(tenantId, tenantDataSource);
                 log.info("### Added datasource for tenant key {}", tenantId);

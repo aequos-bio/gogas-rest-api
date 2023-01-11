@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -25,6 +27,18 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @AutoConfigureMockMvc
 public class BaseGoGasIntegrationTest {
+
+    @DynamicPropertySource
+    static void postgresqlProperties(DynamicPropertyRegistry registry) {
+        GoGasDatabaseContainer databaseContainer = GoGasDatabaseContainer.getInstance();
+
+        registry.add("spring.datasource.url", databaseContainer::getJdbcUrl);
+        registry.add("spring.datasource.password", databaseContainer::getPassword);
+        registry.add("spring.datasource.username", databaseContainer::getUsername);
+
+        log.info("GoGas Database Container started ({} {}/{})", databaseContainer.getJdbcUrl(),
+                databaseContainer.getUsername(), databaseContainer.getPassword());
+    }
 
     @TempDir
     protected Path repoFolder;
