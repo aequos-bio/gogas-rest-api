@@ -20,7 +20,7 @@ import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import ManagerEditDialog from './ManagerEditDialog';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
@@ -77,23 +77,23 @@ const Managers = ({ enqueueSnackbar }) => {
   const reload = useCallback(() => {
     setLoading(true);
     apiGetJson('/api/user/list', {})
-      .then(userList => {
+      .then((userList) => {
         const _users = {};
-        userList.forEach(user => {
+        userList.forEach((user) => {
           _users[user.idUtente] = user;
         });
         setUsers(_users);
       })
-      .catch(err => {
-        enqueueSnackbar('Errore ne caricamento della lista degli utenti');
+      .catch(() => {
+        enqueueSnackbar('Errore nel caricamento della lista degli utenti');
       });
-    apiGetJson('/api/ordertype/manager/list', {}).then(mm => {
+    apiGetJson('/api/ordertype/manager/list', {}).then((mm) => {
       setLoading(false);
       if (mm.error) {
         enqueueSnackbar(mm.errorMessage, { variant: 'error' });
       } else {
         const _managers = {};
-        mm.forEach(m => {
+        mm.forEach((m) => {
           let list;
           if (_managers[m.userId]) {
             list = _managers[m.userId];
@@ -112,25 +112,25 @@ const Managers = ({ enqueueSnackbar }) => {
     reload();
   }, [reload]);
 
-  const editManager = useCallback(user => {
+  const editManager = useCallback((user) => {
     setSelectedManager(user);
     setEditDialogOpen(true);
   }, []);
 
   const rows = useMemo(() => {
     const activeUsers = Object.values(users)
-      .filter(user => (hideDisabled ? user.attivo : true))
+      .filter((user) => (hideDisabled ? user.attivo : true))
       .sort(userSorter);
     return loading ? (
       <LoadingRow colSpan={3} />
     ) : (
-      activeUsers.map(user => {
-        const orderTypes = _.sortBy(managers[user.idUtente], i =>
-          i.orderTypeName.toUpperCase()
+      activeUsers.map((user) => {
+        const orderTypes = _.sortBy(managers[user.idUtente], (i) =>
+          i.orderTypeName.toUpperCase(),
         );
         const sliceSize = Math.max(
           7,
-          Number.parseInt(orderTypes.length / 3, 10) + 1
+          Number.parseInt(orderTypes.length / 3, 10) + 1,
         );
         return (
           <TableRow key={`user-${user.idUtente}`} hover>
@@ -147,7 +147,7 @@ const Managers = ({ enqueueSnackbar }) => {
                 <span>- nessun ordine assegnato -</span>
               ) : (
                 <ul>
-                  {orderTypes.slice(0, sliceSize).map(item => (
+                  {orderTypes.slice(0, sliceSize).map((item) => (
                     <li key={item.id}>{item.orderTypeName}</li>
                   ))}
                 </ul>
@@ -155,14 +155,14 @@ const Managers = ({ enqueueSnackbar }) => {
             </TableCell>
             <TableCell className={classes.tableCell}>
               <ul>
-                {orderTypes.slice(sliceSize, sliceSize * 2).map(item => (
+                {orderTypes.slice(sliceSize, sliceSize * 2).map((item) => (
                   <li key={item.id}>{item.orderTypeName}</li>
                 ))}
               </ul>
             </TableCell>
             <TableCell className={classes.tableCell}>
               <ul>
-                {orderTypes.slice(sliceSize * 2, 100).map(item => (
+                {orderTypes.slice(sliceSize * 2, 100).map((item) => (
                   <li key={item.id}>{item.orderTypeName}</li>
                 ))}
               </ul>
@@ -173,7 +173,7 @@ const Managers = ({ enqueueSnackbar }) => {
                   editManager(user);
                 }}
               >
-                <EditIcon fontSize="small" />
+                <EditIcon fontSize='small' />
               </IconButton>
             </TableCell>
           </TableRow>
@@ -185,22 +185,22 @@ const Managers = ({ enqueueSnackbar }) => {
   return (
     <>
       <Container maxWidth={false}>
-        <PageTitle title="Referenti">
+        <PageTitle title='Referenti'>
           <FormControlLabel
             control={
               <Switch
                 checked={hideDisabled}
-                onChange={evt => setHideDisabled(evt.target.checked)}
-                name="hideDisabled"
-                color="primary"
+                onChange={(evt) => setHideDisabled(evt.target.checked)}
+                name='hideDisabled'
+                color='primary'
               />
             }
-            label="Nascondi inattivi"
+            label='Nascondi inattivi'
           />
         </PageTitle>
 
         <TableContainer>
-          <Table size="small">
+          <Table size='small'>
             <TableHead>
               <TableRow>
                 <TableCell className={classes.cellHeader}>Referente</TableCell>
@@ -217,7 +217,7 @@ const Managers = ({ enqueueSnackbar }) => {
       </Container>
       <ManagerEditDialog
         open={editDialogOpen}
-        onClose={forceReload => {
+        onClose={(forceReload) => {
           setEditDialogOpen(false);
           setSelectedManager();
           if (forceReload) reload();

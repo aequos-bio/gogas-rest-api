@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from '@material-ui/core/styles';
 import { green as primary, amber as secondary } from '@material-ui/core/colors';
 import Routes from './pages/Routes';
 import { Store } from './store/store';
-import './style/app.scss';
+import './style/app.css';
 
 const theme = createTheme({
   palette: {
