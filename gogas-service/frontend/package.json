@@ -11,9 +11,10 @@
     "@material-ui/styles": "^4.11.5",
     "axios": "^1.2.5",
     "cookies-js": "^1.2.3",
+    "crypto-browserify": "^3.12.0",
     "exceljs": "^4.3.0",
     "font-awesome": "^4.7.0",
-    "jsonwebtoken": "^9.0.0",
+    "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
     "moment-timezone": "^0.5.40",
     "notistack": "^1.0.10",
@@ -28,22 +29,23 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-logger": "^3.0.6",
     "redux-persist": "^6.0.0",
-    "redux-thunk": "^2.4.2"
+    "redux-thunk": "^2.4.2",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   },
   "devDependencies": {
+    "babel-eslint": "^10.1.0",
     "http-proxy-middleware": "^2.0.6",
     "husky": "^3.0.9",
     "lint-staged": "^9.4.2",
     "post-merge-install": "^0.3.0",
-    "prettier": "^1.18.2"
+    "prettier": "^1.18.2",
+    "react-app-rewired": "^2.2.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build  && ./buildManager.sh",
-    "test": "react-scripts test"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build  && ./buildManager.sh",
+    "test": "react-app-rewired test"
   },
   "browserslist": {
     "production": [

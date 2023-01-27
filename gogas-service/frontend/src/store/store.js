@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import thunkMiddleware from 'redux-thunk';
 import { createLogger } from 'redux-logger';
 import { createStore, applyMiddleware } from 'redux';
@@ -36,7 +35,7 @@ const loadState = () => {
   return state;
 };
 
-const saveState = state => {
+const saveState = (state) => {
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem('state', serializedState);
@@ -49,7 +48,7 @@ const saveState = state => {
 export const Store = createStore(
   reducers,
   loadState(),
-  composeWithDevTools(applyMiddleware(thunkMiddleware, loggerMiddleware))
+  composeWithDevTools(applyMiddleware(thunkMiddleware, loggerMiddleware)),
 );
 
 Store.subscribe(() => {

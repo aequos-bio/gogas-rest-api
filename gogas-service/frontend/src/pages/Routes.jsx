@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
@@ -34,8 +33,8 @@ const privateRoutes = [
   { path: '/managers', component: Managers },
 ];
 
-const Routes = () => {
-  const authentication = useSelector(state => state.authentication);
+export const Routes = () => {
+  const authentication = useSelector((state) => state.authentication);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -43,7 +42,7 @@ const Routes = () => {
   }, [dispatch]);
 
   return (
-    <Router basename="/">
+    <Router basename='/'>
       <>
         <Switch>
           <Route exact path={['/login']} component={null} />
@@ -51,7 +50,7 @@ const Routes = () => {
         </Switch>
 
         <Switch>
-          <Route path="/login" component={Login} />
+          <Route path='/login' component={Login} />
 
           {privateRoutes.map((pr, i) => (
             <PrivateRoute
@@ -59,7 +58,6 @@ const Routes = () => {
               exact
               path={pr.path}
               component={pr.component}
-              jwtToken={authentication.jwtToken}
             />
           ))}
         </Switch>

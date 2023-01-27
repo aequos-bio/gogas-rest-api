@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import React, { useMemo, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
@@ -25,11 +24,11 @@ import {
 } from '@material-ui/icons';
 import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Jwt from 'jsonwebtoken';
 import Logo from '../logo_aequos.png';
+import useJwt from './JwtHooks';
 
 const drawerWidth = '280px';
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   drawer: {},
   drawerHeader: {
     display: 'flex',
@@ -165,34 +164,27 @@ const menuItems = [
 const NavigationMenu = ({ open, onClose }) => {
   const classes = useStyles();
   const history = useHistory();
-  const { authentication, accounting } = useSelector(state => state);
-
-  const jwt = useMemo(() => {
-    if (authentication.jwtToken) {
-      const j = Jwt.decode(authentication.jwtToken);
-      return j;
-    }
-    return null;
-  }, [authentication]);
+  const { authentication, accounting } = useSelector((state) => state);
+  const jwt = useJwt();
 
   const menuClick = useCallback(
-    menu => {
+    (menu) => {
       const url = menu.url.replace(':userId', jwt.id);
       history.push(url);
       onClose();
     },
-    [history, jwt, onClose]
+    [history, jwt, onClose],
   );
 
   const menu = useMemo(() => {
     const mm = [];
     if (!jwt) return null;
     menuItems.forEach((menuChapter, i) => {
-      const menus = menuChapter.items.filter(m => {
+      const menus = menuChapter.items.filter((m) => {
         if (!m.restrictions) {
           return true;
         }
-        const matching = m.restrictions.filter(r => r === jwt.role);
+        const matching = m.restrictions.filter((r) => r === jwt.role);
         if (matching.length > 0) {
           return true;
         }
@@ -203,10 +195,10 @@ const NavigationMenu = ({ open, onClose }) => {
           <div key={`menuchapter-${i}`} className={classes.menuContainer}>
             {menuChapter.label ? (
               <Typography
-                variant="overline"
-                display="block"
+                variant='overline'
+                display='block'
                 gutterBottom
-                color="textSecondary"
+                color='textSecondary'
                 className={classes.menuChapter}
               >
                 {menuChapter.label.replace('[year]', accounting.currentYear)}
@@ -228,7 +220,7 @@ const NavigationMenu = ({ open, onClose }) => {
               ))}
             </List>
           </div>,
-          <Divider key={`divider-${i}`} />
+          <Divider key={`divider-${i}`} />,
         );
       }
     });
@@ -244,10 +236,10 @@ const NavigationMenu = ({ open, onClose }) => {
         </div>
         <Typography
           className={classes.copyright}
-          variant="overline"
-          display="block"
+          variant='overline'
+          display='block'
           gutterBottom
-          color="textSecondary"
+          color='textSecondary'
         >
           Copyright 2019-2020 AEQUOS.BIO
         </Typography>

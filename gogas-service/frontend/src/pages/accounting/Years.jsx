@@ -1,7 +1,3 @@
-/* eslint-disable no-use-before-define */
-/* eslint-disable no-alert */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -28,20 +24,20 @@ const Years = ({ enqueueSnackbar }) => {
   const [loading, setLoading] = useState(false);
   const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState();
-  const accounting = useSelector(state => state.accounting);
+  const accounting = useSelector((state) => state.accounting);
   const dispatch = useDispatch();
 
   const reload = useCallback(() => {
-    const checkCurrentYear = yy => {
+    const checkCurrentYear = (yy) => {
       const currentYear = Number.parseInt(moment().format('YYYY'), 10);
-      const existing = yy.filter(y => y.year === currentYear);
+      const existing = yy.filter((y) => y.year === currentYear);
       if (!existing.length) {
         // eslint-disable-next-line no-restricted-globals
         const result = confirm(
-          `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`
+          `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`,
         );
         if (result) {
-          apiPost(`/api/year/${currentYear}`).then(y => {
+          apiPost(`/api/year/${currentYear}`).then((y) => {
             if (y.error) {
               enqueueSnackbar(y.errorMessage, { variant: 'error' });
             } else {
@@ -55,7 +51,7 @@ const Years = ({ enqueueSnackbar }) => {
     };
 
     setLoading(true);
-    apiGetJson('/api/year/all', {}).then(yy => {
+    apiGetJson('/api/year/all', {}).then((yy) => {
       setLoading(false);
       if (yy.error) {
         enqueueSnackbar(yy.errorMessage, { variant: 'error' });
@@ -70,7 +66,7 @@ const Years = ({ enqueueSnackbar }) => {
     reload();
   }, [reload]);
 
-  const closeYear = useCallback(y => {
+  const closeYear = useCallback((y) => {
     setSelectedYear(y);
     setConfigDlgOpen(true);
     console.warn('closing year', y);
@@ -84,11 +80,11 @@ const Years = ({ enqueueSnackbar }) => {
         reload();
         enqueueSnackbar('Anno chiuso', { variant: 'success' });
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           err.response?.statusText ||
             "Errore nell'eliminazione della categoria",
-          { variant: 'error' }
+          { variant: 'error' },
         );
       });
   }, [enqueueSnackbar, reload, selectedYear]);
@@ -104,11 +100,11 @@ const Years = ({ enqueueSnackbar }) => {
             {y.closed ? 'Chiuso' : `Aperto${i === 0 ? ', in corso' : ''}`}
             {y.year === accounting.currentYear ? ', corrente' : ''}
           </TableCell>
-          <TableCell align="right">
+          <TableCell align='right'>
             {y.closed || i === 0 ? null : (
               <Button
-                variant="outlined"
-                size="small"
+                variant='outlined'
+                size='small'
                 onClick={() => closeYear(y)}
               >
                 Chiudi
@@ -116,8 +112,8 @@ const Years = ({ enqueueSnackbar }) => {
             )}
             {y.year === accounting.currentYear ? null : (
               <Button
-                variant="outlined"
-                size="small"
+                variant='outlined'
+                size='small'
                 onClick={() => {
                   dispatch(setAccountingYear(y.year));
                 }}
@@ -134,7 +130,7 @@ const Years = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Anni contabili" />
+      <PageTitle title='Anni contabili' />
 
       <TableContainer>
         <Table>
@@ -152,7 +148,7 @@ const Years = ({ enqueueSnackbar }) => {
 
       <ActionDialog
         open={confirmDlgOpen}
-        title="Conferma chiusura"
+        title='Conferma chiusura'
         message={`Sei sicuro di voler chiudere l'anno ${selectedYear?.year}?`}
         onCancel={() => setConfigDlgOpen(false)}
         onAction={doCloseYear}

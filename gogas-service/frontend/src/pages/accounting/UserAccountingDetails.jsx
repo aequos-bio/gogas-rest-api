@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { useSelector } from 'react-redux';
 import {
   Container,
   Fab,
@@ -25,14 +24,14 @@ import { withSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
 import _ from 'lodash';
-import Jwt from 'jsonwebtoken';
 import { apiGetJson, apiDelete } from '../../utils/axios_utils';
 import EditTransactionDialog from './components/EditTransactionDialog';
 import ActionDialog from '../../components/ActionDialog';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
+import useJwt from '../../components/JwtHooks';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
@@ -68,11 +67,11 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
   const [selectedId, setSelectedId] = useState();
   const [years, setYears] = useState({});
   const [loading, setLoading] = useState(false);
-  const authentication = useSelector(state => state.authentication);
+  const jwt = useJwt();
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson(`/api/user/${search.userId}`, {}).then(u => {
+    apiGetJson(`/api/user/${search.userId}`, {}).then((u) => {
       if (u.error) {
         enqueueSnackbar(u.errorMessage, { variant: 'error' });
       } else setUser(u);
@@ -80,8 +79,8 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
 
     apiGetJson(
       `/api/useraccounting/userTransactions?userId=${search.userId}`,
-      {}
-    ).then(t => {
+      {},
+    ).then((t) => {
       setLoading(false);
       if (t.error) {
         enqueueSnackbar(t.errorMessage, { variant: 'error' });
@@ -112,25 +111,17 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
   const downloadXls = useCallback(() => {
     window.open(
       `/api/useraccounting/exportUserDetails?userId=${user.idUtente}`,
-      '_blank'
+      '_blank',
     );
   }, [user]);
 
-  const jwt = useMemo(() => {
-    if (authentication.jwtToken) {
-      const j = Jwt.decode(authentication.jwtToken);
-      return j;
-    }
-    return null;
-  }, [authentication]);
-
   useEffect(() => {
-    apiGetJson('/api/year/all', {}).then(yy => {
+    apiGetJson('/api/year/all', {}).then((yy) => {
       if (yy.error) {
         enqueueSnackbar(yy.errorMessage, { variant: 'error' });
       } else {
         const _years = {};
-        yy.data.forEach(y => {
+        yy.data.forEach((y) => {
           _years[y.year] = y.closed;
         });
         setYears(_years);
@@ -141,11 +132,11 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
   }, [reload, enqueueSnackbar]);
 
   const dialogClosed = useCallback(
-    refresh => {
+    (refresh) => {
       setShowDlg(false);
       if (refresh) reload();
     },
-    [setShowDlg, reload]
+    [setShowDlg, reload],
   );
 
   const newTransaction = useCallback(() => {
@@ -153,12 +144,12 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
     setShowDlg(true);
   }, []);
 
-  const editTransaction = useCallback(id => {
+  const editTransaction = useCallback((id) => {
     setSelectedId(id);
     setShowDlg(true);
   }, []);
 
-  const deleteTransaction = useCallback(id => {
+  const deleteTransaction = useCallback((id) => {
     setSelectedId(id);
     setDeleteDlgOpen(true);
   }, []);
@@ -170,10 +161,10 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
         reload();
         enqueueSnackbar('Movimento eliminato', { variant: 'success' });
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           err.response?.statusText || "Errore nell'eliminazione del movimento",
-          { variant: 'error' }
+          { variant: 'error' },
         );
       });
   }, [enqueueSnackbar, reload, selectedId]);
@@ -194,7 +185,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
         if (lastYearPlus !== undefined || lastYearMinus !== undefined) {
           rr.push(
             <TableRow key={`initialamt-${lastYear}`} hover>
-              <TableCell align="center">01/01/{lastYear}</TableCell>
+              <TableCell align='center'>01/01/{lastYear}</TableCell>
               <TableCell>Saldo iniziale {lastYear}</TableCell>
               <TableCell />
               <TableCell />
@@ -206,12 +197,12 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
                 {t.saldo.toFixed(2)}
               </TableCell>
               {jwt.role === 'A' ? <TableCell /> : null}
-            </TableRow>
+            </TableRow>,
           );
 
           rr.push(
             <TableRow key={`totals-${lastYear}`} hover>
-              <TableCell colSpan="2" align="right">
+              <TableCell colSpan='2' align='right'>
                 <strong>Totale anno {lastYear}</strong>
               </TableCell>
               <TableCell className={classes.tdAmount}>
@@ -222,7 +213,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
               </TableCell>
               <TableCell />
               {jwt.role === 'A' ? <TableCell /> : null}
-            </TableRow>
+            </TableRow>,
           );
         }
         rr.push(
@@ -231,7 +222,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
               <strong>Anno {year}</strong>
               {years[year] ? <CloedIcon className={classes.lockicon} /> : null}
             </TableCell>
-          </TableRow>
+          </TableRow>,
         );
         lastYearPlus = 0;
         lastYearMinus = 0;
@@ -241,9 +232,8 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
       lastYearMinus += t.sign === '-' ? Math.abs(t.amount) : 0;
 
       rr.push(
-        // eslint-disable-next-line react/no-array-index-key
         <TableRow key={`transaction-${i}`} hover>
-          <TableCell align="center">
+          <TableCell align='center'>
             {moment(t.date).format('DD/MM/YYYY')}
           </TableCell>
           <TableCell>
@@ -276,7 +266,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
                     editTransaction(t.id);
                   }}
                 >
-                  <EditIcon fontSize="small" />
+                  <EditIcon fontSize='small' />
                 </IconButton>
               ) : null}
 
@@ -286,29 +276,29 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
                     deleteTransaction(t.id);
                   }}
                 >
-                  <DeleteIcon fontSize="small" />
+                  <DeleteIcon fontSize='small' />
                 </IconButton>
               ) : null}
             </TableCell>
           ) : null}
-        </TableRow>
+        </TableRow>,
       );
     });
 
     rr.push(
       <TableRow key={`initialamt-${lastYear}`} hover>
-        <TableCell align="center">01/01/{lastYear}</TableCell>
+        <TableCell align='center'>01/01/{lastYear}</TableCell>
         <TableCell>Saldo iniziale {lastYear}</TableCell>
         <TableCell />
         <TableCell />
         <TableCell className={classes.tdAmount}>0.00</TableCell>
         {jwt.role === 'A' ? <TableCell /> : null}
-      </TableRow>
+      </TableRow>,
     );
 
     rr.push(
       <TableRow key={`totals-${lastYear}`} hover>
-        <TableCell colSpan="2" align="right">
+        <TableCell colSpan='2' align='right'>
           <strong>Totale anno {lastYear}</strong>
         </TableCell>
         <TableCell className={classes.tdAmount}>
@@ -319,7 +309,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
         </TableCell>
         <TableCell />
         {jwt.role === 'A' ? <TableCell /> : null}
-      </TableRow>
+      </TableRow>,
     );
 
     return rr;
@@ -341,7 +331,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
       >
         <Button
           onClick={downloadXls}
-          variant="outlined"
+          variant='outlined'
           startIcon={<SaveIcon />}
         >
           Esporta XLS
@@ -349,20 +339,20 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
       </PageTitle>
 
       {jwt && jwt.sub && jwt.role === 'A' ? (
-        <Fab className={classes.fab} color="secondary" onClick={newTransaction}>
+        <Fab className={classes.fab} color='secondary' onClick={newTransaction}>
           <PlusIcon />
         </Fab>
       ) : null}
 
       <TableContainer>
-        <Table size="small">
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>
               <TableCell>Descrizione</TableCell>
-              <TableCell align="center">Accrediti</TableCell>
-              <TableCell align="center">Addebiti</TableCell>
-              <TableCell align="center">Saldo</TableCell>
+              <TableCell align='center'>Accrediti</TableCell>
+              <TableCell align='center'>Addebiti</TableCell>
+              <TableCell align='center'>Saldo</TableCell>
               {jwt.role === 'A' ? (
                 <TableCell className={classes.tdButtons} />
               ) : null}
@@ -409,8 +399,8 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
         onCancel={() => setDeleteDlgOpen(false)}
         actions={['Ok']}
         onAction={doDeleteTransaction}
-        title="Conferma eliminazione"
-        message="Sei sicuro di voler eliminare il movimento selezionato?"
+        title='Conferma eliminazione'
+        message='Sei sicuro di voler eliminare il movimento selezionato?'
       />
     </Container>
   );
