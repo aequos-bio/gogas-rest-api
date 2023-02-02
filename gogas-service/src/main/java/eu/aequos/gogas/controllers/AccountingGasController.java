@@ -122,6 +122,9 @@ public class AccountingGasController {
         } catch (GoGasException e) {
             log.error("Error while synchronizing order {} with Aequos", aequosOrder.getId());
             return false;
+        } catch (Exception ex) {
+            log.error("Error while synchronizing order {} with Aequos, generic exception ({})", aequosOrder.getId(), ex.getMessage());
+            return false;
         }
     }
 }
