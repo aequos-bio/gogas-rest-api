@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
@@ -21,7 +18,7 @@ import LoadingListItem from '../../../components/LoadingListItem';
 import UserEditDialog from './UserEditDialog';
 import ActionDialog from '../../../components/ActionDialog';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
@@ -42,7 +39,7 @@ function Users({ enqueueSnackbar }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
-  const info = useSelector(state => state.info);
+  const info = useSelector((state) => state.info);
 
   const sort = info['visualizzazione.utenti']
     ? info['visualizzazione.utenti']
@@ -50,7 +47,7 @@ function Users({ enqueueSnackbar }) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson('/api/user/list', {}).then(uu => {
+    apiGetJson('/api/user/list', {}).then((uu) => {
       setLoading(false);
       if (uu.error) {
         enqueueSnackbar(uu.errorMessage, { variant: 'error' });
@@ -63,8 +60,8 @@ function Users({ enqueueSnackbar }) {
               sort === 'NC' ? 'nome' : 'cognome',
               sort === 'NC' ? 'cognome' : 'nome',
             ],
-            ['desc', 'asc', 'asc']
-          )
+            ['desc', 'asc', 'asc'],
+          ),
         );
       }
     });
@@ -75,10 +72,10 @@ function Users({ enqueueSnackbar }) {
   }, [reload]);
 
   const mapRef = useCallback(
-    uid => {
+    (uid) => {
       let friend = null;
       if (uid)
-        users.forEach(u => {
+        users.forEach((u) => {
           if (u.idUtente === uid)
             friend =
               sort === 'NC'
@@ -87,7 +84,7 @@ function Users({ enqueueSnackbar }) {
         });
       return friend;
     },
-    [users, sort]
+    [users, sort],
   );
 
   const newUser = useCallback(() => {
@@ -95,21 +92,21 @@ function Users({ enqueueSnackbar }) {
     setEditDialogOpen(true);
   }, []);
 
-  const editUser = useCallback(user => {
+  const editUser = useCallback((user) => {
     setSelectedUser(user);
     setEditDialogOpen(true);
   }, []);
 
   const editDialogClosed = useCallback(
-    refresh => {
+    (refresh) => {
       setEditDialogOpen(false);
       setSelectedUser();
       if (refresh) reload();
     },
-    [reload]
+    [reload],
   );
 
-  const deleteUser = useCallback(user => {
+  const deleteUser = useCallback((user) => {
     setSelectedUser(user);
     setDeleteDialogOpen(true);
   }, []);
@@ -122,69 +119,69 @@ function Users({ enqueueSnackbar }) {
         enqueueSnackbar('Utente eliminato', { variant: 'success' });
         reload();
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           err.response && err.response.data
             ? err.response.data.debugMessage || err.response.data.message
             : `Errore durante l'eliminazione dell'utente: ${err}`,
           {
             variant: 'error',
-          }
+          },
         );
       });
   }, [selectedUser, enqueueSnackbar, reload]);
 
   const enableUser = useCallback(
-    user => {
+    (user) => {
       apiPut(`/api/user/${user.idUtente}`, { ...user, attivo: true })
         .then(() => {
           enqueueSnackbar('Utente riabilitato', { variant: 'success' });
           reload();
         })
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar(
             err.response && err.response.data
               ? err.response.data.debugMessage || err.response.data.message
               : `Errore durante la riabilitazione dell'utente: ${err}`,
-            { variant: 'error' }
+            { variant: 'error' },
           );
         });
     },
-    [enqueueSnackbar, reload]
+    [enqueueSnackbar, reload],
   );
 
   const disableUser = useCallback(
-    user => {
+    (user) => {
       apiPut(`/api/user/${user.idUtente}`, { ...user, attivo: false })
         .then(() => {
           enqueueSnackbar('Utente disabilitato', { variant: 'success' });
           reload();
         })
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar(
             err.response && err.response.data
               ? err.response.data.debugMessage || err.response.data.message
               : `Errore durante la disabilitazione dell'utente: ${err}`,
-            { variant: 'error' }
+            { variant: 'error' },
           );
         });
     },
-    [enqueueSnackbar, reload]
+    [enqueueSnackbar, reload],
   );
 
   const passwordReset = useCallback(
-    user => {
+    (user) => {
       if (user.email && user.email.length > 5) {
         setSelectedUser(user);
         setResetPasswordDialogOpen(true);
       } else {
         enqueueSnackbar(
           "Impossibile resettare la password: l'utente è privo di email",
-          { variant: 'warning' }
+          { variant: 'warning' },
         );
       }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar],
   );
 
   const doResetPassword = useCallback(() => {
@@ -197,12 +194,12 @@ function Users({ enqueueSnackbar }) {
         setSelectedUser();
         reload();
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           err.response && err.response.data
             ? err.response.data.debugMessage || err.response.data.message
             : `Errore durante il reset della password dell'utente: ${err}`,
-          { variant: 'error' }
+          { variant: 'error' },
         );
       });
   }, [enqueueSnackbar, reload, selectedUser]);
@@ -212,8 +209,8 @@ function Users({ enqueueSnackbar }) {
       return <LoadingListItem />;
     }
     return users
-      .filter(u => !hideDisabled || u.attivo)
-      .map(user => (
+      .filter((u) => !hideDisabled || u.attivo)
+      .map((user) => (
         <UserItem
           key={user.idUtente}
           user={user}
@@ -241,23 +238,23 @@ function Users({ enqueueSnackbar }) {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Utenti">
+      <PageTitle title='Utenti'>
         <FormControlLabel
           control={
             <Switch
               checked={hideDisabled}
-              onChange={evt => setHideDisabled(evt.target.checked)}
-              name="hideDisabled"
-              color="primary"
+              onChange={(evt) => setHideDisabled(evt.target.checked)}
+              name='hideDisabled'
+              color='primary'
             />
           }
-          label="Nascondi inattivi"
+          label='Nascondi inattivi'
         />
       </PageTitle>
 
       <List className={classes.userList}>{items}</List>
 
-      <Fab className={classes.fab} color="secondary" onClick={newUser}>
+      <Fab className={classes.fab} color='secondary' onClick={newUser}>
         <PlusIcon />
       </Fab>
 
@@ -272,7 +269,7 @@ function Users({ enqueueSnackbar }) {
         onCancel={() => setDeleteDialogOpen(false)}
         actions={['Ok']}
         onAction={doDeleteUser}
-        title="Conferma eliminazione"
+        title='Conferma eliminazione'
         message={`Sei sicuro di voler eliminare l'utente ${selectedUser?.username}?`}
       />
       <ActionDialog
@@ -280,7 +277,7 @@ function Users({ enqueueSnackbar }) {
         onCancel={() => setResetPasswordDialogOpen(false)}
         actions={['Ok']}
         onAction={doResetPassword}
-        title="Conferma reset password"
+        title='Conferma reset password'
         message={`Sei sicuro di voler resettare la password dell'utente ${selectedUser?.username}?`}
       />
     </Container>

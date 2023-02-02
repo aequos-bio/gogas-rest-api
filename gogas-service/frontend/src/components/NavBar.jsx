@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
@@ -15,14 +13,13 @@ import {
   AccountCircleSharp as AccountCircleIcon,
 } from '@material-ui/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import Jwt from 'jsonwebtoken';
 import { withSnackbar } from 'notistack';
-import moment from 'moment-timezone';
 import { apiGetJson } from '../utils/axios_utils';
 import { logout } from '../store/actions';
 import NavigationMenu from './NavigationMenu';
+import useJwt from './JwtHooks';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   appbar: {
     color: 'rgba(255,255,255,.87)',
   },
@@ -63,11 +60,12 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const open = Boolean(anchorEl);
   const [balance, setBalance] = useState(0);
-  const info = useSelector(state => state.info);
-  const authentication = useSelector(state => state.authentication);
+  const info = useSelector((state) => state.info);
+  const authentication = useSelector((state) => state.authentication);
   const dispatch = useDispatch();
+  const jwt = useJwt();
 
-  const handleMenu = event => {
+  const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -75,21 +73,10 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
     setAnchorEl(null);
   };
 
-  const jwt = useMemo(() => {
-    if (authentication.jwtToken) {
-      const j = Jwt.decode(authentication.jwtToken);
-      if (moment(j.exp * 1000).isBefore(moment())) {
-        j.expired = true;
-      }
-      return j;
-    }
-    return null;
-  }, [authentication]);
-
   useEffect(() => {
     if (!jwt || !jwt.id || jwt.expired) return;
     apiGetJson(`/api/accounting/user/${jwt.id}/balance`)
-      .then(b => {
+      .then((b) => {
         if (b.error) {
           enqueueSnackbar(`Caricamento del saldo: ${b.errorMessage}`, {
             variant: 'error',
@@ -98,10 +85,10 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
           setBalance(b);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           `Caricamento del saldo: ${err.debugMessage || err.errorMessage}`,
-          { variant: 'error' }
+          { variant: 'error' },
         );
       });
   }, [jwt, enqueueSnackbar]);
@@ -116,28 +103,28 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
   }, [history, jwt]);
   return (
     <>
-      <AppBar className={classes.appbar} position="fixed">
+      <AppBar className={classes.appbar} position='fixed'>
         <Toolbar>
           <IconButton
-            edge="start"
+            edge='start'
             className={classes.menuButton}
-            color="inherit"
-            aria-label="menu"
+            color='inherit'
+            aria-label='menu'
             onClick={() => setMenuOpen(true)}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h5" className={classes.title}>
+          <Typography variant='h5' className={classes.title}>
             {info['gas.nome'] || 'GoGas'}
           </Typography>
           {authentication && (
             <div className={classes.userbutton}>
               <IconButton
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
+                aria-label='account of current user'
+                aria-controls='menu-appbar'
+                aria-haspopup='true'
                 onClick={handleMenu}
-                color="inherit"
+                color='inherit'
               >
                 <AccountCircleIcon />
               </IconButton>
@@ -154,7 +141,7 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
               </div>
 
               <Menu
-                id="menu-appbar"
+                id='menu-appbar'
                 anchorEl={anchorEl}
                 anchorOrigin={{
                   vertical: 'top',
