@@ -23,7 +23,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { apiGetJson, apiDelete } from '../../utils/axios_utils';
 import EditTransactionDialog from './components/EditTransactionDialog';
 import ActionDialog from '../../components/ActionDialog';
@@ -87,7 +87,7 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
         setTransactions([]);
         setTotals({ accrediti: 0, addebiti: 0 });
       } else {
-        const tt = _.orderBy(t.data, 'date', 'desc');
+        const tt = orderBy(t.data, 'date', 'desc');
         let saldo = 0;
         let accrediti = 0;
         let addebiti = 0;

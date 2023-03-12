@@ -1,11 +1,9 @@
-/* eslint-disable no-constant-condition */
-/* eslint-disable react/no-array-index-key */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Container, Button } from '@material-ui/core';
 import { SaveAltSharp as SaveIcon } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import moment from 'moment-timezone';
 import Excel from 'exceljs';
 import { apiGetJson } from '../../utils/axios_utils';
@@ -16,7 +14,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
   const [loading, setLoading] = useState(false);
   const [userEntries, setUserEntries] = useState([]);
   const [gasEntries, setGasEntries] = useState([]);
-  const accounting = useSelector(state => state.accounting);
+  const accounting = useSelector((state) => state.accounting);
 
   const columns = [
     { label: 'Data', type: 'Date', alignment: 'Left', property: 'data' },
@@ -41,7 +39,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
     },
   ];
 
-  const checkDateFormat = data => {
+  const checkDateFormat = (data) => {
     return data.includes('/')
       ? moment(data, 'DD/MM/YYYY').format('YYYY-MM-DD')
       : data;
@@ -64,16 +62,16 @@ const GasAccounting = ({ enqueueSnackbar }) => {
         });
       } else {
         setUserEntries(
-          user.map(u => ({
+          user.map((u) => ({
             ...u,
             data: checkDateFormat(u.data),
-          }))
+          })),
         );
         setGasEntries(
-          gas.map(g => ({
+          gas.map((g) => ({
             ...g,
             data: checkDateFormat(g.data),
-          }))
+          })),
         );
       }
     });
@@ -84,7 +82,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
   }, [reload]);
 
   const rows = useMemo(() => {
-    const userRows = userEntries.map(e => {
+    const userRows = userEntries.map((e) => {
       // movimenti manuali registrati sui gasisti
       if (e.segno === '+') {
         // versamenti
@@ -108,7 +106,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
       };
     });
 
-    const gasRows = gasEntries.map(e => {
+    const gasRows = gasEntries.map((e) => {
       if (e.codicecausale) {
         // movimento manuale GAS
         return {
@@ -147,8 +145,8 @@ const GasAccounting = ({ enqueueSnackbar }) => {
       return null;
     });
 
-    const rr = _.orderBy(gasRows.concat(userRows), ['data'], ['asc']);
-    return rr.map(v => ({ value: v }));
+    const rr = orderBy(gasRows.concat(userRows), ['data'], ['asc']);
+    return rr.map((v) => ({ value: v }));
   }, [gasEntries, userEntries]);
 
   const exportXls = useCallback(() => {
@@ -163,7 +161,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
     }
 
     let rowNum = 2;
-    rows.forEach(row => {
+    rows.forEach((row) => {
       const valueRow = sh.getRow(rowNum);
       for (let c = 0; c < columns.length; c++) {
         valueRow.getCell(c + 1).value = row.value[columns[c].property];
@@ -176,7 +174,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
       .writeBuffer({
         base64: true,
       })
-      .then(buffer => {
+      .then((buffer) => {
         const base64 = buffer.toString('base64');
 
         const a = document.createElement('a');
@@ -195,7 +193,7 @@ const GasAccounting = ({ enqueueSnackbar }) => {
       <PageTitle
         title={`Situazione contabile del GAS - ${accounting.currentYear}`}
       >
-        <Button onClick={exportXls} variant="outlined" startIcon={<SaveIcon />}>
+        <Button onClick={exportXls} variant='outlined' startIcon={<SaveIcon />}>
           Esporta XLS
         </Button>
       </PageTitle>

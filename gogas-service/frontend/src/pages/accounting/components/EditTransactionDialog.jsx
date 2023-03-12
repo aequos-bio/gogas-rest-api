@@ -12,14 +12,14 @@ import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
 import { useSelector } from 'react-redux';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import moment from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
 import Select from 'react-select';
 import { withSnackbar } from 'notistack';
 import { apiGetJson, apiPost, apiPut } from '../../../utils/axios_utils';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   field: {
     marginBottom: theme.spacing(2),
   },
@@ -43,17 +43,17 @@ const EditTransactionDialog = ({
   const [users, setUsers] = useState([]);
   const [reasons, setReasons] = useState([]);
   const [refreshNeeded, setRefreshNeeded] = useState(false);
-  const info = useSelector(state => state.info);
+  const info = useSelector((state) => state.info);
   const sort = info['visualizzazione.utenti']
     ? info['visualizzazione.utenti']
     : 'NC';
 
   const userLabel = useCallback(
-    u => {
+    (u) => {
       const name =
         sort === 'NC' ? `${u.nome} ${u.cognome}` : `${u.cognome} ${u.nome}`;
       const disa = u.attivo ? null : (
-        <span className="fa fa-ban" style={{ color: 'red' }} />
+        <span className='fa fa-ban' style={{ color: 'red' }} />
       );
 
       return (
@@ -62,10 +62,10 @@ const EditTransactionDialog = ({
         </span>
       );
     },
-    [sort]
+    [sort],
   );
   const [_user, setUser] = useState(
-    user ? { value: user, label: userLabel(user) } : undefined
+    user ? { value: user, label: userLabel(user) } : undefined,
   );
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const EditTransactionDialog = ({
 
     if (transactionId) {
       apiGetJson(`/api/accounting/user/entry/${transactionId}`, {})
-        .then(t => {
+        .then((t) => {
           if (t.error) {
             enqueueSnackbar(t.errorMessage, { variant: 'error' });
           } else {
@@ -90,10 +90,10 @@ const EditTransactionDialog = ({
             setAmount(t.importo);
           }
         })
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar(
             err.response?.statusText || 'Errore nel caricamento del movimento',
-            { variant: 'error' }
+            { variant: 'error' },
           );
         });
     } else {
@@ -104,25 +104,25 @@ const EditTransactionDialog = ({
       setAmount(0);
     }
 
-    apiGetJson('/api/user/list', {}).then(uu => {
+    apiGetJson('/api/user/list', {}).then((uu) => {
       if (uu.error) {
         enqueueSnackbar(uu.errorMessage, { variant: 'error' });
       } else {
         setUsers(
-          _.orderBy(
+          orderBy(
             uu,
             [
               'attivo',
               sort === 'NC' ? 'nome' : 'cognome',
               sort === 'NC' ? 'cognome' : 'nome',
             ],
-            ['desc', 'asc', 'asc']
-          )
+            ['desc', 'asc', 'asc'],
+          ),
         );
       }
     });
 
-    apiGetJson('/api/accounting/reason/list', {}).then(rr => {
+    apiGetJson('/api/accounting/reason/list', {}).then((rr) => {
       if (rr.error) {
         enqueueSnackbar(rr.errorMessage, { variant: 'error' });
       } else {
@@ -136,14 +136,14 @@ const EditTransactionDialog = ({
   }, [_user, reason, date, description, amount]);
 
   const close = useCallback(
-    forcerefresh => {
+    (forcerefresh) => {
       onClose(refreshNeeded || forcerefresh);
     },
-    [refreshNeeded, onClose]
+    [refreshNeeded, onClose],
   );
 
   const save = useCallback(
-    contnue => {
+    (contnue) => {
       const params = {
         data: moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY'),
         idutente: _user.value.idUtente,
@@ -163,11 +163,11 @@ const EditTransactionDialog = ({
           close(true);
         }
       };
-      const catchFn = err => {
+      const catchFn = (err) => {
         enqueueSnackbar(
           err.response?.statusText ||
             'Errore nel salvataggio del movimento contabile',
-          { variant: 'error' }
+          { variant: 'error' },
         );
       };
 
@@ -193,21 +193,21 @@ const EditTransactionDialog = ({
       user,
       userLabel,
       enqueueSnackbar,
-    ]
+    ],
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
       <DialogTitle>Nuovo movimento</DialogTitle>
 
       <DialogContent className={classes.content}>
         <Select
           className={classes.field}
           menuPortalTarget={document.body}
-          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-          options={users.map(u => ({ value: u, label: userLabel(u) }))}
-          placeholder="Selezionare un utente"
-          onChange={u => setUser(u)}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+          options={users.map((u) => ({ value: u, label: userLabel(u) }))}
+          placeholder='Selezionare un utente'
+          onChange={(u) => setUser(u)}
           value={_user}
           isClearable
           isDisabled={user !== undefined}
@@ -216,65 +216,65 @@ const EditTransactionDialog = ({
         <MuiPickersUtilsProvider
           libInstance={moment}
           utils={MomentUtils}
-          locale="it"
+          locale='it'
         >
           <DatePicker
             className={classes.field}
             disableToolbar
-            variant="inline"
-            format="DD/MM/YYYY"
-            margin="dense"
-            id="date-picker-inline"
-            label="Data del movimento"
+            variant='inline'
+            format='DD/MM/YYYY'
+            margin='dense'
+            id='date-picker-inline'
+            label='Data del movimento'
             value={date ? moment(date, 'YYYY-MM-DD') : null}
             onChange={setDate}
             autoOk
-            inputVariant="outlined"
+            inputVariant='outlined'
           />
         </MuiPickersUtilsProvider>
 
         <Select
           className={classes.field}
           menuPortalTarget={document.body}
-          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-          options={reasons.map(r => ({ value: r, label: r.description }))}
-          placeholder="Selezionare una causale"
-          onChange={r => setReason(r)}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+          options={reasons.map((r) => ({ value: r, label: r.description }))}
+          placeholder='Selezionare una causale'
+          onChange={(r) => setReason(r)}
           value={reason}
           isClearable
         />
 
         <TextField
           className={classes.field}
-          label="Descrizione"
+          label='Descrizione'
           value={description}
-          variant="outlined"
-          size="small"
+          variant='outlined'
+          size='small'
           InputLabelProps={{
             shrink: true,
           }}
-          onChange={evt => setDescription(evt.target.value)}
+          onChange={(evt) => setDescription(evt.target.value)}
           fullWidth
         />
 
         <TextField
           className={classes.field}
-          label="Importo"
-          type="number"
-          variant="outlined"
-          size="small"
+          label='Importo'
+          type='number'
+          variant='outlined'
+          size='small'
           InputLabelProps={{
             shrink: true,
           }}
           InputProps={{
             endAdornment: (
-              <InputAdornment position="end">
+              <InputAdornment position='end'>
                 <EuroIcon className={classes.icon} />
               </InputAdornment>
             ),
           }}
           value={amount}
-          onChange={evt => setAmount(evt.target.value)}
+          onChange={(evt) => setAmount(evt.target.value)}
         />
       </DialogContent>
 
