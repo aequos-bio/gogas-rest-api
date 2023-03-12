@@ -1,6 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
 import Cookies from 'cookies-js';
-import moment from 'moment-timezone';
 import accountingReducer from './features/accounting.slice';
 import authenticationReducer from './features/authentication.slice';
 import infoReducer from './features/info.slice';
