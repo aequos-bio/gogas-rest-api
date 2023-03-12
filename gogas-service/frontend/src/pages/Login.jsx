@@ -5,9 +5,9 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Redirect } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import queryString from 'query-string';
-import { login } from '../store/actions';
 import Logo from '../logo_aequos.png';
 import useJwt from '../components/JwtHooks';
+import { login } from '../store/features/authentication.slice';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -41,7 +41,7 @@ const Login = ({ location, history }) => {
       e.preventDefault();
       const username = e.target.username.value;
       const password = e.target.password.value;
-      dispatch(login(username, password));
+      dispatch(login({ username, password }));
       history.push('/');
       return false;
     },

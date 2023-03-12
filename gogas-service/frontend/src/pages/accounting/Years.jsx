@@ -17,7 +17,7 @@ import { apiGetJson, apiPut, apiPost } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
 import ActionDialog from '../../components/ActionDialog';
-import { setAccountingYear } from '../../store/actions';
+import { setAccountingYear } from '../../store/features/accounting.slice';
 
 const Years = ({ enqueueSnackbar }) => {
   const [years, setYears] = useState([]);
