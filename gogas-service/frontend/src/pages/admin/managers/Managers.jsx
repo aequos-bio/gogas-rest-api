@@ -14,7 +14,7 @@ import {
 import { EditSharp as EditIcon } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import _ from 'lodash';
+import { sortBy } from 'lodash';
 import { apiGetJson } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
@@ -125,7 +125,7 @@ const Managers = ({ enqueueSnackbar }) => {
       <LoadingRow colSpan={3} />
     ) : (
       activeUsers.map((user) => {
-        const orderTypes = _.sortBy(managers[user.idUtente], (i) =>
+        const orderTypes = sortBy(managers[user.idUtente], (i) =>
           i.orderTypeName.toUpperCase(),
         );
         const sliceSize = Math.max(

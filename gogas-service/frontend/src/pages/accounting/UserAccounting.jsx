@@ -20,14 +20,14 @@ import {
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { apiGetJson } from '../../utils/axios_utils';
 import EditTransactionDialog from './components/EditTransactionDialog';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
 import ExportTypeSelectionDialog from './components/ExportTypeSelectionDialog';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
@@ -63,13 +63,13 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson('/api/useraccounting/userTotals', {}).then(tt => {
+    apiGetJson('/api/useraccounting/userTotals', {}).then((tt) => {
       setLoading(false);
       if (tt.error) {
         enqueueSnackbar(tt.errorMessage, { variant: 'error' });
       } else {
         let tot = 0;
-        tt.data.forEach(t => {
+        tt.data.forEach((t) => {
           tot += t.total;
         });
         setTotals(tt.data);
@@ -78,7 +78,7 @@ function UserAccounting({ history, enqueueSnackbar }) {
     });
   }, [enqueueSnackbar]);
 
-  const exportXls = useCallback(type => {
+  const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
 
     if (type === 'simple')
@@ -86,18 +86,18 @@ function UserAccounting({ history, enqueueSnackbar }) {
     else if (type === 'full')
       window.open(
         '/api/useraccounting/exportUserTotals?includeUsers=true',
-        '_blank'
+        '_blank',
       );
   }, []);
 
   const onCloseTransactionDlg = useCallback(
-    refresh => {
+    (refresh) => {
       setShowDlg(false);
       if (refresh) {
         reload();
       }
     },
-    [reload]
+    [reload],
   );
 
   useEffect(() => {
@@ -111,15 +111,15 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
     if (!totals) return null;
 
-    const tt = _.orderBy(
+    const tt = orderBy(
       totals,
       ['user.enabled', 'user.firstName', 'user.lastName'],
-      ['desc', 'asc', 'asc']
+      ['desc', 'asc', 'asc'],
     );
-    return tt.map(t => (
+    return tt.map((t) => (
       <TableRow key={`user-${t.user.id}`} hover>
         <TableCell className={classes.tdIcon}>
-          {t.user.enabled ? [] : <BlockIcon fontSize="small" />}
+          {t.user.enabled ? [] : <BlockIcon fontSize='small' />}
         </TableCell>
         <TableCell>{`${t.user.firstName} ${t.user.lastName}`}</TableCell>
         <TableCell
@@ -133,9 +133,9 @@ function UserAccounting({ history, enqueueSnackbar }) {
             onClick={() =>
               history.push(`/useraccountingdetails?userId=${t.user.id}`)
             }
-            size="small"
+            size='small'
           >
-            <EditIcon fontSize="small" />
+            <EditIcon fontSize='small' />
           </IconButton>
         </TableCell>
       </TableRow>
@@ -144,10 +144,10 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Situazione contabile utenti">
+      <PageTitle title='Situazione contabile utenti'>
         <Button
           onClick={() => setExportDlgOpen(true)}
-          variant="outlined"
+          variant='outlined'
           startIcon={<SaveIcon />}
         >
           Esporta XLS
@@ -156,14 +156,14 @@ function UserAccounting({ history, enqueueSnackbar }) {
 
       <Fab
         className={classes.fab}
-        color="secondary"
+        color='secondary'
         onClick={() => setShowDlg(true)}
       >
         <PlusIcon />
       </Fab>
 
       <TableContainer>
-        <Table size="small">
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell className={classes.tdIcon} />

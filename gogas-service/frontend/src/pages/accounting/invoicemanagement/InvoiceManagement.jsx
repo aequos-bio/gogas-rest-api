@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 /* eslint-disable no-nested-ternary */
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -21,7 +20,7 @@ import {
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import moment from 'moment-timezone';
 import { apiGetJson, apiGet } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
@@ -29,7 +28,7 @@ import LoadingRow from '../../../components/LoadingRow';
 import PaymentDialog from './PaymentDialog';
 import InvoiceDialog from './InvoiceDialog';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   tableContainer: {
     marginBottom: theme.spacing(2),
   },
@@ -64,12 +63,12 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
   const [selectedInvoice, setSelectedInvoice] = useState();
   const [showPayDlg, setShowPayDlg] = useState(false);
   const [showInvoiceDlg, setShowInvoiceDlg] = useState(false);
-  const accounting = useSelector(state => state.accounting);
+  const accounting = useSelector((state) => state.accounting);
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson(`/api/ordertype/accounting`, {}).then(accountingCodes => {
-      const aequos = accountingCodes.filter(a => a.id === 'aequos');
+    apiGetJson(`/api/ordertype/accounting`, {}).then((accountingCodes) => {
+      const aequos = accountingCodes.filter((a) => a.id === 'aequos');
       if (aequos.length) {
         setAequosAccountingCode(aequos[0].accountingCode);
       }
@@ -77,13 +76,13 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
 
     apiGetJson(
       `/api/accounting/gas/invoices/${accounting.currentYear}`,
-      {}
-    ).then(tt => {
+      {},
+    ).then((tt) => {
       setLoading(false);
       if (tt.error) {
         enqueueSnackbar(tt.errorMessage, { variant: 'error' });
       } else {
-        setEntries(_.orderBy(tt, ['invoiceDate']));
+        setEntries(orderBy(tt, ['invoiceDate']));
       }
     });
   }, [enqueueSnackbar, accounting]);
@@ -92,20 +91,20 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
     reload();
   }, [reload]);
 
-  const onPayInvoice = invoice => {
+  const onPayInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setShowPayDlg(true);
   };
 
   const onPayDialogClosed = useCallback(
-    needrefresh => {
+    (needrefresh) => {
       setShowPayDlg(false);
       setSelectedInvoice();
       if (needrefresh) {
         reload();
       }
     },
-    [reload]
+    [reload],
   );
 
   const onNewInvoice = () => {
@@ -113,36 +112,36 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
     setShowInvoiceDlg(true);
   };
 
-  const onEditInvoice = invoice => {
+  const onEditInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setShowInvoiceDlg(true);
   };
 
   const onInvoiceDialogClosed = useCallback(
-    needRefresh => {
+    (needRefresh) => {
       setShowInvoiceDlg(false);
       setSelectedInvoice();
       if (needRefresh) {
         reload();
       }
     },
-    [reload]
+    [reload],
   );
 
   const syncOrders = useCallback(() => {
     apiGet(
-      `api/accounting/gas/syncAequosOrdersWithoutInvoice/${accounting.currentYear}`
+      `api/accounting/gas/syncAequosOrdersWithoutInvoice/${accounting.currentYear}`,
     )
-      .then(response => {
+      .then((response) => {
         reload();
         enqueueSnackbar(
           `Sincronizzazione completata con successo, ${response.data.data} ordini aggiunti`,
           {
             variant: 'success',
-          }
+          },
         );
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(`Errore di sincronizzazione: ${err}`, {
           variant: 'error',
         });
@@ -177,18 +176,18 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
               {e.accountingCode === aequosAccountingCode ? null : (
                 <IconButton
                   onClick={() => onEditInvoice(e)}
-                  size="small"
-                  title="Modifica"
+                  size='small'
+                  title='Modifica'
                 >
-                  <EditIcon fontSize="small" />
+                  <EditIcon fontSize='small' />
                 </IconButton>
               )}
               <IconButton
                 onClick={() => onPayInvoice(e)}
-                size="small"
-                title="Pagamento"
+                size='small'
+                title='Pagamento'
               >
-                <PayIcon fontSize="small" />
+                <PayIcon fontSize='small' />
               </IconButton>
             </TableCell>
           </TableRow>
@@ -202,19 +201,19 @@ const InvoiceManagement = ({ enqueueSnackbar }) => {
       <PageTitle
         title={`Gestione fatture fornitori - ${accounting.currentYear}`}
       >
-        <Button type="button" variant="outlined" onClick={reload}>
+        <Button type='button' variant='outlined' onClick={reload}>
           Ricarica
         </Button>
-        <Button type="button" variant="outlined" onClick={syncOrders}>
+        <Button type='button' variant='outlined' onClick={syncOrders}>
           Sincronizza fatture Aequos
         </Button>
       </PageTitle>
 
-      <Fab className={classes.fab} color="secondary" onClick={onNewInvoice}>
+      <Fab className={classes.fab} color='secondary' onClick={onNewInvoice}>
         <PlusIcon />
       </Fab>
       <TableContainer className={classes.tableContainer}>
-        <Table size="small">
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>

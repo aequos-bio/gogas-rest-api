@@ -11,7 +11,7 @@ import {
   TableBody,
 } from '@material-ui/core';
 import { withSnackbar } from 'notistack';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import moment from 'moment-timezone';
 import { apiGetJson, apiPut, apiPost } from '../../utils/axios_utils';
 import PageTitle from '../../components/PageTitle';
@@ -56,7 +56,7 @@ const Years = ({ enqueueSnackbar }) => {
       if (yy.error) {
         enqueueSnackbar(yy.errorMessage, { variant: 'error' });
       } else {
-        setYears(_.orderBy(yy.data, 'year', 'desc'));
+        setYears(orderBy(yy.data, 'year', 'desc'));
         checkCurrentYear(yy.data);
       }
     });
