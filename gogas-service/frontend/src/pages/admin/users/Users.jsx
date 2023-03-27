@@ -8,7 +8,7 @@ import {
   Switch,
 } from '@material-ui/core';
 import { AddSharp as PlusIcon } from '@material-ui/icons';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
 import { apiGetJson, apiPut, apiDelete } from '../../../utils/axios_utils';
@@ -53,7 +53,7 @@ function Users({ enqueueSnackbar }) {
         enqueueSnackbar(uu.errorMessage, { variant: 'error' });
       } else {
         setUsers(
-          _.orderBy(
+          orderBy(
             uu,
             [
               'attivo',

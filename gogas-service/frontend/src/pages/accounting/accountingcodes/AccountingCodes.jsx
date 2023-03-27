@@ -12,13 +12,13 @@ import {
 import { EditSharp as EditIcon } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { apiGetJson } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import EditAccountingCodeDialog from './EditAccountingCodeDialog';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   tdButtons: {
     textAlign: 'center',
     minWidth: '44px',
@@ -40,16 +40,16 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson('/api/ordertype/accounting', {}).then(oo => {
+    apiGetJson('/api/ordertype/accounting', {}).then((oo) => {
       setLoading(false);
       if (oo.error) {
         enqueueSnackbar(oo.errorMessage, { variant: 'error' });
       } else {
         setOrderTypes(
-          _.orderBy(oo, [
-            o => (o.id === 'aequos' ? 'A' : 'Z'),
-            o => o.description,
-          ])
+          orderBy(oo, [
+            (o) => (o.id === 'aequos' ? 'A' : 'Z'),
+            (o) => o.description,
+          ]),
         );
       }
     });
@@ -60,16 +60,16 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
   }, [reload]);
 
   const dialogClosed = useCallback(
-    needrefresh => {
+    (needrefresh) => {
       setDialogOpen(false);
       if (needrefresh) {
         reload();
       }
     },
-    [reload]
+    [reload],
   );
 
-  const editAccountingCode = useCallback(orderType => {
+  const editAccountingCode = useCallback((orderType) => {
     setSelectedOrderType(orderType);
     setDialogOpen(true);
   }, []);
@@ -78,7 +78,7 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
     return loading ? (
       <LoadingRow colSpan={8} />
     ) : (
-      orderTypes.map(o => (
+      orderTypes.map((o) => (
         <TableRow>
           <TableCell>{o.description}</TableCell>
           <TableCell>{o.accountingCode}</TableCell>
@@ -94,10 +94,10 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
 
   return (
     <Container maxWidth={false}>
-      <PageTitle title="Gestione dei codici contabili" />
+      <PageTitle title='Gestione dei codici contabili' />
 
       <TableContainer>
-        <Table size="small">
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell>Tipo ordine</TableCell>

@@ -20,7 +20,7 @@ import {
   ClearSharp as CancelIcon,
 } from '@material-ui/icons';
 import { withSnackbar } from 'notistack';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   apiGetJson,
@@ -29,7 +29,7 @@ import {
   apiDelete,
 } from '../../../utils/axios_utils';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   item: {
     borderBottom: '1px solid #c0c0c0',
   },
@@ -53,8 +53,8 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
 
   const reload = useCallback(() => {
     if (orderTypeId) {
-      apiGetJson(`/api/category/list/${orderTypeId}`, {}).then(list => {
-        setCategories(_.orderBy(list, 'description'));
+      apiGetJson(`/api/category/list/${orderTypeId}`, {}).then((list) => {
+        setCategories(orderBy(list, 'description'));
       });
     }
   }, [orderTypeId]);
@@ -82,22 +82,22 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
         enqueueSnackbar('Nuova categoria creata', { variant: 'success' });
         reload();
       })
-      .catch(err => {
+      .catch((err) => {
         enqueueSnackbar(
           err.response?.statusText || 'Errore nella creazione della categoria',
-          { variant: 'error' }
+          { variant: 'error' },
         );
       });
   }, [enqueueSnackbar, selectedDescription, reload, orderTypeId]);
 
-  const editCategory = useCallback(category => {
+  const editCategory = useCallback((category) => {
     setSelectedId(category.id);
     setSelectedDescription(category.description);
     setMode('edit');
   }, []);
 
   const doEditCategory = useCallback(
-    category => {
+    (category) => {
       apiPut(`/api/category/${orderTypeId}`, {
         id: category.id,
         description: selectedDescription,
@@ -108,23 +108,23 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
           enqueueSnackbar('Categoria modificata', { variant: 'success' });
           reload();
         })
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar(
             err.response?.statusText || 'Errore nella modifica della categoria',
-            { variant: 'error' }
+            { variant: 'error' },
           );
         });
     },
-    [enqueueSnackbar, orderTypeId, selectedDescription, reload]
+    [enqueueSnackbar, orderTypeId, selectedDescription, reload],
   );
 
-  const deleteCategory = useCallback(category => {
+  const deleteCategory = useCallback((category) => {
     setSelectedId(category.id);
     setMode('delete');
   }, []);
 
   const doDeleteCategory = useCallback(
-    category => {
+    (category) => {
       apiDelete(`/api/category/${category.id}`)
         .then(() => {
           reload();
@@ -132,15 +132,15 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
           setSelectedId();
           enqueueSnackbar('Categora eliminata', { variant: 'success' });
         })
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar(
             err.response?.statusText ||
               "Errore nell'eliminazione della categoria",
-            { variant: 'error' }
+            { variant: 'error' },
           );
         });
     },
-    [enqueueSnackbar, reload]
+    [enqueueSnackbar, reload],
   );
 
   const reset = useCallback(() => {
@@ -150,19 +150,19 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
   }, []);
 
   const descriptionField = useCallback(
-    category => {
+    (category) => {
       if ((mode === 'edit' || mode === 'new') && category.id === selectedId) {
         return (
           <TextField
             label={mode === 'new' ? 'Nuova categoria' : 'Modifica categoria'}
             className={classes.textedit}
             value={selectedDescription}
-            variant="outlined"
-            size="small"
+            variant='outlined'
+            size='small'
             InputLabelProps={{
               shrink: true,
             }}
-            onChange={evt => {
+            onChange={(evt) => {
               setSelectedDescription(evt.target.value);
             }}
             autoFocus
@@ -180,20 +180,20 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
 
       return <span>{category.description}</span>;
     },
-    [mode, classes, selectedDescription, selectedId]
+    [mode, classes, selectedDescription, selectedId],
   );
 
   const buttons = useCallback(
-    category => {
+    (category) => {
       if (mode === 'new') {
         if (category.id === selectedId) {
           return (
             <>
               <IconButton onClick={() => doAddCategory()}>
-                <OkIcon fontSize="small" />
+                <OkIcon fontSize='small' />
               </IconButton>
               <IconButton onClick={reset}>
-                <CancelIcon fontSize="small" />
+                <CancelIcon fontSize='small' />
               </IconButton>
             </>
           );
@@ -206,10 +206,10 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
           return (
             <>
               <IconButton onClick={() => doEditCategory(category)}>
-                <OkIcon fontSize="small" />
+                <OkIcon fontSize='small' />
               </IconButton>
               <IconButton onClick={reset}>
-                <CancelIcon fontSize="small" />
+                <CancelIcon fontSize='small' />
               </IconButton>
             </>
           );
@@ -222,10 +222,10 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
           return (
             <>
               <IconButton onClick={() => doDeleteCategory(category)}>
-                <OkIcon fontSize="small" />
+                <OkIcon fontSize='small' />
               </IconButton>
               <IconButton onClick={reset}>
-                <CancelIcon fontSize="small" />
+                <CancelIcon fontSize='small' />
               </IconButton>
             </>
           );
@@ -236,10 +236,10 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
       return (
         <>
           <IconButton onClick={() => editCategory(category)}>
-            <EditIcon fontSize="small" />
+            <EditIcon fontSize='small' />
           </IconButton>
           <IconButton onClick={() => deleteCategory(category)}>
-            <DeleteIcon fontSize="small" />
+            <DeleteIcon fontSize='small' />
           </IconButton>
         </>
       );
@@ -253,10 +253,10 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
       doEditCategory,
       doDeleteCategory,
       reset,
-    ]
+    ],
   );
 
-  const items = categories.map(c => (
+  const items = categories.map((c) => (
     <ListItem className={classes.item} key={`category-${c.id}`}>
       <ListItemText>{descriptionField(c)}</ListItemText>
       <ListItemSecondaryAction>{buttons(c)}</ListItemSecondaryAction>
@@ -280,7 +280,7 @@ const CategoriesDialog = ({ open, orderTypeId, onClose, enqueueSnackbar }) => {
     ) : null;
 
   return (
-    <Dialog open={open} onClose={() => onClose()} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={() => onClose()} maxWidth='xs' fullWidth>
       <DialogTitle>Categorie</DialogTitle>
 
       <DialogContent className={classes.content}>

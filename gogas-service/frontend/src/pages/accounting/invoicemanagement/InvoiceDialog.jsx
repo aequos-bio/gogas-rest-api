@@ -18,13 +18,13 @@ import {
 import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import moment from 'moment-timezone';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import MomentUtils from '@date-io/moment';
 import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiGet, apiPost } from '../../../utils/axios_utils';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   label: {
     fontWeight: 'lighter',
   },
@@ -49,19 +49,19 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   const [amount, setAmount] = useState();
   const [orderIds, setOrderIds] = useState([]);
   const [paymentDate, setPaymentDate] = useState();
-  const accounting = useSelector(state => state.accounting);
+  const accounting = useSelector((state) => state.accounting);
 
   useEffect(() => {
     if (open) {
       apiGet(
-        `api/accounting/gas/ordersWithoutInvoice/${accounting.currentYear}`
-      ).then(oo => {
+        `api/accounting/gas/ordersWithoutInvoice/${accounting.currentYear}`,
+      ).then((oo) => {
         setOrders(
-          _.orderBy(
+          orderBy(
             oo.data,
-            [o => moment(o.dataconsegna, 'DD/MM/YYYY').toISOString()],
-            ['desc']
-          )
+            [(o) => moment(o.dataconsegna, 'DD/MM/YYYY').toISOString()],
+            ['desc'],
+          ),
         );
       });
     }
@@ -92,15 +92,15 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
       onClose(true);
     };
 
-    const catchFn = err => {
+    const catchFn = (err) => {
       enqueueSnackbar(
         err.response?.statusText || 'Errore nel salvataggio della fattura',
-        { variant: 'error' }
+        { variant: 'error' },
       );
     };
 
     const promises = [];
-    orderIds.forEach(orderId => {
+    orderIds.forEach((orderId) => {
       const params = {
         idDataOrdine: orderId,
         numeroFattura: number,
@@ -112,7 +112,7 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
         pagato: paymentDate !== undefined && paymentDate !== null,
       };
       promises.push(
-        apiPost(`/api/order/manage/${orderId}/invoice/data`, params)
+        apiPost(`/api/order/manage/${orderId}/invoice/data`, params),
       );
     });
 
@@ -125,14 +125,14 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
     onClose();
   }, [onClose]);
 
-  const selectOrder = useCallback(id => {
+  const selectOrder = useCallback((id) => {
     const ids = [];
     ids.push(id);
     setOrderIds(ids);
   }, []);
 
   const rows = useMemo(() => {
-    return orders.map(o => (
+    return orders.map((o) => (
       <TableRow
         key={`order-${o.id}`}
         className={orderIds.includes(o.id) ? classes.tableRowSelected : ''}
@@ -145,7 +145,7 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   }, [orders, orderIds, classes, selectOrder]);
 
   return (
-    <Dialog open={open} onClose={cancel} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={cancel} maxWidth='sm' fullWidth>
       <DialogTitle>{invoice ? 'Modifica' : 'Nuova'} fattura</DialogTitle>
 
       <DialogContent>
@@ -154,49 +154,49 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
             <MuiPickersUtilsProvider
               libInstance={moment}
               utils={MomentUtils}
-              locale="it"
+              locale='it'
             >
               <DatePicker
                 disableToolbar
-                variant="inline"
-                format="DD/MM/YYYY"
-                margin="dense"
-                id="date-picker-inline"
-                label="Data"
+                variant='inline'
+                format='DD/MM/YYYY'
+                margin='dense'
+                id='date-picker-inline'
+                label='Data'
                 value={date ? moment(date) : null}
                 onChange={setDate}
                 autoOk
-                inputVariant="outlined"
+                inputVariant='outlined'
               />
             </MuiPickersUtilsProvider>
           </Grid>
 
           <Grid item xs={12}>
             <TextField
-              label="Numero"
+              label='Numero'
               value={number}
-              size="small"
-              onChange={evt => setNumber(evt.target.value)}
-              variant="outlined"
+              size='small'
+              onChange={(evt) => setNumber(evt.target.value)}
+              variant='outlined'
             />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               className={classes.field}
-              label="Importo"
-              type="number"
-              size="small"
+              label='Importo'
+              type='number'
+              size='small'
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">
+                  <InputAdornment position='end'>
                     <EuroIcon className={classes.icon} />
                   </InputAdornment>
                 ),
               }}
               value={amount}
-              onChange={evt => setAmount(evt.target.value)}
-              variant="outlined"
+              onChange={(evt) => setAmount(evt.target.value)}
+              variant='outlined'
             />
           </Grid>
           <Grid item xs={12}>

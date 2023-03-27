@@ -14,9 +14,9 @@ import Years from './accounting/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
 import AccountingCodes from './accounting/accountingcodes/AccountingCodes';
 import Managers from './admin/managers/Managers';
-import { init } from '../store/actions';
 import PrivateRoute from '../components/PrivateRoute';
 import GasMovements from './accounting/movements/GasMovements';
+import { init } from '../store/features/info.slice';
 
 const privateRoutes = [
   { path: '/', component: Home },

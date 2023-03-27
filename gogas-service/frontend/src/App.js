@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from '@material-ui/core/styles';
 import { green as primary, amber as secondary } from '@material-ui/core/colors';
 import './style/app.css';
 import { Routes } from './pages/Routes';
-import { Store } from './store/store';
+import { store } from './store/store';
 
 const theme = createTheme({
   palette: {
@@ -20,7 +20,7 @@ const theme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <Provider store={Store}>
+      <Provider store={store}>
         <SnackbarProvider>
           <Routes />
         </SnackbarProvider>

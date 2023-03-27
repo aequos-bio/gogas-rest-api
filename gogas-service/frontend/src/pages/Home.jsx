@@ -10,7 +10,7 @@ import {
 } from '@material-ui/core';
 import { CheckSharp as CheckIcon } from '@material-ui/icons';
 import { green } from '@material-ui/core/colors';
-import _ from 'lodash';
+import { orderBy } from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiGetJson } from '../utils/axios_utils';
 import useJwt from '../components/JwtHooks';
@@ -30,7 +30,7 @@ const Home = () => {
   useEffect(() => {
     if (!jwt || !jwt.id || jwt.expired) return;
     apiGetJson('/api/order/user/open').then((orders) =>
-      setOpenOrders(_.orderBy(orders, (o) => o.userOrders.length, 'desc')),
+      setOpenOrders(orderBy(orders, (o) => o.userOrders.length, 'desc')),
     );
   }, [jwt]);
 
