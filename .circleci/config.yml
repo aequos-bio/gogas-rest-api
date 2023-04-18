@@ -11,6 +11,8 @@ jobs:
     steps:
       - checkout
       - run: mvn clean install
+      - store_test_results:
+          path: test-results
       - store_artifacts:
           path: /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar
           destination: gogas-service-1.0.jar
