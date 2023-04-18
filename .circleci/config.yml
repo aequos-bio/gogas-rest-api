@@ -28,7 +28,7 @@ jobs:
       - run:
           name: Deploy Over SSH
           command: |
-            scp /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
+            scp -i ~/.ssh/id_gastabien.accounting.aequos.bio /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
 workflows:
   maven_test:
     jobs:
