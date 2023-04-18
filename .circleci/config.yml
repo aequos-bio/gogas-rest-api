@@ -25,6 +25,7 @@ jobs:
       - store_artifacts:
           path: /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar
           destination: telegram-service-1.0.jar
+      - add_ssh_keys
       - run:
           name: Deploy Over SSH
           command: |
