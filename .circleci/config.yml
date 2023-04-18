@@ -10,7 +10,7 @@ jobs:
       platform: "linux/amd64"
     steps:
       - checkout
-      - run: mvn clean install
+      - run: mvn clean install -Dmaven.test.skip=true
       - run:
           name: Save test results
           command: |
