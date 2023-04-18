@@ -11,6 +11,7 @@ public class GoGasDatabaseContainer extends MSSQLServerContainer<GoGasDatabaseCo
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse("mcr.microsoft.com/mssql/server");
     private static final String IMAGE_VERSION = "2022-latest";
 
+
     private static GoGasDatabaseContainer container;
 
     static {
