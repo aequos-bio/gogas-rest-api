@@ -1,15 +1,13 @@
 version: 2.1
 orbs:
   maven: circleci/maven@1.4.0
-executors:
-  machine_executor_amd64:
+jobs:
+  build_and_save:
     machine:
       image: ubuntu-2204:2022.10.2
     environment:
       architecture: "amd64"
       platform: "linux/amd64"
-jobs:
-  build_and_save:
     steps:
       - checkout
       - run: mvn clean install
@@ -22,5 +20,4 @@ jobs:
 workflows:
   maven_test:
     jobs:
-      - build_and_save:
-          executor: machine_executor_amd64
+      - build_and_save
