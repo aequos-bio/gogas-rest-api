@@ -28,6 +28,10 @@ jobs:
       - run:
           name: Deploy Over SSH
           command: |
+            ls -la ~/.ssh
+      - run:
+          name: Deploy Over SSH
+          command: |
             scp -v -i ~/.ssh/id_rsa /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
 workflows:
   maven_test:
