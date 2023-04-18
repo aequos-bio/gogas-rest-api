@@ -25,6 +25,10 @@ jobs:
       - store_artifacts:
           path: /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar
           destination: telegram-service-1.0.jar
+      - run:
+          name: Deploy Over SSH
+          command: |
+            scp /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar $SSH_USER@$SSH_HOST:/gogas/tmp/
 workflows:
   maven_test:
     jobs:
