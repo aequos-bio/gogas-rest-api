@@ -30,7 +30,7 @@ jobs:
           name: x
           command: cat /home/circleci/.ssh/id_rsa_51c79b502b36531e540d972640be32e5
       - run:
-          name: Deploy Over SCP
+          name: Deploy over SCP
           command: |
             scp -v -B -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
 workflows:
