@@ -10,7 +10,7 @@ jobs:
       platform: "linux/amd64"
     steps:
       - checkout
-      - run: mvn clean install -Dmaven.test.skip=true
+      - run: mvn clean install
       - run:
           name: Save test results
           command: |
@@ -27,12 +27,10 @@ jobs:
           destination: telegram-service-1.0.jar
       - add_ssh_keys
       - run:
-          name: x
-          command: cat /home/circleci/.ssh/id_rsa_51c79b502b36531e540d972640be32e5
-      - run:
           name: Deploy over SCP
           command: |
-            scp -v -B -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
+            scp -v -B /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
+            scp -v -B /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
 workflows:
   maven_test:
     jobs:
