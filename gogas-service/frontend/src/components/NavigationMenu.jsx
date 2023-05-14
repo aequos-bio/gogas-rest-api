@@ -24,8 +24,8 @@ import {
 } from '@material-ui/icons';
 import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Logo from '../logo_aequos.png';
-import useJwt from './JwtHooks';
+import Logo from '../assets/logo_aequos.png';
+import useJwt from '../hooks/JwtHooks';
 
 const drawerWidth = '280px';
 const useStyles = makeStyles((theme) => ({
