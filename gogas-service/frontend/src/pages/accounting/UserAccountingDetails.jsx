@@ -29,7 +29,7 @@ import EditTransactionDialog from './components/EditTransactionDialog';
 import ActionDialog from '../../components/ActionDialog';
 import PageTitle from '../../components/PageTitle';
 import LoadingRow from '../../components/LoadingRow';
-import useJwt from '../../components/JwtHooks';
+import useJwt from '../../hooks/JwtHooks';
 
 const useStyles = makeStyles((theme) => ({
   fab: {

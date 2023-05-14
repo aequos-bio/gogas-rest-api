@@ -16,7 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { withSnackbar } from 'notistack';
 import { apiGetJson } from '../utils/axios_utils';
 import NavigationMenu from './NavigationMenu';
-import useJwt from './JwtHooks';
+import useJwt from '../hooks/JwtHooks';
 import { logout } from '../store/features/authentication.slice';
 
 const useStyles = makeStyles((theme) => ({
