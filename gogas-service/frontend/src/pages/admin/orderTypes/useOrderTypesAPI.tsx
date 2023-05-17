@@ -21,7 +21,7 @@ export const useOrderTypesAPI = () => {
     });
   }, [enqueueSnackbar]);
 
-  const getOrderType = (id: string): Promise<OrderType | undefined> => {
+  const getOrderType = useCallback((id: string): Promise<OrderType | undefined> => {
     return apiGetJson<OrderType | ErrorResponse>(`/api/ordertype/${id}`, {})
       .then((orderType) => {
         if (typeof orderType === 'object' && (orderType as ErrorResponse).error) {
@@ -31,9 +31,9 @@ export const useOrderTypesAPI = () => {
           return orderType as OrderType;
         }
       });
-  }
+  }, []);
 
-  const saveOrderType = (orderType: OrderType): Promise<void> => {
+  const saveOrderType = useCallback((orderType: OrderType): Promise<void> => {
     return apiPost('/api/ordertype', orderType)
       .then(() => {
         enqueueSnackbar(
@@ -47,9 +47,9 @@ export const useOrderTypesAPI = () => {
           { variant: 'error' }
         );
       });
-  }
+  }, []);
 
-  const updateOrderType = (id: string, orderType: OrderType): Promise<void> => {
+  const updateOrderType = useCallback((id: string, orderType: OrderType): Promise<void> => {
     return apiPut(`/api/ordertype/${id}`, orderType)
       .then(() => {
         enqueueSnackbar(
@@ -63,9 +63,9 @@ export const useOrderTypesAPI = () => {
           { variant: 'error' }
         );
       });
-  }
+  }, []);
 
-  const deleteOrderType = (id: string): Promise<void> => {
+  const deleteOrderType = useCallback((id: string): Promise<void> => {
     return apiDelete(`/api/ordertype/${id}`)
       .then(() => {
         reload();
@@ -78,9 +78,9 @@ export const useOrderTypesAPI = () => {
           { variant: 'error' }
         );
       });
-  }
+  }, []);
 
-  const syncWithAequos = () => {
+  const syncWithAequos = useCallback(() => {
     return apiPut('/api/ordertype/aequos/sync')
       .then(() => {
         enqueueSnackbar('Sincronizzazione completata con successo', {
@@ -93,7 +93,7 @@ export const useOrderTypesAPI = () => {
           variant: 'error',
         });
       });
-  }
+  }, []);
 
   return {
     orderTypes, loading, reload, getOrderType, saveOrderType, updateOrderType, deleteOrderType, syncWithAequos
