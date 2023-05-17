@@ -43,7 +43,7 @@ interface Props {
   onEditManagers: (id: string) => void;
 }
 
-const OrderTypeItem: React.FC<Props> = ({
+const OrderTypeRow: React.FC<Props> = ({
   orderType,
   onEdit,
   onDelete,
@@ -145,4 +145,4 @@ const OrderTypeItem: React.FC<Props> = ({
   );
 };
 
-export default OrderTypeItem;
+export default OrderTypeRow;

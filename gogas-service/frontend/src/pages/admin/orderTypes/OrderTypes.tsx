@@ -20,7 +20,7 @@ import PageTitle from '../../../components/PageTitle';
 import ActionDialog from '../../../components/ActionDialog';
 import LoadingRow from '../../../components/LoadingRow';
 import EditOrderTypeDialog from './EditOrderTypeDialog';
-import OrderTypeItem from './OrderTypeItem';
+import OrderTypeRow from './OrderTypeRow';
 import CategoriesDialog from './CategoriesDialog';
 import { useOrderTypesAPI } from './useOrderTypesAPI';
 
@@ -120,7 +120,7 @@ const OrderTypes: React.FC = () => {
       <LoadingRow colSpan={8} />
     ) : (
       orderTypes.map(o => (
-        <OrderTypeItem
+        <OrderTypeRow
           key={`ordertype-${o.id}`}
           orderType={o}
           onEdit={editOrderType}

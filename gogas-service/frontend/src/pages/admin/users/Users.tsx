@@ -10,7 +10,7 @@ import {
 import { AddSharp as PlusIcon } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import PageTitle from '../../../components/PageTitle';
-import UserItem from './UserItem';
+import UserRow from './UserRow';
 import LoadingListItem from '../../../components/LoadingListItem';
 import UserEditDialog from './UserEditDialog';
 import ActionDialog from '../../../components/ActionDialog';
@@ -134,7 +134,7 @@ const Users: React.FC = () => {
     return users
       .filter((u) => !hideDisabled || u.attivo)
       .map((user) => (
-        <UserItem
+        <UserRow
           key={user.idUtente}
           user={user}
           friend={mapReference(user.idReferente, users, sort)}

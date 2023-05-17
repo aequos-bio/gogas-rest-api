@@ -57,7 +57,7 @@ interface Props {
   onDisable: (user: User) => void;
 }
 
-const UserItem: React.FC<Props> = ({
+const UserRow: React.FC<Props> = ({
   user,
   friend,
   sort,
@@ -203,4 +203,4 @@ const UserItem: React.FC<Props> = ({
   );
 };
 
-export default UserItem;
+export default UserRow;

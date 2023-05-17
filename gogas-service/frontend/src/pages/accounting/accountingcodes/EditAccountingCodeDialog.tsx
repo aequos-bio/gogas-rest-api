@@ -10,6 +10,15 @@ import {
 import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiPut } from '../../../utils/axios_utils';
+import { AccountingCode } from './types';
+import { useAccountingCodesAPI } from './useAccountingCodesAPI';
+
+interface Props {
+  open: boolean;
+  onClose: (refresh: boolean) => void;
+  orderTypeId?: string;
+  code?: string;
+}
 
 const useStyles = makeStyles(theme => ({
   content: {
@@ -28,48 +37,32 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const EditAccountingCodeDialog = ({
+const EditAccountingCodeDialog: React.FC<Props> = ({
   open,
   onClose,
   orderTypeId,
   code,
-  enqueueSnackbar,
 }) => {
   const classes = useStyles();
   const [accountingCode, setAccountingCode] = useState(code);
+  const { saveAccountingCode } = useAccountingCodesAPI();
 
   useEffect(() => {
     if (open) setAccountingCode(code);
   }, [open, code]);
 
   const canSave = useMemo(() => {
-    return accountingCode !== undefined && accountingCode !== '';
-  }, [accountingCode]);
+    return !!orderTypeId && !!accountingCode;
+  }, [orderTypeId, accountingCode]);
 
   const save = useCallback(() => {
-    const params = {
-      accountingCode,
-    };
-
-    const thenFn = () => {
-      enqueueSnackbar(`Codice contabile modificato'}`, { variant: 'success' });
+    saveAccountingCode(orderTypeId as string, accountingCode as string).then(() => {
       onClose(true);
-    };
-
-    const catchFn = err => {
-      enqueueSnackbar(
-        err.response?.statusText || 'Errore nel salvataggio della causale',
-        { variant: 'error' }
-      );
-    };
-
-    apiPut(`/api/ordertype/${orderTypeId}/accounting`, params)
-      .then(thenFn)
-      .catch(catchFn);
-  }, [orderTypeId, accountingCode, enqueueSnackbar, onClose]);
+    })
+  }, [orderTypeId, accountingCode, onClose]);
 
   return (
-    <Dialog open={open} onClose={() => onClose()} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={() => onClose(false)} maxWidth="xs" fullWidth>
       <DialogTitle>Modifica codice contabile</DialogTitle>
 
       <DialogContent className={classes.content}>
@@ -90,10 +83,10 @@ const EditAccountingCodeDialog = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={() => onClose()} autoFocus>
+        <Button onClick={() => onClose(false)} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => save(false)} disabled={!canSave}>
+        <Button onClick={() => save()} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>
@@ -101,4 +94,4 @@ const EditAccountingCodeDialog = ({
   );
 };
 
-export default withSnackbar(EditAccountingCodeDialog);
+export default EditAccountingCodeDialog;
