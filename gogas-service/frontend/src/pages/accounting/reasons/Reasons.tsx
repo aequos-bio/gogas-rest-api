@@ -16,14 +16,13 @@ import {
   AddSharp as PlusIcon,
   RemoveSharp as RemoveIcon,
 } from '@material-ui/icons';
-import { orderBy } from 'lodash';
 import { makeStyles } from '@material-ui/core/styles';
-import { withSnackbar } from 'notistack';
-import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
+import { apiDelete } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import EditReasonDialog from './EditReasonDialog';
 import ActionDialog from '../../../components/ActionDialog';
 import Loadingrow from '../../../components/LoadingRow';
+import { useReasonsAPI } from './useReasonsAPI';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
@@ -42,39 +41,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Reasons = ({ enqueueSnackbar }) => {
+const Reasons: React.FC = () => {
   const classes = useStyles();
-  const [reasons, setReasons] = useState([]);
-  const [dialogMode, setDialogMode] = useState(false);
-  const [selectedCode, setSelectedCode] = useState();
+  const [dialogMode, setDialogMode] = useState<false | 'new' | 'edit'>(false);
+  const [selectedCode, setSelectedCode] = useState<string | undefined>(undefined);
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const reload = useCallback(() => {
-    setLoading(true);
-    apiGetJson('/api/accounting/reason/list', {})
-      .then((rr) => {
-        setLoading(false);
-        if (rr.error) {
-          enqueueSnackbar(rr.errorMessage, { variant: 'error' });
-        } else {
-          setReasons(orderBy(rr, ['reasonCode'], ['asc']));
-        }
-      })
-      .catch((err) => {
-        enqueueSnackbar(
-          err.response?.statusText || 'Errore nel caricamento delle causali',
-          { variant: 'error' },
-        );
-      });
-  }, [enqueueSnackbar]);
+  const { reasons, reload, loading, deleteReason } = useReasonsAPI();
 
   useEffect(() => {
     reload();
   }, [reload]);
 
   const newReason = useCallback(() => {
-    setSelectedCode();
+    setSelectedCode(undefined);
     setDialogMode('new');
   }, []);
 
@@ -83,7 +62,7 @@ const Reasons = ({ enqueueSnackbar }) => {
     setDialogMode('edit');
   }, []);
 
-  const deleteReason = useCallback((reasonCode) => {
+  const _deleteReason = useCallback((reasonCode) => {
     setSelectedCode(reasonCode);
     setDeleteDlgOpen(true);
   }, []);
@@ -98,9 +77,9 @@ const Reasons = ({ enqueueSnackbar }) => {
         <TableCell>{r.description}</TableCell>
         <TableCell>
           {r.sign === '+' ? (
-            <PlusIcon size='small' />
+            <PlusIcon fontSize='small' />
           ) : (
-            <RemoveIcon size='small' />
+            <RemoveIcon fontSize='small' />
           )}
         </TableCell>
         <TableCell>{r.accountingCode}</TableCell>
@@ -114,7 +93,7 @@ const Reasons = ({ enqueueSnackbar }) => {
           </IconButton>
           <IconButton
             onClick={() => {
-              deleteReason(r.reasonCode);
+              _deleteReason(r.reasonCode);
             }}
           >
             <DeleteIcon fontSize='small' />
@@ -122,7 +101,7 @@ const Reasons = ({ enqueueSnackbar }) => {
         </TableCell>
       </TableRow>
     ));
-  }, [editReason, deleteReason, classes, reasons, loading]);
+  }, [editReason, _deleteReason, classes, reasons, loading]);
 
   const dialogClosed = useCallback(
     (refresh) => {
@@ -133,19 +112,11 @@ const Reasons = ({ enqueueSnackbar }) => {
   );
 
   const doDeleteReason = useCallback(() => {
-    apiDelete(`/api/accounting/reason/${selectedCode}`)
-      .then(() => {
-        setDeleteDlgOpen(false);
-        reload();
-        enqueueSnackbar('Causale eliminata', { variant: 'success' });
-      })
-      .catch((err) => {
-        enqueueSnackbar(
-          err.response?.statusText || "Errore nell'eliminazione della causale",
-          { variant: 'error' },
-        );
-      });
-  }, [enqueueSnackbar, selectedCode, reload]);
+    if (!selectedCode) return;
+    deleteReason(selectedCode).then(() => {
+      setDeleteDlgOpen(false);
+    })
+  }, [selectedCode, reload]);
 
   return (
     <Container maxWidth={false}>
@@ -188,4 +159,4 @@ const Reasons = ({ enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(Reasons);
+export default Reasons;

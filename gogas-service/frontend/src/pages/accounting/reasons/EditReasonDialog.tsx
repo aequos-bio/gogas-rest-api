@@ -12,9 +12,8 @@ import {
   RadioGroup,
   Radio,
 } from '@material-ui/core';
-import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiGetJson, apiPost } from '../../../utils/axios_utils';
+import { useReasonsAPI } from './useReasonsAPI';
 
 const useStyles = makeStyles(theme => ({
   field: {
@@ -28,61 +27,46 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
+interface Props {
+  mode: false | 'edit' | 'new';
+  onClose: (refresh: boolean) => void;
+  reasonCode?: string;
+}
+
+const EditReasonDialog: React.FC<Props> = ({ mode, onClose, reasonCode }) => {
   const classes = useStyles();
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
-  const [sign, setSign] = useState('+');
+  const [sign, setSign] = useState<'+' | '-'>('+');
   const [accountingCode, setAccountingCode] = useState('');
+  const { getReason, saveReason } = useReasonsAPI();
 
   useEffect(() => {
     if (reasonCode) {
-      apiGetJson(`/api/accounting/reason/${reasonCode}`, {})
-        .then(rr => {
-          if (rr.error) {
-            enqueueSnackbar(rr.errorMessage, { variant: 'error' });
-          } else {
-            setCode(rr.reasonCode);
-            setDescription(rr.description);
-            setSign(rr.sign);
-            setAccountingCode(rr.accountingCode || '');
-          }
-        })
-        .catch(err => {
-          enqueueSnackbar(
-            err.response?.statusText || 'Errore nel caricamento delle causali',
-            { variant: 'error' }
-          );
-        });
+      getReason(reasonCode).then((reason) => {
+        setCode(reason?.reasonCode || '');
+        setDescription(reason?.description || '');
+        setSign(reason?.sign || '+');
+        setAccountingCode(reason?.accountingCode || '');
+      })
     } else {
       setCode('');
       setDescription('');
       setSign('+');
       setAccountingCode('');
     }
-  }, [reasonCode, enqueueSnackbar]);
+  }, [reasonCode]);
 
   const save = useCallback(() => {
-    apiPost('/api/accounting/reason', {
+    saveReason({
       reasonCode: code,
       description,
       sign,
       accountingCode,
-    })
-      .then(() => {
-        enqueueSnackbar(
-          `Causale ${mode === 'new' ? 'salvata' : 'modificata'}`,
-          { variant: 'success' }
-        );
-        onClose(true);
-      })
-      .catch(err => {
-        enqueueSnackbar(
-          err.response?.statusText || 'Errore nel salvataggio della causale',
-          { variant: 'error' }
-        );
-      });
-  }, [mode, code, description, sign, accountingCode, enqueueSnackbar, onClose]);
+    }, mode).then(() => {
+      onClose(true);
+    });
+  }, [mode, code, description, sign, accountingCode, onClose]);
 
   const canSave = useMemo(() => {
     let ok = true;
@@ -101,13 +85,13 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
   return (
     <Dialog
       open={mode !== false}
-      onClose={() => onClose()}
+      onClose={() => onClose(false)}
       maxWidth="xs"
       fullWidth
     >
       <DialogTitle>{mode === 'new' ? 'Nuova' : 'Modifica'} causale</DialogTitle>
 
-      <DialogContent className={classes.content}>
+      <DialogContent>
         <TextField
           className={classes.field}
           label="Codice"
@@ -146,7 +130,7 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
           <RadioGroup
             name="sign"
             value={sign}
-            onChange={evt => setSign(evt.target.value)}
+            onChange={evt => setSign(evt.target.value as ('+' | '-'))}
             className={classes.radiogrp}
           >
             <FormControlLabel
@@ -182,7 +166,7 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
         <Button onClick={() => onClose(false)} autoFocus>
           Annulla
         </Button>
-        <Button onClick={() => save(false)} disabled={!canSave}>
+        <Button onClick={() => save()} disabled={!canSave}>
           Salva
         </Button>
       </DialogActions>
@@ -190,4 +174,4 @@ const EditReasonDialog = ({ mode, onClose, reasonCode, enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(EditReasonDialog);
+export default EditReasonDialog;

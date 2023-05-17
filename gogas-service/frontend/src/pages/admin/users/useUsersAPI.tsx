@@ -32,7 +32,7 @@ export const useUsersAPI = (sort: string) => {
     });
   }, [sort, enqueueSnackbar]);
 
-  const deleteUser = (id: string): Promise<void> => {
+  const deleteUser = useCallback((id: string): Promise<void> => {
     return apiDelete(`/api/user/${id}`)
       .then(() => {
         enqueueSnackbar('Utente eliminato', { variant: 'success' });
@@ -48,9 +48,9 @@ export const useUsersAPI = (sort: string) => {
           },
         );
       });
-  }
+  }, [enqueueSnackbar]);
 
-  const enableUser = (user: User): Promise<void> => {
+  const enableUser = useCallback((user: User): Promise<void> => {
     return apiPut(`/api/user/${user.idUtente}`, { ...user, attivo: true })
       .then(() => {
         enqueueSnackbar('Utente abilitato', { variant: 'success' });
@@ -64,10 +64,9 @@ export const useUsersAPI = (sort: string) => {
           { variant: 'error' },
         );
       });
+  }, [enqueueSnackbar]);
 
-  }
-
-  const disableUser = (user: User): Promise<void> => {
+  const disableUser = useCallback((user: User): Promise<void> => {
     return apiPut(`/api/user/${user.idUtente}`, { ...user, attivo: false })
       .then(() => {
         enqueueSnackbar('Utente disabilitato', { variant: 'success' });
@@ -81,10 +80,9 @@ export const useUsersAPI = (sort: string) => {
           { variant: 'error' },
         );
       });
+  }, [enqueueSnackbar]);
 
-  }
-
-  const resetPassword = (id: string): Promise<void> => {
+  const resetPassword = useCallback((id: string): Promise<void> => {
     return apiPut(`/api/user/${id}/password/reset`)
       .then(() => {
         enqueueSnackbar("La password dell'utente è stata resettata", {
@@ -100,7 +98,7 @@ export const useUsersAPI = (sort: string) => {
           { variant: 'error' },
         );
       });
-  }
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
     reload();

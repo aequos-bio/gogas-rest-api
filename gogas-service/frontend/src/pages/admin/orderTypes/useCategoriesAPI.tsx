@@ -21,7 +21,7 @@ export const useCategoriesAPI = (orderTypeId?: string) => {
     }
   }, [orderTypeId]);
 
-  const createCategory = (description: string): Promise<void> => {
+  const createCategory = useCallback((description: string): Promise<void> => {
     return apiPost(`/api/category/${orderTypeId}`, description)
       .then(() => {
         enqueueSnackbar('Nuova categoria creata', { variant: 'success' });
@@ -33,10 +33,9 @@ export const useCategoriesAPI = (orderTypeId?: string) => {
           { variant: 'error' },
         );
       });
+  }, []);
 
-  }
-
-  const updateCategory = (id: string, description: string): Promise<void> => {
+  const updateCategory = useCallback((id: string, description: string): Promise<void> => {
     return apiPut(`/api/category/${orderTypeId}`, {
       id,
       description,
@@ -51,9 +50,9 @@ export const useCategoriesAPI = (orderTypeId?: string) => {
           { variant: 'error' },
         );
       });
-  };
+  }, []);
 
-  const deleteCategory = (category: Category): Promise<void> => {
+  const deleteCategory = useCallback((category: Category): Promise<void> => {
     return apiDelete(`/api/category/${category.id}`)
       .then(() => {
         reload();
@@ -66,7 +65,7 @@ export const useCategoriesAPI = (orderTypeId?: string) => {
           { variant: 'error' },
         );
       });
-  };
+  }, []);
 
   return { categories, reload, createCategory, updateCategory, deleteCategory }
 }

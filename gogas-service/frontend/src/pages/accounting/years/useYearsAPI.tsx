@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import moment from 'moment-timezone';
 import { Year } from "./types";
 import { apiGetJson, apiPost, apiPut } from "../../../utils/axios_utils";
@@ -15,7 +15,6 @@ export const useYearsAPI = () => {
     const currentYear = Number.parseInt(moment().format('YYYY'), 10);
     const existing = _years.filter((y) => y.year === currentYear);
     if (!existing.length) {
-      // eslint-disable-next-line no-restricted-globals
       const result = confirm(
         `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`,
       );
@@ -25,7 +24,6 @@ export const useYearsAPI = () => {
             enqueueSnackbar((y as ErrorResponse).errorMessage, { variant: 'error' });
           } else {
             alert(`Creato nuovo anno contabile ${y.data.data.year}`);
-            // eslint-disable-next-line no-use-before-define
             reload();
           }
         });
@@ -33,7 +31,7 @@ export const useYearsAPI = () => {
     }
   };
 
-  const reload = () => {
+  const reload = useCallback(() => {
     setLoading(true);
     apiGetJson<{ data: Year[] } | ErrorResponse>('/api/year/all', {}).then((yy) => {
       setLoading(false);
@@ -44,9 +42,9 @@ export const useYearsAPI = () => {
         checkCurrentYear((yy as { data: Year[] }).data);
       }
     });
-  };
+  }, []);
 
-  const closeYear = (year: number) => {
+  const closeYear = useCallback((year: number) => {
     return apiPut(`/api/year/close/${year}`)
       .then(() => {
         reload();
@@ -59,8 +57,7 @@ export const useYearsAPI = () => {
           { variant: 'error' },
         );
       });
-
-  }
+  }, []);
 
   return { years, loading, reload, closeYear }
 }
