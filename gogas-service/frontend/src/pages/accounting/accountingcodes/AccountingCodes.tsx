@@ -9,14 +9,15 @@ import {
   TableCell,
   IconButton,
 } from '@material-ui/core';
-import { EditSharp as EditIcon } from '@material-ui/icons';
-import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
 import { orderBy } from 'lodash';
 import { apiGetJson } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import EditAccountingCodeDialog from './EditAccountingCodeDialog';
+import AccountingCodeRow from './AccountingcodeRow';
+import { useAccountingCodesAPI } from './useAccountingCodesAPI';
+import { AccountingCode } from './types';
 
 const useStyles = makeStyles((theme) => ({
   tdButtons: {
@@ -31,29 +32,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const AccountingCodes = ({ enqueueSnackbar }) => {
+const AccountingCodes: React.FC = () => {
   const classes = useStyles();
-  const [orderTypes, setOrderTypes] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedOrderType, setSelectedOrderType] = useState();
-
-  const reload = useCallback(() => {
-    setLoading(true);
-    apiGetJson('/api/ordertype/accounting', {}).then((oo) => {
-      setLoading(false);
-      if (oo.error) {
-        enqueueSnackbar(oo.errorMessage, { variant: 'error' });
-      } else {
-        setOrderTypes(
-          orderBy(oo, [
-            (o) => (o.id === 'aequos' ? 'A' : 'Z'),
-            (o) => o.description,
-          ]),
-        );
-      }
-    });
-  }, [enqueueSnackbar]);
+  const [selectedAccountingCode, setSelectedAccountingCode] = useState<AccountingCode | undefined>(undefined);
+  const { accountingCodes, loading, reload } = useAccountingCodesAPI();
 
   useEffect(() => {
     reload();
@@ -70,7 +53,7 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
   );
 
   const editAccountingCode = useCallback((orderType) => {
-    setSelectedOrderType(orderType);
+    setSelectedAccountingCode(orderType);
     setDialogOpen(true);
   }, []);
 
@@ -78,19 +61,11 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
     return loading ? (
       <LoadingRow colSpan={8} />
     ) : (
-      orderTypes.map((o) => (
-        <TableRow>
-          <TableCell>{o.description}</TableCell>
-          <TableCell>{o.accountingCode}</TableCell>
-          <TableCell>
-            <IconButton onClick={() => editAccountingCode(o)}>
-              <EditIcon />
-            </IconButton>
-          </TableCell>
-        </TableRow>
+      accountingCodes.map((accountingCode) => (
+        <AccountingCodeRow key={`accountingCode-${accountingCode.id}`} accountingCode={accountingCode} onEdit={() => editAccountingCode(accountingCode)} />
       ))
     );
-  }, [loading, orderTypes, editAccountingCode]);
+  }, [loading, accountingCodes, editAccountingCode]);
 
   return (
     <Container maxWidth={false}>
@@ -112,11 +87,11 @@ const AccountingCodes = ({ enqueueSnackbar }) => {
       <EditAccountingCodeDialog
         open={dialogOpen}
         onClose={dialogClosed}
-        code={selectedOrderType?.accountingCode}
-        orderTypeId={selectedOrderType?.id}
+        code={selectedAccountingCode?.accountingCode}
+        orderTypeId={selectedAccountingCode?.id}
       />
     </Container>
   );
 };
 
-export default withSnackbar(AccountingCodes);
+export default AccountingCodes;

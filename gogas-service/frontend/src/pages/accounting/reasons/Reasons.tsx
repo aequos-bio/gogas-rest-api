@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Container,
   Fab,
-  IconButton,
   TableContainer,
   Table,
   TableHead,
@@ -11,33 +10,21 @@ import {
   TableBody,
 } from '@material-ui/core';
 import {
-  EditSharp as EditIcon,
-  DeleteSharp as DeleteIcon,
   AddSharp as PlusIcon,
-  RemoveSharp as RemoveIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiDelete } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import EditReasonDialog from './EditReasonDialog';
 import ActionDialog from '../../../components/ActionDialog';
 import Loadingrow from '../../../components/LoadingRow';
 import { useReasonsAPI } from './useReasonsAPI';
+import ReasonRow from './ReasonRow';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
     position: 'fixed',
     bottom: theme.spacing(2),
     right: theme.spacing(2),
-  },
-  tdIcon: {
-    color: 'red',
-    textAlign: 'center',
-    width: '30px',
-  },
-  tdButtons: {
-    fontSize: '130%',
-    textAlign: 'center',
   },
 }));
 
@@ -71,37 +58,14 @@ const Reasons: React.FC = () => {
     if (loading) {
       return <Loadingrow colSpan={5} />;
     }
-    return reasons.map((r) => (
-      <TableRow key={`reason-${r.reasonCode}`} hover>
-        <TableCell>{r.reasonCode}</TableCell>
-        <TableCell>{r.description}</TableCell>
-        <TableCell>
-          {r.sign === '+' ? (
-            <PlusIcon fontSize='small' />
-          ) : (
-            <RemoveIcon fontSize='small' />
-          )}
-        </TableCell>
-        <TableCell>{r.accountingCode}</TableCell>
-        <TableCell className={classes.tdButtons}>
-          <IconButton
-            onClick={() => {
-              editReason(r.reasonCode);
-            }}
-          >
-            <EditIcon fontSize='small' />
-          </IconButton>
-          <IconButton
-            onClick={() => {
-              _deleteReason(r.reasonCode);
-            }}
-          >
-            <DeleteIcon fontSize='small' />
-          </IconButton>
-        </TableCell>
-      </TableRow>
+    return reasons.map((r, index) => (
+      <ReasonRow key={`reason-${index}`} reason={r} onEdit={() => {
+        editReason(r.reasonCode);
+      }} onDelete={() => {
+        _deleteReason(r.reasonCode);
+      }} />
     ));
-  }, [editReason, _deleteReason, classes, reasons, loading]);
+  }, [editReason, _deleteReason, loading]);
 
   const dialogClosed = useCallback(
     (refresh) => {
