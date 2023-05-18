@@ -20,12 +20,12 @@ import {
   LockSharp as CloedIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { withSnackbar } from 'notistack';
+import { useSnackbar, withSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
 import { orderBy } from 'lodash';
 import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
-import EditTransactionDialog from '../components/EditTransactionDialog';
+import EditUserMovementDialog from './EditUserMovementDialog';
 import ActionDialog from '../../../components/ActionDialog';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccountingDetail({ location, enqueueSnackbar }) {
+function UserAccountingDetail({ location }) {
   const classes = useStyles();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
@@ -68,6 +68,7 @@ function UserAccountingDetail({ location, enqueueSnackbar }) {
   const [years, setYears] = useState({});
   const [loading, setLoading] = useState(false);
   const jwt = useJwt();
+  const {enqueueSnackbar} = useSnackbar();
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -388,7 +389,7 @@ function UserAccountingDetail({ location, enqueueSnackbar }) {
         </Table>
       </TableContainer>
 
-      <EditTransactionDialog
+      <EditUserMovementDialog
         user={user}
         open={showDlg}
         onClose={dialogClosed}
@@ -406,4 +407,4 @@ function UserAccountingDetail({ location, enqueueSnackbar }) {
   );
 }
 
-export default withSnackbar(UserAccountingDetail);
+export default UserAccountingDetail;

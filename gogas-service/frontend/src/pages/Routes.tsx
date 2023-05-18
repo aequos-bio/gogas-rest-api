@@ -7,7 +7,7 @@ import Users from './admin/users/Users';
 import Reasons from './accounting/reasons/Reasons';
 import GasAccounting from './accounting/gasaccounting/GasAccounting';
 import InvoiceManagement from './accounting/invoicemanagement/InvoiceManagement';
-import UserAccounting from './accounting/useraccounting/UserAccounting';
+import UserAccountingTotals from './accounting/useraccountingtotals/UserAccountingTotals';
 import UserAccountingDetail from './accounting/useraccountingdetail/UserAccountingDetail';
 import Years from './accounting/years/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
@@ -24,7 +24,7 @@ const privateRoutes = [
   { path: '/gasaccounting', component: GasAccounting },
   { path: '/gasmovements', component: GasMovements },
   { path: '/invoices', component: InvoiceManagement },
-  { path: '/useraccounting', component: UserAccounting },
+  { path: '/useraccounting', component: UserAccountingTotals },
   { path: '/useraccountingdetails', component: UserAccountingDetail },
   { path: '/users', component: Users },
   { path: '/reasons', component: Reasons },
