@@ -5,16 +5,16 @@ import NavBar from '../components/NavBar';
 import Login from './login/Login';
 import Users from './admin/users/Users';
 import Reasons from './accounting/reasons/Reasons';
-import GasAccounting from './accounting/GasAccounting';
+import GasAccounting from './accounting/gasaccounting/GasAccounting';
 import InvoiceManagement from './accounting/invoicemanagement/InvoiceManagement';
-import UserAccounting from './accounting/UserAccounting';
-import UserAccountingDetails from './accounting/UserAccountingDetails';
+import UserAccounting from './accounting/useraccounting/UserAccounting';
+import UserAccountingDetail from './accounting/useraccountingdetail/UserAccountingDetail';
 import Years from './accounting/years/Years';
 import OrderTypes from './admin/orderTypes/OrderTypes';
 import AccountingCodes from './accounting/accountingcodes/AccountingCodes';
 import Managers from './admin/managers/Managers';
 import PrivateRoute from '../components/PrivateRoute';
-import GasMovements from './accounting/movements/GasMovements';
+import GasMovements from './accounting/gasmovements/GasMovements';
 import { init } from '../store/features/info.slice';
 import { RootState, useAppDispatch } from '../store/store';
 
@@ -25,7 +25,7 @@ const privateRoutes = [
   { path: '/gasmovements', component: GasMovements },
   { path: '/invoices', component: InvoiceManagement },
   { path: '/useraccounting', component: UserAccounting },
-  { path: '/useraccountingdetails', component: UserAccountingDetails },
+  { path: '/useraccountingdetails', component: UserAccountingDetail },
   { path: '/users', component: Users },
   { path: '/reasons', component: Reasons },
   { path: '/ordertypes', component: OrderTypes },

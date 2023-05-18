@@ -21,11 +21,11 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import { withSnackbar } from 'notistack';
 import { orderBy } from 'lodash';
-import { apiGetJson } from '../../utils/axios_utils';
-import EditTransactionDialog from './components/EditTransactionDialog';
-import PageTitle from '../../components/PageTitle';
-import LoadingRow from '../../components/LoadingRow';
-import ExportTypeSelectionDialog from './components/ExportTypeSelectionDialog';
+import { apiGetJson } from '../../../utils/axios_utils';
+import EditTransactionDialog from '../components/EditTransactionDialog';
+import PageTitle from '../../../components/PageTitle';
+import LoadingRow from '../../../components/LoadingRow';
+import ExportTypeSelectionDialog from '../components/ExportTypeSelectionDialog';
 
 const useStyles = makeStyles((theme) => ({
   fab: {

@@ -24,12 +24,12 @@ import { withSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
 import { orderBy } from 'lodash';
-import { apiGetJson, apiDelete } from '../../utils/axios_utils';
-import EditTransactionDialog from './components/EditTransactionDialog';
-import ActionDialog from '../../components/ActionDialog';
-import PageTitle from '../../components/PageTitle';
-import LoadingRow from '../../components/LoadingRow';
-import useJwt from '../../hooks/JwtHooks';
+import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
+import EditTransactionDialog from '../components/EditTransactionDialog';
+import ActionDialog from '../../../components/ActionDialog';
+import PageTitle from '../../../components/PageTitle';
+import LoadingRow from '../../../components/LoadingRow';
+import useJwt from '../../../hooks/JwtHooks';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccountingDetails({ location, enqueueSnackbar }) {
+function UserAccountingDetail({ location, enqueueSnackbar }) {
   const classes = useStyles();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
@@ -406,4 +406,4 @@ function UserAccountingDetails({ location, enqueueSnackbar }) {
   );
 }
 
-export default withSnackbar(UserAccountingDetails);
+export default withSnackbar(UserAccountingDetail);
