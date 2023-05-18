@@ -1,7 +1,11 @@
 import React from "react";
 import { TableRow, TableCell, CircularProgress } from "@material-ui/core";
 
-const LoadingRow = ({ colSpan }) => {
+interface Props {
+  colSpan: number;
+}
+
+const LoadingRow: React.FC<Props> = ({ colSpan }) => {
   return (
     <TableRow>
       <TableCell

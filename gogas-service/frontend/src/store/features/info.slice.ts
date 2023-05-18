@@ -16,7 +16,9 @@ export const infoSlice = createSlice({
   initialState,
   reducers: {
     setInfo: (state, action) => {
-      state = action.payload;
+      Object.keys(action.payload).forEach(key => {
+        state[key as keyof InfoState] = action.payload[key];
+      })
       if (action.payload && action.payload['gas.nome'])
         document.title = action.payload['gas.nome'] || 'GoGas';
     },
@@ -24,7 +26,7 @@ export const infoSlice = createSlice({
 });
 
 export const init = () => (dispatch: AppDispatch) => {
-  apiGetJson('/info')
+  apiGetJson<InfoState>('/info')
     .then((infoJson) => {
       dispatch(setInfo(infoJson));
     })

@@ -15,7 +15,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { withSnackbar } from 'notistack';
 import { apiGetJson } from '../utils/axios_utils';
-import NavigationMenu from './NavigationMenu';
+import NavigationMenu from './navigationmenu/NavigationMenu';
 import useJwt from '../hooks/JwtHooks';
 import { logout } from '../store/features/authentication.slice';
 
