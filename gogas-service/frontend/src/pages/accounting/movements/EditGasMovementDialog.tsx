@@ -15,10 +15,12 @@ import {
 import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
-import moment from 'moment-timezone';
-import { withSnackbar } from 'notistack';
+import moment, { Moment } from 'moment-timezone';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiGetJson, apiPost, apiPut } from '../../../utils/axios_utils';
+import { GasMovement, GasMovementView } from './types';
+import { useReasonsAPI } from '../reasons/useReasonsAPI';
+import { useGasMovementsAPI } from './useGasMovementsAPI';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 
 moment.locale('it');
 
@@ -35,33 +37,30 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const EditGasMovementDialog = ({
+interface Props {
+  open: boolean;
+  onClose: (refresh: boolean) => void;
+  movement?: GasMovementView;
+}
+
+const EditGasMovementDialog: React.FC<Props> = ({
   open,
   onClose,
   movement,
-  enqueueSnackbar,
 }) => {
   const classes = useStyles();
-  const [id, setId] = useState();
-  const [date, setDate] = useState();
-  const [reason, setReason] = useState();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState(0);
-  const [reasons, setReasons] = useState([]);
+  const [id, setId] = useState<string | undefined>(undefined);
+  const [date, setDate] = useState<string | undefined>(undefined);
+  const [reason, setReason] = useState<string | undefined>(undefined);
+  const [description, setDescription] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
   const [refreshNeeded, setRefreshNeeded] = useState(false);
-
-  useEffect(() => {
-    apiGetJson('/api/accounting/reason/list', {}).then(rr => {
-      if (rr.error) {
-        enqueueSnackbar(rr.errorMessage, { variant: 'error' });
-      } else {
-        setReasons(rr);
-      }
-    });
-  }, [enqueueSnackbar]);
+  const { reasons, reload } = useReasonsAPI();
+  const { insertGasMovement, updateGasMovement } = useGasMovementsAPI();
 
   useEffect(() => {
     if (!open) return;
+    reload();
 
     if (movement) {
       setId(movement.id);
@@ -70,9 +69,9 @@ const EditGasMovementDialog = ({
       setDescription(movement.descrizione);
       setAmount(movement.importo);
     } else {
-      setId();
-      setReason(null);
-      setDate();
+      setId(undefined);
+      setReason(undefined);
+      setDate(undefined);
       setDescription('');
       setAmount(0);
     }
@@ -95,46 +94,40 @@ const EditGasMovementDialog = ({
 
   const save = useCallback(
     contnue => {
-      const params = {
+      const params: GasMovement = {
         data: moment(date, 'YYYY-MM-DD').format('DD/MM/YYYY'),
         codicecausale: reason,
         descrizione: description,
         importo: amount,
       };
-      const thenFn = () => {
-        enqueueSnackbar('Movimento salvato', { variant: 'success' });
-        if (contnue) {
-          setRefreshNeeded(true);
-          setAmount(0);
-        } else {
-          close(true);
-        }
-      };
-      const catchFn = err => {
-        enqueueSnackbar(
-          err.response?.statusText ||
-            'Errore nel salvataggio del movimento contabile',
-          { variant: 'error' }
-        );
-      };
       if (id) {
-        apiPut(`/api/accounting/gas/entry/${id}`, params)
-          .then(thenFn)
-          .catch(catchFn);
+        insertGasMovement(id, params).then(() => {
+          if (contnue) {
+            setRefreshNeeded(true);
+            setAmount(0);
+          } else {
+            close(true);
+          }
+        })
       } else {
-        apiPost('/api/accounting/gas/entry', params)
-          .then(thenFn)
-          .catch(catchFn);
+        updateGasMovement(params).then(() => {
+          if (contnue) {
+            setRefreshNeeded(true);
+            setAmount(0);
+          } else {
+            close(true);
+          }
+        })
       }
     },
-    [close, id, date, reason, description, amount, enqueueSnackbar]
+    [close, id, date, reason, description, amount]
   );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>{movement ? 'Modifica' : 'Nuovo'} movimento</DialogTitle>
 
-      <DialogContent className={classes.content}>
+      <DialogContent>
         <MuiPickersUtilsProvider
           libInstance={moment}
           utils={MomentUtils}
@@ -149,7 +142,7 @@ const EditGasMovementDialog = ({
             id="date-picker-inline"
             label="Data del movimento"
             value={date ? moment(date, 'YYYY-MM-DD') : null}
-            onChange={setDate}
+            onChange={(date: MaterialUiPickersDate) => { setDate((date as Moment).format('YYYY-MM-DD')) }}
             autoOk
             inputVariant="outlined"
             disableFuture
@@ -163,7 +156,7 @@ const EditGasMovementDialog = ({
           <Select
             labelId="reason-label"
             value={reason}
-            onChange={evt => setReason(evt.target.value)}
+            onChange={evt => setReason(evt.target.value as string)}
             margin="dense"
           >
             {reasons.map(r => (
@@ -204,12 +197,12 @@ const EditGasMovementDialog = ({
             ),
           }}
           value={amount}
-          onChange={evt => setAmount(evt.target.value)}
+          onChange={evt => setAmount(evt.target.value as unknown as number)}
         />
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={() => close()} autoFocus>
+        <Button onClick={() => close(false)} autoFocus>
           Annulla
         </Button>
         {movement ? null : (
@@ -225,4 +218,4 @@ const EditGasMovementDialog = ({
   );
 };
 
-export default withSnackbar(EditGasMovementDialog);
+export default EditGasMovementDialog;
