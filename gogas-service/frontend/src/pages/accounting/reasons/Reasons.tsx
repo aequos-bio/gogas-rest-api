@@ -65,7 +65,7 @@ const Reasons: React.FC = () => {
         _deleteReason(r.reasonCode);
       }} />
     ));
-  }, [editReason, _deleteReason, loading]);
+  }, [reasons, editReason, _deleteReason, loading]);
 
   const dialogClosed = useCallback(
     (refresh) => {
