@@ -3,7 +3,6 @@ import {
   Container,
   Fab,
   Button,
-  IconButton,
   TableContainer,
   Table,
   TableHead,
@@ -13,19 +12,17 @@ import {
   TableBody,
 } from '@material-ui/core';
 import {
-  ArrowForwardIosSharp as EditIcon,
-  BlockSharp as BlockIcon,
   AddSharp as PlusIcon,
   SaveAltSharp as SaveIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { withSnackbar } from 'notistack';
-import { orderBy } from 'lodash';
-import { apiGetJson } from '../../../utils/axios_utils';
-import EditTransactionDialog from '../components/EditTransactionDialog';
+import EditUserMovementDialog from '../useraccountingdetail/EditUserMovementDialog';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import ExportTypeSelectionDialog from '../components/ExportTypeSelectionDialog';
+import { useHistory } from 'react-router';
+import UserAccountingTotalRow from './UserAccountingTotalRow';
+import { useUserAccountingTotalsAPI } from './useUserAccountingTotalsAPI';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
@@ -53,30 +50,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccounting({ history, enqueueSnackbar }) {
+function UserAccountingTotals() {
   const classes = useStyles();
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [totals, setTotals] = useState([]);
   const [showDlg, setShowDlg] = useState(false);
   const [exportDlgOpen, setExportDlgOpen] = useState(false);
-
-  const reload = useCallback(() => {
-    setLoading(true);
-    apiGetJson('/api/useraccounting/userTotals', {}).then((tt) => {
-      setLoading(false);
-      if (tt.error) {
-        enqueueSnackbar(tt.errorMessage, { variant: 'error' });
-      } else {
-        let tot = 0;
-        tt.data.forEach((t) => {
-          tot += t.total;
-        });
-        setTotals(tt.data);
-        setTotal(tot);
-      }
-    });
-  }, [enqueueSnackbar]);
+  const history = useHistory();
+  const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI();
 
   const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
@@ -109,38 +88,12 @@ function UserAccounting({ history, enqueueSnackbar }) {
       return <LoadingRow colSpan={4} />;
     }
 
-    if (!totals) return null;
-
-    const tt = orderBy(
-      totals,
-      ['user.enabled', 'user.firstName', 'user.lastName'],
-      ['desc', 'asc', 'asc'],
-    );
-    return tt.map((t) => (
-      <TableRow key={`user-${t.user.id}`} hover>
-        <TableCell className={classes.tdIcon}>
-          {t.user.enabled ? [] : <BlockIcon fontSize='small' />}
-        </TableCell>
-        <TableCell>{`${t.user.firstName} ${t.user.lastName}`}</TableCell>
-        <TableCell
-          className={classes.tdAmount}
-          style={{ color: t.total < 0 ? 'red' : 'inheried' }}
-        >
-          {t.total.toFixed(2)}
-        </TableCell>
-        <TableCell className={classes.tdLink}>
-          <IconButton
-            onClick={() =>
-              history.push(`/useraccountingdetails?userId=${t.user.id}`)
-            }
-            size='small'
-          >
-            <EditIcon fontSize='small' />
-          </IconButton>
-        </TableCell>
-      </TableRow>
+    return userTotals.map((userTotal) => (
+      <UserAccountingTotalRow userTotal={userTotal} onOpenDetail={(userId) => {
+        history.push(`/useraccountingdetails?userId=${userId}`)
+      }} />
     ));
-  }, [totals, history, classes, loading]);
+  }, [userTotals, history, classes, loading]);
 
   return (
     <Container maxWidth={false}>
@@ -198,9 +151,9 @@ function UserAccounting({ history, enqueueSnackbar }) {
         onCancel={() => setExportDlgOpen(false)}
         onExport={exportXls}
       />
-      <EditTransactionDialog open={showDlg} onClose={onCloseTransactionDlg} />
+      <EditUserMovementDialog open={showDlg} onClose={onCloseTransactionDlg} />
     </Container>
   );
 }
 
-export default withSnackbar(UserAccounting);
+export default UserAccountingTotals;

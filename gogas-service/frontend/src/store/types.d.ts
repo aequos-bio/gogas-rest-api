@@ -33,3 +33,7 @@ export interface ErrorResponse {
   error: any;
   errorMessage: string;
 }
+
+export interface DataResponse<T> extends ErrorResponse {
+  data: T;
+}
