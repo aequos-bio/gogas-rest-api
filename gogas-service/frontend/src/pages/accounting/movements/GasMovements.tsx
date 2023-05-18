@@ -1,43 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { withSnackbar } from 'notistack';
 import { Container } from '@material-ui/core';
-import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
-import DataTable from '../../../components/DataTable';
+import DataTable, { Column } from '../../../components/DataTable';
 import ActionDialog from '../../../components/ActionDialog';
 import EditGasMovementDialog from './EditGasMovementDialog';
+import { useAppSelector } from '../../../store/store';
+import { useGasMovementsAPI } from './useGasMovementsAPI';
+import { GasMovementView } from './types';
 
-const GasMovements = ({ enqueueSnackbar }) => {
-  const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState([]);
+const GasMovements: React.FC = () => {
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
-  const [selectedMovement, setSelectedMovement] = useState();
+  const [selectedMovement, setSelectedMovement] = useState<GasMovementView | undefined>();
   const [showDlg, setShowDlg] = useState(false);
-  const accounting = useSelector(state => state.accounting);
-
-  const reload = useCallback(() => {
-    setLoading(true);
-    apiGetJson('/api/accounting/gas/entry/list', {
-      dateFrom: `01/01/${accounting.currentYear}`,
-      dateTo: `31/12/${accounting.currentYear}`,
-    }).then(vv => {
-      setLoading(false);
-      if (vv.error) {
-        enqueueSnackbar(vv.errorMessage, {
-          variant: 'error',
-        });
-      } else {
-        setRows(vv);
-      }
-    });
-  }, [enqueueSnackbar, accounting]);
+  const { gasMovements, loading, reload, deleteGasMovement } = useGasMovementsAPI();
+  const accounting = useAppSelector(state => state.accounting);
 
   useEffect(() => {
     reload();
   }, [reload]);
 
-  const columns = [
+  const columns: Column[] = [
     { label: 'Data', type: 'Date', alignment: 'Left', property: 'data' },
     {
       label: 'Causale',
@@ -54,12 +36,13 @@ const GasMovements = ({ enqueueSnackbar }) => {
     {
       label: 'Importo',
       type: 'Amount',
+      alignment: 'Right',
       property: 'importo',
     },
   ];
 
   const addMovement = useCallback(() => {
-    setSelectedMovement();
+    setSelectedMovement(undefined);
     setShowDlg(true);
   }, []);
 
@@ -74,19 +57,12 @@ const GasMovements = ({ enqueueSnackbar }) => {
   }, []);
 
   const doDeleteMovement = useCallback(() => {
-    apiDelete(`/api/accounting/gas/entry/${selectedMovement.id}`)
-      .then(() => {
-        setSelectedMovement();
-        setDeleteDlgOpen(false);
-        enqueueSnackbar('Movimento eliminato', { variant: 'success' });
-        reload();
-      })
-      .catch(err => {
-        enqueueSnackbar(`Impossibile eliminare il movimento: ${err}`, {
-          variant: 'error',
-        });
-      });
-  }, [enqueueSnackbar, reload, selectedMovement]);
+    if (!selectedMovement || !selectedMovement.id) return undefined;
+    deleteGasMovement(selectedMovement.id).then(() => {
+      setSelectedMovement(undefined);
+      setDeleteDlgOpen(false);
+    });
+  }, [reload, selectedMovement]);
 
   const editDialogClosed = useCallback(
     refreshdata => {
@@ -106,9 +82,11 @@ const GasMovements = ({ enqueueSnackbar }) => {
           canDelete: true,
           canAdd: true,
           pagination: false,
+          showHeader: true,
+          showFooter: false,
         }}
         columns={columns}
-        rows={rows.map(v => ({ value: v }))}
+        rows={gasMovements.map(movement => ({ value: movement }))}
         loading={loading}
         onAdd={addMovement}
         onEdit={editMovement}
@@ -132,4 +110,4 @@ const GasMovements = ({ enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(GasMovements);
+export default GasMovements;

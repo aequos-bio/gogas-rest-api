@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import React, { useMemo, useCallback, useState } from 'react';
 import {
   Fab,
@@ -20,24 +19,23 @@ import { makeStyles } from '@material-ui/core/styles';
 import moment from 'moment-timezone';
 import LoadingRow from './LoadingRow';
 
-/*
-const default_column = {
-  label: 'col.header',
-  type: 'String', // String, Date, DateTime, Time, Number, Amount, Icon
-  alignment: 'Left',
-  property: '',
-};
+export interface Column {
+  label: string;
+  type: 'String' | 'Date' | 'DateTime' | 'Time' | 'Number' | 'Amount' | 'Icon';
+  alignment: 'Left' | 'Center' | 'Right';
+  property: string;
+}
 
-const default_row = {
-  value: null,
-  canEdit: true,
-  canDelete: true,
-  customCommands: [],
-};
-*/
+export interface Settings {
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdd: boolean;
+  showHeader: boolean;
+  showFooter: boolean;
+  pagination: boolean;
+}
 
-// eslint-disable-next-line camelcase
-const default_settings = {
+const default_settings: Settings = {
   canEdit: true,
   canDelete: true,
   canAdd: true,
@@ -74,7 +72,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const DataTable = ({
+interface Props {
+  columns: Column[],
+  rows: { value: any }[],
+  settings: Settings;
+  loading: boolean;
+  onAdd: () => void;
+  onEdit: (value: any) => void;
+  onDelete: (value: any) => void;
+}
+
+const DataTable: React.FC<Props> = ({
   columns,
   rows,
   settings = default_settings,
@@ -89,12 +97,12 @@ const DataTable = ({
     settings.pagination ? 10 : 999999
   );
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: any, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = event => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (event: any) => {
+    setRowsPerPage(parseInt(event.target.value as string, 10));
     setPage(0);
   };
 
@@ -134,7 +142,7 @@ const DataTable = ({
       );
     });
     if (settings.canEdit || settings.canDelete) {
-      hh.push(<TableCell className={classes.cellCommands} />);
+      hh.push(<TableCell key='header-commands' className={classes.cellCommands} />);
     }
     return hh;
   }, [columns, cellClasses, settings, classes]);
@@ -248,7 +256,7 @@ const DataTable = ({
           component="div"
           count={rows.length}
           page={page}
-          onChangePage={handleChangePage}
+          onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
           onChangeRowsPerPage={handleChangeRowsPerPage}
           backIconButtonText="Pagina precedente"
