@@ -10,7 +10,7 @@ import { useHistory } from 'react-router-dom';
 import Logo from '../../assets/logo_aequos.png';
 import useJwt from '../../hooks/JwtHooks';
 import { menuItems } from './menuConfiguration';
-import MenuChapter from './Menuchapter';
+import MenuChapter from './MenuChapter';
 
 const drawerWidth = '280px';
 const useStyles = makeStyles((theme) => ({
@@ -72,10 +72,10 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
       <div className={classes.menu}>
         {jwt ? (
           menuItems.map((menuChapter, i) => (
-            <>
-              <MenuChapter key={`manuchapter-${i}`} chapter={menuChapter} onMenuClick={menuClick} />
-              <Divider key={`divider-${i}`} />
-            </>
+            <div key={`manuchapter-${i}`} >
+              <MenuChapter chapter={menuChapter} onMenuClick={menuClick} />
+              <Divider />
+            </div>
           ))
         ) : <></>
         }
