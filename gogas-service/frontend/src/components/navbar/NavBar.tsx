@@ -12,12 +12,12 @@ import {
   MenuSharp as MenuIcon,
   AccountCircleSharp as AccountCircleIcon,
 } from '@material-ui/icons';
-import { useSelector, useDispatch } from 'react-redux';
-import { withSnackbar } from 'notistack';
-import { apiGetJson } from '../utils/axios_utils';
-import NavigationMenu from './navigationmenu/NavigationMenu';
-import useJwt from '../hooks/JwtHooks';
-import { logout } from '../store/features/authentication.slice';
+import NavigationMenu from '../navigationmenu/NavigationMenu';
+import useJwt from '../../hooks/JwtHooks';
+import { logout } from '../../store/features/authentication.slice';
+import { useHistory } from 'react-router-dom';
+import { useUserBalanceAPI } from './useUserBalanceAPI';
+import { useAppDispatch, useAppSelector } from '../../store/store';
 
 const useStyles = makeStyles((theme) => ({
   appbar: {
@@ -54,18 +54,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const NavBar = ({ history, enqueueSnackbar, ...props }) => {
+const NavBar: React.FC = () => {
   const classes = useStyles();
+  const history = useHistory();
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const open = Boolean(anchorEl);
-  const [balance, setBalance] = useState(0);
-  const info = useSelector((state) => state.info);
-  const authentication = useSelector((state) => state.authentication);
-  const dispatch = useDispatch();
+  const { balance } = useUserBalanceAPI();
+  const info = useAppSelector((state) => state.info);
+  const authentication = useAppSelector((state) => state.authentication);
+  const dispatch = useAppDispatch();
   const jwt = useJwt();
 
-  const handleMenu = (event) => {
+  const handleMenu = (event: any) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -73,25 +74,6 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
     setAnchorEl(null);
   };
 
-  useEffect(() => {
-    if (!jwt || !jwt.id || jwt.expired) return;
-    apiGetJson(`/api/accounting/user/${jwt.id}/balance`)
-      .then((b) => {
-        if (b.error) {
-          enqueueSnackbar(`Caricamento del saldo: ${b.errorMessage}`, {
-            variant: 'error',
-          });
-        } else {
-          setBalance(b);
-        }
-      })
-      .catch((err) => {
-        enqueueSnackbar(
-          `Caricamento del saldo: ${err.debugMessage || err.errorMessage}`,
-          { variant: 'error' },
-        );
-      });
-  }, [jwt, enqueueSnackbar]);
 
   const disconnect = useCallback(() => {
     dispatch(logout());
@@ -99,8 +81,10 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
   }, [history, dispatch]);
 
   const openBalanceDetail = useCallback(() => {
+    if (!jwt) return;
     history.push(`/userAccountingDetails?userId=${jwt.id}`);
   }, [history, jwt]);
+
   return (
     <>
       <AppBar className={classes.appbar} position='fixed'>
@@ -131,9 +115,8 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
               <div className={classes.username}>
                 <span>{jwt ? `${jwt.firstname} ${jwt.lastname}` : ''}</span>
                 <span
-                  className={`${classes.balance} ${
-                    balance && balance < 0 ? classes.balanceRed : null
-                  }`}
+                  className={`${classes.balance} ${balance && balance < 0 ? classes.balanceRed : null
+                    }`}
                   onClick={openBalanceDetail}
                 >
                   Saldo {balance || '0.00'} €
@@ -168,4 +151,4 @@ const NavBar = ({ history, enqueueSnackbar, ...props }) => {
   );
 };
 
-export default withSnackbar(NavBar);
+export default NavBar;

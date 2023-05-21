@@ -8,7 +8,13 @@ import {
   DialogActions
 } from '@material-ui/core';
 
-const ExportTypeSelectionDialog = ({open, onCancel, onExport}) => {
+interface Props {
+  open: boolean;
+  onCancel: () => void;
+  onExport: (type: 'simple' | 'full') => void;
+}
+
+const ExportTypeSelectionDialog: React.FC<Props> = ({ open, onCancel, onExport }) => {
   return (
     <Dialog open={open} onClose={onCancel}>
       <DialogTitle>
@@ -20,7 +26,7 @@ const ExportTypeSelectionDialog = ({open, onCancel, onExport}) => {
           Selezionare il tipo di esportazione
         </DialogContentText>
       </DialogContent>
-        
+
       <DialogActions>
         <Button onClick={onCancel} autoFocus>
           Annulla
