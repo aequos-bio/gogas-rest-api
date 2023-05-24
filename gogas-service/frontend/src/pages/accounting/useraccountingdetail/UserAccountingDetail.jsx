@@ -20,7 +20,7 @@ import {
   LockSharp as CloedIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { useSnackbar, withSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
 import { orderBy } from 'lodash';
@@ -30,6 +30,10 @@ import ActionDialog from '../../../components/ActionDialog';
 import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import useJwt from '../../../hooks/JwtHooks';
+import { useLocation } from 'react-router-dom';
+import UserAccountingDetailRow from './UserAccountingDetailRow';
+import UserAccountingDetailInitialBalanceRow from './UserAccountingDetailInitialBalanceRow';
+import UserAccountingDetailFinalBalanceRow from './UserAccountingDetailFinalBalanceRow';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
@@ -56,8 +60,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccountingDetail({ location }) {
+function UserAccountingDetail() {
   const classes = useStyles();
+  const location = useLocation();
   const search = queryString.parse(location.search);
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
@@ -185,36 +190,18 @@ function UserAccountingDetail({ location }) {
       if (year !== lastYear) {
         if (lastYearPlus !== undefined || lastYearMinus !== undefined) {
           rr.push(
-            <TableRow key={`initialamt-${lastYear}`} hover>
-              <TableCell align='center'>01/01/{lastYear}</TableCell>
-              <TableCell>Saldo iniziale {lastYear}</TableCell>
-              <TableCell />
-              <TableCell />
-              <TableCell
-                className={classes.tdAmount}
-                style={{ color: t.saldo < 0 ? 'red' : 'inherited' }}
-              >
-                {t.saldo >= 0 ? '+ ' : ''}
-                {t.saldo.toFixed(2)}
-              </TableCell>
-              {jwt.role === 'A' ? <TableCell /> : null}
-            </TableRow>,
+            <UserAccountingDetailInitialBalanceRow
+              key={`initialamt-${lastYear}`}
+              year={lastYear}
+              balance={t.saldo} />
           );
 
           rr.push(
-            <TableRow key={`totals-${lastYear}`} hover>
-              <TableCell colSpan='2' align='right'>
-                <strong>Totale anno {lastYear}</strong>
-              </TableCell>
-              <TableCell className={classes.tdAmount}>
-                <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
-              </TableCell>
-              <TableCell className={classes.tdAmount}>
-                <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
-              </TableCell>
-              <TableCell />
-              {jwt.role === 'A' ? <TableCell /> : null}
-            </TableRow>,
+            <UserAccountingDetailFinalBalanceRow
+              key={`totals-${lastYear}`}
+              year={lastYear}
+              balancePlus={lastYearPlus}
+              balanceMinus={lastYearMinus} />
           );
         }
         rr.push(
@@ -233,84 +220,29 @@ function UserAccountingDetail({ location }) {
       lastYearMinus += t.sign === '-' ? Math.abs(t.amount) : 0;
 
       rr.push(
-        <TableRow key={`transaction-${i}`} hover>
-          <TableCell align='center'>
-            {moment(t.date).format('DD/MM/YYYY')}
-          </TableCell>
-          <TableCell>
-            {t.reason ? `${t.reason} - ` : ''}
-            {t.friend ? `(${t.friend}) ` : ''}
-            {t.description}
-          </TableCell>
-          <TableCell className={classes.tdAmount}>
-            {t.sign === '+' || t.amount < 0
-              ? Math.abs(t.amount).toFixed(2)
-              : ''}
-          </TableCell>
-          <TableCell className={classes.tdAmount}>
-            {t.sign === '-' && t.amount >= 0
-              ? Math.abs(t.amount).toFixed(2)
-              : ''}
-          </TableCell>
-          <TableCell
-            className={classes.tdAmount}
-            style={{ color: t.saldo < 0 ? 'red' : 'inherited' }}
-          >
-            {t.saldo >= 0 ? '+ ' : ''}
-            {t.saldo.toFixed(2)}
-          </TableCell>
-          {jwt.role === 'A' && !years[year] ? (
-            <TableCell>
-              {t.type === 'M' ? (
-                <IconButton
-                  onClick={() => {
-                    editTransaction(t.id);
-                  }}
-                >
-                  <EditIcon fontSize='small' />
-                </IconButton>
-              ) : null}
-
-              {t.type === 'M' ? (
-                <IconButton
-                  onClick={() => {
-                    deleteTransaction(t.id);
-                  }}
-                >
-                  <DeleteIcon fontSize='small' />
-                </IconButton>
-              ) : null}
-            </TableCell>
-          ) : null}
-        </TableRow>,
+        <UserAccountingDetailRow 
+          key={`transaction-${i}`} 
+          transaction={t} 
+          yearIsClosed={years[year]} 
+          onEditTransaction={editTransaction} 
+          onDeleteTransaction={deleteTransaction}
+          admin={jwt.role === 'A'}/>
       );
     });
 
     rr.push(
-      <TableRow key={`initialamt-${lastYear}`} hover>
-        <TableCell align='center'>01/01/{lastYear}</TableCell>
-        <TableCell>Saldo iniziale {lastYear}</TableCell>
-        <TableCell />
-        <TableCell />
-        <TableCell className={classes.tdAmount}>0.00</TableCell>
-        {jwt.role === 'A' ? <TableCell /> : null}
-      </TableRow>,
+      <UserAccountingDetailInitialBalanceRow
+      key={`initialamt-${lastYear}`}
+      year={lastYear}
+      balance={0} />
     );
 
     rr.push(
-      <TableRow key={`totals-${lastYear}`} hover>
-        <TableCell colSpan='2' align='right'>
-          <strong>Totale anno {lastYear}</strong>
-        </TableCell>
-        <TableCell className={classes.tdAmount}>
-          <strong>{Math.abs(lastYearPlus).toFixed(2)}</strong>
-        </TableCell>
-        <TableCell className={classes.tdAmount}>
-          <strong>{Math.abs(lastYearMinus).toFixed(2)}</strong>
-        </TableCell>
-        <TableCell />
-        {jwt.role === 'A' ? <TableCell /> : null}
-      </TableRow>,
+      <UserAccountingDetailFinalBalanceRow
+        key={`totals-${lastYear}`}
+        year={lastYear}
+        balancePlus={lastYearPlus}
+        balanceMinus={lastYearMinus} />
     );
 
     return rr;
