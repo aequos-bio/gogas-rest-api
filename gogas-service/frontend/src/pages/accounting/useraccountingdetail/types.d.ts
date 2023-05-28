@@ -1,4 +1,4 @@
-export interface UserMovementView {
+export interface UserMovementView {  // usato nel dialogo di modifica (view)
   codicecausale: string;
   data: string;
   descrizione: string;
@@ -11,7 +11,7 @@ export interface UserMovementView {
   segno: '+' | '-';
 }
 
-export interface UserMovement {
+export interface UserMovement { // usato nel dialogo di modifica (insert/edit)
   id?: string;
   data: string;
   idutente: string;
@@ -22,7 +22,7 @@ export interface UserMovement {
   importo: number;
 }
 
-export interface UserTransaction {
+export interface UserTransaction { // usato nella lista
   amount: number;
   date: string; // 2022-06-18
   description: string;

@@ -41,7 +41,7 @@ const UserAccountingTotalRow: React.FC<Props> = ({ userTotal, onOpenDetail }) =>
   const classes = useStyles();
 
   return (
-    <TableRow key={`user-${userTotal.user.id}`} hover>
+    <TableRow hover>
       <TableCell className={classes.tdIcon}>
         {userTotal.user.enabled ? [] : <BlockIcon fontSize='small' />}
       </TableCell>

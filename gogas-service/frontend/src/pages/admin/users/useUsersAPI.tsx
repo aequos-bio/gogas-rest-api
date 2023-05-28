@@ -100,11 +100,17 @@ export const useUsersAPI = (sort: string) => {
       });
   }, [enqueueSnackbar]);
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const getUser = useCallback((id: string) => {
+    return apiGetJson<User | ErrorResponse>(`/api/user/${id}`, {}).then((u) => {
+      if (typeof u === 'object' && (u as ErrorResponse).error) {
+        enqueueSnackbar((u as ErrorResponse).errorMessage, { variant: 'error' });
+      } else {
+        return u as User;
+      }
+    });
+  }, [])
 
   return {
-    users, loading, reload, deleteUser, enableUser, disableUser, resetPassword
+    users, loading, reload, deleteUser, enableUser, disableUser, resetPassword, getUser
   }
 }

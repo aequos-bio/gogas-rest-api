@@ -83,17 +83,9 @@ function UserAccountingTotals() {
     reload();
   }, [reload]);
 
-  const rows = useMemo(() => {
-    if (loading) {
-      return <LoadingRow colSpan={4} />;
-    }
-
-    return userTotals.map((userTotal) => (
-      <UserAccountingTotalRow userTotal={userTotal} onOpenDetail={(userId) => {
-        history.push(`/useraccountingdetails?userId=${userId}`)
-      }} />
-    ));
-  }, [userTotals, history, classes, loading]);
+  const onOpenDetail = useCallback((userId: string) => {
+    history.push(`/useraccountingdetails?userId=${userId}`)
+  }, [history])
 
   return (
     <Container maxWidth={false}>
@@ -126,7 +118,15 @@ function UserAccountingTotals() {
             </TableRow>
           </TableHead>
 
-          <TableBody>{rows}</TableBody>
+          <TableBody>
+            {loading ? (
+              <LoadingRow colSpan={4} />
+            ) : (
+              userTotals.map((userTotal) => (
+                <UserAccountingTotalRow key={`user-${userTotal.user.id}`} userTotal={userTotal} onOpenDetail={onOpenDetail} />
+              ))
+            )}
+          </TableBody>
 
           <TableFooter className={classes.footercell}>
             <TableRow>
