@@ -3,11 +3,8 @@ import {
   Container,
   Fab,
   Button,
-  IconButton,
   TableContainer,
   Table,
-  TableHead,
-  TableFooter,
   TableRow,
   TableCell,
   TableBody,
@@ -20,11 +17,8 @@ import {
   LockSharp as CloedIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { useSnackbar } from 'notistack';
 import queryString from 'query-string';
 import moment from 'moment-timezone';
-import { orderBy } from 'lodash';
-import { apiGetJson, apiDelete } from '../../../utils/axios_utils';
 import EditUserMovementDialog from './EditUserMovementDialog';
 import ActionDialog from '../../../components/ActionDialog';
 import PageTitle from '../../../components/PageTitle';
@@ -34,6 +28,12 @@ import { useLocation } from 'react-router-dom';
 import UserAccountingDetailRow from './UserAccountingDetailRow';
 import UserAccountingDetailInitialBalanceRow from './UserAccountingDetailInitialBalanceRow';
 import UserAccountingDetailFinalBalanceRow from './UserAccountingDetailFinalBalanceRow';
+import { useYearsAPI } from '../years/useYearsAPI';
+import { useUsersAPI } from '../../admin/users/useUsersAPI';
+import { useUserTransactionsAPI } from './useUserTransactionsAPI';
+import { User } from '../../admin/users/types';
+import TableHeader from './TableHeader';
+import TableFoot from './TableFooter';
 
 const useStyles = makeStyles((theme) => ({
   fab: {
@@ -45,76 +45,35 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'right',
     width: '90px',
   },
-  tdButtons: {
-    minWidth: '90px',
-    width: '90px',
-  },
   lockicon: {
     fontSize: '.875rem',
     marginLeft: theme.spacing(0.5),
   },
-  footercell: {
-    '& td': {
-      fontSize: '.875rem',
-    },
-  },
 }));
 
-function UserAccountingDetail() {
+const UserAccountingDetail: React.FC = () => {
   const classes = useStyles();
   const location = useLocation();
   const search = queryString.parse(location.search);
-  const [user, setUser] = useState({});
-  const [transactions, setTransactions] = useState([]);
-  const [totals, setTotals] = useState({ accrediti: 0, addebiti: 0 });
+  const [user, setUser] = useState<User | undefined>(undefined);
   const [showDlg, setShowDlg] = useState(false);
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
   const [selectedId, setSelectedId] = useState();
-  const [years, setYears] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [years, setYears] = useState<{ [year: number]: boolean }>({});
   const jwt = useJwt();
-  const {enqueueSnackbar} = useSnackbar();
+  const { years: yearList, reload: reloadYears } = useYearsAPI();
+  const { getUser } = useUsersAPI("NC");
+  const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string)
 
   const reload = useCallback(() => {
-    setLoading(true);
-    apiGetJson(`/api/user/${search.userId}`, {}).then((u) => {
-      if (u.error) {
-        enqueueSnackbar(u.errorMessage, { variant: 'error' });
-      } else setUser(u);
-    });
+    if (!search.userId) return;
+    getUser(search.userId as string).then(user => setUser(user as User));
+    reloadTransactions();
 
-    apiGetJson(
-      `/api/useraccounting/userTransactions?userId=${search.userId}`,
-      {},
-    ).then((t) => {
-      setLoading(false);
-      if (t.error) {
-        enqueueSnackbar(t.errorMessage, { variant: 'error' });
-        setTransactions([]);
-        setTotals({ accrediti: 0, addebiti: 0 });
-      } else {
-        const tt = orderBy(t.data, 'date', 'desc');
-        let saldo = 0;
-        let accrediti = 0;
-        let addebiti = 0;
-        if (tt.length)
-          for (let f = tt.length - 1; f >= 0; f--) {
-            const m = tt[f].amount * (tt[f].sign === '-' ? -1 : 1);
-            tt[f].saldo = saldo + m;
-            saldo = tt[f].saldo;
-            if (m < 0) {
-              addebiti += -1 * m;
-            } else {
-              accrediti += m;
-            }
-          }
-        setTransactions(tt);
-        setTotals({ accrediti, addebiti });
-      }
-    });
-  }, [search.userId, enqueueSnackbar]);
+  }, [search.userId]);
 
   const downloadXls = useCallback(() => {
+    if (!user) return;
     window.open(
       `/api/useraccounting/exportUserDetails?userId=${user.idUtente}`,
       '_blank',
@@ -122,20 +81,18 @@ function UserAccountingDetail() {
   }, [user]);
 
   useEffect(() => {
-    apiGetJson('/api/year/all', {}).then((yy) => {
-      if (yy.error) {
-        enqueueSnackbar(yy.errorMessage, { variant: 'error' });
-      } else {
-        const _years = {};
-        yy.data.forEach((y) => {
-          _years[y.year] = y.closed;
-        });
-        setYears(_years);
-      }
-    });
-
+    reloadYears();
     reload();
-  }, [reload, enqueueSnackbar]);
+  }, [reload, reloadYears]);
+
+  useEffect(() => {
+    if (!yearList) return;
+    const _years: { [year: number]: boolean } = {};
+    yearList.forEach((y) => {
+      _years[y.year] = y.closed;
+    });
+    setYears(_years);
+  }, [yearList])
 
   const dialogClosed = useCallback(
     (refresh) => {
@@ -146,7 +103,7 @@ function UserAccountingDetail() {
   );
 
   const newTransaction = useCallback(() => {
-    setSelectedId();
+    setSelectedId(undefined);
     setShowDlg(true);
   }, []);
 
@@ -155,25 +112,17 @@ function UserAccountingDetail() {
     setShowDlg(true);
   }, []);
 
-  const deleteTransaction = useCallback((id) => {
+  const _deleteTransaction = useCallback((id) => {
     setSelectedId(id);
     setDeleteDlgOpen(true);
   }, []);
 
   const doDeleteTransaction = useCallback(() => {
-    apiDelete(`/api/accounting/user/entry/${selectedId}`)
-      .then(() => {
-        setDeleteDlgOpen(false);
-        reload();
-        enqueueSnackbar('Movimento eliminato', { variant: 'success' });
-      })
-      .catch((err) => {
-        enqueueSnackbar(
-          err.response?.statusText || "Errore nell'eliminazione del movimento",
-          { variant: 'error' },
-        );
-      });
-  }, [enqueueSnackbar, reload, selectedId]);
+    if (!selectedId) return;
+    deleteTransaction(selectedId).then(() => {
+      setDeleteDlgOpen(false);
+    });
+  }, [selectedId]);
 
   const rows = useMemo(() => {
     if (loading) {
@@ -181,14 +130,15 @@ function UserAccountingDetail() {
     }
     if (!transactions || !transactions.length) return [];
     const rr = [];
-    let lastYear = '';
-    let lastYearPlus;
-    let lastYearMinus;
+    let lastYear = 0;
+    let lastYearPlus = 0;
+    let lastYearMinus = 0;
 
     transactions.forEach((t, i) => {
-      const year = moment(t.date).format('YYYY');
+      const year = Number.parseInt(moment(t.date).format('YYYY'), 10);
+      console.log('comparing', lastYear, year);
       if (year !== lastYear) {
-        if (lastYearPlus !== undefined || lastYearMinus !== undefined) {
+        if (lastYear !== 0) {
           rr.push(
             <UserAccountingDetailInitialBalanceRow
               key={`initialamt-${lastYear}`}
@@ -200,13 +150,14 @@ function UserAccountingDetail() {
             <UserAccountingDetailFinalBalanceRow
               key={`totals-${lastYear}`}
               year={lastYear}
-              balancePlus={lastYearPlus}
-              balanceMinus={lastYearMinus} />
+              balancePlus={lastYearPlus as number | 0}
+              balanceMinus={lastYearMinus as number | 0} />
           );
         }
+
         rr.push(
           <TableRow key={`year-${year}`} hover>
-            <TableCell colSpan={jwt.role === 'A' ? '6' : '5'}>
+            <TableCell colSpan={jwt?.role === 'A' ? 6 : 5}>
               <strong>Anno {year}</strong>
               {years[year] ? <CloedIcon className={classes.lockicon} /> : null}
             </TableCell>
@@ -220,21 +171,21 @@ function UserAccountingDetail() {
       lastYearMinus += t.sign === '-' ? Math.abs(t.amount) : 0;
 
       rr.push(
-        <UserAccountingDetailRow 
-          key={`transaction-${i}`} 
-          transaction={t} 
-          yearIsClosed={years[year]} 
-          onEditTransaction={editTransaction} 
-          onDeleteTransaction={deleteTransaction}
-          admin={jwt.role === 'A'}/>
+        <UserAccountingDetailRow
+          key={`transaction-${i}`}
+          transaction={t}
+          yearIsClosed={years[year]}
+          onEditTransaction={editTransaction}
+          onDeleteTransaction={_deleteTransaction}
+          admin={jwt?.role === 'A'} />
       );
     });
 
     rr.push(
       <UserAccountingDetailInitialBalanceRow
-      key={`initialamt-${lastYear}`}
-      year={lastYear}
-      balance={0} />
+        key={`initialamt-${lastYear}`}
+        year={lastYear}
+        balance={0} />
     );
 
     rr.push(
@@ -249,7 +200,7 @@ function UserAccountingDetail() {
   }, [
     transactions,
     classes,
-    deleteTransaction,
+    _deleteTransaction,
     editTransaction,
     jwt,
     years,
@@ -259,8 +210,8 @@ function UserAccountingDetail() {
   return (
     <Container maxWidth={false}>
       <PageTitle
-        title={`Dettaglio situazione contabile di ${user.nome ||
-          ''} ${user.cognome || ''}`}
+        title={`Dettaglio situazione contabile di ${user?.nome ||
+          ''} ${user?.cognome || ''}`}
       >
         <Button
           onClick={downloadXls}
@@ -279,45 +230,9 @@ function UserAccountingDetail() {
 
       <TableContainer>
         <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Descrizione</TableCell>
-              <TableCell align='center'>Accrediti</TableCell>
-              <TableCell align='center'>Addebiti</TableCell>
-              <TableCell align='center'>Saldo</TableCell>
-              {jwt.role === 'A' ? (
-                <TableCell className={classes.tdButtons} />
-              ) : null}
-            </TableRow>
-          </TableHead>
-
+          <TableHeader admin={jwt?.role === 'A'} />
           <TableBody>{rows}</TableBody>
-
-          <TableFooter className={classes.footercell}>
-            <TableRow>
-              <TableCell />
-              <TableCell>
-                <strong>TOTALE</strong>
-              </TableCell>
-              <TableCell className={classes.tdAmount}>
-                <strong>
-                  {totals && !Number.isNaN(totals.accrediti)
-                    ? totals.accrediti.toFixed(2)
-                    : ''}
-                </strong>
-              </TableCell>
-              <TableCell className={classes.tdAmount}>
-                <strong>
-                  {totals && !Number.isNaN(totals.addebiti)
-                    ? totals.addebiti.toFixed(2)
-                    : ''}
-                </strong>
-              </TableCell>
-              <TableCell />
-              {jwt.role === 'A' ? <TableCell /> : null}
-            </TableRow>
-          </TableFooter>
+          <TableFoot admin={jwt?.role === 'A'} totals={totals} />
         </Table>
       </TableContainer>
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Container,
@@ -57,6 +57,10 @@ const Users: React.FC = () => {
     : 'NC';
   const { users, loading, reload, deleteUser, enableUser, disableUser, resetPassword } = useUsersAPI(sort);
   const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    reload();
+  }, [reload])
 
   const newUser = useCallback(() => {
     setSelectedUser(undefined);

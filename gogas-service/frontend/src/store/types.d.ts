@@ -27,6 +27,7 @@ export interface JwtToken {
   role: string;
   exp: number;
   expired?: boolean;
+  sub: string;
 }
 
 export interface ErrorResponse {
