@@ -77,9 +77,9 @@ interface Props {
   rows: { value: any }[],
   settings: Settings;
   loading: boolean;
-  onAdd: () => void;
-  onEdit: (value: any) => void;
-  onDelete: (value: any) => void;
+  onAdd?: () => void;
+  onEdit?: (value: any) => void;
+  onDelete?: (value: any) => void;
 }
 
 const DataTable: React.FC<Props> = ({

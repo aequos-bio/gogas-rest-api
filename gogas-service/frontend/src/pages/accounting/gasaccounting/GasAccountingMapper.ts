@@ -3,7 +3,6 @@ import { UserMovementView } from "../useraccountingdetail/types";
 import { BalanceRow } from "./types";
 import { GasMovementView } from "../gasmovements/types";
 
-
 export const MapUserMovement = (movement: UserMovementView): BalanceRow => {
   if (movement.segno === '+') {
     // versamenti
