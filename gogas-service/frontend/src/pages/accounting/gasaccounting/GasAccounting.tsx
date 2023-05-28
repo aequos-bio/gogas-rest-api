@@ -1,40 +1,27 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Container, Button } from '@material-ui/core';
 import { SaveAltSharp as SaveIcon } from '@material-ui/icons';
-import { withSnackbar } from 'notistack';
-import { orderBy } from 'lodash';
-import moment from 'moment-timezone';
 import Excel from 'exceljs';
-import { apiGetJson } from '../../../utils/axios_utils';
 import PageTitle from '../../../components/PageTitle';
 import DataTable from '../../../components/DataTable';
 import { columns } from './columns';
 import { useGasAccountingAPI } from './useGasAccountingAPI';
 import { useAppSelector } from '../../../store/store';
-import { MapGasMovement, MapUserMovement } from './GasAccountingMapper';
-import { GasMovement } from '../gasmovements/types';
+import { BalanceRow } from './types';
 
 const GasAccounting: React.FC = () => {
   const accounting = useAppSelector((state) => state.accounting);
-  const { userMovements, gasMovements, loading, reload } = useGasAccountingAPI(accounting.currentYear);
+  const { balanceRows, loading, reload } = useGasAccountingAPI(accounting.currentYear);
 
   useEffect(() => {
     reload();
   }, [reload]);
 
   const rows = useMemo(() => {
-    // movimenti manuali registrati sui gasisti
-    const userRows = userMovements.map(MapUserMovement);
-    const gasRows: GasMovement[] = gasMovements.map(MapGasMovement).filter((row) => !!row) as GasMovement[];
-
-    const balanceRows = gasRows.concat(userRows);
-    const rr = orderBy(balanceRows, ['data'], ['asc']);
-    return rr.map((v) => ({ value: v }));
-  }, [gasMovements, userMovements]);
+    return balanceRows.map((v) => ({ value: v }));
+  }, [balanceRows]);
 
   const exportXls = useCallback(() => {
-    debugger
     const wb = new Excel.Workbook();
     wb.calcProperties.fullCalcOnLoad = true;
     const sh = wb.addWorksheet('Contabilità GAS');
@@ -50,7 +37,7 @@ const GasAccounting: React.FC = () => {
       const valueRow = sh.getRow(rowNum);
       for (let c = 0; c < columns.length; c++) {
         const property = columns[c].property;
-        valueRow.getCell(c + 1).value = row.value[property as keyof GasMovement];
+        valueRow.getCell(c + 1).value = row.value[property as keyof BalanceRow];
       }
 
       rowNum += 1;
@@ -59,7 +46,7 @@ const GasAccounting: React.FC = () => {
     wb.xlsx
       .writeBuffer() // { base64: true }
       .then((buffer) => {
-        const base64 = buffer.toString();
+        const base64 = (buffer as Buffer).toString('base64');
 
         const a = document.createElement('a');
         a.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;

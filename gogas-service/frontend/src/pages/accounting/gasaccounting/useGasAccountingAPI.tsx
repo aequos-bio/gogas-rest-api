@@ -5,6 +5,9 @@ import { UserMovementView } from "../useraccountingdetail/types";
 import { GasMovementView } from "../gasmovements/types";
 import { apiGetJson } from "../../../utils/axios_utils";
 import { ErrorResponse } from "../../../store/types";
+import { BalanceRow } from "./types";
+import { MapGasMovement, MapUserMovement } from "./GasAccountingMapper";
+import { orderBy } from "lodash";
 
 const checkDateFormat = (data: string) => {
   return data.includes('/')
@@ -14,8 +17,7 @@ const checkDateFormat = (data: string) => {
 
 export const useGasAccountingAPI = (year: number) => {
   const [loading, setLoading] = useState(false);
-  const [userMovements, setUserMovements] = useState<UserMovementView[]>([]);
-  const [gasMovements, setGasMovements] = useState<GasMovementView[]>([]);
+  const [balanceRows, setBalanceRows] = useState<BalanceRow[]>([]);
   const { enqueueSnackbar } = useSnackbar();
 
   const reload = useCallback(() => {
@@ -35,21 +37,24 @@ export const useGasAccountingAPI = (year: number) => {
           variant: 'error',
         });
       } else {
-        setUserMovements(
+        const userMovements =
           (user as UserMovementView[]).map((u) => ({
             ...u,
             data: checkDateFormat(u.data),
-          })),
-        );
-        setGasMovements(
+          }));
+        const gasMovements =
           (gas as GasMovementView[]).map((g) => ({
             ...g,
             data: checkDateFormat(g.data),
-          })),
-        );
+          }));
+        const userRows = userMovements.map(MapUserMovement);
+        const gasRows = gasMovements.map(MapGasMovement).filter((row) => !!row) as BalanceRow[];
+
+        const _balanceRows = gasRows.concat(userRows);
+        setBalanceRows(orderBy(_balanceRows, ['data'], ['asc']));
       }
     });
   }, [enqueueSnackbar, year]);
 
-  return { userMovements, gasMovements, loading, reload }
+  return { balanceRows, loading, reload }
 }
