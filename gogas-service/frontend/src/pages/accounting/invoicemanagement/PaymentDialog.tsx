@@ -10,11 +10,13 @@ import {
 } from '@material-ui/core';
 import { ClearSharp as ClearIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
-import moment from 'moment-timezone';
+import moment, { Moment } from 'moment-timezone';
 import MomentUtils from '@date-io/moment';
-import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiPost } from '../../../utils/axios_utils';
+import { Invoice } from './types';
+import { useInvoicesAPI } from './useInvoicesAPI';
+import { useAppSelector } from '../../../store/store';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 
 const useStyles = makeStyles(theme => ({
   label: {
@@ -25,9 +27,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const PaymentDialog = ({ invoice, open, onClose, enqueueSnackbar }) => {
+interface Props {
+  invoice?: Invoice;
+  open: boolean;
+  onClose: (refresh?: boolean) => void;
+}
+
+const PaymentDialog: React.FC<Props> = ({ invoice, open, onClose }) => {
   const classes = useStyles();
-  const [paymentDate, setPaymentDate] = useState(invoice?.paymentDate);
+  const [paymentDate, setPaymentDate] = useState<string | undefined>(invoice?.paymentDate);
+  const accounting = useAppSelector((state) => state.accounting);
+  const { payInvoice } = useInvoicesAPI(accounting.currentYear);
 
   useEffect(() => {
     if (invoice) setPaymentDate(invoice.paymentDate);
@@ -41,44 +51,12 @@ const PaymentDialog = ({ invoice, open, onClose, enqueueSnackbar }) => {
   }, [paymentDate, invoice]);
 
   const doPayment = useCallback(() => {
-    const thenFn = () => {
-      enqueueSnackbar(`Pagamento fattura salvato con successo`, {
-        variant: 'success',
-      });
-      onClose(true);
-    };
-
-    const catchFn = err => {
-      enqueueSnackbar(
-        err.response?.statusText || 'Errore nel salvataggio del pagamento',
-        { variant: 'error' }
-      );
-    };
-
-    const promises = [];
-    invoice.orderIds.forEach(orderId => {
-      const params = {
-        idDataOrdine: orderId,
-        numeroFattura: invoice.invoiceNumber,
-        importoFattura: invoice.invoiceAmount,
-        dataFattura: moment(invoice.invoiceDate).format('DD/MM/YYYY'),
-        dataPagamento: paymentDate
-          ? moment(paymentDate).format('DD/MM/YYYY')
-          : null,
-        pagato: paymentDate !== undefined && paymentDate !== null,
-      };
-      promises.push(
-        apiPost(`/api/order/manage/${orderId}/invoice/data`, params)
-      );
-    });
-
-    Promise.all(promises)
-      .then(thenFn)
-      .catch(catchFn);
-  }, [onClose, invoice, enqueueSnackbar, paymentDate]);
+    if (!paymentDate || !invoice) return;
+    payInvoice(invoice, paymentDate).then(() => { onClose(true) });
+  }, [onClose, invoice, paymentDate]);
 
   return (
-    <Dialog open={open} onClose={onClose} size="sm" fullWidth>
+    <Dialog open={open} onClose={() => onClose()} maxWidth="sm" fullWidth>
       <DialogTitle>Pagamento fattura </DialogTitle>
 
       <DialogContent>
@@ -116,14 +94,14 @@ const PaymentDialog = ({ invoice, open, onClose, enqueueSnackbar }) => {
                 id="date-picker-inline"
                 label="Data di pagamento"
                 value={paymentDate ? moment(paymentDate) : null}
-                onChange={setPaymentDate}
+                onChange={(date: MaterialUiPickersDate) => { setPaymentDate((date as Moment).format('YYYY-MM-DD')) }}
                 autoOk
               />
               <IconButton
                 className={classes.cancelIcon}
                 size="small"
                 onClick={() => {
-                  setPaymentDate();
+                  setPaymentDate(undefined);
                 }}
               >
                 <ClearIcon />
@@ -149,4 +127,4 @@ const PaymentDialog = ({ invoice, open, onClose, enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(PaymentDialog);
+export default PaymentDialog;

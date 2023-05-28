@@ -7,22 +7,28 @@ import { orderBy } from "lodash";
 
 export const useAccountingCodesAPI = () => {
   const [accountingCodes, setAccountingCodes] = useState<AccountingCode[]>([]);
+  const [aequosAccountingCode, setAequosAccountingCode] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson<AccountingCode[] | ErrorResponse>('/api/ordertype/accounting', {}).then((oo) => {
+    apiGetJson<AccountingCode[] | ErrorResponse>('/api/ordertype/accounting', {}).then((response) => {
       setLoading(false);
-      if (typeof oo === 'object' && (oo as ErrorResponse).error) {
-        enqueueSnackbar((oo as ErrorResponse).errorMessage, { variant: 'error' });
+      if (typeof response === 'object' && (response as ErrorResponse).error) {
+        enqueueSnackbar((response as ErrorResponse).errorMessage, { variant: 'error' });
       } else {
         setAccountingCodes(
-          orderBy(oo, [
+          orderBy((response as AccountingCode[]), [
             (o: AccountingCode) => (o.id === 'aequos' ? 'A' : 'Z'),
             (o: AccountingCode) => o.description,
           ]),
         );
+        const aequos = (response as AccountingCode[]).filter((a) => a.id === 'aequos');
+        if (aequos.length) {
+          setAequosAccountingCode(aequos[0].accountingCode);
+        }
+
       }
     });
   }, [enqueueSnackbar]);
@@ -41,5 +47,5 @@ export const useAccountingCodesAPI = () => {
 
   }, []);
 
-  return { accountingCodes, loading, reload, saveAccountingCode }
+  return { accountingCodes, aequosAccountingCode, loading, reload, saveAccountingCode }
 }
