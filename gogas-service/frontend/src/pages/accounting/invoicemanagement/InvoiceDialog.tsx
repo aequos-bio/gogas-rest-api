@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSelector } from 'react-redux';
 import {
   Dialog,
   DialogTitle,
@@ -17,12 +16,13 @@ import {
 } from '@material-ui/core';
 import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { MuiPickersUtilsProvider, DatePicker } from '@material-ui/pickers';
-import moment from 'moment-timezone';
-import { orderBy } from 'lodash';
+import moment, { Moment } from 'moment-timezone';
 import MomentUtils from '@date-io/moment';
-import { withSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiGet, apiPost } from '../../../utils/axios_utils';
+import { Invoice } from './types';
+import { useAppSelector } from '../../../store/store';
+import { useInvoicesAPI } from './useInvoicesAPI';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 
 const useStyles = makeStyles((theme) => ({
   label: {
@@ -37,34 +37,29 @@ const useStyles = makeStyles((theme) => ({
     height: '300px',
   },
   tableRowSelected: {
-    backgroundColor: theme.palette.secondary[300],
+    backgroundColor: theme.palette.secondary.light,
   },
 }));
 
-const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
+interface Props {
+  invoice?: Invoice;
+  open: boolean;
+  onClose: (refresh?: boolean) => void;
+}
+
+const InvoiceDialog: React.FC<Props> = ({ open, onClose, invoice }) => {
   const classes = useStyles();
-  const [orders, setOrders] = useState([]);
-  const [date, setDate] = useState();
-  const [number, setNumber] = useState();
-  const [amount, setAmount] = useState();
-  const [orderIds, setOrderIds] = useState([]);
-  const [paymentDate, setPaymentDate] = useState();
-  const accounting = useSelector((state) => state.accounting);
+  const [date, setDate] = useState<string | undefined>();
+  const [number, setNumber] = useState<string | undefined>();
+  const [amount, setAmount] = useState<number | undefined>();
+  const [orderIds, setOrderIds] = useState<string[]>([]);
+  const [paymentDate, setPaymentDate] = useState<string | undefined>();
+  const accounting = useAppSelector((state) => state.accounting);
+  const { saveInvoice, ordersWithoutInvoice, reloadOrdersWithoutInvoice } = useInvoicesAPI(accounting.currentYear);
 
   useEffect(() => {
-    if (open) {
-      apiGet(
-        `api/accounting/gas/ordersWithoutInvoice/${accounting.currentYear}`,
-      ).then((oo) => {
-        setOrders(
-          orderBy(
-            oo.data,
-            [(o) => moment(o.dataconsegna, 'DD/MM/YYYY').toISOString()],
-            ['desc'],
-          ),
-        );
-      });
-    }
+    if (open) reloadOrdersWithoutInvoice();
+
     if (invoice) {
       setNumber(invoice.invoiceNumber);
       setDate(invoice.invoiceDate);
@@ -72,11 +67,11 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
       setOrderIds(invoice.orderIds);
       setPaymentDate(invoice.paymentDate);
     } else {
-      setNumber();
-      setDate();
-      setAmount();
+      setNumber(undefined);
+      setDate(undefined);
+      setAmount(undefined);
       setOrderIds([]);
-      setPaymentDate();
+      setPaymentDate(undefined);
     }
   }, [invoice, open, accounting]);
 
@@ -85,41 +80,8 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   }, [date, number, amount, orderIds]);
 
   const save = useCallback(() => {
-    const thenFn = () => {
-      enqueueSnackbar(`Fattura salvata con successo`, {
-        variant: 'success',
-      });
-      onClose(true);
-    };
-
-    const catchFn = (err) => {
-      enqueueSnackbar(
-        err.response?.statusText || 'Errore nel salvataggio della fattura',
-        { variant: 'error' },
-      );
-    };
-
-    const promises = [];
-    orderIds.forEach((orderId) => {
-      const params = {
-        idDataOrdine: orderId,
-        numeroFattura: number,
-        importoFattura: amount,
-        dataFattura: moment(date).format('DD/MM/YYYY'),
-        dataPagamento: paymentDate
-          ? moment(paymentDate).format('DD/MM/YYYY')
-          : null,
-        pagato: paymentDate !== undefined && paymentDate !== null,
-      };
-      promises.push(
-        apiPost(`/api/order/manage/${orderId}/invoice/data`, params),
-      );
-    });
-
-    Promise.all(promises)
-      .then(thenFn)
-      .catch(catchFn);
-  }, [number, date, amount, orderIds, paymentDate, onClose, enqueueSnackbar]);
+    saveInvoice(number as string, date as string, amount as number, orderIds, paymentDate as string).then(() => onClose(true));
+  }, [number, date, amount, orderIds, paymentDate, onClose]);
 
   const cancel = useCallback(() => {
     onClose();
@@ -130,19 +92,6 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
     ids.push(id);
     setOrderIds(ids);
   }, []);
-
-  const rows = useMemo(() => {
-    return orders.map((o) => (
-      <TableRow
-        key={`order-${o.id}`}
-        className={orderIds.includes(o.id) ? classes.tableRowSelected : ''}
-        onClick={() => selectOrder(o.id)}
-      >
-        <TableCell>{o.dataconsegna}</TableCell>
-        <TableCell>{o.tipoordine}</TableCell>
-      </TableRow>
-    ));
-  }, [orders, orderIds, classes, selectOrder]);
 
   return (
     <Dialog open={open} onClose={cancel} maxWidth='sm' fullWidth>
@@ -164,7 +113,7 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
                 id='date-picker-inline'
                 label='Data'
                 value={date ? moment(date) : null}
-                onChange={setDate}
+                onChange={(date: MaterialUiPickersDate) => { setDate((date as Moment).format('YYYY-MM-DD')) }}
                 autoOk
                 inputVariant='outlined'
               />
@@ -183,19 +132,18 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
 
           <Grid item xs={12}>
             <TextField
-              className={classes.field}
               label='Importo'
               type='number'
               size='small'
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
-                    <EuroIcon className={classes.icon} />
+                    <EuroIcon />
                   </InputAdornment>
                 ),
               }}
               value={amount}
-              onChange={(evt) => setAmount(evt.target.value)}
+              onChange={(evt) => setAmount(evt.target.value as unknown as number)}
               variant='outlined'
             />
           </Grid>
@@ -206,7 +154,18 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
             ) : (
               <TableContainer className={classes.tableContainer}>
                 <Table>
-                  <TableBody>{rows}</TableBody>
+                  <TableBody>
+                    {ordersWithoutInvoice.map((order) => (
+                      <TableRow
+                        key={`order-${order.id}`}
+                        className={orderIds.includes(order.id) ? classes.tableRowSelected : ''}
+                        onClick={() => selectOrder(order.id)}
+                      >
+                        <TableCell>{order.dataconsegna}</TableCell>
+                        <TableCell>{order.tipoordine}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
                 </Table>
               </TableContainer>
             )}
@@ -224,4 +183,4 @@ const InvoiceDialog = ({ open, onClose, invoice, enqueueSnackbar }) => {
   );
 };
 
-export default withSnackbar(InvoiceDialog);
+export default InvoiceDialog;
