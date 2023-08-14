@@ -74,9 +74,14 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         model.setUser(new User().withUserId(userId));
         model.setDescription(description);
         model.setReason(new AccountingEntryReason().withReasonCode(reasonCode));
-        model.setAmount(amount);
         model.setConfirmed(true);
         model.setFriendReferralId(friendReferralId);
+
+        //ensuring right scale otherwise balance looses decimals when updated
+        if (amount.scale() < 2)
+            amount = amount.setScale(2);
+
+        model.setAmount(amount);
 
         return model;
     }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,7 @@ public class MockUsersData implements MockDataLifeCycle {
         user.setEnabled(true);
         user.setFriendReferral(referenceUser);
         user.setPosition(userIndex++);
+        user.setBalance(BigDecimal.ZERO);
 
         User storedUser = userRepo.save(user);
         createdUsers.add(storedUser);

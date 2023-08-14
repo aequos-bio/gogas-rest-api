@@ -5,13 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.User;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiModelProperty.AccessMode;
-import io.swagger.annotations.ApiParam;
 import lombok.Data;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static io.swagger.annotations.ApiModelProperty.AccessMode.READ_ONLY;
@@ -37,7 +36,7 @@ public final class UserDTO implements ConvertibleDTO<User> {
 
     @ApiModelProperty(required = true)
     @NotEmpty
-    @Pattern(regexp = "A|U|S", message = "wrong role type")
+    @Pattern(regexp = "[AUS]", message = "wrong role type")
     @JsonProperty(value = "ruolo")
     private String role;
 
@@ -122,6 +121,7 @@ public final class UserDTO implements ConvertibleDTO<User> {
     private User initUser() {
         User user = new User();
         user.setPosition(position);
+        user.setBalance(BigDecimal.ZERO);
         return user;
     }
 

@@ -41,11 +41,16 @@ public class AccountAction extends OrderStatusAction {
     @Override
     protected void processOrder() throws InvalidOrderActionException {
         if (order.getOrderType().isComputedAmount())
-            orderItemRepo.setAccountedByOrderId(order.getId(), true);
+            updateOrderItems();
         else
             updateAccountingEntries();
 
         notificationSender.sendOrderNotification(order, OrderEvent.Accounted);
+    }
+
+    private void updateOrderItems() {
+        orderItemRepo.setAccountedByOrderId(order.getId(), true);
+        accountingService.updateBalancesFromOrderItemsByOrderId(order.getId(), true);
     }
 
     private void updateAccountingEntries() throws InvalidOrderActionException {
