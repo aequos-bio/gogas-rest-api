@@ -1,28 +1,48 @@
 package eu.aequos.gogas.order.manager;
 
 import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.notification.telegram.client.TelegramNotificationClient;
+import eu.aequos.gogas.persistence.entity.AuditUserBalance;
+import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import eu.aequos.gogas.persistence.repository.YearRepo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.File;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static eu.aequos.gogas.persistence.entity.AuditUserBalance.EntryType.ORDER;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest {
+class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest {
 
-    @MockBean private YearRepo yearRepo;
+    @MockBean
+    private YearRepo yearRepo;
+
+    @MockBean
+    private TelegramNotificationClient telegramNotificationClient;
+
+    @Autowired
+    private AuditUserBalanceRepo auditUserBalanceRepo;
+
+    @AfterEach
+    void clearUserBalance() {
+        mockAccountingData.resetUserBalances();
+    }
 
     @Test
     void givenAClosedOrderComputedAmountEmpty_whenAccountingOrder_thenOrderIsAccounted() throws Exception {
@@ -66,6 +86,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId2, 0.0);
         checkBalance(mockUsersData.getSimpleUserId(), 0.0);
         checkBalance(mockUsersData.getDefaultAdminId(), 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -14.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -27.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.4, 0.0);
     }
 
     @Test
@@ -91,6 +121,15 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, -5.8);
         checkBalance(userId2, -17.45);
         checkBalance(userId3, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -5.8, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -17.45, 0.0);
     }
 
     @Test
@@ -123,6 +162,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId2, 0.0);
         checkBalance(mockUsersData.getSimpleUserId(), 0.0);
         checkBalance(mockUsersData.getDefaultAdminId(), 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -16.69, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -31.95, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -15.86, 0.0);
     }
 
     @Test
@@ -144,12 +193,25 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId2, -45.1);
         checkBalance(userId3, -13.4);
         checkBalance(friendId1a, -14.1);
-        checkBalance(friendId1b, -6.73);
+        checkBalance(friendId1b, -6.725);
         checkBalance(friendId2, -18.1);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -35.7, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -45.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.4, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -14.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -6.725, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -18.1, 0.0);
     }
 
     @Test
-    void givenAClosedOrderComputedAmountAndNoSummaryWithFriendsItemsAndShppingCost_whenAccountingOrder_thenOrderIsAccountedForUsersAndFriendsWithShippingCosts() throws Exception {
+    void givenAClosedOrderComputedAmountAndNoSummaryWithFriendsItemsAndShippingCost_whenAccountingOrder_thenOrderIsAccountedForUsersAndFriendsWithShippingCosts() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
         OrderDTO orderDTO = buildValidOrderDTO(orderTypeComputed.getId());
@@ -166,12 +228,25 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         performAction(orderId, "contabilizza");
 
-        checkBalance(userId1, -39.5);
+        checkBalance(userId1, -39.49);
         checkBalance(userId2, -49.89);
         checkBalance(userId3, -14.82);
         checkBalance(friendId1a, -15.60);
-        checkBalance(friendId1b, -7.44);
+        checkBalance(friendId1b, -7.435);
         checkBalance(friendId2, -20.02);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -39.49, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -49.89, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -14.82, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -15.60, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -7.435, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -20.02, 0.0);
     }
 
     @Test
@@ -198,11 +273,21 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
 
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -35.7, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -45.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.4, 0.0);
+
         mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
     }
 
     @Test
-    void givenAClosedOrderComputedAmountAndNoSummaryWithFriendsItemsWithShippingCost_whenAccountingOrder_thenOrderIsAccountedOnlyForUsersWithShippingCost() throws Exception {
+    void givenAClosedOrderComputedAmountAndSummaryWithFriendsItemsWithShippingCost_whenAccountingOrder_thenOrderIsAccountedOnlyForUsersWithShippingCost() throws Exception {
         mockOrdersData.forceSummaryRequired(orderTypeComputed, true);
 
         mockMvcGoGas.loginAs("manager", "password");
@@ -227,6 +312,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -39.49, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -49.89, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -14.82, 0.0);
 
         mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
     }
@@ -307,6 +402,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, -10.0);
         checkBalance(userId2, -15.0);
         checkBalance(userId3, -12.5);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
     }
 
     @Test
@@ -334,6 +439,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, -12.67);
         checkBalance(userId2, -19.0);
         checkBalance(userId3, -15.83);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -12.67, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -19.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -15.83, 0.0);
     }
 
     @Test
@@ -360,6 +475,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, -10.0);
         checkBalance(userId2, -15.0);
         checkBalance(userId3, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, 0.0, 0.0);
     }
 
     @Test
@@ -388,6 +513,17 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId2, -15.0);
         checkBalance(userId3, -12.5);
         checkBalance(orderManagerId1, -25.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(4, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(orderManagerId1.toUpperCase()).get(0), AuditUserBalance.OperationType.ADD, -25.0, 0.0);
     }
 
     @Test
@@ -418,6 +554,19 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, -22.87);
         checkBalance(friendId1b, -5.59);
         checkBalance(friendId2, -21.38);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -38.46, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -36.38, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -22.87, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -5.59, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -21.38, 0.0);
     }
 
     @Test
@@ -451,6 +600,19 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, -25.49);
         checkBalance(friendId1b, -6.23);
         checkBalance(friendId2, -23.83);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -42.86, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -40.55, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.93, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -25.49, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -6.23, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -23.83, 0.0);
     }
 
     @Test
@@ -482,6 +644,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId2, 0.0);
 
         mockOrdersData.forceSummaryRequired(orderTypeNotComputed, false);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
     }
     @Test
     void givenAClosedOrderNotComputedAmountSummaryWithFriendItemsWithShippingCost_whenAccountingOrder_thenOrderIsAccountedForUsersOnlyWithShippingCost() throws Exception {
@@ -514,6 +686,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
 
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -12.67, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -19.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -15.83, 0.0);
+
         mockOrdersData.forceSummaryRequired(orderTypeNotComputed, false);
     }
 
@@ -541,6 +723,16 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(3, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
     }
 
     @Test
@@ -693,6 +885,19 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, 0.0);
         checkBalance(userId2, 0.0);
         checkBalance(userId3, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -14.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -27.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.4, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(1), AuditUserBalance.OperationType.REMOVE, 14.1, -14.1);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(1), AuditUserBalance.OperationType.REMOVE, 27.0, -27.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(1), AuditUserBalance.OperationType.REMOVE, 13.4, -13.4);
     }
 
     @Test
@@ -717,6 +922,25 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(12, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -35.7, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -45.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -13.4, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -14.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -6.725, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -18.1, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(1), AuditUserBalance.OperationType.REMOVE, 35.7, -35.7);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(1), AuditUserBalance.OperationType.REMOVE, 45.1, -45.1);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(1), AuditUserBalance.OperationType.REMOVE, 13.4, -13.4);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(1), AuditUserBalance.OperationType.REMOVE, 14.1, -14.1);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(1), AuditUserBalance.OperationType.REMOVE, 6.725, -6.725);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(1), AuditUserBalance.OperationType.REMOVE, 18.1, -18.1);
     }
 
     @Test
@@ -742,6 +966,19 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(userId1, 0.0);
         checkBalance(userId2, 0.0);
         checkBalance(userId3, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(6, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -10.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -15.0, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(1), AuditUserBalance.OperationType.REMOVE, 10.0, -10.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(1), AuditUserBalance.OperationType.REMOVE, 15.0, -15.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(1), AuditUserBalance.OperationType.REMOVE, 12.5, -12.5);
     }
 
     @Test
@@ -773,6 +1010,25 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
         checkBalance(friendId2, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(12, auditEntries.size());
+
+        Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
+                .collect(Collectors.groupingBy(AuditUserBalance::getUserId));
+
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(0), AuditUserBalance.OperationType.ADD, -38.46, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(0), AuditUserBalance.OperationType.ADD, -36.38, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(0), AuditUserBalance.OperationType.ADD, -12.5, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(0), AuditUserBalance.OperationType.ADD, -22.87, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(0), AuditUserBalance.OperationType.ADD, -5.59, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(0), AuditUserBalance.OperationType.ADD, -21.38, 0.0);
+        checkBalanceAudit(auditEntriesByUserId.get(userId1).get(1), AuditUserBalance.OperationType.REMOVE, 38.46, -38.46);
+        checkBalanceAudit(auditEntriesByUserId.get(userId2).get(1), AuditUserBalance.OperationType.REMOVE, 36.38, -36.38);
+        checkBalanceAudit(auditEntriesByUserId.get(userId3).get(1), AuditUserBalance.OperationType.REMOVE, 12.5, -12.5);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1a).get(1), AuditUserBalance.OperationType.REMOVE, 22.87, -22.87);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId1b).get(1), AuditUserBalance.OperationType.REMOVE, 5.59, -5.59);
+        checkBalanceAudit(auditEntriesByUserId.get(friendId2).get(1), AuditUserBalance.OperationType.REMOVE, 21.38, -21.38);
     }
 
     @Test
@@ -1335,5 +1591,19 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
     private void checkBalance(String userId1, double expectedBalance) throws Exception {
         BigDecimal balance = mockMvcGoGas.getDTO("/api/accounting/user/" + userId1 + "/balance", BigDecimal.class);
         assertEquals(expectedBalance, balance.doubleValue(), 0.001);
+    }
+
+    private void checkBalanceAudit(AuditUserBalance auditUserBalance, AuditUserBalance.OperationType operationType,
+                                   double amount, double currentBalance) {
+
+        BigDecimal expectedCurrentBalance = BigDecimal.valueOf(currentBalance).setScale(5, RoundingMode.HALF_UP);
+        BigDecimal expectedAmount = BigDecimal.valueOf(amount).setScale(5, RoundingMode.HALF_UP);
+
+        assertNotNull(auditUserBalance.getTs());
+        assertNotNull(auditUserBalance.getReferenceId());
+        assertEquals(ORDER, auditUserBalance.getEntryType());
+        assertEquals(operationType, auditUserBalance.getOperationType());
+        assertEquals(expectedAmount, auditUserBalance.getAmount());
+        assertEquals(expectedCurrentBalance, auditUserBalance.getCurrentBalance());
     }
 }

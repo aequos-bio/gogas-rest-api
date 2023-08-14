@@ -7,6 +7,9 @@ import eu.aequos.gogas.dto.UserBalanceSummaryDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.entity.AuditUserBalance.EntryType;
+import eu.aequos.gogas.persistence.entity.AuditUserBalance.OperationType;
+import eu.aequos.gogas.persistence.entity.derived.OrderUserTotal;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
@@ -15,51 +18,63 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
+import static eu.aequos.gogas.persistence.entity.AccountingEntryReason.Sign;
 
 @Slf4j
 @Service
 public class AccountingService extends CrudService<AccountingEntry, String> {
 
-    private AccountingRepo accountingRepo;
-    private UserBalanceRepo userBalanceRepo;
-    private UserBalanceEntryRepo userBalanceEntryRepo;
-    private UserService userService;
-    private YearRepo yearRepo;
-    private OrderRepo orderRepo;
+    private final AccountingRepo accountingRepo;
+    private final AccountingReasonRepo accountingReasonRepo;
+    private final UserBalanceEntryRepo userBalanceEntryRepo;
+    private final UserService userService;
+    private final UserRepo userRepo;
+    private final YearRepo yearRepo;
+    private final OrderRepo orderRepo;
+    private final AuditUserBalanceRepo auditUserBalanceRepo;
 
-    public AccountingService(AccountingRepo accountingRepo, UserBalanceRepo userBalanceRepo,
-                             UserBalanceEntryRepo userBalanceEntryRepo, UserService userService,
-                             YearRepo yearRepo, OrderRepo orderRepo) {
+    public AccountingService(AccountingRepo accountingRepo, AccountingReasonRepo accountingReasonRepo,
+                             UserBalanceEntryRepo userBalanceEntryRepo, UserService userService, UserRepo userRepo,
+                             YearRepo yearRepo, OrderRepo orderRepo, AuditUserBalanceRepo auditUserBalanceRepo) {
 
         super(accountingRepo, "accounting entry");
         this.accountingRepo = accountingRepo;
-        this.userBalanceRepo = userBalanceRepo;
+        this.accountingReasonRepo = accountingReasonRepo;
         this.userBalanceEntryRepo = userBalanceEntryRepo;
         this.userService = userService;
+        this.userRepo = userRepo;
         this.yearRepo = yearRepo;
         this.orderRepo = orderRepo;
+        this.auditUserBalanceRepo = auditUserBalanceRepo;
     }
 
     public BigDecimal getBalance(String userId) {
-        return userBalanceRepo.getBalance(userId)
-                .orElse(BigDecimal.ZERO);
+        return userRepo.getBalance(userId);
     }
 
+    @Transactional
     public AccountingEntry create(AccountingEntryDTO dto) throws GoGasException {
         if (isYearClosed(dto))
             throw new GoGasException("Il movimento non può essere creato, l'anno contabile è chiuso");
 
-        AccountingEntry accountingEntry = super.create(dto);
-        log.info("New accounting entry created for user {} (id: {})", accountingEntry.getUser().getId(), accountingEntry.getId());
+        AccountingEntry createdEntry = super.create(dto);
+        log.info("New accounting entry created for user {} (id: {})", createdEntry.getUser().getId(), createdEntry.getId());
 
-        return accountingEntry;
+        String userId = createdEntry.getUser().getId();
+        BigDecimal signedAmount = getSignedAmount(createdEntry);
+        updateBalance(userId, signedAmount, createdEntry.getId(), EntryType.ACCOUNTING, OperationType.ADD);
+
+        return createdEntry;
     }
 
     public AccountingEntryDTO get(String entryId) {
@@ -67,8 +82,10 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         return new AccountingEntryDTO().fromModel(existingEntry);
     }
 
+    @Transactional
     public AccountingEntry update(String entryId, AccountingEntryDTO dto) throws ItemNotFoundException, GoGasException {
         AccountingEntry existingEntry = getRequired(entryId);
+        BigDecimal previousAmount = getSignedAmount(existingEntry);
 
         if (existingEntry.getOrderId() != null)
             throw new GoGasException("Movimento relativo ad un ordine, non può essere modificato");
@@ -76,23 +93,47 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         if (isYearClosed(existingEntry) || isYearClosed(dto))
             throw new GoGasException("Il movimento non può essere modificato, l'anno contabile è chiuso");
 
-        AccountingEntry updateEntry = super.createOrUpdate(existingEntry, dto);
-        log.info("Accounting entry updated for user {} (id: {})", updateEntry.getUser().getId(), updateEntry.getId());
+        if (!existingEntry.getUser().getId().equalsIgnoreCase(dto.getUserId())) {
+            throw new GoGasException("Non è possibile modificare l'utente relativo al movimento");
+        }
 
-        return updateEntry;
+        AccountingEntry updatedEntry = super.createOrUpdate(existingEntry, dto);
+        log.info("Accounting entry updated for user {} (id: {})", updatedEntry.getUser().getId(), updateEntry.getId());
+
+        BigDecimal amountDifference = getSignedAmount(updatedEntry).subtract(previousAmount);
+        String userId = updatedEntry.getUser().getId();
+        updateBalance(userId, amountDifference, updatedEntry.getId(), EntryType.ACCOUNTING, OperationType.UPDATE);
+
+        return updatedEntry;
     }
 
     @Override
+    @Transactional
     public void delete(String entryId) {
         AccountingEntry existingEntry = getRequired(entryId);
 
         if (existingEntry.getOrderId() != null)
             throw new GoGasException("Movimento relativo ad un ordine, non può essere eliminato");
 
-        if (isYearClosed(existingEntry) || isYearClosed(existingEntry))
+        if (isYearClosed(existingEntry))
             throw new GoGasException("Il movimento non può essere eliminato, l'anno contabile è chiuso");
 
+        BigDecimal amount = getSignedAmount(existingEntry).negate();
+        String userId = existingEntry.getUser().getId();
+
+        updateBalance(userId, amount, entryId, EntryType.ACCOUNTING, OperationType.REMOVE);
+
         super.delete(entryId);
+    }
+
+    private BigDecimal getSignedAmount(AccountingEntry entry) {
+        String reasonCode = entry.getReason().getReasonCode();
+
+        Sign sign = accountingReasonRepo.findById(reasonCode)
+                .map(AccountingEntryReason::getSignEnum)
+                .orElseThrow(() -> new GoGasException("Invalid accounting reason " + reasonCode));
+
+        return sign.getSignedAmount(entry.getAmount());
     }
 
     public List<AccountingEntryDTO> getUserAccountingEntries(String userId, String reasonCode,
@@ -191,15 +232,15 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     public List<UserBalanceDTO> getUserBalanceList() {
-        return toUserBalanceDTO(userBalanceRepo.findAllByRole(User.Role.U.name()));
+        return toUserBalanceDTO(userRepo.findByRole(User.Role.U.name()));
     }
 
     public List<UserBalanceDTO> getFriendBalanceList(String referralId) {
-        return toUserBalanceDTO(userBalanceRepo.findByReferralId(referralId));
+        return toUserBalanceDTO(userRepo.findByFriendReferralId(referralId, User.class));
     }
 
-    private List<UserBalanceDTO> toUserBalanceDTO(List<UserBalance> userBalanceList) {
-        return userBalanceList.stream()
+    private List<UserBalanceDTO> toUserBalanceDTO(List<User> userList) {
+        return userList.stream()
                 .map(balance -> new UserBalanceDTO().fromModel(balance, userService.getUserDisplayName(balance.getFirstName(), balance.getLastName())))
                 .sorted(Comparator.comparing(UserBalanceDTO::getFullName))
                 .collect(Collectors.toList());
@@ -237,8 +278,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders))
                 .collect(Collectors.toList());
 
-        BigDecimal balance = userBalanceRepo.getBalance(userId)
-                .orElse(BigDecimal.ZERO);
+        BigDecimal balance = userRepo.getBalance(userId);
 
         return new UserBalanceSummaryDTO(balance, dtoEntries);
     }
@@ -265,11 +305,62 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         return yearRepo.existsYearByYearAndClosed(year, true);
     }
 
-    public int setEntriesConfirmedByOrderId(String orderId, boolean confirmed) {
-        return accountingRepo.setConfirmedByOrderId(orderId, confirmed);
+    @Transactional
+    public int setEntriesConfirmedByOrderId(String orderId, boolean charge) {
+        int updatedEntries = accountingRepo.setConfirmedByOrderId(orderId, charge);
+
+        List<OrderUserTotal> orderUserTotals = accountingRepo.getOrderTotals(orderId);
+        updateUserBalances(orderId, orderUserTotals, charge);
+
+        return updatedEntries;
     }
 
     public long countEntriesByOrderId(String orderId) {
         return accountingRepo.countByOrderId(orderId);
+    }
+
+    @Transactional
+    public void updateBalancesFromOrderItemsByOrderId(String orderId, boolean charge) {
+        List<OrderUserTotal> orderUserTotals = orderRepo.getComputedOrderTotalsForAccounting(orderId);
+        updateUserBalances(orderId, orderUserTotals, charge);
+    }
+
+    @Transactional
+    public void updateFriendBalancesFromOrderItems(String referralId, String orderId, String productId, boolean charge) {
+        List<OrderUserTotal> orderUserTotals = orderRepo.getComputedOrderTotalsForFriendAccounting(referralId, orderId, productId);
+        updateUserBalances(orderId, orderUserTotals, charge);
+    }
+
+    private void updateUserBalances(String orderId, List<OrderUserTotal> orderUserTotals, boolean charge) {
+        BinaryOperator<BigDecimal> reduceOperator = charge ? BigDecimal::subtract : BigDecimal::add;
+        OperationType operationType = charge ? OperationType.ADD : OperationType.REMOVE;
+
+        for (OrderUserTotal orderUserTotal : orderUserTotals) {
+            BigDecimal cumulativeAmount = orderUserTotals.stream()
+                    .filter(nestedOrderUserTotal -> nestedOrderUserTotal.isUserOrFriend(orderUserTotal.getUserId()))
+                    .map(OrderUserTotal::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, reduceOperator);
+
+            updateBalance(orderUserTotal.getUserId(), cumulativeAmount, orderId, EntryType.ORDER, operationType);
+        }
+    }
+
+    private synchronized void updateBalance(String userId, BigDecimal amount, String entryId, EntryType entryType,
+                                            OperationType operationType) {
+
+        BigDecimal currentBalance = userRepo.getBalance(userId);
+
+        userRepo.updateBalance(userId, amount);
+
+        AuditUserBalance auditUserBalance = new AuditUserBalance();
+        auditUserBalance.setUserId(userId);
+        auditUserBalance.setTs(LocalDateTime.now());
+        auditUserBalance.setEntryType(entryType);
+        auditUserBalance.setOperationType(operationType);
+        auditUserBalance.setReferenceId(entryId);
+        auditUserBalance.setAmount(amount);
+        auditUserBalance.setCurrentBalance(currentBalance);
+
+        auditUserBalanceRepo.save(auditUserBalance);
     }
 }

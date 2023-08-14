@@ -29,6 +29,7 @@ public class OrderFriendService {
     private OrderManagerService orderManagerService;
     private ProductService productService;
     private UserService userService;
+    private AccountingService accountingService;
     private ExcelGenerationService reportService;
     private AttachmentService attachmentService;
 
@@ -46,7 +47,8 @@ public class OrderFriendService {
     /** Friends **/
     public List<UserOrderItemDTO> getOriginalFriendsOrder(String userId, String orderId) {
         Order order = orderManagerService.getRequiredWithType(orderId);
-        User user = userService.getRequired(userId);
+
+        userService.getRequired(userId); //DO NOT REMOVE, used for validation
 
         Map<String, OpenOrderItem> userSummaryOrderItemsMap = orderItemService.getUserOrderItems(userId, orderId, true);
         Map<String, FriendTotalOrder> friendsTotalDeliveredQuantityMap = orderItemService.getFriendTotalQuantity(userId, orderId);
@@ -64,8 +66,9 @@ public class OrderFriendService {
     }
 
     public List<OrderItemByProductDTO> getFriendOrderItemsByProduct(String userId, String orderId, String productId) throws ItemNotFoundException {
-        Order order = orderManagerService.getRequiredWithType(orderId);
-        User user = userService.getRequired(userId);
+        //DO NOT REMOVE, used for validation
+        orderManagerService.getRequiredWithType(orderId);
+        userService.getRequired(userId);
 
         List<ByProductOrderItem> orderItems = orderItemService.getFriendItemsByProduct(userId, productId, orderId);
         Map<String, String> userFullNameMap = userService.getUsersFullNameMap(ListConverter.fromList(orderItems)
@@ -77,6 +80,7 @@ public class OrderFriendService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public void setFriendAccounted(String userId, String orderId, String productId, boolean accounted) throws GoGasException {
         BigDecimal summaryUserQty = orderItemService.getSummaryUserQuantityByProduct(userId, productId, orderId)
                 .map(OrderItemQtyOnly::getDeliveredQuantity)
@@ -92,6 +96,7 @@ public class OrderFriendService {
             throw new GoGasException("Impossibile procedere con la contabilizzazione degli amici: la somma delle quantità ripartite non corrisponde alla quantità effettivamente ritirata");
 
         orderItemService.accountFriendOrder(userId, orderId, productId, accounted);
+        accountingService.updateFriendBalancesFromOrderItems(userId, orderId, productId, accounted);
     }
 
     @Transactional
@@ -117,11 +122,10 @@ public class OrderFriendService {
 
         Optional<String> friendReferralOrderItemId = originalFriendOrderItems.stream()
                 .filter(o -> o.getUser().equalsIgnoreCase(userId))
-                .map(o -> o.getId())
+                .map(OrderItemQtyOnly::getId)
                 .findAny();
 
-        if (friendReferralOrderItemId.isPresent())
-            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty);
+        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty));
 
         //after all checks, perform update of delivered quantity
         orderItemService.updateDeliveredQty(orderId, itemId, qty);
@@ -141,7 +145,7 @@ public class OrderFriendService {
         List<ByProductOrderItem> originalFriendOrderItems = orderItemService.getFriendItemsByProduct(userId, orderItem.getProductId(), orderId);
         BigDecimal friendOnlyTotalDeliveredQty = originalFriendOrderItems.stream()
                 .filter(o -> !o.getUser().equalsIgnoreCase(userId))
-                .map(o -> o.getDeliveredQuantity())
+                .map(ByProductOrderItem::getDeliveredQuantity)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
@@ -156,11 +160,10 @@ public class OrderFriendService {
 
         Optional<String> friendReferralOrderItemId = originalFriendOrderItems.stream()
                 .filter(o -> o.getUser().equalsIgnoreCase(userId))
-                .map(o -> o.getId())
+                .map(ByProductOrderItem::getId)
                 .findAny();
 
-        if (friendReferralOrderItemId.isPresent())
-            orderItemService.updateDeliveredQty(orderId, friendReferralOrderItemId.get(), userRemainingQty);
+        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty));
 
         //after all checks, perform update of delivered quantity
         insertOrderItem(orderId, orderItem);

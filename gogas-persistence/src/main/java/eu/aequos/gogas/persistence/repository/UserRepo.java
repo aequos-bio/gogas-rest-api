@@ -4,9 +4,7 @@ import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -35,6 +33,7 @@ public interface UserRepo extends CrudRepository<User, String> {
     <T> List<T> findByIdIn(Set<String> usrIds, Class<T> type);
 
     List<UserCoreInfo> findByIdInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
+
     List<UserCoreInfo> findByIdNotInAndRoleInAndEnabled(Set<String> usrIds, Set<String> roles, boolean enabled);
 
     boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
@@ -42,14 +41,18 @@ public interface UserRepo extends CrudRepository<User, String> {
     @Query(value = "SELECT u.id FROM User u WHERE u.friendReferral.id = ?1")
     Set<String> findFriendsIdByUserId(String userId);
 
-    @Procedure(name = "UserExport.balance")
-    BigDecimal getBalance(@Param("idUtente") String userId);
+    @Query("SELECT u.balance FROM User u WHERE u.id = ?1")
+    BigDecimal getBalance(String userId);
 
     @Modifying
     @Query(value = "UPDATE User u SET u.password = ?2 WHERE id = ?1")
     int updatePassword(String userId, String encodedPassword);
 
     User findByUsernameAndEmail(String username, String email);
+
+    @Modifying
+    @Query("UPDATE User u SET u.balance = u.balance + ?2 WHERE u.id = ?1")
+    int updateBalance(String userId, BigDecimal amount);
 
     @Query(value = "SELECT max(u.position) FROM User u")
     int getMaxUserPosition();

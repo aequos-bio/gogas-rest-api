@@ -1,6 +1,7 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
+import eu.aequos.gogas.persistence.entity.derived.OrderUserTotal;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,5 +35,10 @@ public interface AccountingRepo extends CrudRepository<AccountingEntry, String>,
             "from movimenti m " +
             "LEFT OUTER JOIN speseTrasporto AS s ON m.idUtente = s.idUtente AND m.idDateOrdini = s.idDateOrdini " +
             "where m.confermato=1 and (m.idUtente=? or m.idReferente=?)")
-    public List<AccountingEntry> getUserTransactions(String userId, String refId);
+    List<AccountingEntry> getUserTransactions(String userId, String refId);
+
+    @Query("SELECT e.user.id AS userId, e.friendReferralId AS friendReferralId, e.amount AS amount, s.amount AS shippingCost " +
+            "FROM AccountingEntry e LEFT OUTER JOIN ShippingCost s ON s.userId = e.user.id AND s.orderId = ?1 " +
+            "WHERE e.orderId = ?1")
+    List<OrderUserTotal> getOrderTotals(String orderId);
 }

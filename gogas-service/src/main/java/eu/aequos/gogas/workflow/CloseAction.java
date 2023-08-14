@@ -1,5 +1,6 @@
 package eu.aequos.gogas.workflow;
 
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
@@ -133,10 +134,13 @@ public class CloseAction extends OrderStatusAction {
         BigDecimal totalQty = orderItems.stream()
                 .map(OrderItem::getOrderedQuantity)
                 .reduce(BigDecimal::add)
-                .get();
+                .orElse(BigDecimal.ZERO);
 
-        OrderItem groupedItem = orderItems.stream().findFirst().get();
+        OrderItem groupedItem = orderItems.stream().findFirst()
+                .orElseThrow(() -> new GoGasException("No order items found"));
+
         groupedItem.setUser(user);
+        groupedItem.setFriendReferral(null);
         groupedItem.setOrderedQuantity(totalQty);
         groupedItem.setDeliveredQuantity(totalQty);
         return groupedItem;

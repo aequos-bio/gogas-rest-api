@@ -82,6 +82,9 @@ public final class User implements UserCoreInfo {
     @JoinColumn(name="idreferente")
     private User friendReferral;
 
+    @Column(name = "balance", nullable = false)
+    private BigDecimal balance;
+
     @OneToMany(mappedBy = "user")
     private List<OrderManager> managedOrders;
 

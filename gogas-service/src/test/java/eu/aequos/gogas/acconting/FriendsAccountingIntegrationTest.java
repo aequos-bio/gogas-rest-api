@@ -2,20 +2,21 @@ package eu.aequos.gogas.acconting;
 
 import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.*;
-import eu.aequos.gogas.persistence.entity.AccountingEntry;
-import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderType;
-import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static eu.aequos.gogas.persistence.entity.AuditUserBalance.EntryType.ACCOUNTING;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,6 +38,9 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
     private OrderType externalOrderType;
     private Order externalOrder;
+
+    @Autowired
+    private AuditUserBalanceRepo auditUserBalanceRepo;
 
     @BeforeAll
     void createUsersAndReasons() {
@@ -85,6 +89,10 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
         checkUserBalance(userId1, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(1, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
     }
 
     @Test
@@ -102,6 +110,9 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.loginAs("user1", "password");
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertTrue(auditEntries.isEmpty());
     }
 
     @Test
@@ -130,6 +141,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkUserBalance(userId1, 0.0);
         checkBalance(friendId1a, -10.50);
         checkBalance(friendId1b, -20.75);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, -10.50, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1b, AuditUserBalance.OperationType.ADD, -20.75, 0.0);
     }
 
     @Test
@@ -209,12 +225,17 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1b, "BON", 200.0, LocalDate.of(2022, 5, 6));
-        BasicResponseDTO response = mockMvcGoGas.putDTO("/api/accounting/friend/entry/" + entryId, accountingEntryDTO, BasicResponseDTO.class);
-        assertEquals(entryId, response.getData());
+        mockMvcGoGas.put("/api/accounting/friend/entry/" + entryId, accountingEntryDTO)
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message", is("Non è possibile modificare l'utente relativo al movimento")));
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 200.0);
         checkUserBalance(userId1, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(1, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
     }
 
     @Test
@@ -244,6 +265,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals("-", modifiedEntry.getSign());
         assertEquals(LocalDate.of(2022, 5, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, -400.0, 200.0);
     }
 
     @Test
@@ -269,6 +295,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals("+", modifiedEntry.getSign());
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, 0.0, 200.0);
     }
 
     @Test
@@ -298,6 +329,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals("+", modifiedEntry.getSign());
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(50.0, modifiedEntry.getAmount().doubleValue(), 0.001);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, -150.0, 200.0);
     }
 
     @Test
@@ -442,6 +478,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.REMOVE, -200.0, 200.0);
     }
 
     @Test
@@ -458,6 +499,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
+
+        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        assertEquals(2, auditEntries.size());
+        checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, -200.0, 0.0);
+        checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.REMOVE, 200.0, -200.0);
     }
 
     @Test
@@ -957,5 +1003,20 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
     private void checkUserBalance(String userId, double expectedBalance) throws Exception {
         UserBalanceSummaryDTO balance = mockMvcGoGas.getDTO("/api/accounting/user/balance/" + userId, UserBalanceSummaryDTO.class);
         assertEquals(expectedBalance, balance.getBalance().doubleValue(), 0.001);
+    }
+
+    private void checkBalanceAudit(AuditUserBalance auditUserBalance, String userId, AuditUserBalance.OperationType operationType,
+                                   double amount, double currentBalance) {
+
+        BigDecimal expectedCurrentBalance = BigDecimal.valueOf(currentBalance).setScale(5, RoundingMode.HALF_UP);
+        BigDecimal expectedAmount = BigDecimal.valueOf(amount).setScale(5, RoundingMode.HALF_UP);
+
+        assertEquals(userId, auditUserBalance.getUserId());
+        assertNotNull(auditUserBalance.getTs());
+        assertNotNull(auditUserBalance.getReferenceId());
+        assertEquals(ACCOUNTING, auditUserBalance.getEntryType());
+        assertEquals(operationType, auditUserBalance.getOperationType());
+        assertEquals(expectedAmount, auditUserBalance.getAmount());
+        assertEquals(expectedCurrentBalance, auditUserBalance.getCurrentBalance());
     }
 }

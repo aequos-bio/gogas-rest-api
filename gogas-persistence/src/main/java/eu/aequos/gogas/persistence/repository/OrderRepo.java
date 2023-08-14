@@ -1,10 +1,7 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.derived.OpenOrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
-import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -166,4 +163,24 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
         "group by o.idDateOrdini, t.tipoOrdine, o.dataConsegna " +
         "order by o.dataConsegna ", nativeQuery = true)
     List<OrderTotal> getOrderTotals(LocalDate deliveryDateFrom, LocalDate deliveryDateTo);
+
+    @Query(value = "SELECT o.idUtente as userId, o.idReferenteAmico as friendReferralId, o.importo as amount, s.importo AS shippingCost " +
+            "FROM  " +
+            "(SELECT o.idUtente, o.idReferenteAmico, SUM(o.qtaRitirataKg * o.prezzoKg) as importo " +
+            " FROM ordini o " +
+            " WHERE o.idDateOrdine = ?1 AND o.riepilogoUtente = 1 " +
+            " GROUP BY o.idUtente, o.idReferenteAmico " +
+            ") o " +
+            "LEFT OUTER JOIN speseTrasporto s ON s.idDateOrdini = ?1 AND s.idUtente = o.idUtente ", nativeQuery = true)
+    List<OrderUserTotal> getComputedOrderTotalsForAccounting(String orderId);
+
+    @Query(value = "SELECT o.idUtente as userId, o.importo as amount, s.importo AS shippingCost " +
+            "FROM  " +
+            "(SELECT o.idUtente, SUM(o.qtaRitirataKg * o.prezzoKg) as importo " +
+            " FROM ordini o " +
+            " WHERE o.riepilogoUtente = 0 AND o.idReferenteAmico = ?1 AND 0.idDateOrdine = ?2 AND o.idProdotto = ?3 " +
+            " GROUP BY o.idUtente " +
+            ") o " +
+            "LEFT OUTER JOIN speseTrasporto s ON s.idDateOrdini = ?1 AND s.idUtente = o.idUtente ", nativeQuery = true)
+    List<OrderUserTotal> getComputedOrderTotalsForFriendAccounting(String friendReferralId, String orderId, String productId);
 }

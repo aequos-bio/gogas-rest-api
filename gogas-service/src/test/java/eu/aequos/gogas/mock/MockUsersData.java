@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,6 +82,7 @@ public class MockUsersData implements MockDataLifeCycle {
         user.setEnabled(enabled);
         user.setFriendReferral(referenceUser);
         user.setPosition(userIndex++);
+        user.setBalance(BigDecimal.ZERO);
 
         User storedUser = userRepo.save(user);
         createdUsers.add(storedUser);
