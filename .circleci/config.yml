@@ -1,6 +1,7 @@
 version: 2.1
 orbs:
   maven: circleci/maven@1.4.0
+  node: circleci/node@5.1.0
 jobs:
   build_and_save:
     machine:
@@ -10,6 +11,8 @@ jobs:
       platform: "linux/amd64"
     steps:
       - checkout
+      - run: npm install --prefix gogas-service/frontend
+      - run: npm run build --prefix gogas-service/frontend
       - run: mvn clean install
       - run:
           name: Save test results
@@ -29,8 +32,8 @@ jobs:
       - run:
           name: Deploy over SCP
           command: |
-            scp -v -B /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
-            scp -v -B /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/
+            scp -v -B /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/$CIRCLE_WORKFLOW_ID/
+            scp -v -B /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/$CIRCLE_WORKFLOW_ID/
 workflows:
   maven_test:
     jobs:
