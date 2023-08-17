@@ -32,8 +32,8 @@ jobs:
       - run:
           name: Deploy over SCP
           command: |
-            scp -v -B /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/$CIRCLE_WORKFLOW_ID/
-            scp -v -B /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/$CIRCLE_WORKFLOW_ID/
+            scp -v -B /home/circleci/project/gogas-service/target/gogas-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/gogas-service-1.0-SNAPSHOT_${CIRCLE_WORKFLOW_ID}.jar
+            scp -v -B /home/circleci/project/telegram-service/target/telegram-service-1.0-SNAPSHOT.jar ${SSH_USER}@${SSH_HOST}:/gogas/tmp/telegram-service-1.0-SNAPSHOT_${CIRCLE_WORKFLOW_ID}.jar
 workflows:
   maven_test:
     jobs:
