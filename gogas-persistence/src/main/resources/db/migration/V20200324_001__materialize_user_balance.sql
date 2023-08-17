@@ -19,6 +19,6 @@ SET u.balance = s.saldo
 FROM utenti u
 INNER JOIN SaldoContabile s ON u.idUtente = s.idUtente
 
-INSERT INTO auditUserBalance (userId, entryType, operationType, referenceId, amount, currentBalance)
-SELECT u.idUtente, 'MIGRATION', 'ADD', newid(), u.balance, 0 FROM utenti u
+INSERT INTO auditUserBalance (ts, userId, entryType, operationType, referenceId, amount, currentBalance)
+SELECT CURRENT_TIMESTAMP, u.idUtente, 'MIGRATION', 'ADD', newid(), u.balance, 0 FROM utenti u
 WHERE u.balance > 0
