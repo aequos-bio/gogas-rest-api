@@ -442,7 +442,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public void saveInvoiceAttachment(String orderId, byte[] attachmentContent, String contentType) throws GoGasException {
-        attachmentService.storeAttachment(attachmentContent, AttachmentType.Invoice, orderId);
+        attachmentService.storeAttachment(attachmentContent, AttachmentType.INVOICE, orderId);
         int rowsUpdated = orderRepo.updateAttachmentType(orderId, contentType);
 
         if (rowsUpdated < 1)
@@ -502,13 +502,13 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
-        boolean hasAttachment = attachmentService.hasAttachment(AttachmentType.Invoice, orderId);
+        boolean hasAttachment = attachmentService.hasAttachment(AttachmentType.INVOICE, orderId);
         return new OrderDetailsDTO().fromModel(order, hasAttachment);
     }
 
     public AttachmentDTO readInvoiceAttachment(String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
-        byte[] attachmentContent = attachmentService.retrieveAttachment(AttachmentType.Invoice, orderId);
+        byte[] attachmentContent = attachmentService.retrieveAttachment(AttachmentType.INVOICE, orderId);
         return attachmentService.buildAttachmentDTO(order, attachmentContent, order.getAttachmentType());
     }
 

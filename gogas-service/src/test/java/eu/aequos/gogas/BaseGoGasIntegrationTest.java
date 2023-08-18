@@ -1,11 +1,9 @@
 package eu.aequos.gogas;
 
 import eu.aequos.gogas.attachments.AttachmentRepo;
-import eu.aequos.gogas.mock.MockAccountingData;
-import eu.aequos.gogas.mock.MockDataLifeCycle;
-import eu.aequos.gogas.mock.MockOrdersData;
-import eu.aequos.gogas.mock.MockUsersData;
+import eu.aequos.gogas.mock.*;
 import eu.aequos.gogas.mvc.MockMvcGoGas;
+import eu.aequos.gogas.notification.telegram.client.TelegramNotificationClient;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,6 +44,9 @@ public class BaseGoGasIntegrationTest {
     @MockBean
     private AttachmentRepo attachmentRepo;
 
+    @MockBean
+    private TelegramNotificationClient telegramNotificationClient;
+
     @Autowired
     protected MockMvcGoGas mockMvcGoGas;
 
@@ -57,6 +58,9 @@ public class BaseGoGasIntegrationTest {
 
     @Autowired
     protected MockAccountingData mockAccountingData;
+
+    @Autowired
+    protected MockConfigurationData mockConfigurationData;
 
     @BeforeAll
     void init() {

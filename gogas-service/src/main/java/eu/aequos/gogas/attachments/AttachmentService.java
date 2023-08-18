@@ -59,19 +59,43 @@ public class AttachmentService {
         }
     }
 
+    public void removeAttachment(AttachmentType type, String fileName) {
+        try {
+            Path attachmentFilePath = resolveFilePath(type, fileName);
+
+            if (Files.notExists(attachmentFilePath))
+                throw new ItemNotFoundException("attachment", fileName);
+
+            Files.delete(attachmentFilePath);
+        } catch (IOException ex) {
+            log.error("Error while removing attachment {} of type {}", fileName, type, ex);
+            throw new GoGasException("Unable to remove attachment");
+        }
+    }
+
     public AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String contentType) {
-        String fileName = buildFileName(order.getOrderType().getDescription(),
+        String fileName = buildFileNameFromOrder(order.getOrderType().getDescription(),
                 order.getDeliveryDate(), contentType);
 
         return new AttachmentDTO(attachmentContent, contentType, fileName);
     }
 
-    public String buildFileName(String description, LocalDate date, String mimeType) {
+    public AttachmentDTO buildAttachmentDTO(String filename, byte[] attachmentContent, String contentType) {
+        String fileName = buildFileName(filename, contentType);
+        return new AttachmentDTO(attachmentContent, contentType, fileName);
+    }
+
+    public String buildFileNameFromOrder(String description, LocalDate date, String mimeType) {
         String orderType = description.replace(" ", "_");
         String deliveryDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String extensionWithDot = resolveFileExtension(mimeType);
 
         return String.format("%s-%s%s", orderType, deliveryDate, extensionWithDot);
+    }
+
+    public String buildFileName(String name, String mimeType) {
+        String extensionWithDot = resolveFileExtension(mimeType);
+        return String.format("%s%s", name, extensionWithDot);
     }
 
     private String resolveFileExtension(String mimeType) {

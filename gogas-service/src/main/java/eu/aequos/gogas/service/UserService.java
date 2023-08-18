@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 @Service
 public class UserService extends CrudService<User, String> {
 
-    private final String DISABLED_ICON = "<span class='glyphicon glyphicon-ban-circle' style='margin-right:10px'></span>";
+    private static final String DISABLED_ICON = "<span class='glyphicon glyphicon-ban-circle' style='margin-right:10px'></span>";
 
     private ConfigurationService configurationService;
     private UserRepo userRepo;
@@ -130,14 +130,14 @@ public class UserService extends CrudService<User, String> {
     }
 
     public String getUserDisplayName(String firstName, String lastName) {
-        if (configurationService.getUserSorting() == ConfigurationService.UserSorting.SurnameFirst)
+        if (configurationService.getUserSorting() == ConfigurationService.UserSorting.SURNAME_FIRST)
             return lastName + " " + firstName;
 
         return firstName + " " + lastName;
     }
 
     public Comparator<UserCoreInfo> getUserSorting() {
-        if (configurationService.getUserSorting() == ConfigurationService.UserSorting.SurnameFirst)
+        if (configurationService.getUserSorting() == ConfigurationService.UserSorting.SURNAME_FIRST)
             return Comparator
                     .comparing(UserCoreInfo::getLastName)
                     .thenComparing(UserCoreInfo::getFirstName);

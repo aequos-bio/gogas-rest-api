@@ -1,14 +1,17 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.ConfigurationItemDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
-import eu.aequos.gogas.persistence.entity.Configuration;
-import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtTokenHandler;
+import eu.aequos.gogas.service.ConfigurationService;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,26 +27,16 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Api("Authentication")
 @RestController
 public class AuthenticationController {
 
-    private AuthenticationManager authenticationManager;
-    private JwtTokenHandler jwtTokenHandler;
-    private AuthorizationService userDetailsService;
-    private ConfigurationRepo configurationRepo;
-    private TenantRegistry tenantRegistry;
-
-    public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager,
-                                    JwtTokenHandler jwtTokenHandler, AuthorizationService userDetailsService,
-                                    TenantRegistry tenantRegistry) {
-
-        this.configurationRepo = configurationRepo;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenHandler = jwtTokenHandler;
-        this.userDetailsService = userDetailsService;
-        this.tenantRegistry = tenantRegistry;
-    }
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenHandler jwtTokenHandler;
+    private final AuthorizationService userDetailsService;
+    private final ConfigurationService configurationService;
+    private final TenantRegistry tenantRegistry;
 
     @PostMapping(value = "authenticate")
     public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp,
@@ -101,13 +94,19 @@ public class AuthenticationController {
 
     @GetMapping(value = "info")
     public @ResponseBody Map<String,Object> getInfo() {
-        return configurationRepo.findByVisibleOrderByKey(true).stream()
-                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+        return configurationService.getVisibleConfigurationItems().stream()
+                .collect(Collectors.toMap(ConfigurationItemDTO::getKey, ConfigurationItemDTO::getValue));
     }
 
     @GetMapping(value = "info/gas")
     public @ResponseBody Map<String,Object> getGasInfo() {
-        return configurationRepo.findByKeyLike("gas%").stream()
-                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+        return configurationService.getGasProperties().stream()
+                .collect(Collectors.toMap(ConfigurationItemDTO::getKey, ConfigurationItemDTO::getValue));
+    }
+
+    @GetMapping(value = "info/logo")
+    public void getGasLogo(HttpServletResponse response) throws IOException, GoGasException {
+        AttachmentDTO invoiceAttachment = configurationService.readLogo();
+        invoiceAttachment.writeToHttpResponse(response);
     }
 }

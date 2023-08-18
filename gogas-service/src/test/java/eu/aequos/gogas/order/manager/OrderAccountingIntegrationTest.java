@@ -33,9 +33,6 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
     @MockBean
     private YearRepo yearRepo;
 
-    @MockBean
-    private TelegramNotificationClient telegramNotificationClient;
-
     @Autowired
     private AuditUserBalanceRepo auditUserBalanceRepo;
 
