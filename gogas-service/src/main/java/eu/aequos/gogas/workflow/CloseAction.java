@@ -172,13 +172,13 @@ public class CloseAction extends OrderStatusAction {
         BigDecimal boxesCount = totalOrderedQty.divide(boxWeight, RoundingMode.HALF_UP);
 
         switch (roundingMode) {
-            case Ceil:
+            case CEIL:
                 return boxesCount.setScale(0, RoundingMode.CEILING);
 
-            case Floor:
+            case FLOOR:
                 return boxesCount.setScale(0, RoundingMode.FLOOR);
 
-            case Threshold:
+            case THRESHOLD:
             default:
                 BigDecimal intPart = boxesCount.setScale(0, RoundingMode.FLOOR);
                 BigDecimal decimalPart = boxesCount.remainder(BigDecimal.ONE);
