@@ -71,7 +71,7 @@ public class AccountingEntryDTO implements ConvertibleDTO<AccountingEntry> {
         AccountingEntry model = existingModel.orElse(new AccountingEntry());
 
         model.setDate(date);
-        model.setUser(new User().withUserId(userId));
+        model.setUser(User.fromId(userId));
         model.setDescription(description);
         model.setReason(new AccountingEntryReason().withReasonCode(reasonCode));
         model.setConfirmed(true);

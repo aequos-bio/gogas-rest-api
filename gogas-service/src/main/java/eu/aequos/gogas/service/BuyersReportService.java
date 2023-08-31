@@ -7,6 +7,7 @@ import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -19,18 +20,13 @@ import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.NONE;
 
+@RequiredArgsConstructor
 @Service
 public class BuyersReportService {
 
-    private OrderRepo orderRepo;
-    private OrderItemService orderItemService;
-    private UserService userService;
-
-    public BuyersReportService(OrderRepo orderRepo, OrderItemService orderItemService, UserService userService) {
-        this.orderRepo = orderRepo;
-        this.orderItemService = orderItemService;
-        this.userService = userService;
-    }
+    private final OrderRepo orderRepo;
+    private final OrderItemService orderItemService;
+    private final UserService userService;
 
     public BuyersReportDTO generateBuyersReport(String orderTypeId, LocalDate dateFrom, LocalDate dateTo) {
         List<Order> orderList = searchOrdersBetweenDates(orderTypeId, dateFrom, dateTo);

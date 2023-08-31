@@ -11,43 +11,38 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.Optional;
 
 @Slf4j
-public abstract class CrudService<Model, ID> {
+public abstract class CrudService<M, K> {
 
-    CrudRepository<Model, ID> crudRepository;
-    String type;
+    protected abstract CrudRepository<M, K> getCrudRepository();
+    protected abstract String getType();
 
-    public CrudService(CrudRepository<Model, ID> crudRepository, String type) {
-        this.crudRepository = crudRepository;
-        this.type = type;
+    public M getRequired(K key) throws ItemNotFoundException {
+        return getCrudRepository().findById(key)
+                .orElseThrow(() -> new ItemNotFoundException(getType(), key));
     }
 
-    public Model getRequired(ID id) throws ItemNotFoundException {
-        return crudRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException(type, id));
-    }
-
-    public Model create(ConvertibleDTO<Model> dto) {
+    public M create(ConvertibleDTO<M> dto) {
         return createOrUpdate(null, dto);
     }
 
-    public Model update(ID id, ConvertibleDTO<Model> dto) throws ItemNotFoundException {
-        return createOrUpdate(getRequired(id), dto);
+    public M update(K key, ConvertibleDTO<M> dto) throws ItemNotFoundException {
+        return createOrUpdate(getRequired(key), dto);
     }
 
-    public void delete(ID id) {
+    public void delete(K key) {
         try {
-            log.info("deleting " + type + " with id " + id);
-            crudRepository.deleteById(id);
+            log.info("deleting " + getType() + " with id " + key);
+            getCrudRepository().deleteById(key);
         } catch (EmptyResultDataAccessException ex) {
-            throw new ItemNotFoundException(type, id);
+            throw new ItemNotFoundException(getType(), key);
         } catch (DataIntegrityViolationException ex) {
-            log.info("Cannot delete " + type + " with id " + id + "(" + ex.getMessage() + ")");
-            throw new ItemNotDeletableException(type, id);
+            log.info("Cannot delete " + getType() + " with id " + key + "(" + ex.getMessage() + ")");
+            throw new ItemNotDeletableException(getType(), key);
         }
     }
 
-    protected Model createOrUpdate(Model existingModel, ConvertibleDTO<Model> dto) {
-        Model updatedModel = dto.toModel(Optional.ofNullable(existingModel));
-        return crudRepository.save(updatedModel);
+    protected M createOrUpdate(M existingModel, ConvertibleDTO<M> dto) {
+        M updatedModel = dto.toModel(Optional.ofNullable(existingModel));
+        return getCrudRepository().save(updatedModel);
     }
 }

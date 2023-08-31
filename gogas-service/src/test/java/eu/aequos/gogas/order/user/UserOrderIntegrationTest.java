@@ -24,14 +24,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
 
     private Order computedOrder;
-    private Order notComputedOrder;
-    private Order externalOrder;
 
     @BeforeEach
     void createOrders() {
         computedOrder = mockOrdersData.createOpenOrder(orderTypeComputed);
-        notComputedOrder = mockOrdersData.createOpenOrder(orderTypeNotComputed);
-        externalOrder = mockOrdersData.createOpenOrder(orderTypeExternal);
+        createdOrderIds.add(computedOrder.getId());
     }
 
     @Test

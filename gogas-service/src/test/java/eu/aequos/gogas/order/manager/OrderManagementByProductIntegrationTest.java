@@ -255,6 +255,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
 
         verifyOrderItem(otherProductItems.get(userId1), 1.5, 1.5, "KG", false);
         verifyOrderItem(otherProductItems.get(userId3), 1.5, 1.5, "KG", false);
+
+        verifyUserOrderTotal("user1", 21.86);
+        verifyUserOrderTotal("user2", 14.12);
+        verifyUserOrderTotal("user3", 9.85);
     }
 
     @Test
@@ -308,6 +312,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(items.get(userId1), 2.5, 2.5, "KG", false);
         verifyOrderItem(items.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(items.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -359,6 +367,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAfter.get(userId1), 2.5, 2.5, "KG", false);
         verifyOrderItem(itemsAfter.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -401,6 +413,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         assertEquals(1.0, productResponse.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(8.5, productResponse.getOrderedQty().doubleValue(), 0.001);
         assertEquals(8.5, productResponse.getDeliveredQty().doubleValue(), 0.001);
+
+        verifyUserOrderTotal("user1", 26.86);
+        verifyUserOrderTotal("user2", 18.12);
+        verifyUserOrderTotal("user3", 17.85);
     }
 
     @Test
@@ -508,6 +524,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsBefore.get(userId1), 2.5, 2.5, "KG", false);
         verifyOrderItem(itemsBefore.get(userId2), 2.0, 3.0, "KG", false);
         verifyOrderItem(itemsBefore.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 18.77);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -604,6 +624,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
 
         verifyOrderItem(itemsAfter.get(userId1), 1.5, 12.75, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 1.5, 12.75, "KG", false);
+
+        verifyUserOrderTotal("user1", 44.86);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 35.18);
     }
 
     @Test
@@ -644,6 +668,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
 
         verifyOrderItem(itemsAfter.get(userId1), 10.8, 7.668, "KG", false);
         verifyOrderItem(itemsAfter.get(userId2), 4.7, 3.337, "KG", false);
+
+        verifyUserOrderTotal("user1", 21.19);
+        verifyUserOrderTotal("user2", 15.24);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -723,6 +751,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAfter.get(userId1), 1.5, 1.5, "KG", false);
         verifyOrderItem(itemsAfter.get(userId2), 0.0, 2.456, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 1.5, 1.5, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 21.39);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -823,6 +855,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAfter.get(userId1), 2.5, 0.0, "KG", true);
         verifyOrderItem(itemsAfter.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 21.86);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -891,6 +927,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAfter.get(userId1), 2.5, 2.5, "KG", false);
         verifyOrderItem(itemsAfter.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -921,6 +961,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAfter.get(userId1), 2.5, 2.5, "KG", false);
         verifyOrderItem(itemsAfter.get(userId2), 2.0, 2.0, "KG", false);
         verifyOrderItem(itemsAfter.get(userId3), 4.0, 4.0, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -991,6 +1035,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         verifyOrderItem(itemsAdded.get(userId1), 1.5, 1.5, "KG", false);
         verifyOrderItem(itemsAdded.get(userId2), 0.0, 2.0, "KG", false);
         verifyOrderItem(itemsAdded.get(userId3), 1.5, 1.5, "KG", false);
+
+        verifyUserOrderTotal("user1", 25.74);
+        verifyUserOrderTotal("user2", 17.52);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -1034,6 +1082,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
 
         verifyOrderItem(itemsAdded.get(userId1), 1.5, 4.0, "KG", false);
         verifyOrderItem(itemsAdded.get(userId3), 1.5, 1.5, "KG", false);
+
+        verifyUserOrderTotal("user1", 26.11);
+        verifyUserOrderTotal("user2", 17.22);
+        verifyUserOrderTotal("user3", 16.05);
     }
 
     @Test
@@ -1160,5 +1212,13 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
                                 mockOrdersData.createDeliveredUserOrderItem(order.getId(), userId, productsByCodeComputed.get(productCode), quantity)
                         )
                 );
+
+        mockOrdersData.updateUserTotals(order.getId());
+    }
+
+    private void verifyUserOrderTotal(String userName, double expectedAmount) throws Exception {
+        mockMvcGoGas.loginAs(userName, "password");
+        UserOrderDetailsDTO userOrderDetailsDTO = mockMvcGoGas.getDTO("/api/order/user/" + order.getId(), UserOrderDetailsDTO.class, Map.of("includeTotalAmount", List.of("true")));
+        assertEquals(expectedAmount, userOrderDetailsDTO.getTotalAmount().doubleValue());
     }
 }

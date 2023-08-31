@@ -1,26 +1,33 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.repository.AccountingReasonRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 @Service
 public class AccountingReasonService extends CrudService<AccountingEntryReason, String> {
 
     private static final Function<AccountingEntryReason, SelectItemDTO> SELECT_ITEM_CONVERSION = t -> new SelectItemDTO(t.getReasonCode(), t.getDescription());
 
-    private AccountingReasonRepo accountingReasonRepo;
+    private final AccountingReasonRepo accountingReasonRepo;
 
-    public AccountingReasonService(AccountingReasonRepo accountingReasonRepo) {
-        super(accountingReasonRepo,"accounting reason");
+    @Override
+    protected CrudRepository<AccountingEntryReason, String> getCrudRepository() {
+        return accountingReasonRepo;
+    }
 
-        this.accountingReasonRepo = accountingReasonRepo;
+    @Override
+    protected String getType() {
+        return "accounting reason";
     }
 
     public List<SelectItemDTO> getAccountingReasonsForSelect() {

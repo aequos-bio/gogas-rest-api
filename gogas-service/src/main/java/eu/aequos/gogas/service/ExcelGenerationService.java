@@ -16,6 +16,7 @@ import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -30,31 +31,22 @@ import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class ExcelGenerationService {
 
-    private ExcelServiceClient excelServiceClient;
+    private static final String EXCEL_SERVICE_ERROR_MESSAGE = "Error while calling excel service";
+    private static final String EXCEL_FILE_ERROR_MESSAGE = "Error while generating excel file";
+    private static final String BALANCE_LABEL = "Saldo";
 
-    private UserRepo userRepo;
-    private OrderItemRepo orderItemRepo;
-    private ProductRepo productRepo;
-    private SupplierOrderItemRepo supplierOrderItemRepo;
-    private UserService userService;
-    private AccountingService accountingService;
-
-    public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
-                                  OrderItemRepo orderItemRepo, ProductRepo productRepo,
-                                  SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService) {
-
-        this.excelServiceClient = excelServiceClient;
-        this.userRepo = userRepo;
-        this.userService = userService;
-        this.orderItemRepo = orderItemRepo;
-        this.productRepo = productRepo;
-        this.supplierOrderItemRepo = supplierOrderItemRepo;
-        this.accountingService = accountingService;
-    }
+    private final ExcelServiceClient excelServiceClient;
+    private final UserRepo userRepo;
+    private final OrderItemRepo orderItemRepo;
+    private final ProductRepo productRepo;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final UserService userService;
+    private final AccountingService accountingService;
 
     public byte[] extractProductPriceList(String orderTypeId) throws GoGasException {
         List<ExcelPriceListItem> products = productRepo.findByType(orderTypeId).stream()
@@ -64,8 +56,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.products(products);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -116,8 +108,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.order(orderExportRequest);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -150,8 +142,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.order(orderExportRequest);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -178,7 +170,7 @@ public class ExcelGenerationService {
             return userRepo.findAll();
 
         Set<String> userIdsInOrder = orderItems.stream()
-                .map(item -> item.getUserId())
+                .map(OrderItemExport::getUserId)
                 .collect(Collectors.toSet());
 
         return userRepo.findByIdIn(userIdsInOrder, User.class);
@@ -200,7 +192,7 @@ public class ExcelGenerationService {
             return productRepo.findAvailableByTypeOrderByPriceList(orderType.getId());
 
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(item -> item.getProductId())
+                .map(OrderItemExport::getProductId)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
@@ -208,7 +200,7 @@ public class ExcelGenerationService {
 
     private List<Product> getProductsForFriendExport(List<OrderItemExport> orderItems) {
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(item -> item.getProductId())
+                .map(OrderItemExport::getProductId)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
@@ -258,7 +250,7 @@ public class ExcelGenerationService {
                 new ColumnDefinition<UserBalanceDTO>("Utente", Text)
                         .withExtract(UserBalanceDTO::getFullName),
 
-                new ColumnDefinition<UserBalanceDTO>("Saldo", Currency)
+                new ColumnDefinition<UserBalanceDTO>(BALANCE_LABEL, Currency)
                         .withExtract(u -> u.getBalance().doubleValue())
                         .withShowTotal()
         );
@@ -301,7 +293,7 @@ public class ExcelGenerationService {
                         .withExtract(t -> t.getAmount().signum() < 0 ? t.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
-                new ColumnDefinition<>("Saldo", SubTotal)
+                new ColumnDefinition<>(BALANCE_LABEL, SubTotal)
         );
 
         UserBalanceSummaryDTO userBalance = accountingService.getUserBalance(userId, null, null, true);
@@ -330,7 +322,7 @@ public class ExcelGenerationService {
                         .withExtract(e -> e.getAmount().signum() < 0 ? e.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
-                new ColumnDefinition<>("Saldo", SubTotal)
+                new ColumnDefinition<>(BALANCE_LABEL, SubTotal)
         );
 
         String title = "Situazione contabile gas";

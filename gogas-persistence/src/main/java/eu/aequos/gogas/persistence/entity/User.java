@@ -93,6 +93,24 @@ public final class User implements UserCoreInfo {
         return this;
     }
 
+    public static User fromId(String id) {
+        return fromId(id, null);
+    }
+
+    public static User fromId(String id, String friendReferralId) {
+        User user = new User();
+        user.setId(id);
+
+        if (friendReferralId != null) {
+            user.setFriendReferral(User.fromId(friendReferralId));
+            user.setRole(Role.S.name());
+        } else {
+            user.setRole(Role.U.name());
+        }
+
+        return user;
+    }
+
     public Role getRoleEnum() {
         return Role.valueOf(role.toUpperCase());
     }

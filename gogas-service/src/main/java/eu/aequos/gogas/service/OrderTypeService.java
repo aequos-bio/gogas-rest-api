@@ -10,6 +10,8 @@ import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.toList;
 
+@RequiredArgsConstructor
 @Service
 public class OrderTypeService extends CrudService<OrderType, String> {
 
@@ -28,20 +31,19 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     private static final Function<OrderType, SelectItemDTO> SELECT_ITEM_EXTENDED_CONVERSION = t ->
             new OrderTypeSelectItemDTO(t.getId(), t.getDescription(), t.getAequosOrderId(), t.isExternal(), t.getExternallink());
 
-    private OrderTypeRepo orderTypeRepo;
-    private OrderRepo orderRepo;
-    private OrderManagerRepo orderManagerRepo;
-    private AequosIntegrationService aequosIntegrationService;
+    private final OrderTypeRepo orderTypeRepo;
+    private final OrderRepo orderRepo;
+    private final OrderManagerRepo orderManagerRepo;
+    private final AequosIntegrationService aequosIntegrationService;
 
-    public OrderTypeService(OrderTypeRepo orderTypeRepo, OrderRepo orderRepo,
-                            OrderManagerRepo orderManagerRepo,
-                            AequosIntegrationService aequosIntegrationService) {
-        super(orderTypeRepo, "order type");
+    @Override
+    protected CrudRepository<OrderType, String> getCrudRepository() {
+        return orderTypeRepo;
+    }
 
-        this.orderTypeRepo = orderTypeRepo;
-        this.orderRepo = orderRepo;
-        this.orderManagerRepo = orderManagerRepo;
-        this.aequosIntegrationService = aequosIntegrationService;
+    @Override
+    protected String getType() {
+        return "order type";
     }
 
     public OrderTypeDTO getById(String orderTypeId) {

@@ -18,8 +18,10 @@ import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.specification.ProductSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,33 +31,27 @@ import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.dto.SelectItemDTO.valueAsLabel;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class ProductService extends CrudService<Product, String> {
 
-    private OrderTypeService orderTypeService;
-    private ProductRepo productRepo;
-    private PriceListSynchronizer priceListSynchronizer;
-    private AequosIntegrationService aequosIntegrationService;
-    private ExcelServiceClient excelServiceClient;
-    private ExcelGenerationService reportService;
-    private AttachmentService attachmentService;
+    private final OrderTypeService orderTypeService;
+    private final ProductRepo productRepo;
+    private final PriceListSynchronizer priceListSynchronizer;
+    private final AequosIntegrationService aequosIntegrationService;
+    private final ExcelServiceClient excelServiceClient;
+    private final ExcelGenerationService reportService;
+    private final AttachmentService attachmentService;
 
-    public ProductService(ProductRepo productRepo, OrderTypeService orderTypeService,
-                          PriceListSynchronizer priceListSynchronizer,
-                          AequosIntegrationService aequosIntegrationService,
-                          ExcelServiceClient excelServiceClient, ExcelGenerationService reportService,
-                          AttachmentService attachmentService) {
+    @Override
+    protected CrudRepository<Product, String> getCrudRepository() {
+        return productRepo;
+    }
 
-        super(productRepo, "product");
-
-        this.orderTypeService = orderTypeService;
-        this.productRepo = productRepo;
-        this.priceListSynchronizer = priceListSynchronizer;
-        this.aequosIntegrationService = aequosIntegrationService;
-        this.excelServiceClient = excelServiceClient;
-        this.reportService = reportService;
-        this.attachmentService = attachmentService;
+    @Override
+    protected String getType() {
+        return "product";
     }
 
     public List<Product> getProductsOnPriceList(String productType) {

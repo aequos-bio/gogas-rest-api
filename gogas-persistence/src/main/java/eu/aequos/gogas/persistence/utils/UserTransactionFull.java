@@ -2,7 +2,6 @@ package eu.aequos.gogas.persistence.utils;
 
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
-import org.springframework.data.jpa.repository.Query;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -23,26 +22,15 @@ public class UserTransactionFull {
   private String friend;
   private String type = "O"; // O - ordine, M - movimento contabile
 
-  public UserTransactionFull(String id, String userId, LocalDate date, String description, BigDecimal amount, String reason, String sign, boolean recorded) {
-    this.id = id;
-    this.userId = id;
-    this.date = date;
-    this.description = description;
-    this.amount = amount;
-    this.reason = reason;
-    this.sign = sign;
-    this.recorded = recorded;
-  }
-
   public UserTransactionFull() {
   }
 
-  public UserTransactionFull(AccountingEntry transaction, AccountingEntryReason reason) {
-      this.setId(transaction.getId());
-      this.setUserId(transaction.getUser().getId());
-      this.setDate(transaction.getDate());
-      this.setDescription(transaction.getDescription());
-      this.setAmount(transaction.getAmount());
+  public UserTransactionFull(AccountingEntry accountingEntry, AccountingEntryReason reason) {
+      this.setId(accountingEntry.getId());
+      this.setUserId(accountingEntry.getUser().getId());
+      this.setDate(accountingEntry.getDate());
+      this.setDescription(accountingEntry.getDescription());
+      this.setAmount(accountingEntry.getAmount());
 
       this.setReason(reason.getDescription());
       this.setSign(reason.getSign());

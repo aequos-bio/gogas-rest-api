@@ -2,19 +2,17 @@ package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.OrderItemService;
+import eu.aequos.gogas.service.UserOrderSummaryService;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
 
-    private OrderItemService orderItemService;
-
-    public DeliveryNotificationBuilder(OrderItemService orderItemService) {
-        this.orderItemService = orderItemService;
-    }
+    private final UserOrderSummaryService userOrderSummaryService;
 
     @Override
     public String getEventName() {
@@ -47,7 +45,7 @@ public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
 
     @Override
     public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
-        Set<String> usersOrdering = orderItemService.getUsersWithOrder(order.getId());
+        Set<String> usersOrdering = userOrderSummaryService.getUsersWithOrder(order.getId());
 
         return preferences.stream()
                 .filter(pref -> usersOrdering.contains(pref.getUserId()))

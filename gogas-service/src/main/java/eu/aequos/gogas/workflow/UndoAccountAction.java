@@ -34,14 +34,11 @@ public class UndoAccountAction extends OrderStatusAction {
 
     @Override
     protected void processOrder() {
-        if (order.getOrderType().isComputedAmount())
-            updateOrderItems();
-        else
-            accountingService.setEntriesConfirmedByOrderId(order.getId(), false);
+        if (order.getOrderType().isComputedAmount()) {
+            orderItemRepo.setAccountedByOrderId(order.getId(), false);
+        }
+
+        accountingService.undoAccountOrder(order);
     }
 
-    private void updateOrderItems() {
-        orderItemRepo.setAccountedByOrderId(order.getId(), false);
-        accountingService.updateBalancesFromOrderItemsByOrderId(order.getId(), false);
-    }
 }

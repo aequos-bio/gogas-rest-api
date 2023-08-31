@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegrationTest {
+class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegrationTest {
 
     private Order orderComputed;
     private Order orderNotComputed;
@@ -122,8 +122,8 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         Map<String, OrderByUserDTO> userTotals = mockMvcGoGas.getDTOList("/api/order/manage/" + orderComputed.getId() + "/byUser/list", OrderByUserDTO.class).stream()
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
-        verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 25.735);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 17.215);
+        verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 25.74);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 17.22);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 3, 16.05);
     }
 
@@ -217,8 +217,8 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         Map<String, OrderByUserDTO> userTotals = mockMvcGoGas.postDTOList("/api/order/manage/" + orderComputed.getId() + "/shippingCost", BigDecimal.valueOf(10.0), OrderByUserDTO.class).stream()
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
-        verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 25.735, 4.36);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 17.215, 2.92);
+        verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 25.74, 4.36);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 17.22, 2.92);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 3, 16.05, 2.72);
     }
 
@@ -229,9 +229,9 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         Map<String, OrderByUserDTO> userTotals = mockMvcGoGas.getDTOList("/api/order/manage/" + orderNotComputed.getId() + "/byUser/list", OrderByUserDTO.class).stream()
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
-        verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 0.0);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 0.0);
-        verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, 0.0);
+        verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, null);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, null);
+        verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, null);
     }
 
     @Test
@@ -248,7 +248,7 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
         verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 23.87);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 0.0);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, null);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, 49.5);
     }
 
@@ -334,18 +334,18 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
     }
 
     @Test
-    void givenAnOrderWithNotComputedAmountWithSomeUsersCost_whenGettingAvailableUsers_thenOtherUsersAreReturned() throws Exception {
-        mockMvcGoGas.loginAs("manager2", "password");
+    void givenAnExternalOrderWithSomeUsersCost_whenGettingAvailableUsers_thenOtherUsersAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
 
-        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderNotComputed.getId() + "/byUser/" + userId1, BigDecimal.valueOf(23.87), BasicResponseDTO.class);
+        BasicResponseDTO updateResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderExternal.getId() + "/byUser/" + userId1, BigDecimal.valueOf(23.87), BasicResponseDTO.class);
         assertNotNull(updateResponse);
 
-        BasicResponseDTO updateResponse3 = mockMvcGoGas.postDTO("/api/order/manage/" + orderNotComputed.getId() + "/byUser/" + userId3, BigDecimal.valueOf(49.5), BasicResponseDTO.class);
+        BasicResponseDTO updateResponse3 = mockMvcGoGas.postDTO("/api/order/manage/" + orderExternal.getId() + "/byUser/" + userId3, BigDecimal.valueOf(49.5), BasicResponseDTO.class);
         assertNotNull(updateResponse3);
 
         Set<String> userIds = Set.of(userId1, userId3);
 
-        List<SelectItemDTO> availableUsers = mockMvcGoGas.getDTOList("/api/order/manage/" + orderNotComputed.getId() + "/byUser/availableUsers", SelectItemDTO.class);
+        List<SelectItemDTO> availableUsers = mockMvcGoGas.getDTOList("/api/order/manage/" + orderExternal.getId() + "/byUser/availableUsers", SelectItemDTO.class);
         assertTrue(availableUsers.stream().noneMatch(item -> userIds.contains(item.getId())));
         assertTrue(availableUsers.stream().anyMatch(item -> userId2.equals(item.getId())));
     }
@@ -394,7 +394,7 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
         verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 23.87);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 0.0);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, null);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, 49.5);
     }
 
@@ -466,7 +466,7 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
 
         verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 25.0, 3.125);
         verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 15.0, 1.875);
-        verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, 0.0, 0.0);
+        verifyUserOrder(userTotals.get(userId3), "user3 user3", 5, null, 0.0);
     }
 
     @Test
@@ -549,21 +549,35 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 0, 10.0, 1.0);
     }
 
-    private void verifyUserOrder(OrderByUserDTO order, String userName, int itemsCount, double amount) {
+    private void verifyUserOrder(OrderByUserDTO order, String userName, int itemsCount, Double amount) {
         assertEquals(userName, order.getUserFullName());
         assertEquals(itemsCount, order.getOrderedItemsCount());
-        assertEquals(amount, order.getNetAmount().doubleValue(), 0.001);
-        assertEquals(amount, order.getTotalAmount().doubleValue(), 0.001);
+
+        if (amount != null) {
+            assertEquals(amount, order.getNetAmount().doubleValue(), 0.001);
+            assertEquals(amount, order.getTotalAmount().doubleValue(), 0.001);
+        } else {
+            assertNull(order.getNetAmount());
+            assertEquals(BigDecimal.ZERO, order.getTotalAmount());
+        }
+
         assertFalse(order.isNegativeBalance());
         assertNull(order.getShippingCost());
     }
 
-    private void verifyUserOrder(OrderByUserDTO order, String userName, int itemsCount, double amount, double shippingCost) {
+    private void verifyUserOrder(OrderByUserDTO order, String userName, int itemsCount, Double amount, double shippingCost) {
         assertEquals(userName, order.getUserFullName());
         assertEquals(itemsCount, order.getOrderedItemsCount());
-        assertEquals(amount, order.getNetAmount().doubleValue(), 0.001);
+
+        if (amount != null) {
+            assertEquals(amount, order.getNetAmount().doubleValue(), 0.001);
+            assertEquals(amount + shippingCost, order.getTotalAmount().doubleValue(), 0.001);
+        } else {
+            assertNull(order.getNetAmount());
+            assertEquals(BigDecimal.ZERO, order.getTotalAmount());
+        }
+
         assertEquals(shippingCost, order.getShippingCost().doubleValue(), 0.001);
-        assertEquals(amount + shippingCost, order.getTotalAmount().doubleValue(), 0.001);
         assertFalse(order.isNegativeBalance());
     }
 
@@ -574,12 +588,15 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         assertEquals(deliveredQty, orderItemm.getDeliveredQty().doubleValue(), 0.001);
     }
 
-    private void createUserOrders(Order order, Map<String, Product> productsByCode, Map<String, Map<String, Double>> userQuantities) {
+    private void createUserOrders(Order order, Map<String, Product> productsByCode,
+                                  Map<String, Map<String, Double>> userQuantities) {
         userQuantities
                 .forEach((userId, quantities) -> quantities
                         .forEach((productCode, quantity) ->
                                 mockOrdersData.createDeliveredUserOrderItem(order.getId(), userId, productsByCode.get(productCode), quantity)
                         )
                 );
+
+        mockOrdersData.updateUserTotals(order.getId());
     }
 }
