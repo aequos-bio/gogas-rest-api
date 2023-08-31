@@ -36,7 +36,7 @@ public class OrderUserController {
     @PostMapping(value = "list")
     public List<OrderDTO> listOrders(@RequestBody OrderSearchFilter searchFilter) {
         GoGasUserDetails currentUser = authorizationService.getCurrentUser();
-        return orderUserService.search(searchFilter, currentUser.getId(), currentUser.getRole());
+        return orderUserService.search(searchFilter, currentUser.getId());
     }
 
     @GetMapping(value = "{orderId}")

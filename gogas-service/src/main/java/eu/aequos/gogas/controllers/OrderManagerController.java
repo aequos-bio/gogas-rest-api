@@ -153,8 +153,8 @@ public class OrderManagerController {
 
     @PostMapping(value = "{orderId}/byUser/{userId}")
     public BasicResponseDTO updateAmountByUser(@PathVariable String orderId, @PathVariable String userId, @RequestBody  @PositiveOrZero BigDecimal cost) throws ItemNotFoundException {
-        String accountingEntryId = orderManagerService.updateUserCost(orderId, userId, cost);
-        return new BasicResponseDTO(accountingEntryId);
+        orderManagerService.updateUserCost(orderId, userId, cost);
+        return new BasicResponseDTO("OK");
     }
 
     @DeleteMapping(value = "{orderId}/byUser/{userId}")

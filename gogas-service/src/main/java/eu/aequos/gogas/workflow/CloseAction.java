@@ -10,6 +10,7 @@ import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.UserOrderSummaryService;
 import lombok.Value;
 
 import java.math.BigDecimal;
@@ -29,19 +30,19 @@ public class CloseAction extends OrderStatusAction {
     private final ConfigurationService.RoundingMode roundingMode;
     private final ConfigurationService configurationService;
     private final ProductRepo productRepo;
+    private final UserOrderSummaryService userOrderSummaryService;
 
     private Map<String, Product> productMap;
 
-    public CloseAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
-                       SupplierOrderItemRepo supplierOrderItemRepo,
-                       ConfigurationService.RoundingMode roundingMode,
-                       Order order, ProductRepo productRepo,
-                       ConfigurationService configurationService) {
+    public CloseAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo, SupplierOrderItemRepo supplierOrderItemRepo,
+                       ConfigurationService.RoundingMode roundingMode, Order order, ProductRepo productRepo,
+                       ConfigurationService configurationService, UserOrderSummaryService userOrderSummaryService) {
 
         super(orderItemRepo, orderRepo, supplierOrderItemRepo, order, Order.OrderStatus.Closed);
         this.roundingMode = roundingMode;
         this.configurationService = configurationService;
         this.productRepo = productRepo;
+        this.userOrderSummaryService = userOrderSummaryService;
     }
 
     @Override
@@ -59,6 +60,10 @@ public class CloseAction extends OrderStatusAction {
     protected void processOrder() {
         List<OrderItem> savedOrderItems = processOrderItems();
         orderItemRepo.saveAll(savedOrderItems);
+
+        //computing user totals from in memory items because are saved at the end of the transaction
+        boolean computeAmount = order.getOrderType().isComputedAmount();
+        userOrderSummaryService.recomputeOnOrderClosed(order.getId(), savedOrderItems, computeAmount);
 
         List<SupplierOrderItem> supplierOrderItems = processSupplierOrders(savedOrderItems);
         supplierOrderItemRepo.saveAll(supplierOrderItems);

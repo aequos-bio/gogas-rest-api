@@ -5,21 +5,28 @@ import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.dto.SupplierDTO;
 import eu.aequos.gogas.persistence.entity.Supplier;
 import eu.aequos.gogas.persistence.repository.SupplierRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 @Service
 public class SupplierService extends CrudService<Supplier, String> {
 
-    private SupplierRepo supplierRepo;
+    private final SupplierRepo supplierRepo;
 
-    public SupplierService(SupplierRepo supplierRepo) {
-        super(supplierRepo,"supplier");
+    @Override
+    protected CrudRepository<Supplier, String> getCrudRepository() {
+        return supplierRepo;
+    }
 
-        this.supplierRepo = supplierRepo;
+    @Override
+    protected String getType() {
+        return "supplier";
     }
 
     public List<SupplierDTO> getAllSuppliers() {

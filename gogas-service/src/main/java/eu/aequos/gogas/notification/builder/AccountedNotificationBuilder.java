@@ -4,9 +4,8 @@ import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
-import eu.aequos.gogas.service.OrderItemService;
+import eu.aequos.gogas.service.UserOrderSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +17,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
-    private final OrderItemService orderItemService;
-    private final AccountingService accountingService;
+    private final UserOrderSummaryService userOrderSummaryService;
 
     @Override
     public boolean eventSupported(OrderEvent orderEvent) {
@@ -58,18 +56,10 @@ public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
-        Set<String> orderingUsers = getOrderingUsers(order);
+        Set<String> orderingUsers = userOrderSummaryService.getUsersWithOrder(order.getId());
 
         return preferences.stream()
                 .filter(pref -> orderingUsers.contains(pref.getUserId()))
                 .filter(NotificationPreferencesView::onOrderAccounted);
-    }
-
-    //TODO: potrebbe diventare metodo dell'ordine stesso.... (OOP)
-    private Set<String> getOrderingUsers(Order order) {
-        if (order.getOrderType().isComputedAmount())
-            return orderItemService.getUsersWithOrder(order.getId());
-
-        return accountingService.getUsersWithOrder(order.getId());
     }
 }

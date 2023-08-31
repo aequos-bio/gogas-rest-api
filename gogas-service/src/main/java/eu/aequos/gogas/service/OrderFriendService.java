@@ -13,7 +13,7 @@ import eu.aequos.gogas.persistence.entity.derived.ByProductOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.OrderItemQtyOnly;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,16 +22,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderFriendService {
 
-    private OrderItemService orderItemService;
-    private OrderManagerService orderManagerService;
-    private ProductService productService;
-    private UserService userService;
-    private AccountingService accountingService;
-    private ExcelGenerationService reportService;
-    private AttachmentService attachmentService;
+    private final OrderItemService orderItemService;
+    private final OrderManagerService orderManagerService;
+    private final ProductService productService;
+    private final UserService userService;
+    private final AccountingService accountingService;
+    private final ExcelGenerationService reportService;
+    private final AttachmentService attachmentService;
 
     private List<Product> getProducts(boolean showAllProductsOnPriceList, String orderTypeId, Collection<OpenOrderItem> orderItems) {
         if (showAllProductsOnPriceList)
@@ -82,6 +82,8 @@ public class OrderFriendService {
 
     @Transactional
     public void setFriendAccounted(String userId, String orderId, String productId, boolean accounted) throws GoGasException {
+        Order order = orderManagerService.getRequiredWithType(orderId);
+
         BigDecimal summaryUserQty = orderItemService.getSummaryUserQuantityByProduct(userId, productId, orderId)
                 .map(OrderItemQtyOnly::getDeliveredQuantity)
                 .orElse(BigDecimal.ZERO);
@@ -96,7 +98,7 @@ public class OrderFriendService {
             throw new GoGasException("Impossibile procedere con la contabilizzazione degli amici: la somma delle quantità ripartite non corrisponde alla quantità effettivamente ritirata");
 
         orderItemService.accountFriendOrder(userId, orderId, productId, accounted);
-        accountingService.updateFriendBalancesFromOrderItems(userId, orderId, productId, accounted);
+        accountingService.updateFriendBalancesFromOrderItems(userId, order);
     }
 
     @Transactional
@@ -125,10 +127,10 @@ public class OrderFriendService {
                 .map(OrderItemQtyOnly::getId)
                 .findAny();
 
-        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty));
+        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty, false));
 
         //after all checks, perform update of delivered quantity
-        orderItemService.updateDeliveredQty(orderId, itemId, qty);
+        orderItemService.updateDeliveredQty(orderId, itemId, qty, true);
 
         return new OrderItemByProductDTO()
                 .itemIdAndQuantity(friendReferralOrderItemId.orElse(""), userRemainingQty);
@@ -163,7 +165,7 @@ public class OrderFriendService {
                 .map(ByProductOrderItem::getId)
                 .findAny();
 
-        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty));
+        friendReferralOrderItemId.ifPresent(s -> orderItemService.updateDeliveredQty(orderId, s, userRemainingQty, false));
 
         //after all checks, perform update of delivered quantity
         insertOrderItem(orderId, orderItem);
@@ -178,7 +180,8 @@ public class OrderFriendService {
 
         User user = userService.getRequired(orderItem.getUserId());
         Product product = productService.getRequired(orderItem.getProductId());
-        orderItemService.insertItemByFriendReferral(user, product, orderId, orderItem);
+        Order order = orderManagerService.getRequiredWithType(orderId);
+        orderItemService.insertItemByFriendReferral(user, product, order, orderItem);
     }
 
     public List<SelectItemDTO> getFriendsNotOrdering(String userId, String orderId, String productId) {

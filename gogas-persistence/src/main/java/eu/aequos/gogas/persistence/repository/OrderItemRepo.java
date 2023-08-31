@@ -2,7 +2,6 @@ package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.OrderItem;
 import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.entity.derived.ByUserOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.FriendTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.OrderItemUserOnly;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
@@ -74,14 +73,6 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
             "FROM OrderItem o " +
             "WHERE o.order = ?1 and o.summary = true")
     long countDistinctUserByOrder(String orderId);
-
-    @Query(value = "SELECT o.idUtente AS userId, COUNT(o.idProdotto) AS orderedItems, " +
-            "SUM(COALESCE(o.qtaRitirataKg, o.qtaOrdinata * CASE WHEN o.um = p.umCollo THEN p.pesoCassa ELSE 1 END) * o.prezzoKg) AS totalAmount " +
-            "FROM ordini o " +
-            "JOIN prodotti p ON o.idProdotto = p.idProdotto " +
-            "WHERE o.idDateOrdine = ?1 and o.riepilogoUtente = ?2 " +
-            "GROUP BY o.idUtente", nativeQuery = true)
-    List<ByUserOrderItem> itemsCountAndAmountByUserForOrder(String orderId, boolean summary);
 
     @Transactional
     @Modifying

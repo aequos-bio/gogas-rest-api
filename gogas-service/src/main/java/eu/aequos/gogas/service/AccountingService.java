@@ -13,10 +13,12 @@ import eu.aequos.gogas.persistence.entity.derived.OrderUserTotal;
 import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
-import eu.aequos.gogas.persistence.specification.UserBalanceSpecs;
+import eu.aequos.gogas.persistence.utils.UserTransactionFull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,32 +32,28 @@ import java.util.stream.Collectors;
 import static eu.aequos.gogas.converter.ListConverter.toMap;
 import static eu.aequos.gogas.persistence.entity.AccountingEntryReason.Sign;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class AccountingService extends CrudService<AccountingEntry, String> {
 
     private final AccountingRepo accountingRepo;
     private final AccountingReasonRepo accountingReasonRepo;
-    private final UserBalanceEntryRepo userBalanceEntryRepo;
+    private final ShippingCostRepo shippingCostRepo;
     private final UserService userService;
     private final UserRepo userRepo;
     private final YearRepo yearRepo;
     private final OrderRepo orderRepo;
     private final AuditUserBalanceRepo auditUserBalanceRepo;
 
-    public AccountingService(AccountingRepo accountingRepo, AccountingReasonRepo accountingReasonRepo,
-                             UserBalanceEntryRepo userBalanceEntryRepo, UserService userService, UserRepo userRepo,
-                             YearRepo yearRepo, OrderRepo orderRepo, AuditUserBalanceRepo auditUserBalanceRepo) {
+    @Override
+    protected CrudRepository<AccountingEntry, String> getCrudRepository() {
+        return accountingRepo;
+    }
 
-        super(accountingRepo, "accounting entry");
-        this.accountingRepo = accountingRepo;
-        this.accountingReasonRepo = accountingReasonRepo;
-        this.userBalanceEntryRepo = userBalanceEntryRepo;
-        this.userService = userService;
-        this.userRepo = userRepo;
-        this.yearRepo = yearRepo;
-        this.orderRepo = orderRepo;
-        this.auditUserBalanceRepo = auditUserBalanceRepo;
+    @Override
+    protected String getType() {
+        return "accounting entry";
     }
 
     public BigDecimal getBalance(String userId) {
@@ -193,38 +191,12 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .collect(Collectors.toList());
     }
 
-    public String createOrUpdateEntryForOrder(Order order, User user, BigDecimal amount) {
-        AccountingEntry userOrderEntry = accountingRepo.findByOrderIdAndUserId(order.getId(), user.getId())
-                .orElse(prepareAccountingEntryForOrder(order, user));
-
-        userOrderEntry.setAmount(amount);
-        return accountingRepo.save(userOrderEntry).getId();
-    }
-
-    private AccountingEntry prepareAccountingEntryForOrder(Order order, User user) {
-        AccountingEntry entry = new AccountingEntry();
-        entry.setUser(user);
-        entry.setOrderId(order.getId());
-        entry.setDate(order.getDeliveryDate());
-        entry.setReason(new AccountingEntryReason().withReasonCode("ORDINE"));
-        entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
-        entry.setConfirmed(false);
-
-        if (user.getRoleEnum().isFriend() && user.getFriendReferral() != null) {
-            entry.setFriendReferralId(user.getFriendReferral().getId());
+    private BigDecimal computeTotalAmount(BigDecimal orderAmount, BigDecimal shippingCost) {
+        if (shippingCost == null) {
+            return orderAmount;
         }
 
-        return entry;
-    }
-
-    public Set<String> getUsersWithOrder(String orderId) {
-        return accountingRepo.findByOrderId(orderId).stream()
-                .map(entry -> entry.getUser().getId())
-                .collect(Collectors.toSet());
-    }
-
-    public boolean deleteUserEntryForOrder(String orderId, String userId) {
-        return accountingRepo.deleteByOrderIdAndUserId(orderId, userId) > 0;
+        return orderAmount.add(shippingCost);
     }
 
     public List<AccountingEntry> getOrderAccountingEntries(String orderId) {
@@ -254,33 +226,48 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     public UserBalanceSummaryDTO getPaginatedUserBalance(String userId, LocalDate dateFrom, LocalDate dateTo,
                                                 boolean dateAscending, Integer skipItems, Integer maxItems) {
 
-        Specification<UserBalanceEntry> filter = new SpecificationBuilder<UserBalanceEntry>()
-                .withBaseFilter(UserBalanceSpecs.user(userId, dateAscending))
-                .and(UserBalanceSpecs::fromDate, dateFrom)
-                .and(UserBalanceSpecs::toDate, dateTo)
+        Specification<AccountingEntry> filter = new SpecificationBuilder<AccountingEntry>()
+                .withBaseFilter(AccountingSpecs.user(userId, dateAscending))
+                .and(AccountingSpecs::fromDate, dateFrom)
+                .and(AccountingSpecs::toDate, dateTo)
                 .build();
 
-        List<UserBalanceEntry> entries;
+        List<AccountingEntry> entries;
         if (skipItems != null) {
-            entries = userBalanceEntryRepo.findAll(filter, PageRequest.of(skipItems / maxItems, maxItems)).getContent();
+            entries = accountingRepo.findAll(filter, PageRequest.of(skipItems / maxItems, maxItems)).getContent();
         } else {
-            entries = userBalanceEntryRepo.findAll(filter);
+            entries = accountingRepo.findAll(filter);
         }
 
         Set<String> orderIds = entries.stream()
-                .map(UserBalanceEntry::getOrderId)
+                .map(AccountingEntry::getOrderId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         Map<String, Order> relatedOrders = getRelatedOrders(orderIds);
 
         List<UserBalanceEntryDTO> dtoEntries = entries.stream()
-                .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders))
+                .filter(entry -> isVisibleUserEntry(entry, relatedOrders, userId))
+                .map(entry -> new UserBalanceEntryDTO().fromModel(entry, relatedOrders, userId))
                 .collect(Collectors.toList());
 
         BigDecimal balance = userRepo.getBalance(userId);
 
         return new UserBalanceSummaryDTO(balance, dtoEntries);
+    }
+
+    // Evaluates if an accounting entry is visible, meaning that is actually charged to the user
+    // The entry is not visible if it related to an order of a friend when summary (aggregation) is applied
+    private boolean isVisibleUserEntry(AccountingEntry entry, Map<String, Order> orders, String userId) {
+        if (entry.getOrderId() == null) {
+            return true;
+        }
+
+        if (userId.equals(entry.getUser().getId())) {
+            return true;
+        }
+
+        return !orders.get(entry.getOrderId()).getOrderType().isSummaryRequired();
     }
 
     private Map<String, Order> getRelatedOrders(Set<String> orderIds) {
@@ -306,43 +293,95 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
     }
 
     @Transactional
-    public int setEntriesConfirmedByOrderId(String orderId, boolean charge) {
-        int updatedEntries = accountingRepo.setConfirmedByOrderId(orderId, charge);
+    public void accountOrder(Order order, List<UserOrderSummary> userOrderSummaries) {
+        Map<String, BigDecimal> shippingCostsByUserId = shippingCostRepo.findByOrderId(order.getId()).stream()
+                .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
 
-        List<OrderUserTotal> orderUserTotals = accountingRepo.getOrderTotals(orderId);
-        updateUserBalances(orderId, orderUserTotals, charge);
+        boolean accountingEntryConfirmed = order.getOrderType().isComputedAmount(); //for backward compatibility and verification
 
-        return updatedEntries;
-    }
+        List<AccountingEntry> orderAccountingEntries = userOrderSummaries.stream()
+                .map(s -> buildAccountingEntryForOrder(order, s.getUserId(), s.getFriendReferralId(), s.getTotalAmount(), shippingCostsByUserId.get(s.getUserId()), accountingEntryConfirmed))
+                .collect(Collectors.toList());
 
-    public long countEntriesByOrderId(String orderId) {
-        return accountingRepo.countByOrderId(orderId);
-    }
+        accountingRepo.saveAll(orderAccountingEntries);
 
-    @Transactional
-    public void updateBalancesFromOrderItemsByOrderId(String orderId, boolean charge) {
-        List<OrderUserTotal> orderUserTotals = orderRepo.getComputedOrderTotalsForAccounting(orderId);
-        updateUserBalances(orderId, orderUserTotals, charge);
+        updateUserBalances(order.getId(), orderAccountingEntries, true);
     }
 
     @Transactional
-    public void updateFriendBalancesFromOrderItems(String referralId, String orderId, String productId, boolean charge) {
-        List<OrderUserTotal> orderUserTotals = orderRepo.getComputedOrderTotalsForFriendAccounting(referralId, orderId, productId);
-        updateUserBalances(orderId, orderUserTotals, charge);
+    public void undoAccountOrder(Order order) {
+        List<AccountingEntry> orderAccountingEntries = accountingRepo.findByOrderId(order.getId());
+        accountingRepo.deleteAll(orderAccountingEntries);
+        updateUserBalances(order.getId(), orderAccountingEntries, false);
     }
 
-    private void updateUserBalances(String orderId, List<OrderUserTotal> orderUserTotals, boolean charge) {
+    @Transactional
+    public void updateFriendBalancesFromOrderItems(String referralId, Order order) {
+        List<AccountingEntry> friendOrderAccountingEntries = accountingRepo.findByOrderIdAndFriendReferralId(order.getId(), referralId);
+
+        updateUserBalances(order.getId(), friendOrderAccountingEntries, false);
+        accountingRepo.deleteAll(friendOrderAccountingEntries);
+
+        List<OrderUserTotal> orderUserTotals = orderRepo.getComputedOrderTotalsForFriendAccounting(referralId, order.getId());
+        if (orderUserTotals.isEmpty()) {
+            return;
+        }
+
+        List<AccountingEntry> orderAccountingEntries = createAccountingEntriesForComputedOrder(order, orderUserTotals);
+        updateUserBalances(order.getId(), orderAccountingEntries, true);
+    }
+
+    private List<AccountingEntry> createAccountingEntriesForComputedOrder(Order order, List<OrderUserTotal> orderUserTotals) {
+        List<AccountingEntry> orderAccountingEntries = orderUserTotals.stream()
+                .map(t -> buildAccountingEntryForOrder(order, t.getUserId(), t.getFriendReferralId(), t.getAmount(), t.getShippingCost(), false))
+                .collect(Collectors.toList());
+
+        accountingRepo.saveAll(orderAccountingEntries);
+
+        return orderAccountingEntries;
+    }
+
+    private AccountingEntry buildAccountingEntryForOrder(Order order, String userId, String friendReferralId,
+                                                         BigDecimal amount, BigDecimal shippingCost, boolean confirmed) {
+
+        User user = User.fromId(userId, friendReferralId);
+
+        AccountingEntry entry = new AccountingEntry();
+        entry.setUser(user);
+        entry.setOrderId(order.getId());
+        entry.setDate(order.getDeliveryDate());
+        entry.setReason(new AccountingEntryReason().withReasonCode("ORDINE"));
+        entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
+
+        //used to compare previous way to aggregate balance "schedacontabile"
+        entry.setConfirmed(confirmed);
+
+        if (user.getRoleEnum().isFriend() && user.getFriendReferral() != null) {
+            entry.setFriendReferralId(user.getFriendReferral().getId());
+        }
+
+        BigDecimal totalAmount = computeTotalAmount(amount, shippingCost);
+        entry.setAmount(totalAmount);
+
+        return entry;
+    }
+
+    private void updateUserBalances(String orderId, List<AccountingEntry> orderUserTotals, boolean charge) {
         BinaryOperator<BigDecimal> reduceOperator = charge ? BigDecimal::subtract : BigDecimal::add;
         OperationType operationType = charge ? OperationType.ADD : OperationType.REMOVE;
 
-        for (OrderUserTotal orderUserTotal : orderUserTotals) {
+        for (AccountingEntry orderUserTotal : orderUserTotals) {
             BigDecimal cumulativeAmount = orderUserTotals.stream()
-                    .filter(nestedOrderUserTotal -> nestedOrderUserTotal.isUserOrFriend(orderUserTotal.getUserId()))
-                    .map(OrderUserTotal::getTotalAmount)
+                    .filter(nestedOrderUserTotal -> isUserOrFriend(nestedOrderUserTotal, orderUserTotal.getUser().getId()))
+                    .map(AccountingEntry::getAmount)
                     .reduce(BigDecimal.ZERO, reduceOperator);
 
-            updateBalance(orderUserTotal.getUserId(), cumulativeAmount, orderId, EntryType.ORDER, operationType);
+            updateBalance(orderUserTotal.getUser().getId(), cumulativeAmount, orderId, EntryType.ORDER, operationType);
         }
+    }
+
+    private boolean isUserOrFriend(AccountingEntry accountingEntry, String userId) {
+        return userId.equals(accountingEntry.getUser().getId()) || userId.equals(accountingEntry.getFriendReferralId());
     }
 
     private synchronized void updateBalance(String userId, BigDecimal amount, String entryId, EntryType entryType,
@@ -353,6 +392,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         userRepo.updateBalance(userId, amount);
 
         AuditUserBalance auditUserBalance = new AuditUserBalance();
+        auditUserBalance.setId(UUID.randomUUID().toString());
         auditUserBalance.setUserId(userId);
         auditUserBalance.setTs(LocalDateTime.now());
         auditUserBalance.setEntryType(entryType);
@@ -362,5 +402,14 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         auditUserBalance.setCurrentBalance(currentBalance);
 
         auditUserBalanceRepo.save(auditUserBalance);
+    }
+
+    public List<UserTransactionFull> getAllEntriesByUser(String userId) {
+        Map<String, AccountingEntryReason> reasonsByCode = accountingReasonRepo.findAllByOrderByDescription().stream()
+                .collect(toMap(AccountingEntryReason::getReasonCode));
+
+        return accountingRepo.findByUserId(userId).stream()
+                .map(entry -> new UserTransactionFull(entry, reasonsByCode.get(entry.getReason().getReasonCode())))
+                .collect(Collectors.toList());
     }
 }

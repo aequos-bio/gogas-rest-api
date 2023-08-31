@@ -38,8 +38,11 @@ import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 @Service
 public class ExcelGenerationService {
 
-    private final ExcelServiceClient excelServiceClient;
+    private static final String EXCEL_SERVICE_ERROR_MESSAGE = "Error while calling excel service";
+    private static final String EXCEL_FILE_ERROR_MESSAGE = "Error while generating excel file";
+    private static final String BALANCE_LABEL = "Saldo";
 
+    private final ExcelServiceClient excelServiceClient;
     private final UserRepo userRepo;
     private final OrderItemRepo orderItemRepo;
     private final ProductRepo productRepo;
@@ -56,8 +59,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.products(products);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -108,8 +111,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.order(orderExportRequest);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -147,8 +150,8 @@ public class ExcelGenerationService {
         try {
             return excelServiceClient.order(orderExportRequest);
         } catch(Exception ex) {
-            log.error("Error while calling excel service", ex);
-            throw new GoGasException("Error while generating excel file");
+            log.error(EXCEL_SERVICE_ERROR_MESSAGE, ex);
+            throw new GoGasException(EXCEL_FILE_ERROR_MESSAGE);
         }
     }
 
@@ -191,7 +194,7 @@ public class ExcelGenerationService {
         }
 
         Set<String> userIdsInOrder = orderItems.stream()
-                .map(OrderItem::getUser)
+                .map(OrderItemExport::getUserId)
                 .collect(Collectors.toSet());
 
         return userRepo.findByIdIn(userIdsInOrder, User.class);
@@ -241,7 +244,7 @@ public class ExcelGenerationService {
 
     private List<Product> getProductsForFriendExport(List<OrderItem> orderItems) {
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(OrderItem::getProduct)
+                .map(OrderItemExport::getProductId)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
@@ -304,7 +307,7 @@ public class ExcelGenerationService {
                 new ColumnDefinition<UserBalanceDTO>("Utente", Text)
                         .withExtract(UserBalanceDTO::getFullName),
 
-                new ColumnDefinition<UserBalanceDTO>("Saldo", Currency)
+                new ColumnDefinition<UserBalanceDTO>(BALANCE_LABEL, Currency)
                         .withExtract(u -> u.getBalance().doubleValue())
                         .withShowTotal()
         );
@@ -347,7 +350,7 @@ public class ExcelGenerationService {
                         .withExtract(t -> t.getAmount().signum() < 0 ? t.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
-                new ColumnDefinition<>("Saldo", SubTotal)
+                new ColumnDefinition<>(BALANCE_LABEL, SubTotal)
         );
 
         UserBalanceSummaryDTO userBalance = accountingService.getUserBalance(userId, null, null, true);
@@ -376,7 +379,7 @@ public class ExcelGenerationService {
                         .withExtract(e -> e.getAmount().signum() < 0 ? e.getAmount().abs().doubleValue() : null)
                         .withShowTotal(),
 
-                new ColumnDefinition<>("Saldo", SubTotal)
+                new ColumnDefinition<>(BALANCE_LABEL, SubTotal)
         );
 
         String title = "Situazione contabile gas";

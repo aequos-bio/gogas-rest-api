@@ -1,37 +1,48 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.dto.AccountingGasEntryDTO;
+import eu.aequos.gogas.dto.OrderAccountingInfoDTO;
+import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.AccountingGasEntry;
 import eu.aequos.gogas.persistence.entity.derived.OrderTotal;
 import eu.aequos.gogas.persistence.repository.AccountingGasRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
+import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
 import eu.aequos.gogas.persistence.specification.AccountingGasSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 @Service
 public class AccountingGasService extends CrudService<AccountingGasEntry, String> {
 
-    private AccountingGasRepo accountingGasRepo;
-    private AccountingService accountingService;
-    private OrderRepo orderRepo;
+    private final AccountingGasRepo accountingGasRepo;
+    private final AccountingService accountingService;
+    private final OrderRepo orderRepo;
+    private final UserOrderSummaryRepo userOrderSummaryRepo;
 
-    public AccountingGasService(AccountingGasRepo accountingRepo, AccountingService accountingService,
-                                OrderRepo orderRepo) {
+    @Override
+    protected CrudRepository<AccountingGasEntry, String> getCrudRepository() {
+        return accountingGasRepo;
+    }
 
-        super(accountingRepo, "accounting gas entry");
-        this.accountingGasRepo = accountingRepo;
-        this.accountingService = accountingService;
-        this.orderRepo = orderRepo;
+    @Override
+    protected String getType() {
+        return "accounting gas entry";
     }
 
     public AccountingGasEntry create(AccountingGasEntryDTO dto) throws GoGasException {
@@ -74,7 +85,7 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
 
         Stream<AccountingGasEntryDTO> orderEntries = getOrderAccontingEntries(dateFrom, dateTo).stream();
 
-        List<OrderTotal> totals = orderRepo.getOrderTotals(dateFrom, dateTo);
+        List<OrderTotal> totals = userOrderSummaryRepo.getOrderTotals(dateFrom, dateTo);
         Stream<AccountingGasEntryDTO> orderTotals = totals.stream()
             .map(total -> new AccountingGasEntryDTO().fromOrderTotal(total));
 
@@ -109,9 +120,7 @@ public class AccountingGasService extends CrudService<AccountingGasEntry, String
                 .collect(Collectors.toMap(OrderAccountingInfoDTO::getInvoiceKey, Function.identity(), OrderAccountingInfoDTO::mergeByInvoiceKey))
                 .values();
 
-        List<OrderAccountingInfoDTO> list = new ArrayList<>();
-        list.addAll(infoList);
-        return list;
+        return new ArrayList<>(infoList);
     }
 
     public List<OrderDTO> getOrdersWithoutInvoice(LocalDate dateFrom, LocalDate dateTo, boolean aequosOrders) {

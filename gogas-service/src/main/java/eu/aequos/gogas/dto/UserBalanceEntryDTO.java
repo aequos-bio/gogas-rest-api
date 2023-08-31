@@ -2,9 +2,9 @@ package eu.aequos.gogas.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.UserBalanceEntry;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -36,11 +36,11 @@ public class UserBalanceEntryDTO {
     private String externalLink;
 
 
-    public UserBalanceEntryDTO fromModel(UserBalanceEntry model, Map<String, Order> orders) {
+    public UserBalanceEntryDTO fromModel(AccountingEntry model, Map<String, Order> orders, String userId) {
         id = model.getId();
         date = model.getDate();
-        description = model.getDescription();
-        amount = getSignedAmount(model.getAmount(), model.getSign());
+        description = buildDescription(model, userId);
+        amount = getSignedAmount(model.getAmount(), model.getReason().getSign());
 
         extractRelatedOrder(model.getOrderId(), orders)
                 .ifPresent(relatedOrder -> {
@@ -51,6 +51,16 @@ public class UserBalanceEntryDTO {
                 });
 
         return this;
+    }
+
+    private String buildDescription(AccountingEntry model, String userId) {
+        String baseDescription = model.getReason().getDescription() + " - " + model.getDescription();
+
+        if (userId.equalsIgnoreCase(model.getUser().getId())) {
+            return baseDescription;
+        }
+
+        return baseDescription + " (" + model.getUser().getFirstName() + " " + model.getUser().getLastName() + ")";
     }
 
     private Optional<Order> extractRelatedOrder(String orderId, Map<String, Order> orders) {

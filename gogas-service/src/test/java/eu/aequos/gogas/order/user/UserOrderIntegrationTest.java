@@ -28,6 +28,7 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
     @BeforeEach
     void createOrders() {
         computedOrder = mockOrdersData.createOpenOrder(orderTypeComputed);
+        createdOrderIds.add(computedOrder.getId());
     }
 
     @Test

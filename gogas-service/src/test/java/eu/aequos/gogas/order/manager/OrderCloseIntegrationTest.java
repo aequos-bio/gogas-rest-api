@@ -3,6 +3,7 @@ package eu.aequos.gogas.order.manager;
 import eu.aequos.gogas.dto.OrderByProductDTO;
 import eu.aequos.gogas.dto.OrderDTO;
 import eu.aequos.gogas.dto.OrderItemByProductDTO;
+import eu.aequos.gogas.dto.UserOrderDetailsDTO;
 import eu.aequos.gogas.service.ConfigurationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTest {
+class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTest {
 
     @MockBean
     private ConfigurationService configurationService;
@@ -65,6 +66,10 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+
         mockMvcGoGas.loginAs("manager", "password");
 
         performClose(orderId, 0);
@@ -82,6 +87,10 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         verifyOrderItem(items3.get(userId1), 4.0, 4.0, "KG", false);
         verifyOrderItem(items3.get(userId2), 4.5, 4.5, "KG", false);
         verifyOrderItem(items3.get(userId3), 5.5, 5.5, "KG", false);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
     }
 
     @Test
@@ -193,6 +202,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         addUserOrdersWithFriends(orderId);
 
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
+
         when(configurationService.getBoxRoundingThreshold()).thenReturn(BigDecimal.valueOf(0.5));
 
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
@@ -230,6 +246,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         verifyOrderItem(items4.get(userId2), 4.5, 4.5, "KG", false);
         verifyOrderItem(items4.get(userId3), 5.5, 5.5, "KG", false);
         verifyOrderItem(items4.get(friendId1b), 2.5, 2.5, "KG", false);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
     }
 
     @Test
@@ -243,6 +266,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         String orderId = createOrder(orderDTO);
 
         addUserOrdersWithFriends(orderId);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
 
         when(configurationService.getBoxRoundingThreshold()).thenReturn(BigDecimal.valueOf(0.5));
 
@@ -280,6 +310,10 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         //restore original summary required
         mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
+
+        verifyUserOrderTotal("user1", orderId, 34.93);
+        verifyUserOrderTotal("user2", orderId, 45.1);
+        verifyUserOrderTotal("user3", orderId, 13.4);
     }
 
     @Test
@@ -407,6 +441,12 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         changeUserOrderItemQuantity(orderId, "PATATE", userId2, 2.0);
         changeUserOrderItemQuantity(orderId, "PATATE", userId3, 3.0);
 
+        verifyUserOrderTotal("user1", orderId, 11.0);
+        verifyUserOrderTotal("user2", orderId, 23.38);
+        verifyUserOrderTotal("user3", orderId, 9.78);
+
+        mockMvcGoGas.loginAs("manager", "password");
+
         performAction(orderId, "reopen");
 
         verifyOrderStatusAndActions(orderId, orderTypeComputed.getId(), 0, "Aperto", "modifica,dettaglio,cancel,chiudi", false, false);
@@ -432,6 +472,10 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         verifyOrderOpenedItem(items3.get(userId1), 4.0, "KG", false);
         verifyOrderOpenedItem(items3.get(userId2), 4.5, "KG", false);
         verifyOrderOpenedItem(items3.get(userId3), 5.5, "KG", false);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
     }
 
     @Test
@@ -447,6 +491,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
+
         mockMvcGoGas.loginAs("manager", "password");
 
         performClose(orderId, 0);
@@ -455,6 +506,15 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         changeUserOrderItemQuantity(orderId, "PATATE", userId2, 2.0);
         changeUserOrderItemQuantity(orderId, "PATATE", userId3, 3.0);
         changeUserOrderItemQuantity(orderId, "MELE2", friendId1a, 3.0);
+
+        verifyUserOrderTotal("user1", orderId, 11.0);
+        verifyUserOrderTotal("user2", orderId, 23.38);
+        verifyUserOrderTotal("user3", orderId, 9.78);
+        verifyUserOrderTotal("friendId1a", orderId, 12.4);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
+
+        mockMvcGoGas.loginAs("manager", "password");
 
         performAction(orderId, "reopen");
 
@@ -489,6 +549,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         verifyOrderOpenedItem(items4.get(userId2), 4.5, "KG", false);
         verifyOrderOpenedItem(items4.get(userId3), 5.5, "KG", false);
         verifyOrderOpenedItem(items4.get(friendId1b), 2.5, "KG", false);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
     }
 
     @Test
@@ -510,10 +577,22 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
 
         performClose(orderId, 0);
 
+        verifyUserOrderTotal("user1", orderId, 34.93);
+        verifyUserOrderTotal("user2", orderId, 45.1);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+
+        mockMvcGoGas.loginAs("manager", "password");
+
         changeUserOrderItemQuantity(orderId, "MELE1", userId1, 1.0);
         changeUserOrderItemQuantity(orderId, "PATATE", userId2, 2.0);
         changeUserOrderItemQuantity(orderId, "PATATE", userId3, 3.0);
         changeUserOrderItemQuantity(orderId, "MELE2", userId1, 5.0);
+
+        verifyUserOrderTotal("user1", orderId, 30.43);
+        verifyUserOrderTotal("user2", orderId, 41.48);
+        verifyUserOrderTotal("user3", orderId, 9.78);
+
+        mockMvcGoGas.loginAs("manager", "password");
 
         performAction(orderId, "reopen");
 
@@ -548,6 +627,13 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         verifyOrderOpenedItem(items4.get(userId2), 4.5, "KG", false);
         verifyOrderOpenedItem(items4.get(userId3), 5.5, "KG", false);
         verifyOrderOpenedItem(items4.get(friendId1b), 2.5, "KG", false);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+        verifyUserOrderTotal("friendId1a", orderId, 14.1);
+        verifyUserOrderTotal("friendId1b", orderId, 6.73);
+        verifyUserOrderTotal("friendId2", orderId, 18.1);
 
         mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
     }
@@ -694,5 +780,11 @@ public class OrderCloseIntegrationTest extends OrderManagementBaseIntegrationTes
         assertEquals(orderedBoxes, productDTO.getOrderedBoxes().doubleValue(), 0.001);
         assertEquals(orderedQty, productDTO.getOrderedQty().doubleValue(), 0.001);
         assertEquals(usersCount, productDTO.getOrderingUsersCount());
+    }
+
+    private void verifyUserOrderTotal(String userName, String orderId, double expectedAmount) throws Exception {
+        mockMvcGoGas.loginAs(userName, "password");
+        UserOrderDetailsDTO userOrderDetailsDTO = mockMvcGoGas.getDTO("/api/order/user/" + orderId, UserOrderDetailsDTO.class, Map.of("includeTotalAmount", List.of("true")));
+        assertEquals(expectedAmount, userOrderDetailsDTO.getTotalAmount().doubleValue());
     }
 }

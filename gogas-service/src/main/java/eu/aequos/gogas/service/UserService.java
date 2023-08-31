@@ -15,7 +15,9 @@ import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.RandomPassword;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,33 +26,30 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class UserService extends CrudService<User, String> {
 
     private static final String DISABLED_ICON = "<span class='glyphicon glyphicon-ban-circle' style='margin-right:10px'></span>";
 
-    private ConfigurationService configurationService;
-    private UserRepo userRepo;
-    private PasswordEncoder passwordEncoder;
-    private MailNotificationChannel mailNotificationChannel;
-    private PushTokenRepo pushTokenRepo;
-    private NotificationPreferencesRepo notificationPreferencesRepo;
+    private final ConfigurationService configurationService;
+    private final UserRepo userRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final MailNotificationChannel mailNotificationChannel;
+    private final PushTokenRepo pushTokenRepo;
+    private final NotificationPreferencesRepo notificationPreferencesRepo;
 
     //TODO: cache users
 
-    public UserService(ConfigurationService configurationService, UserRepo userRepo, PushTokenRepo pushTokenRepo,
-                       PasswordEncoder passwordEncoder, MailNotificationChannel mailNotificationChannel,
-                       NotificationPreferencesRepo notificationPreferencesRepo) {
+    @Override
+    protected CrudRepository<User, String> getCrudRepository() {
+        return userRepo;
+    }
 
-        super(userRepo, "user");
-
-        this.configurationService = configurationService;
-        this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-        this.mailNotificationChannel = mailNotificationChannel;
-        this.pushTokenRepo = pushTokenRepo;
-        this.notificationPreferencesRepo = notificationPreferencesRepo;
+    @Override
+    protected String getType() {
+        return "user";
     }
 
     public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll, String allLabel) {
@@ -154,6 +153,9 @@ public class UserService extends CrudService<User, String> {
                 .collect(Collectors.toMap(UserCoreInfo::getId, this::getUserDisplayName));
     }
 
+    public List<User> getFullUsers(Set<String> userIds) {
+        return userRepo.findByIdIn(userIds, User.class);
+    }
 
     private SelectItemDTO getSelectItem(UserCoreInfo user) {
         String icon = user.isEnabled() ? "" : DISABLED_ICON;

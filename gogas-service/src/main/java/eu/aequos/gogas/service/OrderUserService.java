@@ -8,9 +8,13 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.exception.OrderClosedException;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.entity.derived.*;
+import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
+import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummaryDerived;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
+import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
@@ -21,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,6 +50,7 @@ public class OrderUserService {
     private final OrderRepo orderRepo;
     private final UserRepo userRepo;
     private final ProductCategoryRepo categoryRepo;
+    private final UserOrderSummaryRepo userOrderSummaryRepo;
 
     public List<OpenOrderDTO> getOpenOrders(String userId) {
         List<Order> openOrders = orderRepo.getOpenOrders();
@@ -58,15 +64,15 @@ public class OrderUserService {
         Map<String, User> userMap = userRepo.findAll().stream()
                 .collect(toMap(User::getId));
 
-        Map<String, List<OpenOrderSummary>> openOrderSummaries = orderRepo.findOpenOrderSummary(userId, orderIds).stream()
-                .collect(Collectors.groupingBy(OpenOrderSummary::getOrderId));
+        Map<String, List<UserOrderSummary>> openOrderSummaries = userOrderSummaryRepo.findOpenOrderSummaries(userId, orderIds).stream()
+                .collect(Collectors.groupingBy(UserOrderSummary::getOrderId));
 
         return openOrders.stream()
                 .map(o -> new OpenOrderDTO().fromModel(o, openOrderSummaries.getOrDefault(o.getId(), new ArrayList<>()), userMap))
                 .collect(Collectors.toList());
     }
 
-    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId, String userRole) {
+    public List<OrderDTO> search(OrderSearchFilter searchFilter, String userId) {
 
         List<Order> orderList = getFilteredOrders(searchFilter, userId);
 
@@ -76,19 +82,12 @@ public class OrderUserService {
         Set<String> orderIds = ListConverter.fromList(orderList)
                 .extractIds(Order::getId);
 
-        Map<String, UserOrderSummary> orderSummaries = fetchUserOrderSummary(userId, userRole, orderIds).stream()
+        Map<String, UserOrderSummaryDerived> orderSummaries = userOrderSummaryRepo.findUserAndFriendOrderSummaryByUser(userId, orderIds).stream()
                 .collect(Collectors.toMap(OrderSummary::getOrderId, Function.identity()));
 
         return orderList.stream()
                 .map(entry -> new OrderDTO().fromModel(entry, orderSummaries.get(entry.getId())))
                 .collect(Collectors.toList());
-    }
-
-    private List<UserOrderSummary> fetchUserOrderSummary(String userId, String userRole, Set<String> orderIds) {
-        if (userRole.equals(User.Role.S.name()))
-            return orderRepo.findFriendOrderSummary(userId, orderIds);
-
-        return orderRepo.findUserOrderSummary(userId, orderIds);
     }
 
     private List<Order> getFilteredOrders(OrderSearchFilter searchFilter, String userId) {
@@ -154,7 +153,8 @@ public class OrderUserService {
 
         validateUpdateRequest(updateRequest, order, product);
 
-        OrderItemUpdate orderItemUpdate = orderItemService.updateOrDeleteItemByUser(user, product, orderId, updateRequest);
+        boolean updateTotal = order.getOrderType().isComputedAmount();
+        OrderItemUpdate orderItemUpdate = orderItemService.updateOrDeleteItemByUser(user, product, order, updateRequest, updateTotal);
 
         Optional<ProductTotalOrder> productTotalOrder = orderItemService.getTotalQuantityByProduct(orderId, product.getId());
 
@@ -277,10 +277,11 @@ public class OrderUserService {
         UserOrderDetailsDTO userOrderDetails = new UserOrderDetailsDTO().fromModel(order);
 
         if (includeTotalAmount) {
-            Optional<UserOrderSummary> orderSummary = orderRepo.findUserOrderSummary(userId, Collections.singleton(orderId)).stream()
-                    .findFirst();
+            BigDecimal orderTotalAmount = userOrderSummaryRepo.findUserOrderSummaryByUser(userId, Collections.singleton(orderId))
+                    .map(UserOrderSummary::getTotalAmount)
+                    .orElse(BigDecimal.ZERO);
 
-            userOrderDetails.withTotalAmount(orderSummary);
+            userOrderDetails.withTotalAmount(orderTotalAmount);
         }
 
         return userOrderDetails;

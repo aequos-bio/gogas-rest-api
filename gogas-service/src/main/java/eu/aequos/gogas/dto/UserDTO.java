@@ -113,7 +113,7 @@ public final class UserDTO implements ConvertibleDTO<User> {
             model.setPassword(hashedPassword);
 
         if (friendReferralId != null && !friendReferralId.isEmpty())
-            model.setFriendReferral(new User().withUserId(friendReferralId));
+            model.setFriendReferral(User.fromId(friendReferralId));
 
         return model;
     }

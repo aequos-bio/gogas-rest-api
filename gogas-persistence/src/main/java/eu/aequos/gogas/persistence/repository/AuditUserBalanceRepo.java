@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface AuditUserBalanceRepo extends CrudRepository<AuditUserBalance, AuditUserBalance.Key> {
+public interface AuditUserBalanceRepo extends CrudRepository<AuditUserBalance, String> {
 
     List<AuditUserBalance> findAllByOrderByTs();
 

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
+import eu.aequos.gogas.persistence.entity.derived.UserOrderSummaryDerived;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
@@ -108,7 +108,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
         return totalAmount.getTotalAmount().add(shippingCost);
     }
 
-    public OrderDTO fromModel(Order order, UserOrderSummary userOrderSummary) {
+    public OrderDTO fromModel(Order order, UserOrderSummaryDerived userOrderSummary) {
         fromModel(order);
 
         BigDecimal shippingCost = null;
@@ -116,7 +116,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
         if (userOrderSummary != null) {
             this.itemsCount = userOrderSummary.getItemsCount();
             this.hasFriends = userOrderSummary.getFriendCount() > 0;
-            this.accounted = userOrderSummary.getfriendAccounted() > 0;
+            this.accounted = userOrderSummary.getFriendAccounted() > 0;
             shippingCost = userOrderSummary.getShippingCost();
         }
 

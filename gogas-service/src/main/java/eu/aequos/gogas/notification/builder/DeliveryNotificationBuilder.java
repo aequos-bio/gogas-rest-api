@@ -4,7 +4,7 @@ import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.OrderItemService;
+import eu.aequos.gogas.service.UserOrderSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class DeliveryNotificationBuilder implements OrderNotificationBuilder {
 
-    private final OrderItemService orderItemService;
+    private final UserOrderSummaryService userOrderSummaryService;
 
     @Override
     public boolean eventSupported(OrderEvent orderEvent) {
@@ -54,7 +54,7 @@ public class DeliveryNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
-        Set<String> usersOrdering = orderItemService.getUsersWithOrder(order.getId());
+        Set<String> usersOrdering = userOrderSummaryService.getUsersWithOrder(order.getId());
 
         return preferences.stream()
                 .filter(pref -> usersOrdering.contains(pref.getUserId()))

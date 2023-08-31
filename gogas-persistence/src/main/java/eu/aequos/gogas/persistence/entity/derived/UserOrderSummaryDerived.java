@@ -2,10 +2,9 @@ package eu.aequos.gogas.persistence.entity.derived;
 
 import java.math.BigDecimal;
 
-public interface UserOrderSummary extends OrderSummary {
-
+public interface UserOrderSummaryDerived extends OrderSummary {
     int getItemsCount();
     int getFriendCount();
-    int getfriendAccounted();
+    int getFriendAccounted();
     BigDecimal getShippingCost();
 }

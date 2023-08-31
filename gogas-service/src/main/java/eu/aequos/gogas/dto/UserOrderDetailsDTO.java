@@ -3,13 +3,10 @@ package eu.aequos.gogas.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
-import eu.aequos.gogas.persistence.entity.derived.UserOrderSummary;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -59,10 +56,8 @@ public class UserOrderDetailsDTO {
         return this;
     }
 
-    public UserOrderDetailsDTO withTotalAmount(Optional<UserOrderSummary> orderTotalAmount) {
-        this.totalAmount = orderTotalAmount.map(OrderSummary::getTotalAmount)
-                .orElse(BigDecimal.ZERO);
-
+    public UserOrderDetailsDTO withTotalAmount(BigDecimal orderTotalAmount) {
+        this.totalAmount = orderTotalAmount;
         return this;
     }
 }

@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
-public class OrderPlaningService {
+public class OrderPlanningService {
 
     private final OrderTypeRepo orderTypeRepo;
 

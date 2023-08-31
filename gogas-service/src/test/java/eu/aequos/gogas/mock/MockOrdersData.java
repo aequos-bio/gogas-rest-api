@@ -3,6 +3,7 @@ package eu.aequos.gogas.mock;
 import eu.aequos.gogas.mvc.WithTenant;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
+import eu.aequos.gogas.service.UserOrderSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class MockOrdersData implements MockDataLifeCycle {
     private final SupplierOrderItemRepo supplierOrderItemRepo;
     private final AccountingRepo accountingRepo;
     private final ShippingCostRepo shippingCostRepo;
+    private final UserOrderSummaryService userOrderSummaryService;
 
     public OrderType createAequosOrderType(String name, Integer aequosId) {
         return createAequosOrderType(name, aequosId, null);
@@ -236,10 +238,15 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderItemRepo.save(orderItem);
     }
 
+    public void updateUserTotals(String orderId) {
+        userOrderSummaryService.recomputeAllUsersTotalForComputedOrder(orderId);
+    }
+
     @Transactional
     public void deleteOrder(String orderId) {
         orderItemRepo.deleteByOrderAndSummary(orderId, false);
         orderItemRepo.deleteByOrderAndSummary(orderId, true);
+        userOrderSummaryService.clear(orderId);
         supplierOrderItemRepo.deleteByOrderId(orderId);
         accountingRepo.deleteAll(accountingRepo.findByOrderId(orderId));
         shippingCostRepo.deleteAll(shippingCostRepo.findByOrderId(orderId));
@@ -248,6 +255,7 @@ public class MockOrdersData implements MockDataLifeCycle {
 
     public void deleteAllOrderTypes() {
         orderItemRepo.deleteAll();
+        userOrderSummaryService.clear();
         supplierOrderItemRepo.deleteAll();
         accountingRepo.deleteAll();
         shippingCostRepo.deleteAll();

@@ -15,7 +15,7 @@ public abstract class OrderStatusAction {
     protected final Order order;
     private final Order.OrderStatus targetStatus;
 
-    public OrderStatusAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
+    OrderStatusAction(OrderItemRepo orderItemRepo, OrderRepo orderRepo,
                              SupplierOrderItemRepo supplierOrderItemRepo, Order order,
                              Order.OrderStatus targetStatus) {
 

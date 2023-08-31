@@ -4,20 +4,18 @@ import eu.aequos.gogas.dto.MenuDTO;
 import eu.aequos.gogas.persistence.entity.Menu;
 import eu.aequos.gogas.persistence.entity.MenuByRole;
 import eu.aequos.gogas.persistence.repository.MenuRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class MenuService {
 
-    private MenuRepo menuRepo;
-
-    public MenuService(MenuRepo menuRepo) {
-        this.menuRepo = menuRepo;
-    }
+    private final MenuRepo menuRepo;
 
     public List<MenuDTO> getMenuTreeByRole(String role) {
         List<MenuByRole> flatMenuList = menuRepo.findByIdRole(role);

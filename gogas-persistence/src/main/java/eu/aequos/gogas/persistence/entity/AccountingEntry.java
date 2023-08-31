@@ -38,6 +38,7 @@ public class AccountingEntry {
     @Column(name = "importo", nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;
 
+    //WARNING: this is now used to exclude accounting entries created for computed orders from "schedacontabile" to have a comparison after migration
     @Column(name = "confermato", nullable = false)
     private boolean confirmed;
 

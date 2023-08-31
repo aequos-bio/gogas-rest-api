@@ -11,6 +11,7 @@ import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.ConfigurationService.RoundingMode;
+import eu.aequos.gogas.service.UserOrderSummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class OrderWorkflowHandler {
     private final ProductRepo productRepo;
     private final ConfigurationService configurationService;
     private final NotificationSender notificationSender;
+    private final UserOrderSummaryService userOrderSummaryService;
 
     @Transactional
     public void changeStatus(Order order, String changeAction, int roundType) throws InvalidOrderActionException {
@@ -41,13 +43,13 @@ public class OrderWorkflowHandler {
         switch (changeAction) {
             case "close":
                 RoundingMode roundingMode = RoundingMode.getRoundingMode(roundType);
-                return new CloseAction(orderItemRepo, orderRepo, supplierOrderItemRepo, roundingMode, order, productRepo, configurationService);
+                return new CloseAction(orderItemRepo, orderRepo, supplierOrderItemRepo, roundingMode, order, productRepo, configurationService, userOrderSummaryService);
 
             case "reopen":
-                return new ReopenAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order);
+                return new ReopenAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, userOrderSummaryService);
 
             case "contabilizza":
-                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, notificationSender, accountingService);
+                return new AccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, notificationSender, accountingService, userOrderSummaryService);
 
             case "tornachiuso":
                 return new UndoAccountAction(orderItemRepo, orderRepo, supplierOrderItemRepo, order, accountingService);

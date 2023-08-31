@@ -2,15 +2,16 @@ package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
 
-import javax.persistence.*;
-import java.io.Serializable;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "audituserbalance")
-@IdClass(AuditUserBalance.Key.class)
 public class AuditUserBalance {
 
     public enum EntryType {
@@ -22,6 +23,9 @@ public class AuditUserBalance {
     }
 
     @Id
+    @Column(name = "id" , columnDefinition = "uniqueidentifier", nullable = false)
+    private String id;
+
     @Column(name = "userid" , columnDefinition = "uniqueidentifier", nullable = false)
     private String userId;
 
@@ -42,10 +46,4 @@ public class AuditUserBalance {
 
     @Column(name = "currentbalance", nullable = false, precision = 18, scale = 5)
     private BigDecimal currentBalance;
-
-    @Data
-    public static class Key implements Serializable {
-        private String userId;
-        private LocalDateTime ts;
-    }
 }
