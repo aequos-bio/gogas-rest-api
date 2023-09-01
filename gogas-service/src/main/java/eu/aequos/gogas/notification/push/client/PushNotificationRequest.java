@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.Getter;
 
-import java.util.List;
+import java.util.Set;
 
 @Getter
 public class PushNotificationRequest {
@@ -12,8 +12,8 @@ public class PushNotificationRequest {
     @JsonProperty("app_id")
     private String appId;
 
-    @JsonProperty("include_player_ids")
-    private List<String> targetTokens;
+    @JsonProperty("include_external_user_ids")
+    private Set<String> targetUserIds;
 
     @JsonProperty("data")
     private Payload data;
@@ -34,8 +34,8 @@ public class PushNotificationRequest {
         this.appId = appId;
     }
 
-    public void setTargetTokens(List<String> targetTokens) {
-        this.targetTokens = targetTokens;
+    public void setTargetUsers(Set<String> targetUserIds) {
+        this.targetUserIds = targetUserIds;
     }
 
     public void setOrderId(String orderId) {

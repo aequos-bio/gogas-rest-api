@@ -35,13 +35,7 @@ public class PushNotificationChannel implements NotificationChannel {
     }
 
     public void sendOrderNotification(Order order, OrderNotificationBuilder notificationBuilder, Set<String> targetUserIds) {
-        List<String> targetTokens = extractNotificationTokens(targetUserIds);
-        if (targetTokens.isEmpty()) {
-            log.info("No target user found for push notifications");
-            return;
-        }
-
-        PushNotificationRequest request = buildPushNotificationRequest(order, notificationBuilder, targetTokens);
+        PushNotificationRequest request = buildPushNotificationRequest(order, notificationBuilder, targetUserIds);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
         log.info("Notification send, response: " + response);
     }
@@ -53,12 +47,12 @@ public class PushNotificationChannel implements NotificationChannel {
         return pushTokenRepo.findTokensByUserIdIn(targetUserIds);
     }
 
-    private PushNotificationRequest buildPushNotificationRequest(Order order, OrderNotificationBuilder notificationBuilder, List<String> targetTokens) {
+    private PushNotificationRequest buildPushNotificationRequest(Order order, OrderNotificationBuilder notificationBuilder, Set<String> targetUserIds) {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
         request.setHeadings(notificationBuilder.getHeading());
         request.setContents(notificationBuilder.getPushMessage(order));
-        request.setTargetTokens(targetTokens);
+        request.setTargetUsers(targetUserIds);
         request.setOrderId(order.getId());
         request.setAndroidGroup("order_" + notificationBuilder.getEventName());
         request.setAndroidGroupMessage("$[notif_count] " + notificationBuilder.getMultipleNotificationsHeading());
