@@ -8,7 +8,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
+import java.time.temporal.ChronoUnit;
 
 import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 
@@ -113,7 +113,7 @@ public class OrderDetailsDTO {
     }
 
     private boolean sendWeightAllowed(LocalDate deliveryDate) {
-        long diffInDays = Period.between(deliveryDate, LocalDate.now()).getDays();
+        long diffInDays = ChronoUnit.DAYS.between(deliveryDate, LocalDate.now());
         return diffInDays >= 0 && diffInDays <= 4;
     }
 }
