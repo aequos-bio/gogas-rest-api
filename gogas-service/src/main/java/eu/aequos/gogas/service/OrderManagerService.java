@@ -431,7 +431,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public List<OrderDTO> getAvailableOrdersNotYetOpened(String userId) {
-        List<OrderDTO> availableOrders = Stream.concat(getAequosAvailableOpenOrders(), orderPlaningService.getWeeklyOrders())
+        List<OrderDTO> availableOrders = Stream.concat(getAequosAvailableOpenOrders(), orderPlanningService.getWeeklyOrders())
                 .collect(toList());
 
         Set<String> availableOrderTypeIds = availableOrders.stream()

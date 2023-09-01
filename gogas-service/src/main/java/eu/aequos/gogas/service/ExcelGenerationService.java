@@ -194,7 +194,7 @@ public class ExcelGenerationService {
         }
 
         Set<String> userIdsInOrder = orderItems.stream()
-                .map(OrderItemExport::getUserId)
+                .map(OrderItem::getUser)
                 .collect(Collectors.toSet());
 
         return userRepo.findByIdIn(userIdsInOrder, User.class);
@@ -244,7 +244,7 @@ public class ExcelGenerationService {
 
     private List<Product> getProductsForFriendExport(List<OrderItem> orderItems) {
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(OrderItemExport::getProductId)
+                .map(OrderItem::getProduct)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);

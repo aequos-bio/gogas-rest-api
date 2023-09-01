@@ -1,7 +1,6 @@
 package eu.aequos.gogas.order.manager;
 
 import eu.aequos.gogas.dto.*;
-import eu.aequos.gogas.notification.telegram.client.TelegramNotificationClient;
 import eu.aequos.gogas.persistence.entity.AuditUserBalance;
 import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import eu.aequos.gogas.persistence.repository.YearRepo;
@@ -35,9 +34,6 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
 
     @MockBean
     private YearRepo yearRepo;
-
-    @MockBean
-    private TelegramNotificationClient telegramNotificationClient;
 
     @Autowired
     private AuditUserBalanceRepo auditUserBalanceRepo;
