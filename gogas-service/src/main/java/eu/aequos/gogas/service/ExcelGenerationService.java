@@ -16,45 +16,38 @@ import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.lang.Integer;
 import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.excel.generic.ColumnDefinition.DataType.*;
 
+@RequiredArgsConstructor
 @Slf4j
 @Service
 public class ExcelGenerationService {
 
-    private ExcelServiceClient excelServiceClient;
+    private final ExcelServiceClient excelServiceClient;
 
-    private UserRepo userRepo;
-    private OrderItemRepo orderItemRepo;
-    private ProductRepo productRepo;
-    private SupplierOrderItemRepo supplierOrderItemRepo;
-    private UserService userService;
-    private AccountingService accountingService;
-
-    public ExcelGenerationService(ExcelServiceClient excelServiceClient, UserRepo userRepo, UserService userService,
-                                  OrderItemRepo orderItemRepo, ProductRepo productRepo,
-                                  SupplierOrderItemRepo supplierOrderItemRepo, AccountingService accountingService) {
-
-        this.excelServiceClient = excelServiceClient;
-        this.userRepo = userRepo;
-        this.userService = userService;
-        this.orderItemRepo = orderItemRepo;
-        this.productRepo = productRepo;
-        this.supplierOrderItemRepo = supplierOrderItemRepo;
-        this.accountingService = accountingService;
-    }
+    private final UserRepo userRepo;
+    private final OrderItemRepo orderItemRepo;
+    private final ProductRepo productRepo;
+    private final SupplierOrderItemRepo supplierOrderItemRepo;
+    private final UserService userService;
+    private final AccountingService accountingService;
+    private final ConfigurationService configurationService;
 
     public byte[] extractProductPriceList(String orderTypeId) throws GoGasException {
         List<ExcelPriceListItem> products = productRepo.findByType(orderTypeId).stream()
@@ -92,10 +85,8 @@ public class ExcelGenerationService {
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
 
-        List<UserExport> userList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers()).stream()
-                .map(this::convertUserForExport)
-                .sorted(Comparator.comparing(UserExport::getPosition))
-                .collect(Collectors.toList());
+        List<User> usersList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers());
+        List<UserExport> usersExportList = convertUsersForExport(usersList);
 
         List<ProductExport> products = getProductsForExport(orderItems, order.getOrderType()).stream()
                 .map(this::convertProductForExport)
@@ -107,7 +98,7 @@ public class ExcelGenerationService {
 
         OrderExportRequest orderExportRequest = new OrderExportRequest();
         orderExportRequest.setProducts(products);
-        orderExportRequest.setUsers(userList);
+        orderExportRequest.setUsers(usersExportList);
         orderExportRequest.setUserOrder(orderItems);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
@@ -126,10 +117,8 @@ public class ExcelGenerationService {
                 .map(this::getOrderItemsForFriendExport)
                 .collect(Collectors.toList());
 
-        List<UserExport> userList = userRepo.findUserAndFriendsByUserId(userId).stream()
-                .map(this::convertUserForExport)
-                .sorted(Comparator.comparing(UserExport::getFullName))
-                .collect(Collectors.toList());
+        List<User> usersList = getUsersForExport(originalOrderItems, false);
+        List<UserExport> usersExportList = convertUsersForExport(usersList);
 
         List<ProductExport> products = getProductsForFriendExport(originalOrderItems).stream()
                 .map(this::convertProductForExport)
@@ -142,7 +131,7 @@ public class ExcelGenerationService {
 
         OrderExportRequest orderExportRequest = new OrderExportRequest();
         orderExportRequest.setProducts(products);
-        orderExportRequest.setUsers(userList);
+        orderExportRequest.setUsers(usersExportList);
         orderExportRequest.setUserOrder(originalOrderItems);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(true);
@@ -178,16 +167,36 @@ public class ExcelGenerationService {
             return userRepo.findAll();
 
         Set<String> userIdsInOrder = orderItems.stream()
-                .map(item -> item.getUserId())
+                .map(OrderItemExport::getUserId)
                 .collect(Collectors.toSet());
 
         return userRepo.findByIdIn(userIdsInOrder, User.class);
     }
 
-    private UserExport convertUserForExport(User user) {
+    private List<UserExport> convertUsersForExport(List<User> users) {
+        Comparator<User> userComparator = configurationService.getUserComparatorForOrderExport();
+
+        Function<User, Integer> userPositionBuilder = getUserPositionBuilder();
+
+        return users.stream()
+                .sorted(userComparator)
+                .map(user -> convertUserForExport(user, userPositionBuilder))
+                .collect(Collectors.toList());
+    }
+
+    private Function<User, Integer> getUserPositionBuilder() {
+        if (configurationService.isUserPositionEnabled()) {
+            return User::getPosition;
+        }
+
+        AtomicInteger counter = new AtomicInteger();
+        return user -> counter.incrementAndGet();
+    }
+
+    private UserExport convertUserForExport(User user, Function<User, Integer> userPositionBuilder) {
         UserExport reportUser = new UserExport();
         reportUser.setId(user.getId());
-        reportUser.setPosition(user.getPosition());
+        reportUser.setPosition(userPositionBuilder.apply(user));
         reportUser.setFullName(userService.getUserDisplayName(user.getFirstName(), user.getLastName()));
         reportUser.setRole(user.getRole());
         reportUser.setEmail(user.getEmail());
@@ -200,7 +209,7 @@ public class ExcelGenerationService {
             return productRepo.findAvailableByTypeOrderByPriceList(orderType.getId());
 
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(item -> item.getProductId())
+                .map(OrderItemExport::getProductId)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
@@ -208,7 +217,7 @@ public class ExcelGenerationService {
 
     private List<Product> getProductsForFriendExport(List<OrderItemExport> orderItems) {
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(item -> item.getProductId())
+                .map(OrderItemExport::getProductId)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);

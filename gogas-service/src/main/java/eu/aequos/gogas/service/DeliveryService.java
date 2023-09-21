@@ -9,8 +9,8 @@ import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
 import eu.aequos.gogas.exception.GoGasException;
-import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.NotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import lombok.RequiredArgsConstructor;
@@ -38,11 +38,12 @@ public class DeliveryService {
     private final ProductService productService;
     private final NotificationSender notificationSender;
     private final ObjectMapper objectMapper;
+    private final ConfigurationService configurationService;
 
     public DeliveryOrderDTO getOrderForDelivery(String orderId) {
         Order order = orderManagerService.getRequiredWithType(orderId);
 
-        List<UserDTO> users = userService.getUsersByRoles(visibleUserRoles(order.getOrderType()));
+        List<UserDTO> users = userService.getFullActiveUsersByRoles(visibleUserRoles(order.getOrderType()));
 
         //TODO: fare metodo nel service che recupera meno dati
         Map<String, List<DeliveryOrderItemDTO>> deliveryOrderItems = orderItemRepo.findByOrderAndSummary(orderId, true).stream()
@@ -59,8 +60,17 @@ public class DeliveryService {
         deliveryOrder.setDeliveryDate(order.getDeliveryDate());
         deliveryOrder.setProducts(deliveryProducts);
         deliveryOrder.setUsers(users);
+        deliveryOrder.setSortUsersByName(getUsersSortingByNameFlag());
 
         return deliveryOrder;
+    }
+
+    private Boolean getUsersSortingByNameFlag() {
+        if (configurationService.isUserPositionEnabled()) {
+            return null;
+        }
+
+        return true;
     }
 
     private DeliveryProductDTO toProductDTO(OrderByProductDTO product, List<DeliveryOrderItemDTO> orderItems) {

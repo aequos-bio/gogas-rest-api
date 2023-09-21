@@ -4,13 +4,16 @@ import eu.aequos.gogas.dto.ConfigurationItemDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
+import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ public class ConfigurationService {
     private static final String USER_SORTING_KEY = "visualizzazione.utenti";
     private static final String USER_SORTING_NAME_FIRST = "NC";
     private static final String USER_SORTING_SURNAME_FIRST = "CN";
+    private static final String USER_POSITION_KEY = "users.position";
 
     private static final String BOX_ROUNDING_THRESOLD_KEY = "colli.soglia_arrotondamento";
     private static final String BOX_ROUNDING_THRESOLD_DEFAULT_STRING = "0.5";
@@ -31,9 +35,13 @@ public class ConfigurationService {
 
     private static final String GAS_NAME_KEY = "gas.nome";
 
+    @Getter
+    @RequiredArgsConstructor
     public enum UserSorting {
-        NameFirst,
-        SurnameFirst;
+        NameFirst(Comparator.comparing(User::getFirstName).thenComparing(User::getLastName)),
+        SurnameFirst(Comparator.comparing(User::getLastName).thenComparing(User::getFirstName));
+
+        private final Comparator<User> comparator;
     }
 
     public enum RoundingMode {
@@ -58,6 +66,14 @@ public class ConfigurationService {
                 .toUpperCase();
 
         return USER_SORTING_SURNAME_FIRST.equals(sortingConf) ? UserSorting.SurnameFirst : UserSorting.NameFirst;
+    }
+
+    public Comparator<User> getUserComparatorForOrderExport() {
+        if (isUserPositionEnabled()) {
+            return Comparator.comparing(User::getPosition);
+        }
+
+        return getUserSorting().getComparator();
     }
 
     public BigDecimal getBoxRoundingThreshold() {
@@ -87,6 +103,12 @@ public class ConfigurationService {
     public String getGasName() {
         return configurationRepo.findValueByKey(GAS_NAME_KEY)
                 .orElse("");
+    }
+
+    public boolean isUserPositionEnabled() {
+        return configurationRepo.findValueByKey(USER_POSITION_KEY)
+                .map(Boolean::parseBoolean)
+                .orElse(false);
     }
 
     public LocalDate parseLocalDate(String date) {

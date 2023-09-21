@@ -1,6 +1,7 @@
 package eu.aequos.gogas.dto.delivery;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import eu.aequos.gogas.dto.UserDTO;
 import lombok.Data;
 
@@ -20,4 +21,7 @@ public class DeliveryOrderDTO {
 
     private List<UserDTO> users;
     private List<DeliveryProductDTO> products;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean sortUsersByName;
 }

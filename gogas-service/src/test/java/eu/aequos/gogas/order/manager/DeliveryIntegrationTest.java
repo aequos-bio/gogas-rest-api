@@ -7,9 +7,13 @@ import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
+import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -21,8 +25,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,12 +33,21 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
 
     private String orderId;
 
+    @Autowired
+    private ConfigurationRepo configurationRepo;
+
     @BeforeEach
     void createOrder() {
         Order order = mockOrdersData.createOrder(orderTypeComputed, LocalDate.now().minusDays(3), LocalDate.now().plusDays(2),
                 LocalDate.now().plusDays(5), Order.OrderStatus.Opened.getStatusCode(), BigDecimal.ZERO);
 
         orderId = order.getId();
+    }
+
+    @AfterEach
+    void resetConfiguration() {
+        configurationRepo.findById("users.position")
+                .ifPresent(configurationRepo::delete);
     }
 
     @Test
@@ -762,6 +774,39 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertEquals(2.0, orderItems3.get(userId2).getDeliveredQty().doubleValue(), 0.0001);
     }
 
+    @Test
+    void givenSortUserByPositionDisabled_whenGettingDeliveryData_thenSortByNameFlagIsEnabled() throws Exception {
+        addComputedUserOrdersNoFriends(orderId);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        closeOrder(orderId);
+
+        DeliveryOrderDTO deliveryData = mockMvcGoGas.getDTO("/api/delivery/" + orderId, DeliveryOrderDTO.class);
+
+        assertEquals(true, deliveryData.getSortUsersByName());
+    }
+
+    @Test
+    void givenSortUserByPositionEnabled_whenGettingDeliveryData_thenSortByNameFlagIsNull() throws Exception {
+        enableSortUsersByPosition();
+
+        addComputedUserOrdersNoFriends(orderId);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        closeOrder(orderId);
+
+        DeliveryOrderDTO deliveryData = mockMvcGoGas.getDTO("/api/delivery/" + orderId, DeliveryOrderDTO.class);
+
+        assertNull(deliveryData.getSortUsersByName());
+    }
+
+    private void enableSortUsersByPosition() {
+        Configuration configurationFlag = new Configuration();
+        configurationFlag.setKey("users.position");
+        configurationFlag.setValue("true");
+        configurationRepo.save(configurationFlag);
+    }
+
     private void changeDeliveredQuantity(Map<String, Map<String, DeliveryOrderItemDTO>> deliveryData, String productCode, String userId, double quantity) {
         DeliveryOrderItemDTO deliveryItem = deliveryData.get(productCode.toUpperCase()).get(userId);
         deliveryItem.setFinalDeliveredQty(BigDecimal.valueOf(quantity));
@@ -843,10 +888,5 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         mockMvcGoGas.loginAs("user3", "password");
         addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
         addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
-    }
-
-    private void checkBalance(String userId1, double expectedBalance) throws Exception {
-        BigDecimal balance = mockMvcGoGas.getDTO("/api/accounting/user/" + userId1 + "/balance", BigDecimal.class);
-        assertEquals(expectedBalance, balance.doubleValue(), 0.001);
     }
 }

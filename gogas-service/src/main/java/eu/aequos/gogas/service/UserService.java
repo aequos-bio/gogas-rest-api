@@ -87,7 +87,12 @@ public class UserService extends CrudService<User, String> {
     }
 
     public List<SelectItemDTO> getActiveUsersByRoles(Set<String> roles) {
-        return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true), false, null);
+        return toSelectItems(userRepo.findByRoleInAndEnabled(roles, true, UserCoreInfo.class), false, null);
+    }
+
+    public List<UserDTO> getFullActiveUsersByRoles(Set<String> roles) {
+        List<User> users = userRepo.findByRoleInAndEnabled(roles, true, User.class);
+        return convertFromModel(users);
     }
 
     public List<SelectItemDTO> getActiveUsersForSelectByListAndRoles(Set<String> list, Set<String> role) {
@@ -153,11 +158,6 @@ public class UserService extends CrudService<User, String> {
 
     public List<UserDTO> getUsers(User.Role role) {
         List<User> users = role != null ? userRepo.findByRole(role.name()) : userRepo.findAll();
-        return convertFromModel(users);
-    }
-
-    public List<UserDTO> getUsersByRoles(Set<String> roles) {
-        List<User> users = !roles.isEmpty() ? userRepo.findByRoleIn(roles) : userRepo.findAll();
         return convertFromModel(users);
     }
 

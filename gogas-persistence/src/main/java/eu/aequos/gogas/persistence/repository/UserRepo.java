@@ -1,14 +1,12 @@
 package eu.aequos.gogas.persistence.repository;
 
 import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.entity.UserSummary;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,7 +26,7 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     <T> List<T> findByFriendReferralId(String friendReferralId, Class<T> type);
 
-    List<UserCoreInfo> findByRoleInAndEnabled(Set<String> roles, boolean enabled);
+    <T> List<T> findByRoleInAndEnabled(Set<String> roles, boolean enabled, Class<T> type);
 
     List<User> findByRole(String role);
 
