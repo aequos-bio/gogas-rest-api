@@ -98,7 +98,7 @@ public class OrderByProductDTO {
         if (supplierOrderItem != null) {
             this.price = supplierOrderItem.getUnitPrice();
             this.boxWeight = supplierOrderItem.getBoxWeight();
-            this.orderedQty = supplierOrderItem.getBoxesCount().multiply(supplierOrderItem.getBoxWeight());
+            this.orderedQty = supplierOrderItem.getTotalQuantity();
             this.orderedBoxes = supplierOrderItem.getBoxesCount();
         } else {
             this.price = p.getPrice();
