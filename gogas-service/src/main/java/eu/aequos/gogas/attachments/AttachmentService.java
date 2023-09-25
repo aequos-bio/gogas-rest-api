@@ -61,17 +61,24 @@ public class AttachmentService {
 
     public AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String contentType) {
         String fileName = buildFileName(order.getOrderType().getDescription(),
-                order.getDeliveryDate(), contentType);
+                order.getDeliveryDate(), "", contentType);
 
         return new AttachmentDTO(attachmentContent, contentType, fileName);
     }
 
-    public String buildFileName(String description, LocalDate date, String mimeType) {
+    public AttachmentDTO buildAttachmentDTO(Order order, byte[] attachmentContent, String suffix, String contentType) {
+        String fileName = buildFileName(order.getOrderType().getDescription(),
+                order.getDeliveryDate(), suffix, contentType);
+
+        return new AttachmentDTO(attachmentContent, contentType, fileName);
+    }
+
+    public String buildFileName(String description, LocalDate date, String suffix, String mimeType) {
         String orderType = description.replace(" ", "_");
         String deliveryDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String extensionWithDot = resolveFileExtension(mimeType);
 
-        return String.format("%s-%s%s", orderType, deliveryDate, extensionWithDot);
+        return String.format("%s-%s%s%s", orderType, deliveryDate, suffix, extensionWithDot);
     }
 
     private String resolveFileExtension(String mimeType) {

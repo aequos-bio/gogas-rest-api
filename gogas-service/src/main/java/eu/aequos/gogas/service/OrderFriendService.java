@@ -191,6 +191,6 @@ public class OrderFriendService {
         Order order = orderManagerService.getRequiredWithType(orderId);
         byte[] excelReportContent = reportService.extractFriendsOrderDetails(order, userId);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
+        return attachmentService.buildAttachmentDTO(order, excelReportContent, "_amici", contentType);
     }
 }

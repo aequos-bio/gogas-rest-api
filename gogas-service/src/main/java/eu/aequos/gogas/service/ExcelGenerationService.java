@@ -24,10 +24,7 @@ import java.io.IOException;
 import java.lang.Integer;
 import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -124,9 +121,12 @@ public class ExcelGenerationService {
                 .map(this::convertProductForExport)
                 .collect(Collectors.toList());
 
+        Map<String, BigDecimal> productBoxWeight = products.stream()
+                .collect(Collectors.toMap(ProductExport::getId, ProductExport::getBoxWeight));
+
         List<OrderItem> summaryOrderItems = orderItemRepo.findByUserAndOrderAndSummary(userId, order.getId(), true, OrderItem.class);
         List<SupplierOrderItemExport> supplierOrderItems = summaryOrderItems.stream()
-                .map(this::getSupplierOrderItemsForFriendExport)
+                .map(item -> getSupplierOrderItemsForFriendExport(item, productBoxWeight.get(item.getProduct())))
                 .collect(Collectors.toList());
 
         OrderExportRequest orderExportRequest = new OrderExportRequest();
@@ -243,11 +243,11 @@ public class ExcelGenerationService {
         return s;
     }
 
-    private SupplierOrderItemExport getSupplierOrderItemsForFriendExport(OrderItem item) {
+    private SupplierOrderItemExport getSupplierOrderItemsForFriendExport(OrderItem item, BigDecimal boxWeight) {
         SupplierOrderItemExport s = new SupplierOrderItemExport();
         s.setProductId(item.getProduct());
         s.setUnitPrice(item.getPrice());
-        s.setBoxWeight(BigDecimal.ZERO);
+        s.setBoxWeight(Optional.ofNullable(boxWeight).orElse(BigDecimal.ZERO));
         s.setQuantity(item.getDeliveredQuantity());
         return s;
     }

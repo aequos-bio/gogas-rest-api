@@ -21,7 +21,6 @@ import eu.aequos.gogas.service.pricelist.PriceListSynchronizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -133,7 +132,7 @@ public class ProductService extends CrudService<Product, String> {
 
         byte[] excelContent = reportService.extractProductPriceList(productType);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        String fileName = attachmentService.buildFileName(orderType.getDescription(), LocalDate.now(), contentType);
+        String fileName = attachmentService.buildFileName(orderType.getDescription(), LocalDate.now(), "", contentType);
 
         return new AttachmentDTO(excelContent, contentType, fileName);
     }
