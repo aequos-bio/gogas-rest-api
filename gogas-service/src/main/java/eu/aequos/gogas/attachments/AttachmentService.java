@@ -102,6 +102,6 @@ public class AttachmentService {
         if (Files.notExists(folderPath))
             Files.createDirectories(folderPath);
 
-        return folderPath.resolve(fileName);
+        return folderPath.resolve(fileName.toLowerCase());
     }
 }
