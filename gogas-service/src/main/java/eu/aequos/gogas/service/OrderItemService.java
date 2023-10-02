@@ -104,8 +104,8 @@ public class OrderItemService {
                 .collect(toMap(FriendTotalOrder::getProduct, Function.identity()));
     }
 
-    public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId) {
-        return orderItemRepo.itemsCountAndAmountByUserForClosedOrder(orderId);
+    public List<ByUserOrderItem> getItemsCountAndAmountByUser(String orderId, boolean isClosed) {
+        return orderItemRepo.itemsCountAndAmountByUserForOrder(orderId, isClosed);
     }
 
     public List<ByProductOrderItem> getItemsByProduct(String productId, String orderId, boolean summary) {

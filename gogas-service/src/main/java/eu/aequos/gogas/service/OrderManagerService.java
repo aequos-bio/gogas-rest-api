@@ -333,11 +333,12 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     private List<OrderByUserDTO> getOrderDetailByUser(Order order) {
         boolean computedAmount = order.getOrderType().isComputedAmount();
+        boolean isClosed = !order.getStatus().isOpen();
 
         Map<String, BigDecimal> accountingEntries = accountingService.getOrderAccountingEntries(order.getId()).stream()
                 .collect(Collectors.toMap(entry -> entry.getUser().getId(), AccountingEntry::getAmount));
 
-        Map<String, ByUserOrderItem> userOrderItems = orderItemService.getItemsCountAndAmountByUser(order.getId()).stream()
+        Map<String, ByUserOrderItem> userOrderItems = orderItemService.getItemsCountAndAmountByUser(order.getId(), isClosed).stream()
                 .collect(toMap(ByUserOrderItem::getUserId));
 
         Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()

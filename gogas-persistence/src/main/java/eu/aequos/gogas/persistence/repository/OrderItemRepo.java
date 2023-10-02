@@ -75,11 +75,11 @@ public interface OrderItemRepo extends CrudRepository<OrderItem, String> {
             "WHERE o.order = ?1 and o.summary = true")
     long countDistinctUserByOrder(String orderId);
 
-    @Query("SELECT o.user AS userId, COUNT(o.product) AS orderedItems, SUM(o.deliveredQuantity * o.price) AS totalAmount " +
+    @Query("SELECT o.user AS userId, COUNT(o.product) AS orderedItems, SUM(COALESCE(o.deliveredQuantity, o.orderedQuantity) * o.price) AS totalAmount " +
             "FROM OrderItem o " +
-            "WHERE o.order = ?1 and o.summary = true " +
+            "WHERE o.order = ?1 and o.summary = ?2 " +
             "GROUP BY o.user")
-    List<ByUserOrderItem> itemsCountAndAmountByUserForClosedOrder(String orderId);
+    List<ByUserOrderItem> itemsCountAndAmountByUserForOrder(String orderId, boolean summary);
 
     @Transactional
     @Modifying

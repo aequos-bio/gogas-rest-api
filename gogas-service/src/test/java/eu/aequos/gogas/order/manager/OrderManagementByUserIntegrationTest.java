@@ -549,6 +549,21 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 0, 10.0, 1.0);
     }
 
+    @Test
+    void givenAnOpenOrder_whenGettingSummaryByUser_thenAllValuesAreCorrect() throws Exception {
+        Order orderComputedOpen = mockOrdersData.createOpenOrder(orderTypeComputed);
+        addUserOrdersNoFriends(orderComputedOpen.getId());
+
+        mockMvcGoGas.loginAs("manager", "password");
+
+        Map<String, OrderByUserDTO> userTotals = mockMvcGoGas.getDTOList("/api/order/manage/" + orderComputedOpen.getId() + "/byUser/list", OrderByUserDTO.class).stream()
+                .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
+
+        verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 14.1);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 15.375);
+        verifyUserOrder(userTotals.get(userId3), "user3 user3", 2, 13.4);
+    }
+
     private void verifyUserOrder(OrderByUserDTO order, String userName, int itemsCount, double amount) {
         assertEquals(userName, order.getUserFullName());
         assertEquals(itemsCount, order.getOrderedItemsCount());
@@ -581,5 +596,21 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
                                 mockOrdersData.createDeliveredUserOrderItem(order.getId(), userId, productsByCode.get(productCode), quantity)
                         )
                 );
+    }
+
+    private void addUserOrdersNoFriends(String orderId) throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+        addComputedUserOrder(orderId, userId1, "MELE1", 3.0, "KG");
+        addComputedUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
+        addComputedUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
+
+        mockMvcGoGas.loginAs("user2", "password");
+        addComputedUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
+        addComputedUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
+        addComputedUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
+
+        mockMvcGoGas.loginAs("user3", "password");
+        addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
+        addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
     }
 }
