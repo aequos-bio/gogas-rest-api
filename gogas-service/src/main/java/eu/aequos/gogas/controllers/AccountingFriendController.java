@@ -67,9 +67,6 @@ public class AccountingFriendController {
         if (!authorizationService.isFriend(accountingEntryDTO.getUserId()))
             throw new UserNotAuthorizedException();
 
-        //forcing current logged user as friend referral
-        accountingEntryDTO.setFriendReferralId(authorizationService.getCurrentUser().getId());
-
         String entryId =  accountingService.create(accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);
     }
@@ -78,9 +75,6 @@ public class AccountingFriendController {
     public BasicResponseDTO updateAccountingEntry(@PathVariable String accountingEntryId, @RequestBody @Valid AccountingEntryDTO accountingEntryDTO) throws ItemNotFoundException, GoGasException {
         if (!isFriendAccountingEntry(accountingEntryId))
             throw new UserNotAuthorizedException();
-
-        //forcing current logged user as friend referral
-        accountingEntryDTO.setFriendReferralId(authorizationService.getCurrentUser().getId());
 
         String entryId =  accountingService.update(accountingEntryId, accountingEntryDTO).getId();
         return new BasicResponseDTO(entryId);

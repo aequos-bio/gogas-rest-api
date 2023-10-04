@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
+    private String userId1;
     private String friendId1a;
     private String friendId1b;
 
@@ -45,6 +46,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         friend1a = mockUsersData.createFriendUser("friend1a", "password", "friend1a", "friend1a", user1);
         friend1b = mockUsersData.createFriendUser("friend1b", "password", "friend1b", "friend1b", user1);
 
+        userId1 = user1.getId().toUpperCase();
         friendId1a = friend1a.getId().toUpperCase();
         friendId1b = friend1b.getId().toUpperCase();
 
@@ -72,6 +74,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1a, "BON", 200.0, LocalDate.of(2022, 5, 6));
         BasicResponseDTO response = mockMvcGoGas.postDTO("/api/accounting/friend/entry", accountingEntryDTO, BasicResponseDTO.class);
@@ -79,6 +82,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
     }
 
     @Test
@@ -111,6 +115,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryUser1 = buildAccountingEntryDTO(friendId1a, "QTA", 10.50, LocalDate.of(2022, 5, 6));
         BasicResponseDTO response1 = mockMvcGoGas.postDTO("/api/accounting/friend/entry", accountingEntryUser1, BasicResponseDTO.class);
@@ -120,7 +125,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         BasicResponseDTO response2 = mockMvcGoGas.postDTO("/api/accounting/friend/entry", accountingEntryUser2, BasicResponseDTO.class);
         assertNotNull(response2.getData());
 
-
+        checkUserBalance(userId1, 0.0);
         checkBalance(friendId1a, -10.50);
         checkBalance(friendId1b, -20.75);
     }
@@ -199,6 +204,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1b, "BON", 200.0, LocalDate.of(2022, 5, 6));
         BasicResponseDTO response = mockMvcGoGas.putDTO("/api/accounting/friend/entry/" + entryId, accountingEntryDTO, BasicResponseDTO.class);
@@ -206,6 +212,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 200.0);
+        checkUserBalance(userId1, 0.0);
     }
 
     @Test
@@ -216,6 +223,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1a, "ADD", 200.0, LocalDate.of(2022, 5, 6));
         BasicResponseDTO response = mockMvcGoGas.putDTO("/api/accounting/friend/entry/" + entryId, accountingEntryDTO, BasicResponseDTO.class);
@@ -223,6 +231,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, -200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO modifiedEntry = mockMvcGoGas.getDTO("/api/accounting/friend/entry/" + entryId, AccountingEntryDTO.class);
         assertEquals(entryId, modifiedEntry.getId());
@@ -243,6 +252,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1a, "BON", 200.0, LocalDate.of(2022, 4, 6));
         BasicResponseDTO response = mockMvcGoGas.putDTO("/api/accounting/friend/entry/" + entryId, accountingEntryDTO, BasicResponseDTO.class);
@@ -267,6 +277,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 200.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO accountingEntryDTO = buildAccountingEntryDTO(friendId1a, "BON", 50.0, LocalDate.of(2022, 4, 6));
         BasicResponseDTO response = mockMvcGoGas.putDTO("/api/accounting/friend/entry/" + entryId, accountingEntryDTO, BasicResponseDTO.class);
@@ -274,6 +285,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         checkBalance(friendId1a, 50.0);
         checkBalance(friendId1b, 0.0);
+        checkUserBalance(userId1, 0.0);
 
         AccountingEntryDTO modifiedEntry = mockMvcGoGas.getDTO("/api/accounting/friend/entry/" + entryId, AccountingEntryDTO.class);
         assertEquals(entryId, modifiedEntry.getId());
@@ -892,6 +904,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
     private void checkBalance(String userId, double expectedBalance) throws Exception {
         UserBalanceSummaryDTO balance = mockMvcGoGas.getDTO("/api/accounting/friend/balance/" + userId, UserBalanceSummaryDTO.class);
+        assertEquals(expectedBalance, balance.getBalance().doubleValue(), 0.001);
+    }
+
+    private void checkUserBalance(String userId, double expectedBalance) throws Exception {
+        UserBalanceSummaryDTO balance = mockMvcGoGas.getDTO("/api/accounting/user/balance/" + userId, UserBalanceSummaryDTO.class);
         assertEquals(expectedBalance, balance.getBalance().doubleValue(), 0.001);
     }
 }
