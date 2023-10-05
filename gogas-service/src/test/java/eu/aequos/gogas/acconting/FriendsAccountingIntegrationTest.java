@@ -12,10 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,9 +26,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
     private String userId1;
     private String friendId1a;
     private String friendId1b;
+    private String friendId2;
 
     private User friend1a;
     private User friend1b;
+    private User friend2;
 
     private OrderType orderType;
     private Order order;
@@ -42,13 +41,16 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
     @BeforeAll
     void createUsersAndReasons() {
         User user1 = mockUsersData.createSimpleUser("user1", "password", "user1", "user1");
-        User user2 = mockUsersData.createSimpleUser("user2", "password", "user2", "user2");
         friend1a = mockUsersData.createFriendUser("friend1a", "password", "friend1a", "friend1a", user1);
         friend1b = mockUsersData.createFriendUser("friend1b", "password", "friend1b", "friend1b", user1);
+
+        User user2 = mockUsersData.createSimpleUser("user2", "password", "user2", "user2");
+        friend2 = mockUsersData.createFriendUser("friend2", "password", "friend2", "friend2", user2);
 
         userId1 = user1.getId().toUpperCase();
         friendId1a = friend1a.getId().toUpperCase();
         friendId1b = friend1b.getId().toUpperCase();
+        friendId2 = friend2.getId().toUpperCase();
 
         mockAccountingData.createAccountingReason("BON", "Bonifico", "+");
         mockAccountingData.createAccountingReason("QTA", "Quota", "-");
@@ -645,6 +647,51 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         );
 
         List<AccountingEntryDTO> searchResults = mockMvcGoGas.getDTOList("/api/accounting/friend/entry/list", AccountingEntryDTO.class, requestParams);
+        assertTrue(searchResults.isEmpty());
+    }
+
+    @Test
+    void givenASetOfEntries_whenSearchingWithoutCriteria_thenOnlyEntriesOfTheActualFriendsAreReturned() throws Exception {
+        List<AccountingEntry> entries = List.of(
+                mockAccountingData.createAccountingEntry(friend1a, "BON", 200.0, LocalDate.of(2022, 5, 1)),
+                mockAccountingData.createAccountingEntry(friend1a, "ADD", 100.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(friend1a, "QTA", 50.0, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(friend1b, "BON", 250.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(friend1b, "ADD", 112.34, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(friend1b, "QTA", 25.62, LocalDate.of(2022, 5, 7)),
+                mockAccountingData.createAccountingEntry(friend2, "ADD", 300.00, LocalDate.of(2022, 5, 13)),
+                mockAccountingData.createAccountingEntry(friend2, "QTA", 32.11, LocalDate.of(2022, 5, 14))
+        );
+
+        mockMvcGoGas.loginAs("user1", "password");
+
+        Map<String, List<String>> requestParams = Collections.emptyMap();
+        Map<String, AccountingEntryDTO> searchResults = mockMvcGoGas.getDTOList("/api/accounting/friend/entry/list", AccountingEntryDTO.class, requestParams).stream()
+                .collect(Collectors.toMap(AccountingEntryDTO::getId, Function.identity()));
+
+        assertEquals(6, searchResults.size());
+        assertTrue(searchResults.entrySet().stream().noneMatch(entry -> friendId2.equals(entry.getValue().getUserId())));
+    }
+
+    @Test
+    void givenASetOfEntries_whenSearchingWrongFriendId_thenNoEntriesAreReturned() throws Exception {
+        List<AccountingEntry> entries = List.of(
+                mockAccountingData.createAccountingEntry(friend1a, "BON", 200.0, LocalDate.of(2022, 5, 1)),
+                mockAccountingData.createAccountingEntry(friend1a, "ADD", 100.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(friend1a, "QTA", 50.0, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(friend1b, "BON", 250.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(friend1b, "ADD", 112.34, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(friend1b, "QTA", 25.62, LocalDate.of(2022, 5, 7)),
+                mockAccountingData.createAccountingEntry(friend2, "ADD", 300.00, LocalDate.of(2022, 5, 13)),
+                mockAccountingData.createAccountingEntry(friend2, "QTA", 32.11, LocalDate.of(2022, 5, 14))
+        );
+
+        mockMvcGoGas.loginAs("user1", "password");
+
+        Map<String, List<String>> requestParams = Map.of("userId", List.of(friendId2));
+        Map<String, AccountingEntryDTO> searchResults = mockMvcGoGas.getDTOList("/api/accounting/friend/entry/list", AccountingEntryDTO.class, requestParams).stream()
+                .collect(Collectors.toMap(AccountingEntryDTO::getId, Function.identity()));
+
         assertTrue(searchResults.isEmpty());
     }
 

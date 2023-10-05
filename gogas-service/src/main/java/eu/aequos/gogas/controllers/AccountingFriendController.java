@@ -49,7 +49,7 @@ public class AccountingFriendController {
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, currentUserId);
+        return accountingService.getFriendsAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, currentUserId);
     }
 
     @GetMapping(value = "entry/{accountingEntryId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

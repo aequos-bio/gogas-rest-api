@@ -39,8 +39,8 @@ public interface UserRepo extends CrudRepository<User, String> {
 
     boolean existsUserByIdAndFriendReferralId(String userId, String frientReferrald);
 
-    @Query(value = "SELECT u FROM User u WHERE u.id = ?1 OR u.friendReferral = ?1")
-    List<User> findUserAndFriendsByUserId(String userId);
+    @Query(value = "SELECT u.id FROM User u WHERE u.friendReferral.id = ?1")
+    Set<String> findFriendsIdByUserId(String userId);
 
     @Procedure(name = "UserExport.balance")
     BigDecimal getBalance(@Param("idUtente") String userId);

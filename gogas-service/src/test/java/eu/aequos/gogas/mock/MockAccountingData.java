@@ -46,10 +46,6 @@ public class MockAccountingData implements MockDataLifeCycle {
         entry.setDate(date);
         entry.setAmount(BigDecimal.valueOf(amount));
 
-        if (user.getRoleEnum().isFriend()) {
-            entry.setFriendReferralId(user.getFriendReferral().getId());
-        }
-
         return accountingRepo.save(entry);
     }
 

@@ -87,18 +87,51 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         super.delete(entryId);
     }
 
-    public List<AccountingEntryDTO> getAccountingEntries(String userId, String reasonCode,
+    public List<AccountingEntryDTO> getUserAccountingEntries(String userId, String reasonCode,
+                                                             String description, LocalDate dateFrom,
+                                                             LocalDate dateTo) {
+
+        return getAccountingEntries(Set.of(userId), reasonCode, description, dateFrom, dateTo);
+    }
+
+    public List<AccountingEntryDTO> getFriendsAccountingEntries(String selectedFriendId, String reasonCode,
+                                                                String description, LocalDate dateFrom,
+                                                                LocalDate dateTo, String userId) {
+
+        Set<String> friendsIds = buildFriendListForFilter(selectedFriendId, userId);
+
+        if (friendsIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return getAccountingEntries(friendsIds, reasonCode, description, dateFrom, dateTo);
+    }
+
+    private Set<String> buildFriendListForFilter(String selectedFriendId, String userId) {
+        Set<String> allFriendsIds = userService.getFriendsIds(userId);
+
+        if (selectedFriendId == null) {
+            return allFriendsIds;
+        }
+
+        if (!allFriendsIds.contains(selectedFriendId)) {
+            return Collections.emptySet();
+        }
+
+        return Set.of(selectedFriendId);
+    }
+
+    private List<AccountingEntryDTO> getAccountingEntries(Set<String> userIds, String reasonCode,
                                                          String description, LocalDate dateFrom,
-                                                         LocalDate dateTo, String friendReferralId) {
+                                                         LocalDate dateTo) {
 
         Specification<AccountingEntry> filter = new SpecificationBuilder<AccountingEntry>()
                 .withBaseFilter(AccountingSpecs.notLinkedToOrder())
-                .and(AccountingSpecs::user, userId)
+                .and(AccountingSpecs::users, userIds)
                 .and(AccountingSpecs::reason, reasonCode)
                 .and(AccountingSpecs::descriptionLike, description)
                 .and(AccountingSpecs::fromDate, dateFrom)
                 .and(AccountingSpecs::toDate, dateTo)
-                .and(AccountingSpecs::isFriendOf, friendReferralId)
                 .build();
 
         return accountingRepo.findAll(filter).stream()

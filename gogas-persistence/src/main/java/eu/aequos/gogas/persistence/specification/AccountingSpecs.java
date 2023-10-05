@@ -4,11 +4,12 @@ import eu.aequos.gogas.persistence.entity.AccountingEntry;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 public class AccountingSpecs {
 
-    public static Specification<AccountingEntry> user(String userId) {
-        return (entry, cq, cb) -> cb.equal(entry.join("user").get("id"), userId);
+    public static Specification<AccountingEntry> users(Set<String> userIds) {
+        return (entry, cq, cb) -> entry.join("user").get("id").in(userIds);
     }
 
     public static Specification<AccountingEntry> fromDate(LocalDate fromDate) {
@@ -21,10 +22,6 @@ public class AccountingSpecs {
 
     public static Specification<AccountingEntry> descriptionLike(String description) {
         return (entry, cq, cb) -> cb.like(entry.get("description"), "%" + description +"%");
-    }
-
-    public static Specification<AccountingEntry> isFriendOf(String userId) {
-        return (entry, cq, cb) -> cb.equal(entry.get("friendReferralId"), userId);
     }
 
     public static Specification<AccountingEntry> reason(String reasonCode) {

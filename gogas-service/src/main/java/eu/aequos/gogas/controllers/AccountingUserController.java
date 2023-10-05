@@ -54,7 +54,7 @@ public class AccountingUserController {
         LocalDate parsedDateFrom = configurationService.parseLocalDate(dateFrom);
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
-        return accountingService.getAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo, null);
+        return accountingService.getUserAccountingEntries(userId, reasonCode, description, parsedDateFrom, parsedDateTo);
     }
 
     @PostMapping(value = "entry")
