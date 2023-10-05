@@ -91,7 +91,11 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                                                              String description, LocalDate dateFrom,
                                                              LocalDate dateTo) {
 
-        return getAccountingEntries(Set.of(userId), reasonCode, description, dateFrom, dateTo);
+        Set<String> userIds = Optional.ofNullable(userId)
+                .map(Set::of)
+                .orElse(null);
+
+        return getAccountingEntries(userIds, reasonCode, description, dateFrom, dateTo);
     }
 
     public List<AccountingEntryDTO> getFriendsAccountingEntries(String selectedFriendId, String reasonCode,
