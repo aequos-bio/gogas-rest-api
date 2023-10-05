@@ -95,7 +95,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
                 .map(Set::of)
                 .orElse(null);
 
-        return getAccountingEntries(userIds, reasonCode, description, dateFrom, dateTo);
+        return getAccountingEntries(userIds, User.Role.U, reasonCode, description, dateFrom, dateTo);
     }
 
     public List<AccountingEntryDTO> getFriendsAccountingEntries(String selectedFriendId, String reasonCode,
@@ -108,7 +108,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
             return Collections.emptyList();
         }
 
-        return getAccountingEntries(friendsIds, reasonCode, description, dateFrom, dateTo);
+        return getAccountingEntries(friendsIds, User.Role.S, reasonCode, description, dateFrom, dateTo);
     }
 
     private Set<String> buildFriendListForFilter(String selectedFriendId, String userId) {
@@ -125,13 +125,14 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         return Set.of(selectedFriendId);
     }
 
-    private List<AccountingEntryDTO> getAccountingEntries(Set<String> userIds, String reasonCode,
-                                                         String description, LocalDate dateFrom,
-                                                         LocalDate dateTo) {
+    private List<AccountingEntryDTO> getAccountingEntries(Set<String> userIds, User.Role userRole,
+                                                          String reasonCode, String description,
+                                                          LocalDate dateFrom, LocalDate dateTo) {
 
         Specification<AccountingEntry> filter = new SpecificationBuilder<AccountingEntry>()
                 .withBaseFilter(AccountingSpecs.notLinkedToOrder())
                 .and(AccountingSpecs::users, userIds)
+                .and(AccountingSpecs::userRole, userRole)
                 .and(AccountingSpecs::reason, reasonCode)
                 .and(AccountingSpecs::descriptionLike, description)
                 .and(AccountingSpecs::fromDate, dateFrom)

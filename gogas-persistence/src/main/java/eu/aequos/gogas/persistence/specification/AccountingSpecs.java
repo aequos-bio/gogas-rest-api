@@ -1,6 +1,7 @@
 package eu.aequos.gogas.persistence.specification;
 
 import eu.aequos.gogas.persistence.entity.AccountingEntry;
+import eu.aequos.gogas.persistence.entity.User;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -10,6 +11,10 @@ public class AccountingSpecs {
 
     public static Specification<AccountingEntry> users(Set<String> userIds) {
         return (entry, cq, cb) -> entry.join("user").get("id").in(userIds);
+    }
+
+    public static Specification<AccountingEntry> userRole(User.Role role) {
+        return (entry, cq, cb) -> cb.equal(entry.join("user").get("role"), role.name());
     }
 
     public static Specification<AccountingEntry> fromDate(LocalDate fromDate) {

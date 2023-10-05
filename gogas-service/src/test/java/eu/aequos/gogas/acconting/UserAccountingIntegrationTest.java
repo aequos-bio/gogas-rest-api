@@ -12,10 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -28,9 +25,11 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
     private String userId1;
     private String userId2;
+    private String friendId1;
 
     private User user1;
     private User user2;
+    private User friend1;
 
     private User manager1;
 
@@ -44,9 +43,11 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
     void createUsersAndReasons() {
         user1 = mockUsersData.createSimpleUser("user1", "password", "user1", "user1");
         user2 = mockUsersData.createSimpleUser("user2", "password", "user2", "user2");
+        friend1 = mockUsersData.createFriendUser("friend1", "password", "friend1", "friend1", user1);
 
         userId1 = user1.getId().toUpperCase();
         userId2 = user2.getId().toUpperCase();
+        friendId1 = friend1.getId().toUpperCase();
 
         mockAccountingData.createAccountingReason("BON", "Bonifico", "+");
         mockAccountingData.createAccountingReason("QTA", "Quota", "-");
@@ -642,6 +643,29 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
         List<AccountingEntryDTO> searchResults = mockMvcGoGas.getDTOList("/api/accounting/user/entry/list", AccountingEntryDTO.class, requestParams);
         assertEquals(6, searchResults.size());
+    }
+
+    @Test
+    void givenASetOfEntries_whenSearchingWithoutUser_thenOnlyEntriesOfRoleUserAreReturned() throws Exception {
+        List<AccountingEntry> entries = List.of(
+                mockAccountingData.createAccountingEntry(user1, "BON", 200.0, LocalDate.of(2022, 5, 1)),
+                mockAccountingData.createAccountingEntry(user1, "ADD", 100.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(user1, "QTA", 50.0, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(user2, "BON", 250.0, LocalDate.of(2022, 5, 2)),
+                mockAccountingData.createAccountingEntry(user2, "ADD", 112.34, LocalDate.of(2022, 5, 4)),
+                mockAccountingData.createAccountingEntry(user2, "QTA", 25.62, LocalDate.of(2022, 5, 7)),
+                mockAccountingData.createAccountingEntry(friend1, "ADD", 120.34, LocalDate.of(2022, 5, 13)),
+                mockAccountingData.createAccountingEntry(friend1, "QTA", 34.98, LocalDate.of(2022, 5, 12))
+        );
+
+        mockMvcGoGas.loginAsAdmin();
+
+        Map<String, List<String>> requestParams = Collections.emptyMap();
+        Map<String, AccountingEntryDTO> searchResults = mockMvcGoGas.getDTOList("/api/accounting/user/entry/list", AccountingEntryDTO.class, requestParams).stream()
+                .collect(Collectors.toMap(AccountingEntryDTO::getId, Function.identity()));
+
+        assertEquals(6, searchResults.size());
+        assertTrue(searchResults.entrySet().stream().noneMatch(entry -> friendId1.equals(entry.getValue().getUserId())));
     }
 
     @Test
