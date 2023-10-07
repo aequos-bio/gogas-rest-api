@@ -187,7 +187,7 @@ public class AequosIntegrationService {
             String body = "Buonasera Simona,\n\nin allegato l'ordine di carni bianche in consegna il " +
                     ConfigurationService.formatDate(order.getDeliveryDate()) + " per " + gasName + ".";
 
-            mailNotificationSender.sendMail(new String[] {sendExcelMailAddress}, new String[] { senderEmail }, senderEmail, subject, body, List.of(reportAttachment));
+            mailNotificationSender.sendMail(sendExcelMailAddress, senderEmail, senderEmail, subject, body, List.of(reportAttachment));
         } catch (Exception ex) {
             log.error("Unable to send excel report to supplier", ex);
         }
