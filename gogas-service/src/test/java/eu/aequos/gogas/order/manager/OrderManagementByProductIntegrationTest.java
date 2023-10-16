@@ -25,7 +25,7 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
     private Order order;
 
     @BeforeEach
-    void setUp() {
+    protected void setUp() {
         order = mockOrdersData.createOrder(orderTypeComputed, "2022-03-20", "2022-03-30", "2022-04-01", Order.OrderStatus.Closed);
 
         Map<String, Integer> boxQuantities = Map.ofEntries(

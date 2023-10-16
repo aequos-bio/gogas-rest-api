@@ -31,7 +31,7 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
     private Order orderExternal;
 
     @BeforeEach
-    void setUp() {
+    protected void setUp() {
         orderComputed = mockOrdersData.createOrder(orderTypeComputed, "2022-03-20", "2022-03-30", "2022-04-05", Order.OrderStatus.Closed);
 
         Map<String, Integer> boxQuantities = Map.ofEntries(
