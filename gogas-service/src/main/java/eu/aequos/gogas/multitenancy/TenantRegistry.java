@@ -15,8 +15,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -38,6 +40,12 @@ public class TenantRegistry {
 
     public Map<Object, Object> getDataSourceMap() {
         return tenantDataSourceMap;
+    }
+
+    public Set<String> getAllTenants() {
+        return tenantDataSourceMap.keySet().stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet());
     }
 
     public boolean isValidTenant(String tenantId) {

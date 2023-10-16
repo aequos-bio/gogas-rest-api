@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -183,6 +184,10 @@ public class MockOrdersData implements MockDataLifeCycle {
         order.setExternalOrderId(externalOrderId);
         order.setSent(true);
         orderRepo.save(order);
+    }
+
+    public List<SupplierOrderItem> getSupplierOrderItems(String orderId) {
+        return supplierOrderItemRepo.findByOrderId(orderId);
     }
 
     public SupplierOrderItem createSupplierOrderItem(Order order, Product product, int boxCount) {

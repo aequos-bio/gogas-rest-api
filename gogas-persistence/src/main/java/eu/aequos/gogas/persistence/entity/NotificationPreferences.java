@@ -10,7 +10,7 @@ import javax.persistence.*;
 public class NotificationPreferences {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

@@ -1,13 +1,21 @@
 package eu.aequos.gogas.notification.builder;
 
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-public class ExpirationNotificationBuilder extends OrderNotificationBuilder {
+@Component
+public class ExpirationNotificationBuilder implements OrderNotificationBuilder {
+
+    @Override
+    public boolean eventSupported(OrderEvent orderEvent) {
+        return OrderEvent.Expiration.equals(orderEvent);
+    }
 
     @Override
     public String getEventName() {
@@ -42,11 +50,6 @@ public class ExpirationNotificationBuilder extends OrderNotificationBuilder {
     @Override
     public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
         return preferences.stream()
-                .filter(pref -> filter(order, pref));
-    }
-
-    private boolean filter(Order order, NotificationPreferencesView preference) {
-        return preference.onOrderExpiration() &&
-                order.isExpiring(preference.getOnExpirationMinutesBefore());
+                .filter(NotificationPreferencesView::onOrderExpiration);
     }
 }

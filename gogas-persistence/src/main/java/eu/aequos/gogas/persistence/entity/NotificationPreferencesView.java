@@ -26,14 +26,8 @@ public class NotificationPreferencesView {
     @Column(name = "scadenza")
     private boolean onOrderExpiration;
 
-    @Column(name = "minutiscadenza")
-    private int onExpirationMinutesBefore;
-
     @Column(name = "consegna")
     private boolean onOrderDelivery;
-
-    @Column(name = "minuticonsegna")
-    private int onDeliveryMinutesBefore;
 
     @Column(name = "aggiornamentoqta")
     private boolean onOrderUpdatedQuantity;
@@ -67,14 +61,6 @@ public class NotificationPreferencesView {
 
     public String getOrderTypeId() {
         return orderTypeId;
-    }
-
-    public int getOnExpirationMinutesBefore() {
-        return onExpirationMinutesBefore;
-    }
-
-    public int getOnDeliveryMinutesBefore() {
-        return onDeliveryMinutesBefore;
     }
 
     @Data

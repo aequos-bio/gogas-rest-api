@@ -33,6 +33,12 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
 
     List<Order> findByOrderTypeIdInAndStatusCodeIn(Set<String> orderTypeId, Set<Integer> statusCodes);
 
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.dueDate >= ?1")
+    List<Order> findByDueDateGreaterThanEqual(LocalDate date);
+
+    @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.deliveryDate >= ?1")
+    List<Order> findByDeliveryDateGreaterThanEqual(LocalDate date);
+
     @Query(value = "SELECT idDateOrdini AS orderId, " +
             "CASE " +
             "   WHEN t.\"external\" = 1 OR t.totaleCalcolato = 0 THEN " +

@@ -1,13 +1,21 @@
 package eu.aequos.gogas.notification.builder;
 
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-public class QuantityUpdatedNotificationBuilder extends OrderNotificationBuilder {
+@Component
+public class QuantityUpdatedNotificationBuilder implements OrderNotificationBuilder {
+
+    @Override
+    public boolean eventSupported(OrderEvent orderEvent) {
+        return OrderEvent.QuantityUpdated.equals(orderEvent);
+    }
 
     @Override
     public String getEventName() {

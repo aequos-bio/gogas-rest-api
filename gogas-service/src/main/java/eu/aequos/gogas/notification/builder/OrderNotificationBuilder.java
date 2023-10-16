@@ -1,30 +1,25 @@
 package eu.aequos.gogas.notification.builder;
 
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.service.ConfigurationService;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-public abstract class OrderNotificationBuilder {
+public interface OrderNotificationBuilder {
 
-    public abstract String getEventName();
+    boolean eventSupported(OrderEvent orderEvent);
 
-    public abstract String getHeading();
+    String getEventName();
 
-    public abstract String getMultipleNotificationsHeading();
+    String getHeading();
 
-    public abstract Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences);
+    String getMultipleNotificationsHeading();
 
-    protected abstract String getPushTemplate();
+    Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences);
 
-    public String getPushMessage(Order order) {
-        String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
-        String messageTemplate = getPushTemplate();
+    String getPushTemplate();
 
-        return String.format(messageTemplate, order.getOrderType().getDescription(), formattedDeliveryDate);
-    }
-
-    public abstract String getTelegramMessage(Order order);
+    String getTelegramMessage(Order order);
 }

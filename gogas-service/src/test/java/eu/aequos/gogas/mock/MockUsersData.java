@@ -1,7 +1,11 @@
 package eu.aequos.gogas.mock;
 
 import eu.aequos.gogas.mvc.WithTenant;
+import eu.aequos.gogas.persistence.entity.NotificationPreferences;
+import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
+import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
+import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.ShaPasswordEncoder;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,8 @@ public class MockUsersData implements MockDataLifeCycle {
     public static final String SIMPLE_USER_PASSWORD = "simple_user";
 
     private final UserRepo userRepo;
+    private final NotificationPreferencesRepo notificationPreferencesRepo;
+    private final PushTokenRepo pushTokenRepo;
 
     private final PasswordEncoder passwordEncoder = new ShaPasswordEncoder();
     private final List<User> createdUsers = new ArrayList<>();
@@ -65,7 +71,26 @@ public class MockUsersData implements MockDataLifeCycle {
         User storedUser = userRepo.save(user);
         createdUsers.add(storedUser);
 
+        NotificationPreferences notificationPreferences = new NotificationPreferences();
+        notificationPreferences.setUserId(storedUser.getId());
+        notificationPreferences.setOnOrderOpened(true);
+        notificationPreferences.setOnOrderExpiration(true);
+        notificationPreferences.setOnOrderDelivery(true);
+        notificationPreferences.setOnOrderUpdatedQuantity(true);
+        notificationPreferences.setOnOrderAccounted(true);
+
+        notificationPreferencesRepo.save(notificationPreferences);
+
         return storedUser;
+    }
+
+    public void addPushNotificationToken(String userId, String token) {
+        PushToken pushToken = new PushToken();
+        pushToken.setUserId(userId);
+        pushToken.setDeviceId(token + "_device");
+        pushToken.setToken(token);
+
+        pushTokenRepo.save(pushToken);
     }
 
     public String getSimpleUserId() {
@@ -80,6 +105,9 @@ public class MockUsersData implements MockDataLifeCycle {
     }
 
     public void deleteUsers() {
+        pushTokenRepo.deleteAll();
+        notificationPreferencesRepo.deleteAll();
+
         createdUsers.sort(Comparator.comparing(User::getRole));
         createdUsers.forEach(userRepo::delete);
         createdUsers.clear();

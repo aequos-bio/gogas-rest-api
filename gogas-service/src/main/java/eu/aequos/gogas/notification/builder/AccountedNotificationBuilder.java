@@ -1,23 +1,28 @@
 package eu.aequos.gogas.notification.builder;
 
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.OrderItemService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class AccountedNotificationBuilder extends OrderNotificationBuilder {
+@Component
+@RequiredArgsConstructor
+public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
-    private OrderItemService orderItemService;
-    private AccountingService accountingService;
+    private final OrderItemService orderItemService;
+    private final AccountingService accountingService;
 
-    public AccountedNotificationBuilder(OrderItemService orderItemService, AccountingService accountingService) {
-        this.orderItemService = orderItemService;
-        this.accountingService = accountingService;
+    @Override
+    public boolean eventSupported(OrderEvent orderEvent) {
+        return OrderEvent.Opened.equals(orderEvent);
     }
 
     @Override

@@ -6,6 +6,7 @@ import eu.aequos.gogas.notification.push.client.PushNotificationClient;
 import eu.aequos.gogas.notification.push.client.PushNotificationRequest;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
+import eu.aequos.gogas.service.ConfigurationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,13 +36,12 @@ public class PushNotificationChannel implements NotificationChannel {
     }
 
     public void sendOrderNotification(Order order, OrderNotificationBuilder notificationBuilder, Set<String> targetUserIds) {
-        List<String> targetTokens = extractNotificationTokens(targetUserIds);
-        if (targetTokens.isEmpty()) {
+        if (targetUserIds.isEmpty()) {
             log.info("No target user found for push notifications");
             return;
         }
 
-        PushNotificationRequest request = buildPushNotificationRequest(order, notificationBuilder, targetTokens);
+        PushNotificationRequest request = buildPushNotificationRequest(order, notificationBuilder, targetUserIds);
         String response = pushNotificationClient.sendNotifications("Bearer " + serviceKey, request);
         log.info("Notification send, response: " + response);
     }
@@ -53,16 +53,23 @@ public class PushNotificationChannel implements NotificationChannel {
         return pushTokenRepo.findTokensByUserIdIn(targetUserIds);
     }
 
-    private PushNotificationRequest buildPushNotificationRequest(Order order, OrderNotificationBuilder notificationBuilder, List<String> targetTokens) {
+    private PushNotificationRequest buildPushNotificationRequest(Order order, OrderNotificationBuilder notificationBuilder, Set<String> userIds) {
         PushNotificationRequest request = new PushNotificationRequest();
         request.setAppId(serviceAppId);
         request.setHeadings(notificationBuilder.getHeading());
-        request.setContents(notificationBuilder.getPushMessage(order));
-        request.setTargetTokens(targetTokens);
+        request.setContents(buildMessageBody(order, notificationBuilder));
+        request.setUserIds(userIds);
         request.setOrderId(order.getId());
         request.setAndroidGroup("order_" + notificationBuilder.getEventName());
         request.setAndroidGroupMessage("$[notif_count] " + notificationBuilder.getMultipleNotificationsHeading());
 
         return request;
+    }
+
+    private String buildMessageBody(Order order, OrderNotificationBuilder notificationBuilder) {
+        String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
+        String messageTemplate = notificationBuilder.getPushTemplate();
+
+        return String.format(messageTemplate, order.getOrderType().getDescription(), formattedDeliveryDate);
     }
 }

@@ -1,3 +1,5 @@
+CREATE DATABASE localhost_test;
+
 CREATE DATABASE gogas_integration_test;
 
 CREATE TABLE tenants (

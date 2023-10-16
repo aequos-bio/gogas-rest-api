@@ -1,19 +1,25 @@
 package eu.aequos.gogas.notification.builder;
 
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.OrderItemService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
+@Component
+@RequiredArgsConstructor
+public class DeliveryNotificationBuilder implements OrderNotificationBuilder {
 
-    private OrderItemService orderItemService;
+    private final OrderItemService orderItemService;
 
-    public DeliveryNotificationBuilder(OrderItemService orderItemService) {
-        this.orderItemService = orderItemService;
+    @Override
+    public boolean eventSupported(OrderEvent orderEvent) {
+        return OrderEvent.Delivery.equals(orderEvent);
     }
 
     @Override
@@ -51,11 +57,6 @@ public class DeliveryNotificationBuilder extends OrderNotificationBuilder {
 
         return preferences.stream()
                 .filter(pref -> usersOrdering.contains(pref.getUserId()))
-                .filter(pref -> filter(order, pref));
-    }
-
-    public boolean filter(Order order, NotificationPreferencesView preference) {
-        return preference.onOrderDelivery() &&
-                order.isInDelivery(11, preference.getOnDeliveryMinutesBefore());
+                .filter(NotificationPreferencesView::onOrderDelivery);
     }
 }

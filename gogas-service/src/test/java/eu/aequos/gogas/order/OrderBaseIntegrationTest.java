@@ -137,7 +137,7 @@ public class OrderBaseIntegrationTest extends BaseGoGasIntegrationTest {
     }
 
     @BeforeEach
-    void setUp() {
+    protected void setUp() {
         createdOrderIds = new ArrayList<>();
     }
 

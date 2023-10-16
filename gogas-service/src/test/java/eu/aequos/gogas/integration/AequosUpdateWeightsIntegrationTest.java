@@ -3,8 +3,12 @@ package eu.aequos.gogas.integration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.aequos.gogas.BaseGoGasIntegrationTest;
-import eu.aequos.gogas.dto.*;
-import eu.aequos.gogas.integration.api.*;
+import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.OrderItemUpdateRequest;
+import eu.aequos.gogas.dto.SmallUserOrderItemDTO;
+import eu.aequos.gogas.integration.api.AequosApiClient;
+import eu.aequos.gogas.integration.api.OrderCreationItem;
+import eu.aequos.gogas.integration.api.WeightsUpdatedResponse;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
@@ -258,7 +262,7 @@ class AequosUpdateWeightsIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pesiInviati", is(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))));
 
-        Set<String> updatedSupplierOrderItems = supplierOrderItemRepo.findByOrderId(aequosOrder.getId()).stream()
+        Set<String> updatedSupplierOrderItems = mockOrdersData.getSupplierOrderItems(aequosOrder.getId()).stream()
                 .filter(SupplierOrderItem::isWeightUpdated)
                 .map(SupplierOrderItem::getProductExternalCode)
                 .collect(Collectors.toSet());

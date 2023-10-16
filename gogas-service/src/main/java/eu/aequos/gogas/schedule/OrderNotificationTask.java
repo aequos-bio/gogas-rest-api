@@ -2,63 +2,71 @@ package eu.aequos.gogas.schedule;
 
 import eu.aequos.gogas.multitenancy.TenantContext;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
-import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.NotificationSender;
+import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
-import eu.aequos.gogas.persistence.specification.OrderSpecs;
-import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.domain.Specification;
+import org.slf4j.MDC;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Function;
 
-import static eu.aequos.gogas.persistence.specification.OrderSpecs.SortingType.NONE;
-
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OrderNotificationTask {
 
-    private TenantRegistry tenantRegistry;
-    private OrderRepo orderRepo;
-    private NotificationSender notificationSender;
+    private static final int EXPIRATION_NOTIFICATION_AHEAD_MINUTES = 60;
+    private static final int DELIVERY_NOTIFICATION_REFERENCE_HOUR = 10;
 
-    public OrderNotificationTask(TenantRegistry tenantRegistry, OrderRepo orderRepo,
-                                 NotificationSender notificationSender) {
-        this.tenantRegistry = tenantRegistry;
-        this.orderRepo = orderRepo;
-        this.notificationSender = notificationSender;
-    }
+    private final TenantRegistry tenantRegistry;
+    private final OrderRepo orderRepo;
+    private final NotificationSender notificationSender;
+    private final Clock clock;
 
     @Scheduled(cron = "${notification.task.cron}")
     public void sendOrderNotifications() {
         log.info("Notification process started");
 
         try {
-            for (Object tenantId : tenantRegistry.getDataSourceMap().keySet()) {
-                TenantContext.setTenantId((String) tenantId);
-                sendNotifications(OrderSpecs::dueDateFrom, OrderEvent.Expiration);
-                sendNotifications(OrderSpecs::deliveryDateFrom, OrderEvent.Delivery);
+            for (String tenantId : tenantRegistry.getAllTenants()) {
+                TenantContext.setTenantId(tenantId);
+                MDC.put("logFileName", tenantId);
+
+                sendNotifications(orderRepo::findByDueDateGreaterThanEqual, this::isExpiring, OrderEvent.Expiration);
+                sendNotifications(orderRepo::findByDeliveryDateGreaterThanEqual, this::isInDelivery, OrderEvent.Delivery);
             }
         } finally {
             TenantContext.clearTenantId();
         }
     }
 
-    private void sendNotifications(Function<LocalDate, Specification<Order>> orderDateFilter, OrderEvent event) {
-        Specification<Order> filter = new SpecificationBuilder<Order>()
-                .withBaseFilter(OrderSpecs.select(NONE))
-                .and(orderDateFilter, LocalDate.now())
-                .build();
+    private boolean isExpiring(Order order) {
+        return isDateTimeWithinMinutesFromNow(order.getDueDateAndTime(), EXPIRATION_NOTIFICATION_AHEAD_MINUTES, clock);
+    }
 
-        List<Order> orderList = orderRepo.findAll(filter);
+    private boolean isInDelivery(Order order) {
+        LocalDateTime deliveryDateAndTime = order.getDeliveryDate().atTime(DELIVERY_NOTIFICATION_REFERENCE_HOUR, 0);
+        return isDateTimeWithinMinutesFromNow(deliveryDateAndTime, 0, clock);
+    }
 
-        for (Order order : orderList) {
-            notificationSender.sendOrderNotification(order, event);
-        }
+    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes, Clock clock) {
+        return ChronoUnit.MINUTES.between(LocalDateTime.now(clock), orderDate) < minutes;
+    }
+
+    private void sendNotifications(Function<LocalDate, List<Order>> orderRetriever, Function<Order, Boolean> orderFilter, OrderEvent event) {
+        List<Order> orderList = orderRetriever.apply(LocalDate.now(clock));
+
+        orderList.stream()
+                .filter(orderFilter::apply)
+                .forEach(order -> notificationSender.sendOrderNotification(order, event));
     }
 }

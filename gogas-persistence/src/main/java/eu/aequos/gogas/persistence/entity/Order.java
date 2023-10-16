@@ -5,9 +5,10 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.time.Duration;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
@@ -122,10 +123,6 @@ public class Order {
         return now.isAfter(openingDate.atStartOfDay()) && now.isBefore(this.getDueDateAndTime());
     }
 
-    public boolean isExpiring(int minutesBefore) {
-        return isDateTimeWithinMinutesFromNow(getDueDateAndTime(), minutesBefore);
-    }
-
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(getDueDateAndTime());
     }
@@ -134,13 +131,7 @@ public class Order {
         return LocalDate.now().isBefore(openingDate);
     }
 
-    public boolean isInDelivery(int referenceHour, int minutesBefore) {
-        LocalDateTime deliveryDateAndTime = this.deliveryDate.atTime(referenceHour, 0);
-        return isDateTimeWithinMinutesFromNow(deliveryDateAndTime, minutesBefore);
-    }
-
-    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes) {
-        long diffInMinutesFromNow = Duration.between(orderDate, LocalDateTime.now()).toMinutes();
-        return Math.abs(diffInMinutesFromNow - minutes) < 2;
+    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes, Clock clock) {
+        return ChronoUnit.MINUTES.between(LocalDateTime.now(clock), orderDate) < minutes;
     }
 }

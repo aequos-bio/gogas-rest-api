@@ -11,6 +11,8 @@ import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.time.Clock;
+
 @Configuration
 public class RestConfiguration {
 
@@ -33,5 +35,10 @@ public class RestConfiguration {
     @Bean
     public FormEncoder feignFormEncoder() {
         return new FormEncoder(new SpringEncoder(this.messageConverters));
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 }

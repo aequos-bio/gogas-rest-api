@@ -45,7 +45,7 @@ public class GoGasDatabaseContainer extends MSSQLServerContainer<GoGasDatabaseCo
 
             PreparedStatement preparedStatement = connect.prepareStatement("" +
                     "INSERT INTO tenants (tenant_id, username, [password], [url])\n" +
-                    "VALUES ('localhost', 'sa', 'Int3grat1on_te5T!', '" + getJdbcUrl() + ";database=gogas_integration_test');\n");
+                    "VALUES ('localhost', 'sa', 'Int3grat1on_te5T!', '" + getJdbcUrl() + ";database=localhost_test');\n");
             preparedStatement.execute();
 
             PreparedStatement preparedStatement2 = connect.prepareStatement("" +

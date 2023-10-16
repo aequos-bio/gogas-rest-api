@@ -1,7 +1,6 @@
 package eu.aequos.gogas.notification;
 
 import eu.aequos.gogas.notification.builder.OrderNotificationBuilder;
-import eu.aequos.gogas.notification.builder.OrderNotificationBuilderSelector;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesViewRepo;
@@ -19,13 +18,25 @@ import java.util.stream.Collectors;
 public class NotificationSender {
 
     private final NotificationPreferencesViewRepo notificationPreferencesViewRepo;
-    private final OrderNotificationBuilderSelector orderNotificationBuilderSelector;
+    private final List<OrderNotificationBuilder> orderNotificationBuilders;
     private final List<NotificationChannel> notificationChannels;
+    private final UserNotificationsCache userNotificationsCache;
 
     public void sendOrderNotification(Order order, OrderEvent event) {
-        log.info("Sending order notifications for event {}", event.name());
-        OrderNotificationBuilder notificationBuilder = orderNotificationBuilderSelector.select(event);
+        if (userNotificationsCache.isNotificationAlreadySent(order.getId(), event)) {
+            return;
+        }
 
+        log.info("Sending order notifications for order {} and event {}", order.getId(), event.name());
+
+        orderNotificationBuilders.stream()
+                .filter(notificationBuilder -> notificationBuilder.eventSupported(event))
+                .forEach(notificationBuilder -> sendNotification(order, notificationBuilder));
+
+        userNotificationsCache.addNotificationSent(order.getId(), event);
+    }
+
+    private void sendNotification(Order order, OrderNotificationBuilder notificationBuilder) {
         Set<String> targetUserIds = extractTargetUserIds(order, notificationBuilder);
         if (targetUserIds.isEmpty()) {
             log.info("No target user found for notifications");

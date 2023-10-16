@@ -7,9 +7,8 @@ import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
-import eu.aequos.gogas.persistence.entity.Configuration;
+import eu.aequos.gogas.mock.MockConfigurationData;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
     private String orderId;
 
     @Autowired
-    private ConfigurationRepo configurationRepo;
+    private MockConfigurationData mockConfigurationData;
 
     @BeforeEach
     void createOrder() {
@@ -46,8 +45,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
 
     @AfterEach
     void resetConfiguration() {
-        configurationRepo.findById("users.position")
-                .ifPresent(configurationRepo::delete);
+        mockConfigurationData.removeSortUsersByPosition();
     }
 
     @Test
@@ -788,7 +786,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
 
     @Test
     void givenSortUserByPositionEnabled_whenGettingDeliveryData_thenSortByNameFlagIsNull() throws Exception {
-        enableSortUsersByPosition();
+        mockConfigurationData.enableSortUsersByPosition();
 
         addComputedUserOrdersNoFriends(orderId);
 
@@ -800,12 +798,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertNull(deliveryData.getSortUsersByName());
     }
 
-    private void enableSortUsersByPosition() {
-        Configuration configurationFlag = new Configuration();
-        configurationFlag.setKey("users.position");
-        configurationFlag.setValue("true");
-        configurationRepo.save(configurationFlag);
-    }
+
 
     private void changeDeliveredQuantity(Map<String, Map<String, DeliveryOrderItemDTO>> deliveryData, String productCode, String userId, double quantity) {
         DeliveryOrderItemDTO deliveryItem = deliveryData.get(productCode.toUpperCase()).get(userId);
