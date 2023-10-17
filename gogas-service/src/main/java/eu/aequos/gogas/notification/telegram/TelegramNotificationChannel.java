@@ -22,12 +22,19 @@ public class TelegramNotificationChannel implements NotificationChannel {
     public void sendOrderNotification(Order order, OrderNotificationBuilder notificationBuilder, Set<String> targetUserIds) {
         TelegramNotificationRequestDTO requestDTO = TelegramNotificationRequestDTO.builder()
                 .userIds(targetUserIds)
-                .text(notificationBuilder.getTelegramMessage(order))
+                .text(buildTelegramMessageForOrder(order, notificationBuilder))
                 .build();
 
         String tenantId = TenantContext.getTenantId()
                 .orElseThrow(() -> new GoGasException("Invalid tenant"));
 
         telegramNotificationClient.sendNotifications(tenantId, requestDTO);
+    }
+
+    private String buildTelegramMessageForOrder(Order order, OrderNotificationBuilder notificationBuilder) {
+        String eventMessage = notificationBuilder.getTelegramMessage(order);
+        String orderLink = "\n\n[Apri l'ordine su Go!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + order.getId() + ")";
+
+        return eventMessage + orderLink;
     }
 }
