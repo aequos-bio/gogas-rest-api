@@ -70,9 +70,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
             }
         } catch (TokenExpiredException ex) {
-            response.sendRedirect("/login");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token expired");
         } catch (JWTVerificationException ex) {
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token non valido o scaduto");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token expired or not valid");
         } catch (UserNotAuthorizedException ex) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Utente o tenant non valido");
         }
