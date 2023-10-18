@@ -3,13 +3,16 @@ package eu.aequos.gogas.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.entity.Supplier;
 import eu.aequos.gogas.persistence.entity.ProductCategory;
+import eu.aequos.gogas.persistence.entity.Supplier;
+import eu.aequos.gogas.validation.ValidUUID;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -23,27 +26,30 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     private String id;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotBlank
     @JsonProperty("descrizione")
     private String description;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotBlank
     @JsonProperty("unitamisura")
     private String um;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
+    @Positive
     @JsonProperty("pesocassa")
     private BigDecimal boxWeight;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
+    @Positive
     @JsonProperty("prezzounitario")
     private BigDecimal price;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
+    @ValidUUID
     @JsonProperty("idtipo")
     private String typeId;
 
@@ -52,7 +58,7 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     private String typeName;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
     @JsonProperty("ordinabile")
     private boolean available;
 
@@ -60,7 +66,8 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     private String boxUm;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
+    @ValidUUID
     @JsonProperty("idproduttore")
     private String supplierId;
 
@@ -75,7 +82,8 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     private String notes;
 
     @ApiModelProperty(required = true)
-    @NotEmpty
+    @NotNull
+    @ValidUUID
     @JsonProperty("idcategoria")
     private String categoryId;
 
@@ -92,6 +100,7 @@ public class ProductDTO implements ConvertibleDTO<Product> {
     @JsonProperty("solocollointero")
     private boolean boxOnly;
 
+    @Positive
     @JsonProperty("multiplo")
     private BigDecimal multiple;
 

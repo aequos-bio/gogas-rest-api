@@ -8,6 +8,7 @@ import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.SupplierRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,22 +19,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 public class PriceListSynchronizer {
 
-    private ProductRepo productRepo;
-    private SupplierRepo supplierRepo;
-    private OrderTypeRepo orderTypeRepo;
-    private ProductCategoryRepo productCategoryRepo;
-
-    public PriceListSynchronizer(ProductRepo productRepo, SupplierRepo supplierRepo,
-                                 OrderTypeRepo orderTypeRepo, ProductCategoryRepo productCategoryRepo) {
-
-        this.productRepo = productRepo;
-        this.supplierRepo = supplierRepo;
-        this.orderTypeRepo = orderTypeRepo;
-        this.productCategoryRepo = productCategoryRepo;
-    }
+    private final ProductRepo productRepo;
+    private final SupplierRepo supplierRepo;
+    private final OrderTypeRepo orderTypeRepo;
+    private final ProductCategoryRepo productCategoryRepo;
 
     @Transactional
     public LocalDateTime syncPriceList(OrderType orderType, ExternalPriceList externalPriceList) {

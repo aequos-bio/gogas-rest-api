@@ -58,6 +58,13 @@ public class ProductService extends CrudService<Product, String> {
         this.attachmentService = attachmentService;
     }
 
+    public ProductDTO getProduct(String productId) {
+        Product product = getRequired(productId);
+        OrderType orderType = orderTypeService.getRequired(product.getType());
+
+        return new ProductDTO().fromModel(product, orderType);
+    }
+
     public List<Product> getProductsOnPriceList(String productType) {
         return fetchProducts(productType, null, true,false, true);
     }

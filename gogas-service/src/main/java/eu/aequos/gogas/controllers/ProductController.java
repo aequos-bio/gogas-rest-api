@@ -7,25 +7,30 @@ import eu.aequos.gogas.persistence.entity.Product;
 import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.security.annotations.IsProductManager;
 import eu.aequos.gogas.service.ProductService;
+import eu.aequos.gogas.validation.ProductValidator;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
 @RequiredArgsConstructor
+@Validated
 @Api("Products")
 @RestController
 @RequestMapping("api/products")
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductValidator productValidator;
 
     @ApiOperation(
         value = "Get available products by order type",
@@ -59,12 +64,23 @@ public class ProductController {
     }
 
     @ApiOperation(
+            value = "Get product details",
+            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
+    )
+    @IsProductManager
+    @GetMapping(value = "{productId}")
+    public ProductDTO getProduct(@PathVariable String productId) {
+        return productService.getProduct(productId);
+    }
+
+    @ApiOperation(
         value = "Create product",
         authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin"), @AuthorizationScope(scope ="order manager", description = "order manager") }) }
     )
     @IsProductManager
     @PostMapping()
-    public BasicResponseDTO createProduct(@RequestBody ProductDTO productDTO) {
+    public BasicResponseDTO createProduct(@RequestBody @Valid ProductDTO productDTO) {
+        productValidator.validate(productDTO);
         String productId = productService.create(productDTO).getId();
         return new BasicResponseDTO(productId);
     }
@@ -79,7 +95,8 @@ public class ProductController {
     })
     @IsProductManager
     @PutMapping(value = "{productId}")
-    public BasicResponseDTO updateProduct(@PathVariable String productId, @RequestBody ProductDTO productDTO) throws ItemNotFoundException {
+    public BasicResponseDTO updateProduct(@PathVariable String productId, @RequestBody @Valid ProductDTO productDTO) throws ItemNotFoundException {
+        productValidator.validate(productDTO);
         String updatedProductId = productService.update(productId, productDTO).getId();
         return new BasicResponseDTO(updatedProductId);
     }
