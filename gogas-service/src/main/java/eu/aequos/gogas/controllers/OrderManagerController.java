@@ -207,7 +207,7 @@ public class OrderManagerController {
     @PostMapping(value = "{orderId}/aequos/order/sendmail")
     public BasicResponseDTO sendOrderToAequosMail(@PathVariable String orderId) throws GoGasException {
         String userId = authorizationService.getCurrentUser().getId();
-        orderManagerService.sendOrderToAequosMail(orderId, userId);
+        orderManagerService.sendOrderToAequosMail(userId, orderId);
         return new BasicResponseDTO("OK");
     }
 

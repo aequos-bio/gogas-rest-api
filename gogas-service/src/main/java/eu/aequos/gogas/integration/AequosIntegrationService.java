@@ -82,8 +82,10 @@ public class AequosIntegrationService {
         formParams.put("tipo_ordine", Integer.toString(aequosOrderType));
         formParams.put("rows", extractAndSerializeOrderItems(orderBoxes));
 
-        if (aequosOrderId != null)
+        if (aequosOrderId != null) {
+            log.info("Order already sent to Aequos (id: {}), updating it", aequosOrderId);
             formParams.put("order_id", aequosOrderId);
+        }
 
         OrderCreatedResponse response = aequosApiClient.createOrder(formParams);
 
@@ -182,6 +184,8 @@ public class AequosIntegrationService {
 
     public void sendExcelToSupplier(Order order, String senderEmail, AttachmentDTO reportAttachment) {
         try {
+            log.info("Sending excel file with order details (order id: {}, sender: {}, to: {})", order.getId(), senderEmail, sendExcelMailAddress);
+
             String gasName = configurationService.getGasName().toUpperCase();
             String subject = "Ordine Carni Bianche - " + gasName;
             String body = "Buonasera Simona,\n\nin allegato l'ordine di carni bianche in consegna il " +

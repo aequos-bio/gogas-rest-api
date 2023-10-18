@@ -209,6 +209,8 @@ public class OrderManagerService extends CrudService<Order, String> {
 
     public void changeStatus(String orderId, String actionCode, int roundType) throws ItemNotFoundException, InvalidOrderActionException {
         Order order = this.getRequiredWithType(orderId);
+
+        log.info("Performing a status change for order id {} - current status: {}, action: {}", order.getId(), order.getStatus().getDescription(), actionCode);
         orderWorkflowHandler.changeStatus(order, actionCode, roundType);
     }
 
@@ -291,6 +293,8 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         supplierOrderItemRepo.updatePriceByOrderIdAndProductId(orderId, productId, price);
         orderItemService.updatePriceByOrderIdAndProductId(orderId, productId, price);
+
+        log.info("Updated product price to {} for product id {} and order id {}", price, orderId, productId);
     }
 
     public void distributeRemainingQuantities(String orderId, String productId) throws ItemNotFoundException {
@@ -440,6 +444,8 @@ public class OrderManagerService extends CrudService<Order, String> {
         }
 
         orderRepo.save(order);
+
+        log.info("Invoice data updated for order id {}", orderId);
     }
 
     public void saveInvoiceAttachment(String orderId, byte[] attachmentContent, String contentType) throws GoGasException {
@@ -448,6 +454,8 @@ public class OrderManagerService extends CrudService<Order, String> {
 
         if (rowsUpdated < 1)
             throw new ItemNotFoundException("Order", orderId);
+
+        log.info("Stored attachment for order id {} (content type {})", orderId, contentType);
     }
 
     public List<OrderDTO> getAvailableOrdersNotYetOpened(String userId, User.Role userRole) {
@@ -536,19 +544,24 @@ public class OrderManagerService extends CrudService<Order, String> {
         if (supplierOrderBoxes.isEmpty())
             throw new GoGasException("Order cannot be sent: no products found");
 
+        log.info("Sending order {} to Aequos", order.getId());
+
         String aequosOrderId = aequosIntegrationService.createOrUpdateOrder(aequosOrderType, order.getExternalOrderId(), supplierOrderBoxes);
         orderRepo.updateOrderExternalId(orderId, aequosOrderId, true);
 
-        if (aequosIntegrationService.requiresWeightColumns(order)) {
-            String currentUserEmail = userService.getRequired(currentUserId).getEmail();
-            aequosIntegrationService.sendExcelToSupplier(order, currentUserEmail, extractExcelReport(order));
-        }
+        sendOrderToAequosMail(currentUserId, order);
+
+        log.info("Order {} sent correctly to Aequos (id: {})", order.getId(), aequosOrderId);
 
         return aequosOrderId;
     }
 
-    public void sendOrderToAequosMail(String orderId, String currentUserId) throws GoGasException {
+    public void sendOrderToAequosMail(String currentUserId, String orderId) throws GoGasException {
         Order order = getRequiredWithType(orderId);
+        sendOrderToAequosMail(currentUserId, order);
+    }
+
+    private void sendOrderToAequosMail(String currentUserId, Order order) {
         if (aequosIntegrationService.requiresWeightColumns(order)) {
             String currentUserEmail = userService.getRequired(currentUserId).getEmail();
             aequosIntegrationService.sendExcelToSupplier(order, currentUserEmail, extractExcelReport(order));
@@ -565,11 +578,15 @@ public class OrderManagerService extends CrudService<Order, String> {
         if (order.getExternalOrderId() == null)
             throw new GoGasException("Missing Aequos order id");
 
+        log.info("Sending weights to Aequos for order id {} (Aequos id: {})", order.getId(), order.getExternalOrderId());
+
         List<ProductTotalOrder> totalDeliveredQuantityByProduct = orderItemService.getTotalQuantityByProduct(order.getId(), false);
         List<String> updatedItems = aequosIntegrationService.sendUpdatedWeights(order.getExternalOrderId(), order.getOrderType().getAequosOrderId(), totalDeliveredQuantityByProduct);
 
         supplierOrderItemRepo.updateItemsAsWeightSentByOrderAndProduct(orderId, updatedItems);
         orderRepo.updateWeightSentDate(orderId, LocalDateTime.now());
+
+        log.info("Weights sent to Aequos, {} products updated", updatedItems.size());
 
         return updatedItems.size();
     }
@@ -584,7 +601,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         if (order.getExternalOrderId() == null)
             throw new GoGasException("Missing Aequos order id");
 
-        log.info("Synchronizing with Aequos order with id {} (Aequos id {}) ", orderId, order.getExternalOrderId());
+        log.info("Synchronizing quantities with Aequos for order id {} (Aequos id {}) ", orderId, order.getExternalOrderId());
 
         OrderSynchResponse orderSynchResponse = aequosIntegrationService.synchronizeOrder(order.getExternalOrderId());
 

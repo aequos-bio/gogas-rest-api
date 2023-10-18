@@ -11,6 +11,7 @@ import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.AccountingSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.persistence.specification.UserBalanceSpecs;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
 
+@Slf4j
 @Service
 public class AccountingService extends CrudService<AccountingEntry, String> {
 
@@ -54,7 +56,10 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         if (isYearClosed(dto))
             throw new GoGasException("Il movimento non può essere creato, l'anno contabile è chiuso");
 
-        return super.create(dto);
+        AccountingEntry accountingEntry = super.create(dto);
+        log.info("New accounting entry created for user {} (id: {})", accountingEntry.getUser().getId(), accountingEntry.getId());
+
+        return accountingEntry;
     }
 
     public AccountingEntryDTO get(String entryId) {
@@ -71,7 +76,10 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         if (isYearClosed(existingEntry) || isYearClosed(dto))
             throw new GoGasException("Il movimento non può essere modificato, l'anno contabile è chiuso");
 
-        return super.createOrUpdate(existingEntry, dto);
+        AccountingEntry updateEntry = super.createOrUpdate(existingEntry, dto);
+        log.info("Accounting entry updated for user {} (id: {})", updateEntry.getUser().getId(), updateEntry.getId());
+
+        return updateEntry;
     }
 
     @Override
