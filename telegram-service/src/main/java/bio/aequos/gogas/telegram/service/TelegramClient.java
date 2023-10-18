@@ -37,6 +37,7 @@ public class TelegramClient {
     private String escapeMessage(String message) {
         return message
                 .replace(".", "\\.")
-                .replace("!", "\\!");
+                .replace("!", "\\!")
+                .replace("-", "\\-");
     }
 }
