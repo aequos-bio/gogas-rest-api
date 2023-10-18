@@ -9,6 +9,8 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,30 +22,22 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Api("Authentication")
 @RestController
+@RequiredArgsConstructor
 public class AuthenticationController {
 
-    private AuthenticationManager authenticationManager;
-    private JwtTokenHandler jwtTokenHandler;
-    private AuthorizationService userDetailsService;
-    private ConfigurationRepo configurationRepo;
-    private TenantRegistry tenantRegistry;
-
-    public AuthenticationController(ConfigurationRepo configurationRepo, AuthenticationManager authenticationManager,
-                                    JwtTokenHandler jwtTokenHandler, AuthorizationService userDetailsService,
-                                    TenantRegistry tenantRegistry) {
-
-        this.configurationRepo = configurationRepo;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenHandler = jwtTokenHandler;
-        this.userDetailsService = userDetailsService;
-        this.tenantRegistry = tenantRegistry;
-    }
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenHandler jwtTokenHandler;
+    private final AuthorizationService userDetailsService;
+    private final ConfigurationRepo configurationRepo;
+    private final TenantRegistry tenantRegistry;
+    private final BuildProperties buildProperties;
 
     @PostMapping(value = "authenticate")
     public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp,
@@ -109,5 +103,11 @@ public class AuthenticationController {
     public @ResponseBody Map<String,Object> getGasInfo() {
         return configurationRepo.findByKeyLike("gas%").stream()
                 .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+    }
+    @GetMapping(value = "info/build")
+    public String getBuildTimestamp() {
+        return buildProperties.getTime()
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }
