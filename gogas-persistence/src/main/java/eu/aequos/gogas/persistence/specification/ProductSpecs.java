@@ -3,7 +3,10 @@ package eu.aequos.gogas.persistence.specification;
 import eu.aequos.gogas.persistence.entity.Product;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,14 +30,20 @@ public class ProductSpecs {
             entry.fetch("category");
             entry.fetch("supplier");
 
-            if (orderByPriceList) {
-                List<Order> orderList = new ArrayList();
-                orderList.add(cb.asc(entry.get("category").get("priceListPosition")));
-                orderList.add(cb.asc(entry.get("description")));
-                cq.orderBy(orderList);
-            }
+            applyOrderBy(orderByPriceList, entry, cq, cb);
 
             return cb.equal(entry.get("type"), type);
         };
+    }
+
+    private static void applyOrderBy(boolean orderByPriceList, Root<Product> entry, CriteriaQuery<?> cq, CriteriaBuilder cb) {
+        List<Order> orderList = new ArrayList<>();
+
+        if (orderByPriceList) {
+            orderList.add(cb.asc(entry.get("category").get("priceListPosition")));
+        }
+
+        orderList.add(cb.asc(entry.get("description")));
+        cq.orderBy(orderList);
     }
 }

@@ -8,6 +8,7 @@ import eu.aequos.gogas.security.annotations.IsOrderTypeManager;
 import eu.aequos.gogas.security.annotations.IsProductManager;
 import eu.aequos.gogas.service.ProductService;
 import eu.aequos.gogas.validation.ProductValidator;
+import eu.aequos.gogas.validation.ValidUUID;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
@@ -55,8 +56,8 @@ public class ProductController {
     })
     @IsOrderTypeManager
     @GetMapping(value = "list/{productTypeId}")
-    public List<ProductDTO> listProducts(@PathVariable String productTypeId,
-                                         @RequestParam(required = false) String category,
+    public List<ProductDTO> listProducts(@PathVariable @ValidUUID String productTypeId,
+                                         @RequestParam(required = false) @ValidUUID String category,
                                          @RequestParam(required = false) Boolean available,
                                          @RequestParam(required = false) Boolean cancelled) throws ItemNotFoundException {
 

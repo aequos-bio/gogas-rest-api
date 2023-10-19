@@ -11,12 +11,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.LinkedMultiValueMap;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,6 +47,28 @@ class ProductIntegrationTest extends BaseGoGasIntegrationTest {
                 entry("1054", mockOrdersData.createSupplier("1054", "Az. Agr. BIANCIOTTO ALDO (Roncaglia Bio)", "MN")),
                 entry("1131", mockOrdersData.createSupplier("1131", "ABBIATE VALERIO", "BO"))
         );
+
+        //Create existing products
+        mockOrdersData.createProduct(orderType.getId(), "BIRRA1", "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+                suppliers.get("1041"), categories.get("Birra"), true, false, false, "PZ", null, 1.0, 3.65, null, null, "Mensile");
+
+        mockOrdersData.createProduct(orderType.getId(), "BIRRA2", "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+                suppliers.get("1041"), categories.get("Birra"), false, false, false, "PZ", null, 1.0, 3.65, null, null, "Settimanale");
+
+        mockOrdersData.createProduct(orderType.getId(), "MELE1", "MELE CRIMSON CRISP - Roncaglia",
+                suppliers.get("1054"), categories.get("Frutta"), true, false, false, "KG", "Cassa", 8.5, 1.55, null, null, null);
+
+        mockOrdersData.createProduct(orderType.getId(), "MELE2", "MELE OPAL - Roncaglia",
+                suppliers.get("1054"), categories.get("Frutta"), false, false, false, "KG", "Cassa", 8.5, 1.70, 2.0, null, null);
+
+        mockOrdersData.createProduct(orderType.getId(), "ARANCE", "ARANCE - Agrinova Bio",
+                suppliers.get("1054"), categories.get("Frutta"), true, false, true, "KG", "Cassa", 8.0, 1.10, null, "Ordinabili solo a cassa", null);
+
+        mockOrdersData.createProduct(orderType.getId(), "PATATE", "PATATE GIALLE DI MONTAGNA - Abbiate Valerio",
+                suppliers.get("1131"), categories.get("Ortaggi"), true, false, false, "KG", "Cassa", 11.0, 1.45, null, null, null);
+
+        mockOrdersData.createProduct(orderType.getId(), "CIPOLLE", "CIPOLLE ROSSE - Abbiate Valerio",
+                suppliers.get("1131"), categories.get("Ortaggi"), false, true, false, "KG", "Cassa", 5.0, 1.30, null, null, null);
 
         mockUsersData.createSimpleUser("user1", "password", "user1", "user1");
 
@@ -840,6 +864,198 @@ class ProductIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void givenAListOfProducts_whenSearchingProducts_thenProductsAreReturnedInAlphabeticalOrder() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of(
+                "ARANCE - Agrinova Bio",
+                "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+                "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+                "CIPOLLE ROSSE - Abbiate Valerio",
+                "MELE CRIMSON CRISP - Roncaglia",
+                "MELE OPAL - Roncaglia",
+                "PATATE GIALLE DI MONTAGNA - Abbiate Valerio"
+        );
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenAFilterOnCategory_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("category", List.of(categories.get("Birra").getId()));
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of(
+                "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+                "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone"
+        );
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenAFilterOnInvalidCategory_whenSearchingProducts_thenErrorIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("category", List.of("invalid"));
+
+        mockMvcGoGas.get("/api/products/list/" + orderType.getId(), new LinkedMultiValueMap<>(params))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenAFilterOnNotExistingCategory_whenSearchingProducts_thenNoProductsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of(
+                "category", List.of(UUID.randomUUID().toString())
+        );
+
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        assertTrue(actualProductNames.isEmpty());
+    }
+
+    @Test
+    void givenAFilterOnAvailableOnly_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("available", List.of("true"));
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of(
+                "ARANCE - Agrinova Bio",
+                "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+                "MELE CRIMSON CRISP - Roncaglia",
+                "PATATE GIALLE DI MONTAGNA - Abbiate Valerio"
+        );
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenAFilterOnNotAvailableOnly_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("available", List.of("false"));
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of(
+                "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+                "CIPOLLE ROSSE - Abbiate Valerio",
+                "MELE OPAL - Roncaglia"
+        );
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenAFilterOnInvalidFlagValue_whenSearchingProducts_thenErrorIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("available", List.of("invalid"));
+
+        mockMvcGoGas.get("/api/products/list/" + orderType.getId(), new LinkedMultiValueMap<>(params))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void givenAFilterOnNotCancelledOnly_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("cancelled", List.of("false"));
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of(
+                "ARANCE - Agrinova Bio",
+                "BIRRA AMBRATA - BRAMA ROSSA - Birrificio Gedeone",
+                "BIRRA SOLEA 3,8gradi - 500 ML - Birrificio Gedeone",
+                "MELE CRIMSON CRISP - Roncaglia",
+                "MELE OPAL - Roncaglia",
+                "PATATE GIALLE DI MONTAGNA - Abbiate Valerio"
+        );
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenAFilterOnCancelledOnly_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of("cancelled", List.of("true"));
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of("CIPOLLE ROSSE - Abbiate Valerio");
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenACompositeFilterThatMatchesProducts_whenSearchingProducts_thenProductsAreCorrectlyFiltered() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of(
+                "category", List.of(categories.get("Ortaggi").getId()),
+                "available", List.of("false"),
+                "cancelled", List.of("true")
+        );
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        List<String> expectedProductNames = List.of("CIPOLLE ROSSE - Abbiate Valerio");
+
+        assertEquals(expectedProductNames, actualProductNames);
+    }
+
+    @Test
+    void givenACompositeFilterThatMatchesNoProducts_whenSearchingProducts_thenNoProductsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, List<String>> params = Map.of(
+                "category", List.of(categories.get("Birra").getId()),
+                "available", List.of("false"),
+                "cancelled", List.of("true")
+        );
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId(), ProductDTO.class, params);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        assertTrue(actualProductNames.isEmpty());
+    }
+
+    @Test
+    void givenASimpleUserLogin_whenSearchingProducts_thenNotAuthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("user1", "password");
+
+        mockMvcGoGas.get("/api/products/list/" + orderType.getId())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenANotManagerLogin_whenSearchingProducts_thenNotAuthorizedIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager2", "password");
+
+        mockMvcGoGas.get("/api/products/list/" + orderType.getId())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAnInvalidOrderTypeId_whenSearchingProducts_thenForbiddenIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+
+        mockMvcGoGas.get("/api/products/list/invalid")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenANotExistingOrderTypeId_whenSearchingProducts_thenForbiddenIsReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+
+        mockMvcGoGas.get("/api/products/list/" + UUID.randomUUID())
+                .andExpect(status().isForbidden());
+    }
+
+
     private String createProduct(ProductDTO productDTO) throws Exception {
         BasicResponseDTO creationResponse = mockMvcGoGas.postDTO("/api/products", productDTO, BasicResponseDTO.class);
         assertNotNull(creationResponse.getData());
@@ -894,5 +1110,5 @@ class ProductIntegrationTest extends BaseGoGasIntegrationTest {
         return productDTO;
     }
 
-    //TODO: add tests for search and for import from excel
+    //TODO: add tests for import/export from excel
 }
