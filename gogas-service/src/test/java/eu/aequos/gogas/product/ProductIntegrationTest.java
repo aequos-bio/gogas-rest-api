@@ -1055,6 +1055,14 @@ class ProductIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void givenAnUpperCaseOrderTypeId_whenSearchingProducts_thenProductsAreReturned() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        List<ProductDTO> products = mockMvcGoGas.getDTOList("/api/products/list/" + orderType.getId().toUpperCase(), ProductDTO.class);
+
+        List<String> actualProductNames = products.stream().map(ProductDTO::getDescription).collect(Collectors.toList());
+        assertEquals(7, actualProductNames.size());
+    }
 
     private String createProduct(ProductDTO productDTO) throws Exception {
         BasicResponseDTO creationResponse = mockMvcGoGas.postDTO("/api/products", productDTO, BasicResponseDTO.class);
