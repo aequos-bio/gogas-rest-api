@@ -20,8 +20,8 @@ import {
   ClearSharp as CancelIcon,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { useCategoriesAPI } from './useCategoriesAPI';
-import { Category } from './typed';
+import { useOrderTypeCategoriesAPI } from './useOrderTypeCategoriesAPI';
+import { Category, OrderType } from './typed';
 
 const useStyles = makeStyles((theme) => ({
   item: {
@@ -40,13 +40,13 @@ const useStyles = makeStyles((theme) => ({
 
 interface Props {
   open: boolean;
-  orderTypeId?: string;
+  orderType?: OrderType;
   onClose: () => void;
 }
 
-const CategoriesDialog: React.FC<Props> = ({ open, orderTypeId, onClose }) => {
+const CategoriesDialog: React.FC<Props> = ({ open, orderType, onClose }) => {
   const classes = useStyles();
-  const { categories, reload, createCategory, updateCategory, deleteCategory: deleteCat } = useCategoriesAPI(orderTypeId);
+  const { categories, reload, createCategory, updateCategory, deleteCategory: deleteCat } = useOrderTypeCategoriesAPI(orderType?.id);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [selectedDescription, setSelectedDescription] = useState('');
   const [mode, setMode] = useState<string | undefined>(undefined);
@@ -240,7 +240,7 @@ const CategoriesDialog: React.FC<Props> = ({ open, orderTypeId, onClose }) => {
 
   return (
     <Dialog open={open} onClose={() => onClose()} maxWidth='xs' fullWidth>
-      <DialogTitle>Categorie</DialogTitle>
+      <DialogTitle>{orderType?.descrizione} - Categorie</DialogTitle>
 
       <DialogContent className={classes.content}>
         {!mode ? (

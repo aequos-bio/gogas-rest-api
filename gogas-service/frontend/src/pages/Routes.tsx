@@ -1,36 +1,36 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import Home from './home/HomePage';
 import NavBar from '../components/navbar/NavBar';
 import Login from './login/Login';
-import Users from './admin/users/Users';
-import Reasons from './accounting/reasons/Reasons';
-import GasAccounting from './accounting/gasaccounting/GasAccounting';
-import InvoiceManagement from './accounting/invoicemanagement/InvoiceManagement';
-import UserAccountingTotals from './accounting/useraccountingtotals/UserAccountingTotals';
-import UserAccountingDetail from './accounting/useraccountingdetail/UserAccountingDetail';
-import Years from './accounting/years/Years';
-import OrderTypes from './admin/orderTypes/OrderTypes';
-import AccountingCodes from './accounting/accountingcodes/AccountingCodes';
-import Managers from './admin/managers/Managers';
+import HomePage from './home/HomePage';
+import YearsPage from './accounting/years/YearsPage';
+import GasAccountingPage from './accounting/gasaccounting/GasAccountingPage';
+import GasMovementsPage from './accounting/gasmovements/GasMovementsPage';
+import InvoiceManagementPage from './accounting/invoicemanagement/InvoiceManagementPage';
+import UserAccountingTotalsPage from './accounting/useraccountingtotals/UserAccountingTotalsPage';
+import UserAccountingDetailPage from './accounting/useraccountingdetail/UserAccountingDetailPage';
+import UsersPage from './admin/users/UsersPage';
+import ReasonsPage from './accounting/reasons/ReasonsPage';
+import OrderTypesPage from './admin/orderTypes/OrderTypesPage';
+import AccountingCodesPage from './accounting/accountingcodes/AccountingCodesPage';
+import ManagersPage from './admin/managers/ManagersPage';
 import PrivateRoute from '../components/PrivateRoute';
-import GasMovements from './accounting/gasmovements/GasMovements';
 import { init } from '../store/features/info.slice';
-import { RootState, useAppDispatch } from '../store/store';
+import { useAppDispatch } from '../store/store';
 
 const privateRoutes = [
-  { path: '/', component: Home },
-  { path: '/years', component: Years },
-  { path: '/gasaccounting', component: GasAccounting },
-  { path: '/gasmovements', component: GasMovements },
-  { path: '/invoices', component: InvoiceManagement },
-  { path: '/useraccounting', component: UserAccountingTotals },
-  { path: '/useraccountingdetails', component: UserAccountingDetail },
-  { path: '/users', component: Users },
-  { path: '/reasons', component: Reasons },
-  { path: '/ordertypes', component: OrderTypes },
-  { path: '/accountingcodes', component: AccountingCodes },
-  { path: '/managers', component: Managers },
+  { path: '/', component: HomePage },
+  { path: '/years', component: YearsPage },
+  { path: '/gasaccounting', component: GasAccountingPage },
+  { path: '/gasmovements', component: GasMovementsPage },
+  { path: '/invoices', component: InvoiceManagementPage },
+  { path: '/useraccounting', component: UserAccountingTotalsPage },
+  { path: '/useraccountingdetails', component: UserAccountingDetailPage },
+  { path: '/users', component: UsersPage },
+  { path: '/reasons', component: ReasonsPage },
+  { path: '/ordertypes', component: OrderTypesPage },
+  { path: '/accountingcodes', component: AccountingCodesPage },
+  { path: '/managers', component: ManagersPage },
 ];
 
 export const Routes = () => {

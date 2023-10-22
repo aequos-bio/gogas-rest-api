@@ -14,7 +14,7 @@ import { User } from '../users/types';
 import ManagedOrderType from './ManagedOrderType';
 import { AxiosResponse } from 'axios';
 import { useOrderTypesAPI } from '../orderTypes/useOrderTypesAPI';
-import { useOrderTypeManagersAPI } from './useOrderTypeManagersAPI';
+import { useManagersAPI } from './useManagersAPI';
 
 const useStyles = makeStyles(theme => ({
   column: {
@@ -33,7 +33,7 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
   const classes = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const { orderTypes, reload: reloadOrderTypes } = useOrderTypesAPI();
-  const { managers, reload: reloadManagers } = useOrderTypeManagersAPI();
+  const { managers, reload: reloadManagers } = useManagersAPI();
   const originallyManagedOrderTypes = managers[manager?.idUtente || ''] || [];
   const [managedOrderTypes, setManagedOrderTypes] = useState<string[]>([]);
 

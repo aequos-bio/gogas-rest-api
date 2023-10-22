@@ -33,13 +33,13 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   mode: false | 'edit' | 'new',
   onClose: (refresh: boolean) => void,
-  orderTypeId: string,
+  orderType: OrderType,
 }
 
 const EditOrderTypeDialog: React.FC<Props> = ({
   mode,
   onClose,
-  orderTypeId,
+  orderType,
 }) => {
   const classes = useStyles();
   const [description, setDescription] = useState('');
@@ -73,26 +73,20 @@ const EditOrderTypeDialog: React.FC<Props> = ({
     setOrderToAequos(false);
     setBilledByAequos(false);
 
-    if (orderTypeId) {
-      getOrderType(orderTypeId).then(orderType => {
-        if (orderType) {
-          setDescription(orderType.descrizione || '');
-          setGroupFriends(orderType.riepilogo || false);
-          setCalculateTotal(orderType.totalecalcolato || false);
-          setExternalOrder(orderType.external || false);
-          setNeedShifts(orderType.turni || false);
-          setShowCount(orderType.preventivo || false);
-          setShowCompleteness(orderType.completamentocolli || false);
-          setExcelAllUsers(orderType.excelAllUsers || false);
-          setExcelAllProducts(orderType.excelAllProducts || false);
-          setExternalLink(orderType.externalLink || '');
-          setAccountingCode(orderType.accountingCode || '');
-          setOrderToAequos(orderType.idordineaequos !== undefined);
-          setBilledByAequos(orderType.billedByAequos);
-        }
-      })
-    }
-  }, [mode, orderTypeId]);
+    setDescription(orderType.descrizione || '');
+    setGroupFriends(orderType.riepilogo || false);
+    setCalculateTotal(orderType.totalecalcolato || false);
+    setExternalOrder(orderType.external || false);
+    setNeedShifts(orderType.turni || false);
+    setShowCount(orderType.preventivo || false);
+    setShowCompleteness(orderType.completamentocolli || false);
+    setExcelAllUsers(orderType.excelAllUsers || false);
+    setExcelAllProducts(orderType.excelAllProducts || false);
+    setExternalLink(orderType.externalLink || '');
+    setAccountingCode(orderType.accountingCode || '');
+    setOrderToAequos(orderType.idordineaequos !== undefined);
+    setBilledByAequos(orderType.billedByAequos);
+  }, [mode, orderType]);
 
   const canSave = useMemo(() => {
     return description !== undefined && description !== '';
@@ -120,10 +114,10 @@ const EditOrderTypeDialog: React.FC<Props> = ({
         onClose(true);
       })
     } else {
-      updateOrderType(orderTypeId, params).then(() => { onClose(true) });
+      updateOrderType(orderType.id as string, params).then(() => { onClose(true) });
     }
   }, [
-    orderTypeId,
+    orderType,
     description,
     groupFriends,
     calculateTotal,

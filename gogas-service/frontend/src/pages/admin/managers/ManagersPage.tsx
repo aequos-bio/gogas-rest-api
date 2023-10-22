@@ -17,7 +17,7 @@ import LoadingRow from '../../../components/LoadingRow';
 import ManagerEditDialog from './ManagerEditDialog';
 import { User } from '../users/types';
 import { useUsersAPI } from '../users/useUsersAPI';
-import { useOrderTypeManagersAPI } from './useOrderTypeManagersAPI';
+import { useManagersAPI } from './useManagersAPI';
 import ManagerRow from './ManagerRow';
 
 const useStyles = makeStyles((theme) => ({
@@ -54,7 +54,7 @@ const userSorter = (user1: User, user2: User) => {
 const Managers: React.FC = () => {
   const classes = useStyles();
   const { users: userList, loading: usersLoading, reload: reloadUsers } = useUsersAPI('NC');
-  const { managers, loading: managersLoading, reload: reloadManagers } = useOrderTypeManagersAPI();
+  const { managers, loading: managersLoading, reload: reloadManagers } = useManagersAPI();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedManager, setSelectedManager] = useState();
   const [hideDisabled, setHideDisabled] = useState(true);

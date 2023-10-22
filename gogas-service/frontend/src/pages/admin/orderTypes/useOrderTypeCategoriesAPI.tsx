@@ -5,7 +5,7 @@ import { Category } from "./typed";
 import { ErrorResponse } from "../../../store/types";
 import { useSnackbar } from "notistack";
 
-export const useCategoriesAPI = (orderTypeId?: string) => {
+export const useOrderTypeCategoriesAPI = (orderTypeId?: string) => {
   const { enqueueSnackbar } = useSnackbar();
   const [categories, setCategories] = useState<Category[]>([]);
 
