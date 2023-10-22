@@ -19,7 +19,7 @@ const buildManagersMap = (managersList: OrderTypeManager[]) => {
   return _managers;
 }
 
-export const useOrderTypeManagersAPI = () => {
+export const useManagersAPI = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [managers, setManagers] = useState<{ [userId: string]: OrderTypeManager[] }>({});
   const [loading, setLoading] = useState(false);

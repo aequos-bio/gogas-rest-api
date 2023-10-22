@@ -37,10 +37,10 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   orderType: OrderType;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onEditCategories: (id: string) => void;
-  onEditManagers: (id: string) => void;
+  onEdit: (orderType: OrderType) => void;
+  onDelete: (orderType: OrderType) => void;
+  onEditCategories: (orderType: OrderType) => void;
+  onEditManagers: (orderType: OrderType) => void;
 }
 
 const OrderTypeRow: React.FC<Props> = ({
@@ -107,7 +107,7 @@ const OrderTypeRow: React.FC<Props> = ({
           <MenuItem
             onClick={() => {
               handleCloseMenu();
-              onEdit(orderType.id as string);
+              onEdit(orderType);
             }}
           >
             Modifica
@@ -116,7 +116,7 @@ const OrderTypeRow: React.FC<Props> = ({
           <MenuItem
             onClick={() => {
               handleCloseMenu();
-              onDelete(orderType.id as string);
+              onDelete(orderType);
             }}
           >
             Elimina
@@ -125,7 +125,7 @@ const OrderTypeRow: React.FC<Props> = ({
           <MenuItem
             onClick={() => {
               handleCloseMenu();
-              onEditCategories(orderType.id as string);
+              onEditCategories(orderType);
             }}
           >
             Categorie
@@ -134,7 +134,7 @@ const OrderTypeRow: React.FC<Props> = ({
           <MenuItem
             onClick={() => {
               handleCloseMenu();
-              onEditManagers(orderType.id as string);
+              onEditManagers(orderType);
             }}
           >
             Referenti

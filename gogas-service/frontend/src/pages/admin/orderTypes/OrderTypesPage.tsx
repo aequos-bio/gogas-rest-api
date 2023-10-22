@@ -23,6 +23,9 @@ import EditOrderTypeDialog from './EditOrderTypeDialog';
 import OrderTypeRow from './OrderTypeRow';
 import CategoriesDialog from './CategoriesDialog';
 import { useOrderTypesAPI } from './useOrderTypesAPI';
+import ManagersDialog from './ManagersDialog';
+import { OrderType } from './typed';
+import { Order } from '../../accounting/invoicemanagement/types';
 
 const useStyles = makeStyles(theme => ({
   fab: {
@@ -58,10 +61,9 @@ const OrderTypes: React.FC = () => {
   const classes = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const [dialogMode, setDialogMode] = useState<false | 'new' | 'edit'>(false);
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const [selectedOrderType, setSelectedOrderType] = useState<OrderType | undefined>(undefined);
   const [deleteDlgOpen, setDeleteDlgOpen] = useState(false);
   const [categoriesDlgOpen, setCategoriesDlgOpen] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [managersDlgOpen, setManagersDlgOpen] = useState(false);
   const { orderTypes, loading, reload, deleteOrderType, syncWithAequos } = useOrderTypesAPI();
 
@@ -71,39 +73,37 @@ const OrderTypes: React.FC = () => {
   }, [reload]);
 
   const newOrderType = useCallback(() => {
-    setSelectedId(undefined);
+    setSelectedOrderType(undefined);
     setDialogMode('new');
   }, []);
 
-  const editOrderType = useCallback(id => {
-    setSelectedId(id);
+  const editOrderType = useCallback((_orderType: OrderType) => {
+    setSelectedOrderType(_orderType);
     setDialogMode('edit');
   }, []);
 
-  const _deleteOrderType = useCallback(id => {
-    setSelectedId(id);
+  const _deleteOrderType = useCallback((_orderType: OrderType) => {
+    setSelectedOrderType(_orderType);
     setDeleteDlgOpen(true);
   }, []);
 
-  const editCategories = useCallback(id => {
-    setSelectedId(id);
+  const editCategories = useCallback((_orderType: OrderType) => {
+    setSelectedOrderType(_orderType);
     setCategoriesDlgOpen(true);
   }, []);
 
-  const editManagers = useCallback(
-    id => {
-      setSelectedId(id);
-      setManagersDlgOpen(true);
-      enqueueSnackbar('Non implementato!', { variant: 'error' });
-    },
-    [enqueueSnackbar]
+  const editManagers = useCallback((_orderType: OrderType) => {
+    setSelectedOrderType(_orderType);
+    setManagersDlgOpen(true);
+  },
+    []
   );
 
   const doDeleteOrderType = useCallback(() => {
-    deleteOrderType(selectedId as string).then(() => {
+    deleteOrderType((selectedOrderType as OrderType).id as string).then(() => {
       setDeleteDlgOpen(false);
     });
-  }, [selectedId]);
+  }, [selectedOrderType]);
 
   const dialogClosed = useCallback(
     needrefresh => {
@@ -201,7 +201,7 @@ const OrderTypes: React.FC = () => {
       <EditOrderTypeDialog
         mode={dialogMode}
         onClose={dialogClosed}
-        orderTypeId={selectedId as string}
+        orderType={selectedOrderType as OrderType}
       />
 
       <ActionDialog
@@ -214,9 +214,15 @@ const OrderTypes: React.FC = () => {
       />
 
       <CategoriesDialog
-        orderTypeId={selectedId}
+        orderType={selectedOrderType}
         open={categoriesDlgOpen}
         onClose={() => setCategoriesDlgOpen(false)}
+      />
+
+      <ManagersDialog
+        orderType={selectedOrderType}
+        open={managersDlgOpen}
+        onClose={() => setManagersDlgOpen(false)}
       />
     </Container>
   );

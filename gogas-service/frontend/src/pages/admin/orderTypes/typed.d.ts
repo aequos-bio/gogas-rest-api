@@ -20,3 +20,10 @@ export interface Category {
   id: string;
   description: string;
 }
+
+export interface _GenericManager {
+  id: string; // managerId
+  description: string;
+}
+export interface OrderTypeManager extends _GenericManager { } // id = managerId
+export interface AvailableOrderTypeManager extends _GenericManager { } // id = userId
