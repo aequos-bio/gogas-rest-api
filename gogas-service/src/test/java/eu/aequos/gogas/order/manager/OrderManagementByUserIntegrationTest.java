@@ -560,7 +560,7 @@ public class OrderManagementByUserIntegrationTest extends OrderManagementBaseInt
                 .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
 
         verifyUserOrder(userTotals.get(userId1), "user1 user1", 3, 14.1);
-        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 15.375);
+        verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 27.0);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 2, 13.4);
     }
 
