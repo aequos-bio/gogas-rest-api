@@ -1,6 +1,7 @@
 package eu.aequos.gogas;
 
 import eu.aequos.gogas.attachments.AttachmentRepo;
+import eu.aequos.gogas.excel.ExcelServiceClient;
 import eu.aequos.gogas.mock.MockAccountingData;
 import eu.aequos.gogas.mock.MockDataLifeCycle;
 import eu.aequos.gogas.mock.MockOrdersData;
@@ -53,6 +54,9 @@ public class BaseGoGasIntegrationTest {
 
     @MockBean
     public TelegramNotificationClient telegramNotificationClient;
+
+    @MockBean
+    public ExcelServiceClient excelServiceClient;
 
     @Autowired
     protected MockMvcGoGas mockMvcGoGas;

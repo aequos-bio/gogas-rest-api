@@ -1,5 +1,6 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.converter.ListConverter;
 import eu.aequos.gogas.dto.AccountingGasEntryDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceEntryDTO;
@@ -78,14 +79,16 @@ public class ExcelGenerationService {
     }
 
     public byte[] extractOrderDetails(Order order, boolean requiresWeightColumns) throws ItemNotFoundException, GoGasException {
-        List<OrderItemExport> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true).stream()
+        List<OrderItem> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true);
+
+        List<OrderItemExport> orderItemsForExport = orderItems.stream()
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
 
         List<User> usersList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers());
         List<UserExport> usersExportList = convertUsersForExport(usersList);
 
-        List<ProductExport> products = getProductsForExport(orderItems, order.getOrderType()).stream()
+        List<ProductExport> products = getProductsForExport(orderItemsForExport, order.getOrderType()).stream()
                 .map(this::convertProductForExport)
                 .collect(Collectors.toList());
 
@@ -96,7 +99,7 @@ public class ExcelGenerationService {
         OrderExportRequest orderExportRequest = new OrderExportRequest();
         orderExportRequest.setProducts(products);
         orderExportRequest.setUsers(usersExportList);
-        orderExportRequest.setUserOrder(orderItems);
+        orderExportRequest.setUserOrder(orderItemsForExport);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(false);
         orderExportRequest.setAddWeightColumns(requiresWeightColumns);
@@ -110,29 +113,33 @@ public class ExcelGenerationService {
     }
 
     public byte[] extractFriendsOrderDetails(Order order, String userId) throws ItemNotFoundException, GoGasException {
-        List<OrderItemExport> originalOrderItems = orderItemRepo.findByOrderAndUserOrFriend(order.getId(), userId).stream()
-                .map(this::getOrderItemsForFriendExport)
-                .collect(Collectors.toList());
+        List<OrderItem> originalOrderItems = orderItemRepo.findByOrderAndUserOrFriend(order.getId(), userId);
 
         List<User> usersList = getUsersForExport(originalOrderItems, false);
         List<UserExport> usersExportList = convertUsersForExport(usersList);
 
-        List<ProductExport> products = getProductsForFriendExport(originalOrderItems).stream()
+        List<Product> products = getProductsForFriendExport(originalOrderItems);
+
+        List<ProductExport> productsForExport = products.stream()
                 .map(this::convertProductForExport)
                 .collect(Collectors.toList());
 
-        Map<String, BigDecimal> productBoxWeight = products.stream()
-                .collect(Collectors.toMap(ProductExport::getId, ProductExport::getBoxWeight));
+        Map<String, Product> productById = products.stream()
+                .collect(ListConverter.toMap(Product::getId));
+
+        List<OrderItemExport> originalOrderItemsForExport = originalOrderItems.stream()
+                .map(orderItem -> getOrderItemsForFriendExport(orderItem, productById.get(orderItem.getProduct())))
+                .collect(Collectors.toList());
 
         List<OrderItem> summaryOrderItems = orderItemRepo.findByUserAndOrderAndSummary(userId, order.getId(), true, OrderItem.class);
         List<SupplierOrderItemExport> supplierOrderItems = summaryOrderItems.stream()
-                .map(item -> getSupplierOrderItemsForFriendExport(item, productBoxWeight.get(item.getProduct())))
+                .map(item -> getSupplierOrderItemsForFriendExport(item, productById.get(item.getProduct())))
                 .collect(Collectors.toList());
 
         OrderExportRequest orderExportRequest = new OrderExportRequest();
-        orderExportRequest.setProducts(products);
+        orderExportRequest.setProducts(productsForExport);
         orderExportRequest.setUsers(usersExportList);
-        orderExportRequest.setUserOrder(originalOrderItems);
+        orderExportRequest.setUserOrder(originalOrderItemsForExport);
         orderExportRequest.setSupplierOrder(supplierOrderItems);
         orderExportRequest.setFriends(true);
 
@@ -153,21 +160,35 @@ public class ExcelGenerationService {
         return i;
     }
 
-    private OrderItemExport getOrderItemsForFriendExport(OrderItem item) {
+    private OrderItemExport getOrderItemsForFriendExport(OrderItem item, Product product) {
+        BigDecimal unitQuantity = getOrderedUnitQuantity(item, product);
+
         OrderItemExport i = new OrderItemExport();
         i.setProductId(item.getProduct());
         i.setUserId(item.getUser());
-        i.setQuantity(item.getOrderedQuantity());
+        i.setQuantity(unitQuantity);
         i.setUnitPrice(item.getPrice());
         return i;
     }
 
-    private List<User> getUsersForExport(List<OrderItemExport> orderItems, boolean exportAllUsers) {
+    private BigDecimal getOrderedUnitQuantity(OrderItem item, Product product) {
+        if (product == null || product.getBoxWeight() == null) {
+            return item.getOrderedQuantity();
+        }
+
+        if (!item.getUm().equals(product.getBoxUm())) {
+            return item.getOrderedQuantity();
+        }
+
+        return item.getOrderedQuantity().multiply(product.getBoxWeight());
+    }
+
+    private List<User> getUsersForExport(List<OrderItem> orderItems, boolean exportAllUsers) {
         if (exportAllUsers)
             return userRepo.findAll();
 
         Set<String> userIdsInOrder = orderItems.stream()
-                .map(OrderItemExport::getUserId)
+                .map(OrderItem::getUser)
                 .collect(Collectors.toSet());
 
         return userRepo.findByIdIn(userIdsInOrder, User.class);
@@ -215,9 +236,9 @@ public class ExcelGenerationService {
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
     }
 
-    private List<Product> getProductsForFriendExport(List<OrderItemExport> orderItems) {
+    private List<Product> getProductsForFriendExport(List<OrderItem> orderItems) {
         Set<String> productIdsInOrder = orderItems.stream()
-                .map(OrderItemExport::getProductId)
+                .map(OrderItem::getProduct)
                 .collect(Collectors.toSet());
 
         return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
@@ -243,11 +264,15 @@ public class ExcelGenerationService {
         return s;
     }
 
-    private SupplierOrderItemExport getSupplierOrderItemsForFriendExport(OrderItem item, BigDecimal boxWeight) {
+    private SupplierOrderItemExport getSupplierOrderItemsForFriendExport(OrderItem item, Product product) {
+        BigDecimal boxWeight = Optional.ofNullable(product)
+                .map(Product::getBoxWeight)
+                .orElse(BigDecimal.ZERO);
+
         SupplierOrderItemExport s = new SupplierOrderItemExport();
         s.setProductId(item.getProduct());
         s.setUnitPrice(item.getPrice());
-        s.setBoxWeight(Optional.ofNullable(boxWeight).orElse(BigDecimal.ZERO));
+        s.setBoxWeight(boxWeight);
         s.setQuantity(item.getDeliveredQuantity());
         return s;
     }

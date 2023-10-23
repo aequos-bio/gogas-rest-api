@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest {
 
-    void performAction(String orderId, String action) throws Exception {
+    protected void performAction(String orderId, String action) throws Exception {
         BasicResponseDTO cancelResponse = mockMvcGoGas.postDTO("/api/order/manage/" + orderId + "/action/" + action, null, BasicResponseDTO.class);
         assertEquals("OK", cancelResponse.getData());
     }
@@ -45,7 +45,7 @@ public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest
                 .collect(Collectors.toList());
     }
 
-    void addComputedUserOrder(String orderId, String userId, String productCode, double qty, String um) throws Exception {
+    protected void addComputedUserOrder(String orderId, String userId, String productCode, double qty, String um) throws Exception {
         addUserOrder(orderId, userId, productsByCodeComputed.get(productCode).getId(), qty, um);
     }
 
@@ -68,7 +68,7 @@ public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest
         assertNotNull(updateResponse);
     }
 
-    OrderDTO buildValidOrderDTO(String orderTypeId) {
+    protected OrderDTO buildValidOrderDTO(String orderTypeId) {
         return buildValidOrderDTO(orderTypeId, null);
     }
 
@@ -90,7 +90,7 @@ public class OrderManagementBaseIntegrationTest extends OrderBaseIntegrationTest
         return orderDTO;
     }
 
-    String createOrder(OrderDTO orderDTO) throws Exception {
+    protected String createOrder(OrderDTO orderDTO) throws Exception {
         BasicResponseDTO creationResponse = mockMvcGoGas.postDTO("/api/order/manage", orderDTO, BasicResponseDTO.class);
         assertNotNull(creationResponse.getData());
         String orderId = creationResponse.getData().toString();
