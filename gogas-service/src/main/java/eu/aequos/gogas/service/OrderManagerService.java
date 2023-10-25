@@ -197,11 +197,14 @@ public class OrderManagerService extends CrudService<Order, String> {
                 .collect(toList());
     }
 
-    //TODO: cambiare spostando logica in un oggetto utente o referente
     private List<String> getOrderTypesManagedBy(String userId, User.Role userRole) {
         if (userRole.isAdmin())
             return Collections.emptyList();
 
+        return getOrderTypesManagedBy(userId);
+    }
+
+    private List<String> getOrderTypesManagedBy(String userId) {
         return orderManagerRepo.findByUser(userId).stream()
                 .map(OrderManager::getOrderType)
                 .collect(toList());
@@ -458,7 +461,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         log.info("Stored attachment for order id {} (content type {})", orderId, contentType);
     }
 
-    public List<OrderDTO> getAvailableOrdersNotYetOpened(String userId, User.Role userRole) {
+    public List<OrderDTO> getAvailableOrdersNotYetOpened(String userId) {
         List<OrderDTO> availableOrders = Stream.concat(getAequosAvailableOpenOrders(), orderPlaningService.getWeeklyOrders())
                 .collect(toList());
 
@@ -471,10 +474,10 @@ public class OrderManagerService extends CrudService<Order, String> {
         Map<String, List<Order>> openOrders = orderRepo.findByOrderTypeIdInAndStatusCodeIn(availableOrderTypeIds, statusCodes)
                 .stream().collect(Collectors.groupingBy(order -> order.getOrderType().getId(), toList()));
 
-        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId, userRole);
+        List<String> managedOrderTypeIds = getOrderTypesManagedBy(userId);
 
         return availableOrders.stream()
-                .filter(order -> managedOrderTypeIds.isEmpty() || managedOrderTypeIds.contains(order.getOrderTypeId()))
+                .filter(order -> managedOrderTypeIds.contains(order.getOrderTypeId()))
                 .filter(order -> orderNotYetOpened(order, openOrders.get(order.getOrderTypeId())))
                 .collect(toList());
     }

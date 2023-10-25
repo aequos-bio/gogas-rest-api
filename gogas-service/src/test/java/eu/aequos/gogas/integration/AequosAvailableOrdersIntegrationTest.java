@@ -8,6 +8,7 @@ import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -29,6 +31,13 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
 
     @MockBean
     private AequosApiClient aequosApiClient;
+
+    private User orderManager;
+
+    @BeforeAll
+    void beforeAll() {
+        orderManager = mockUsersData.createSimpleUser("manager", "password", "manager", "manager");
+    }
 
     @BeforeEach
     void setUp() {
@@ -54,7 +63,10 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenNoExistingOrderTypesForAequosOrders_whenRequestingAequosAvailableOrders_thenNoOrderIsReturned() throws Exception {
-        mockMvcGoGas.loginAsAdmin();
+        OrderType nonAequosType = mockOrdersData.createOrderType("Non Aequos Type");
+        mockOrdersData.addManager(orderManager, nonAequosType);
+
+        mockMvcGoGas.loginAs("manager", "password");
 
         List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
         assertTrue(availableOrders.isEmpty());
@@ -62,10 +74,13 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenPartialExistingOrderTypesForAequosOrders_whenRequestingAequosAvailableOrders_thenOnlyExistingOrderTypesAreReturned() throws Exception {
-        mockMvcGoGas.loginAsAdmin();
-
         OrderType availableOrderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 0);
         OrderType otherOrderType = mockOrdersData.createAequosOrderType("Mozzarelle", 10);
+
+        mockOrdersData.addManager(orderManager, availableOrderType);
+        mockOrdersData.addManager(orderManager, otherOrderType);
+
+        mockMvcGoGas.loginAs("manager", "password");
 
         List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
 
@@ -76,8 +91,6 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
 
     @Test
     void givenAllExistingOrderTypesForAequosOrders_whenRequestingAequosAvailableOrders_thenAllOrderTypesAreReturned() throws Exception {
-        mockMvcGoGas.loginAsAdmin();
-
         Map<Integer, OrderType> existingOrderTypes = Stream.of(
                 mockOrdersData.createAequosOrderType("Fresco Settimanale", 0),
                 mockOrdersData.createAequosOrderType("Pane", 1),
@@ -85,11 +98,55 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
                 mockOrdersData.createAequosOrderType("Mozzarelle", 10)
         ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
 
+        existingOrderTypes.values().forEach(orderType -> mockOrdersData.addManager(orderManager, orderType));
+
+        mockMvcGoGas.loginAs("manager", "password");
         List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
 
         List<OrderDTO> expectedOrders = List.of(
                 buildExpectedOrderDTO(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30"),
                 buildExpectedOrderDTO(existingOrderTypes.get(1), "2022-03-21", "2022-03-30", "2022-04-10"),
+                buildExpectedOrderDTO(existingOrderTypes.get(2), "2022-03-21", "2022-03-26", "2022-04-05")
+        );
+
+        assertEquals(expectedOrders, availableOrders);
+    }
+
+    @Test
+    void givenAdminUser_whenRequestingAequosAvailableOrders_thenNoOrderTypeIsReturned() throws Exception {
+        Map<Integer, OrderType> existingOrderTypes = Stream.of(
+                mockOrdersData.createAequosOrderType("Fresco Settimanale", 0),
+                mockOrdersData.createAequosOrderType("Pane", 1),
+                mockOrdersData.createAequosOrderType("Carni", 2),
+                mockOrdersData.createAequosOrderType("Mozzarelle", 10)
+        ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
+
+        existingOrderTypes.values().forEach(orderType -> mockOrdersData.addManager(orderManager, orderType));
+
+        mockMvcGoGas.loginAsAdmin();
+        List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
+
+        assertThat(availableOrders).isEmpty();
+    }
+
+    @Test
+    void givenAdminUserAsOrderManager_whenRequestingAequosAvailableOrders_thenOrderTypesAreReturned() throws Exception {
+        Map<Integer, OrderType> existingOrderTypes = Stream.of(
+                mockOrdersData.createAequosOrderType("Fresco Settimanale", 0),
+                mockOrdersData.createAequosOrderType("Pane", 1),
+                mockOrdersData.createAequosOrderType("Carni", 2),
+                mockOrdersData.createAequosOrderType("Mozzarelle", 10)
+        ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
+
+        String adminId = mockUsersData.getDefaultAdminId();
+        mockOrdersData.addManager(adminId, existingOrderTypes.get(0));
+        mockOrdersData.addManager(adminId, existingOrderTypes.get(2));
+
+        mockMvcGoGas.loginAsAdmin();
+        List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
+
+        List<OrderDTO> expectedOrders = List.of(
+                buildExpectedOrderDTO(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30"),
                 buildExpectedOrderDTO(existingOrderTypes.get(2), "2022-03-21", "2022-03-26", "2022-04-05")
         );
 
@@ -105,7 +162,6 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
                 mockOrdersData.createAequosOrderType("Mozzarelle", 10)
         ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
 
-        User orderManager = mockUsersData.createSimpleUser("manager", "password", "manager", "manager");
         mockOrdersData.addManager(orderManager, existingOrderTypes.get(0));
         mockOrdersData.addManager(orderManager, existingOrderTypes.get(10));
 
@@ -129,7 +185,6 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
                 mockOrdersData.createAequosOrderType("Mozzarelle", 10)
         ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
 
-        User orderManager = mockUsersData.createSimpleUser("manager2", "password", "manager2", "manager2");
         mockOrdersData.addManager(orderManager, existingOrderTypes.get(0));
         mockOrdersData.addManager(orderManager, existingOrderTypes.get(1));
         mockOrdersData.addManager(orderManager, existingOrderTypes.get(2));
@@ -137,7 +192,7 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
         mockOrdersData.createOrder(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30", Order.OrderStatus.Opened);
         mockOrdersData.createOrder(existingOrderTypes.get(1), "2022-03-21", "2022-03-30", "2022-04-10", Order.OrderStatus.Opened);
 
-        mockMvcGoGas.loginAs("manager2", "password");
+        mockMvcGoGas.loginAs("manager", "password");
 
         List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
 
@@ -157,11 +212,13 @@ class AequosAvailableOrdersIntegrationTest extends BaseGoGasIntegrationTest {
                 mockOrdersData.createAequosOrderType("Mozzarelle", 10)
         ).collect(Collectors.toMap(OrderType::getAequosOrderId, Function.identity()));
 
+        existingOrderTypes.values().forEach(orderType -> mockOrdersData.addManager(orderManager, orderType));
+
         mockOrdersData.createOrder(existingOrderTypes.get(0), "2022-03-20", "2022-03-24", "2022-03-30", Order.OrderStatus.Opened);
         mockOrdersData.createOrder(existingOrderTypes.get(1), "2022-03-21", "2022-03-30", "2022-04-10", Order.OrderStatus.Opened);
         mockOrdersData.createOrder(existingOrderTypes.get(2), "2022-03-21", "2022-03-26", "2022-04-05", Order.OrderStatus.Opened);
 
-        mockMvcGoGas.loginAsAdmin();
+        mockMvcGoGas.loginAs("manager", "password");
 
         List<OrderDTO> availableOrders = mockMvcGoGas.getDTOList("/api/order/manage/aequos/available", OrderDTO.class);
 

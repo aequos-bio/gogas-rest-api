@@ -135,9 +135,13 @@ public class MockOrdersData implements MockDataLifeCycle {
     }
 
     public void addManager(User user, OrderType orderType) {
+        addManager(user.getId(), orderType);
+    }
+
+    public void addManager(String userId, OrderType orderType) {
         OrderManager orderManager = new OrderManager();
         orderManager.setOrderType(orderType.getId());
-        orderManager.setUser(user.getId());
+        orderManager.setUser(userId);
         orderManagerRepo.save(orderManager);
     }
 
