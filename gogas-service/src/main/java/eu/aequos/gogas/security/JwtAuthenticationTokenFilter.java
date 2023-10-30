@@ -48,7 +48,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         try {
-            if (request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/favicon.png") || request.getServletPath().startsWith("/login") || request.getServletPath().startsWith("/static")) {
+            String requestURI = request.getRequestURI();
+
+            if (requestURI.equals("/authenticate") || requestURI.equals("/favicon.png") || requestURI.startsWith("/login") || requestURI.startsWith("/static")) {
                 chain.doFilter(request, response);
             } else {
                 String authToken = extractAuthTokenFromRequest(request);
