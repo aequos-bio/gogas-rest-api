@@ -21,9 +21,8 @@
                     <Pattern>%d{yyyy-MM-dd HH:mm:ss} %X{user} [%thread] %level %logger{35} - %msg%n</Pattern>
                 </encoder>
 
-                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                    <FileNamePattern>${LOG_PATH}/archived/gogas-${logFileName}-%d{yyyy-MM-dd}.%i.log.zip</FileNamePattern>
-                    <maxFileSize>10MB</maxFileSize>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <FileNamePattern>${LOG_PATH}/archived/gogas-${logFileName}-%d{yyyy-MM-dd}.log.zip</FileNamePattern>
                     <maxHistory>30</maxHistory>
                     <totalSizeCap>5GB</totalSizeCap>
                 </rollingPolicy>

@@ -54,12 +54,16 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                 String authToken = extractAuthTokenFromRequest(request);
                 GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-                if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
+                if (userDetails == null) {
+                    throw new UserNotAuthorizedException();
+                }
+
+                if (!isValidTenant(userDetails.getTenant(), request)) {
                     log.warn("Missing or mismatching tenant id, user not authorized");
                     throw new UserNotAuthorizedException();
                 }
 
-                if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
