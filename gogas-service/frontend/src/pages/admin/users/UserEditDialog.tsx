@@ -71,24 +71,26 @@ const UserEditDialog: React.FC<Props> = ({ open, onClose, user }) => {
 
   useEffect(() => {
     if (!open) return;
-    apiGetJson('/api/user/list', { role: 'U' }).then((list: User[]) => {
-      setFriends(
-        list
-          .map(f => ({
-            id: f.idUtente,
-            description:
-              info['visualizzazione.utenti'] === 'NC'
-                ? `${f.nome} ${f.cognome}`
-                : `${f.cognome} ${f.nome}`,
-            attivo: f.attivo,
-          }))
-          .sort((f1, f2) => {
-            if (f1.attivo === f2.attivo) {
-              return f1.description > f2.description ? 1 : -1;
-            }
-            return f1.attivo > f2.attivo ? -1 : 1;
-          })
-      );
+    apiGetJson<User[]>('/api/user/list', { role: 'U' }).then((list) => {
+      if (list) {
+        setFriends(
+          list
+            .map(f => ({
+              id: f.idUtente,
+              description:
+                info['visualizzazione.utenti'] === 'NC'
+                  ? `${f.nome} ${f.cognome}`
+                  : `${f.cognome} ${f.nome}`,
+              attivo: f.attivo,
+            }))
+            .sort((f1, f2) => {
+              if (f1.attivo === f2.attivo) {
+                return f1.description > f2.description ? 1 : -1;
+              }
+              return f1.attivo > f2.attivo ? -1 : 1;
+            })
+        );
+      }
     });
   }, [open, info]);
 
