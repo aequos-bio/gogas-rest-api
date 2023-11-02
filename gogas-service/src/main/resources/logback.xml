@@ -12,6 +12,8 @@
             <defaultValue>master</defaultValue>
         </discriminator>
 
+        <timeout>1 day</timeout>
+
         <sift>
             <!-- A standard RollingFileAppender, the log file is based on 'logFileName' at runtime  -->
             <appender name="FILE-${logFileName}" class="ch.qos.logback.core.rolling.RollingFileAppender">
