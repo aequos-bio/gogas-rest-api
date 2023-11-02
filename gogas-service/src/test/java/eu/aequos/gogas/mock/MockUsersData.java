@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
@@ -35,15 +36,23 @@ public class MockUsersData implements MockDataLifeCycle {
     private int userIndex = 1;
 
     public User createSimpleUser(String username, String password, String firstName, String lastName) {
-        return createUser(username, password, firstName, lastName, User.Role.U, null);
+        return createUser(username, password, firstName, lastName, User.Role.U, null, true);
     }
 
     public User createAdminUser(String username, String password, String firstName, String lastName) {
-        return createUser(username, password, firstName, lastName, User.Role.A, null);
+        return createUser(username, password, firstName, lastName, User.Role.A, null, true);
     }
 
     public User createFriendUser(String username, String password, String firstName, String lastName, User referenceUser) {
-        return createUser(username, password, firstName, lastName, User.Role.S, referenceUser);
+        return createUser(username, password, firstName, lastName, User.Role.S, referenceUser, true);
+    }
+
+    public User createDisabledUser(String username, String password, String firstName, String lastName) {
+        return createUser(username, password, firstName, lastName, User.Role.U, null, false);
+    }
+
+    public User createDisabledFriend(String username, String password, String firstName, String lastName, User referenceUser) {
+        return createUser(username, password, firstName, lastName, User.Role.S, referenceUser, false);
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -56,7 +65,7 @@ public class MockUsersData implements MockDataLifeCycle {
     }
 
     private User createUser(String username, String password, String firstName, String lastName,
-                            User.Role role, User referenceUser) {
+                            User.Role role, User referenceUser, boolean enabled) {
 
         User user = new User();
         user.setUsername(username);
@@ -64,7 +73,7 @@ public class MockUsersData implements MockDataLifeCycle {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setRole(role.name());
-        user.setEnabled(true);
+        user.setEnabled(enabled);
         user.setFriendReferral(referenceUser);
         user.setPosition(userIndex++);
 
@@ -113,10 +122,19 @@ public class MockUsersData implements MockDataLifeCycle {
         createdUsers.clear();
     }
 
-    public Set<String> getAllUsers(boolean excludeFriends) {
+    public Set<String> getAllUsers(boolean excludeFriends, boolean activeOnly) {
+        return getAllUsersAttribute(excludeFriends, activeOnly, User::getUsername);
+    }
+
+    public Set<String> getAllUserIds(boolean excludeFriends, boolean activeOnly) {
+        return getAllUsersAttribute(excludeFriends, activeOnly, user -> user.getId().toUpperCase());
+    }
+
+    private Set<String> getAllUsersAttribute(boolean excludeFriends, boolean activeOnly, Function<User, String> attributeExtractor) {
         return createdUsers.stream()
                 .filter(not(user -> excludeFriends && user.getRoleEnum() == User.Role.S))
-                .map(User::getUsername)
+                .filter(not(user -> activeOnly && !user.isEnabled()))
+                .map(attributeExtractor::apply)
                 .collect(Collectors.toSet());
     }
 

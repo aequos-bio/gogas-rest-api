@@ -72,6 +72,16 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderTypeRepo.save(orderType);
     }
 
+    public void forceExportAllUsers(OrderType orderType, boolean exportAllUsers) {
+        orderType.setExcelAllUsers(exportAllUsers);
+        orderTypeRepo.save(orderType);
+    }
+
+    public void forceExportAllProducts(OrderType orderType, boolean exportAllProducts) {
+        orderType.setExcelAllProducts(exportAllProducts);
+        orderTypeRepo.save(orderType);
+    }
+
     public ProductCategory createCategory(String name, String orderTypeId) {
         return createCategory(name, orderTypeId, 0, null);
     }

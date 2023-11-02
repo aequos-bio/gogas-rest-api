@@ -13,6 +13,7 @@ import eu.aequos.gogas.excel.products.ExcelPriceListItem;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.*;
+import eu.aequos.gogas.persistence.entity.User.Role;
 import eu.aequos.gogas.persistence.repository.OrderItemRepo;
 import eu.aequos.gogas.persistence.repository.ProductRepo;
 import eu.aequos.gogas.persistence.repository.SupplierOrderItemRepo;
@@ -85,7 +86,7 @@ public class ExcelGenerationService {
                 .map(this::getOrderItemsForExport)
                 .collect(Collectors.toList());
 
-        List<User> usersList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers());
+        List<User> usersList = getUsersForExport(orderItems, order.getOrderType().isExcelAllUsers(), order.getOrderType().isSummaryRequired());
         List<UserExport> usersExportList = convertUsersForExport(usersList);
 
         List<ProductExport> products = getProductsForExport(orderItemsForExport, order.getOrderType()).stream()
@@ -115,7 +116,7 @@ public class ExcelGenerationService {
     public byte[] extractFriendsOrderDetails(Order order, String userId) throws ItemNotFoundException, GoGasException {
         List<OrderItem> originalOrderItems = orderItemRepo.findByOrderAndUserOrFriend(order.getId(), userId);
 
-        List<User> usersList = getUsersForExport(originalOrderItems, false);
+        List<User> usersList = getUsersForExport(originalOrderItems, false, false);
         List<UserExport> usersExportList = convertUsersForExport(usersList);
 
         List<Product> products = getProductsForFriendExport(originalOrderItems);
@@ -183,9 +184,11 @@ public class ExcelGenerationService {
         return item.getOrderedQuantity().multiply(product.getBoxWeight());
     }
 
-    private List<User> getUsersForExport(List<OrderItem> orderItems, boolean exportAllUsers) {
-        if (exportAllUsers)
-            return userRepo.findAll();
+    private List<User> getUsersForExport(List<OrderItem> orderItems, boolean exportAllUsers, boolean excludeFriends) {
+        if (exportAllUsers) {
+            Set<String> roles = excludeFriends ? Set.of(Role.U.name()) : Set.of(Role.U.name(), Role.S.name());
+            return userRepo.findByRoleInAndEnabled(roles, true, User.class);
+        }
 
         Set<String> userIdsInOrder = orderItems.stream()
                 .map(OrderItem::getUser)

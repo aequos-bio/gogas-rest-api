@@ -67,7 +67,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertEquals(LocalDate.now().plusDays(7), deliveryData.getDeliveryDate());
         assertEquals(orderId, deliveryData.getOrderId());
         assertEquals("Fresco Settimanale", deliveryData.getOrderType());
-        assertEquals(mockUsersData.getAllUsers(false), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
+        assertEquals(mockUsersData.getAllUsers(false, true), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
 
         Map<String, DeliveryProductDTO> productsById = deliveryData.getProducts().stream()
                 .collect(Collectors.toMap(DeliveryProductDTO::getProductId, Function.identity()));
@@ -142,7 +142,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertEquals(LocalDate.now().plusDays(7), deliveryData.getDeliveryDate());
         assertEquals(orderId, deliveryData.getOrderId());
         assertEquals("Fresco Settimanale", deliveryData.getOrderType());
-        assertEquals(mockUsersData.getAllUsers(true), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
+        assertEquals(mockUsersData.getAllUsers(true, true), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
 
         Map<String, DeliveryProductDTO> productsById = deliveryData.getProducts().stream()
                 .collect(Collectors.toMap(DeliveryProductDTO::getProductId, Function.identity()));
@@ -232,7 +232,7 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertEquals(LocalDate.now().plusDays(7), deliveryData.getDeliveryDate());
         assertEquals(orderId, deliveryData.getOrderId());
         assertEquals("Fresco Settimanale", deliveryData.getOrderType());
-        assertEquals(mockUsersData.getAllUsers(false), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
+        assertEquals(mockUsersData.getAllUsers(false, true), deliveryData.getUsers().stream().map(UserDTO::getUsername).collect(Collectors.toSet()));
 
         Map<String, DeliveryProductDTO> productsById = deliveryData.getProducts().stream()
                 .collect(Collectors.toMap(DeliveryProductDTO::getProductId, Function.identity()));
