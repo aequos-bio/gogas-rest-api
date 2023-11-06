@@ -30,10 +30,15 @@ public class MockOrdersData implements MockDataLifeCycle {
     private final ShippingCostRepo shippingCostRepo;
 
     public OrderType createAequosOrderType(String name, Integer aequosId) {
+        return createAequosOrderType(name, aequosId, null);
+    }
+
+    public OrderType createAequosOrderType(String name, Integer aequosId, String accountingCode) {
         OrderType orderType = new OrderType();
         orderType.setDescription(name);
         orderType.setAequosOrderId(aequosId);
         orderType.setBilledByAequos(true);
+        orderType.setAccountingCode(accountingCode);
         return orderTypeRepo.save(orderType);
     }
 
