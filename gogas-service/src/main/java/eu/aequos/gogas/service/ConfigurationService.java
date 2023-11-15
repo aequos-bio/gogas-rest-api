@@ -1,9 +1,13 @@
 package eu.aequos.gogas.service;
 
+import eu.aequos.gogas.attachments.AttachmentService;
+import eu.aequos.gogas.attachments.AttachmentType;
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.ConfigurationItemDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
+import eu.aequos.gogas.persistence.entity.Configuration;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import lombok.Getter;
@@ -35,19 +39,21 @@ public class ConfigurationService {
 
     private static final String GAS_NAME_KEY = "gas.nome";
 
+    private static final String GAS_LOGO_TYPE = "gas.logo.type";
+
     @Getter
     @RequiredArgsConstructor
     public enum UserSorting {
-        NameFirst(Comparator.comparing(User::getFirstName).thenComparing(User::getLastName)),
-        SurnameFirst(Comparator.comparing(User::getLastName).thenComparing(User::getFirstName));
+        NAME_FIRST(Comparator.comparing(User::getFirstName).thenComparing(User::getLastName)),
+        SURNAME_FIRST(Comparator.comparing(User::getLastName).thenComparing(User::getFirstName));
 
         private final Comparator<User> comparator;
     }
 
     public enum RoundingMode {
-        Threshold,
-        Ceil,
-        Floor;
+        THRESHOLD,
+        CEIL,
+        FLOOR;
 
         public static RoundingMode getRoundingMode(int code) {
             try {
@@ -59,13 +65,14 @@ public class ConfigurationService {
     }
 
     private final ConfigurationRepo configurationRepo;
+    private final AttachmentService attachmentService;
 
     public UserSorting getUserSorting() {
         String sortingConf = configurationRepo.findValueByKey(USER_SORTING_KEY)
                 .orElse(USER_SORTING_NAME_FIRST)
                 .toUpperCase();
 
-        return USER_SORTING_SURNAME_FIRST.equals(sortingConf) ? UserSorting.SurnameFirst : UserSorting.NameFirst;
+        return USER_SORTING_SURNAME_FIRST.equals(sortingConf) ? UserSorting.SURNAME_FIRST : UserSorting.NAME_FIRST;
     }
 
     public Comparator<User> getUserComparatorForOrderExport() {
@@ -133,11 +140,62 @@ public class ConfigurationService {
                 .collect(Collectors.toList());
     }
 
+    public List<ConfigurationItemDTO> getGasProperties() {
+        return configurationRepo.findByKeyLike("gas%").stream()
+                .map(c -> new ConfigurationItemDTO().fromModel(c))
+                .collect(Collectors.toList());
+    }
+
     public boolean updateConfigurationItem(ConfigurationItemDTO configurationItem) throws GoGasException {
         if (configurationItem.getKey() == null || configurationItem.getValue() == null)
             throw new GoGasException("Configurazione non valida");
 
         int itemsUpdated = configurationRepo.updateConfiguration(configurationItem.getKey(), configurationItem.getValue());
         return itemsUpdated == 1;
+    }
+
+    public void storeLogo(byte[] logoFileContent, String contentType) {
+        attachmentService.storeAttachment(logoFileContent, AttachmentType.LOGO, "logo");
+        createOrUpdate(GAS_LOGO_TYPE, contentType, "Content type of logo image", false);
+    }
+
+    private Configuration createOrUpdate(String key, String value, String description, boolean visible) {
+        Configuration contentTypeConfiguration = configurationRepo.findById(GAS_LOGO_TYPE)
+                .orElseGet(() -> buildConfigurationItem(key, description, visible));
+
+        contentTypeConfiguration.setValue(value);
+
+        return configurationRepo.save(contentTypeConfiguration);
+    }
+
+    private Configuration buildConfigurationItem(String key, String description, boolean visible) {
+        Configuration configuration = new Configuration();
+        configuration.setKey(key);
+        configuration.setVisible(visible);
+        configuration.setDescription(description);
+        return configuration;
+    }
+
+    public AttachmentDTO readLogo() {
+        byte[] content = attachmentService.retrieveAttachment(AttachmentType.LOGO, "logo");
+        String contentType = configurationRepo.findValueByKey(GAS_LOGO_TYPE)
+                .orElseThrow(() ->new GoGasException("Content type not found for logo image"));
+
+        return attachmentService.buildAttachmentDTO("logo", content, contentType);
+    }
+
+    public void removeLogo() {
+        attachmentService.removeAttachment(AttachmentType.LOGO, "logo");
+        deleteLogoTypeProperty();
+    }
+
+    //FOR TESTING PURPOSES
+    public void resetProperties() {
+        deleteLogoTypeProperty();
+    }
+
+    private void deleteLogoTypeProperty() {
+        configurationRepo.findById(GAS_LOGO_TYPE)
+                .ifPresent(configurationRepo::delete);
     }
 }

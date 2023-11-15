@@ -1,13 +1,15 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
+import eu.aequos.gogas.dto.ConfigurationItemDTO;
 import eu.aequos.gogas.dto.CredentialsDTO;
+import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.multitenancy.TenantRegistry;
-import eu.aequos.gogas.persistence.entity.Configuration;
-import eu.aequos.gogas.persistence.repository.ConfigurationRepo;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtTokenHandler;
+import eu.aequos.gogas.service.ConfigurationService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.info.BuildProperties;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -35,7 +38,7 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenHandler jwtTokenHandler;
     private final AuthorizationService userDetailsService;
-    private final ConfigurationRepo configurationRepo;
+    private final ConfigurationService configurationService;
     private final TenantRegistry tenantRegistry;
     private final BuildProperties buildProperties;
 
@@ -95,15 +98,22 @@ public class AuthenticationController {
 
     @GetMapping(value = "info")
     public @ResponseBody Map<String,Object> getInfo() {
-        return configurationRepo.findByVisibleOrderByKey(true).stream()
-                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+        return configurationService.getVisibleConfigurationItems().stream()
+                .collect(Collectors.toMap(ConfigurationItemDTO::getKey, ConfigurationItemDTO::getValue));
     }
 
     @GetMapping(value = "info/gas")
     public @ResponseBody Map<String,Object> getGasInfo() {
-        return configurationRepo.findByKeyLike("gas%").stream()
-                .collect(Collectors.toMap(Configuration::getKey, Configuration::getValue));
+        return configurationService.getGasProperties().stream()
+                .collect(Collectors.toMap(ConfigurationItemDTO::getKey, ConfigurationItemDTO::getValue));
     }
+
+    @GetMapping(value = "info/logo")
+    public void getGasLogo(HttpServletResponse response) throws IOException, GoGasException {
+        AttachmentDTO invoiceAttachment = configurationService.readLogo();
+        invoiceAttachment.writeToHttpResponse(response);
+    }
+
     @GetMapping(value = "info/build")
     public String getBuildTimestamp() {
         return buildProperties.getTime()

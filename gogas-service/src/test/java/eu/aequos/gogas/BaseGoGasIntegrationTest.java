@@ -2,10 +2,7 @@ package eu.aequos.gogas;
 
 import eu.aequos.gogas.attachments.AttachmentRepo;
 import eu.aequos.gogas.excel.ExcelServiceClient;
-import eu.aequos.gogas.mock.MockAccountingData;
-import eu.aequos.gogas.mock.MockDataLifeCycle;
-import eu.aequos.gogas.mock.MockOrdersData;
-import eu.aequos.gogas.mock.MockUsersData;
+import eu.aequos.gogas.mock.*;
 import eu.aequos.gogas.mvc.MockMvcGoGas;
 import eu.aequos.gogas.notification.push.client.PushNotificationClient;
 import eu.aequos.gogas.notification.telegram.client.TelegramNotificationClient;
@@ -69,6 +66,9 @@ public class BaseGoGasIntegrationTest {
 
     @Autowired
     protected MockAccountingData mockAccountingData;
+
+    @Autowired
+    protected MockConfigurationData mockConfigurationData;
 
     @BeforeAll
     void init() {
