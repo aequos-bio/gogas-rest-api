@@ -82,30 +82,24 @@
       }
     ]
   },
-  "categorie": {
-    "Birra": [
-      {
-        "id": "7",
-        "descrizione": "Birra",
-        "colore_listino": "4E5ED4",
-        "ordine_listino": "17"
-      }
-    ],
-    "Frutta": [
-      {
-        "id": "0",
-        "descrizione": "Frutta",
-        "colore_listino": "FFFF33",
-        "ordine_listino": "1"
-      }
-    ],
-    "Ortaggi": [
-      {
-        "id": "4",
-        "descrizione": "Ortaggi",
-        "colore_listino": "62D900",
-        "ordine_listino": "3"
-      }
-    ]
-  }
+  "categorie": [
+    {
+      "id": "7",
+      "descrizione": "Birra",
+      "colore_listino": "4E5ED4",
+      "ordine_listino": "17"
+    },
+    {
+      "id": "0",
+      "descrizione": "Frutta",
+      "colore_listino": "FFFF33",
+      "ordine_listino": "1"
+    },
+    {
+      "id": "4",
+      "descrizione": "Ortaggi",
+      "colore_listino": "62D900",
+      "ordine_listino": "3"
+    }
+  ]
 }

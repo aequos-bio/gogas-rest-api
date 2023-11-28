@@ -46,6 +46,9 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         AequosPriceList malformedAequosPriceList = objectMapper.readValue(getClass().getResourceAsStream("malformedPriceList.json"), AequosPriceList.class);
         when(aequosApiClient.getPriceList(1)).thenReturn(malformedAequosPriceList);
+
+        AequosPriceList noCategoriesAequosPriceList = objectMapper.readValue(getClass().getResourceAsStream("priceListNoCategory.json"), AequosPriceList.class);
+        when(aequosApiClient.getPriceList(2)).thenReturn(noCategoriesAequosPriceList);
     }
 
     @AfterEach
@@ -105,6 +108,20 @@ class AequosPriceListSyncIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.aequosOrderId", is(0)))
+                .andExpect(jsonPath("$.lastSynchro", is(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))));
+    }
+
+    @Test
+    void givenAValidOrderManagerForOrderType_whenRequestingAequosPriceListSynch_thenSyncIsPerformed2() throws Exception {
+        OrderType orderType = mockOrdersData.createAequosOrderType("Fresco Settimanale", 2);
+        User simpleUser = mockUsersData.createSimpleUser("manager3", "password", "manager", "manager");
+        mockOrdersData.addManager(simpleUser, orderType);
+
+        mockMvcGoGas.loginAs("manager3", "password");
+
+        mockMvcGoGas.put("/api/products/" + orderType.getId() + "/sync")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.aequosOrderId", is(2)))
                 .andExpect(jsonPath("$.lastSynchro", is(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))));
     }
 

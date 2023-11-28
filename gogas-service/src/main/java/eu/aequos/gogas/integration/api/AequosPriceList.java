@@ -18,7 +18,7 @@ public class AequosPriceList implements ExternalPriceList {
     private Map<String, List<AequosPriceListItem>> products;
 
     @JsonProperty("categorie")
-    private Map<String, List<AequosPriceListCategory>> categories;
+    private List<AequosPriceListCategory> categories;
 
     @Override
     public Map<String, List<ExternalPriceListItem>> getProducts() {
@@ -28,9 +28,8 @@ public class AequosPriceList implements ExternalPriceList {
     }
 
     @Override
-    public Map<String, List<ExternalPriceListCategory>> getCategories() {
+    public List<ExternalPriceListCategory> getCategories() {
         //remapping due to java type incompatibility
-        return categories.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
+        return new ArrayList<>(categories);
     }
 }

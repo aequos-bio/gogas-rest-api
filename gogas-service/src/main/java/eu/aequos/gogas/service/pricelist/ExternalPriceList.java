@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface ExternalPriceList {
     Map<String, List<ExternalPriceListItem>> getProducts();
-    Map<String, List<ExternalPriceListCategory>> getCategories();
+    List<ExternalPriceListCategory> getCategories();
 }
