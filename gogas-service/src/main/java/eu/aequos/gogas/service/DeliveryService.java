@@ -162,9 +162,6 @@ public class DeliveryService {
     }
 
     private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap, DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem) {
-        if (!deliveredItem.isChanged())
-            return Optional.empty();
-
         if (updateQuantity(orderId, deliveredProduct.getProductId(), deliveredItem))
             return Optional.empty();
 

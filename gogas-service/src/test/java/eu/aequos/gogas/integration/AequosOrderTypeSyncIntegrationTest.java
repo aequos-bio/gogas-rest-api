@@ -5,12 +5,10 @@ import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.OrderTypeDTO;
 import eu.aequos.gogas.integration.api.AequosApiClient;
 import eu.aequos.gogas.integration.api.AequosOrderType;
-import eu.aequos.gogas.mock.MockOrdersData;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.Arrays;
@@ -73,9 +71,9 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
         Map<Integer, OrderTypeDTO> createdOrderTypes = getOrderTypesByAequosId();
         assertEquals(3, createdOrderTypes.size());
 
-        checkCreatedAequosOrderType(createdOrderTypes.get(0), "Fresco Settimanale", true);
-        checkCreatedAequosOrderType(createdOrderTypes.get(1), "Pane", true);
-        checkCreatedAequosOrderType(createdOrderTypes.get(2), "Carni bianche", false);
+        checkCreatedAequosOrderType(createdOrderTypes.get(0), "Fresco Settimanale", true, null);
+        checkCreatedAequosOrderType(createdOrderTypes.get(1), "Pane", true, null);
+        checkCreatedAequosOrderType(createdOrderTypes.get(2), "Carni bianche", false, null);
     }
 
     @Test
@@ -112,10 +110,29 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
 
         assertEquals(updatedOrderTypes.get(0), existingOrderTypes.get(0));
         assertEquals(updatedOrderTypes.get(2), existingOrderTypes.get(2));
-        checkCreatedAequosOrderType(updatedOrderTypes.get(1), "Pane", true);
+        checkCreatedAequosOrderType(updatedOrderTypes.get(1), "Pane", true, null);
     }
 
-    private void checkCreatedAequosOrderType(OrderTypeDTO orderType, String description, boolean billedByAequos) {
+    @Test
+    void givenAListOfNewAequosOrderTypeAndAequosAccountingCodeAlreadySet_whenRequestingAequosOrderTypeSynch_thenOrderTypesAreCreatedWithAccountingCode() throws Exception {
+        mockMvcGoGas.loginAsAdmin();
+
+        mockOrdersData.createAequosOrderType("An existing order", 5, "F_AEQUOS");
+
+        BasicResponseDTO basicResponseDTO = mockMvcGoGas.putDTO("/api/ordertype/aequos/sync", BasicResponseDTO.class);
+        assertEquals("OK", basicResponseDTO.getData());
+
+        Map<Integer, OrderTypeDTO> existingOrderTypes = getOrderTypesByAequosId();
+        assertEquals(4, existingOrderTypes.size());
+
+        checkCreatedAequosOrderType(existingOrderTypes.get(0), "Fresco Settimanale", true, "F_AEQUOS");
+        checkCreatedAequosOrderType(existingOrderTypes.get(1), "Pane", true, "F_AEQUOS");
+        checkCreatedAequosOrderType(existingOrderTypes.get(2), "Carni bianche", false, null);
+    }
+
+    private void checkCreatedAequosOrderType(OrderTypeDTO orderType, String description,
+                                             boolean billedByAequos, String accountingCode) {
+
         assertEquals(description, orderType.getDescription());
         assertEquals(billedByAequos, orderType.isBilledByAequos());
 
@@ -129,6 +146,7 @@ class AequosOrderTypeSyncIntegrationTest extends BaseGoGasIntegrationTest {
         assertFalse(orderType.isHasTurns());
         assertFalse(orderType.isUsed());
         assertNull(orderType.getExternalLink());
+        assertEquals(accountingCode, orderType.getAccountingCode());
     }
 
     private Map<Integer, OrderTypeDTO> getOrderTypesByAequosId() throws Exception {

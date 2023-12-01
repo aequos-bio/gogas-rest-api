@@ -139,7 +139,7 @@ public class ProductService extends CrudService<Product, String> {
 
         byte[] excelContent = reportService.extractProductPriceList(productType);
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        String fileName = attachmentService.buildFileName(orderType.getDescription(), LocalDate.now(), "", contentType);
+        String fileName = attachmentService.buildFileNameFromOrder(orderType.getDescription(), LocalDate.now(), "", contentType);
 
         return new AttachmentDTO(excelContent, contentType, fileName);
     }

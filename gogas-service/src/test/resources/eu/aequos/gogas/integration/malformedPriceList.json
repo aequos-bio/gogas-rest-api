@@ -82,30 +82,24 @@
       }
     ]
   },
-  "categorie": {
-    "Frutta": [
-      {
-        "id": "0",
-        "descrizione": "frutta",
-        "colore_listino": "FFFF33",
-        "ordine_listino": "1"
-      }
-    ],
-    "frutta": [
-      {
-        "id": "0",
-        "descrizione": "frutta",
-        "colore_listino": "FFFF33",
-        "ordine_listino": "1"
-      }
-    ],
-    "Ortaggi": [
-      {
-        "id": "4",
-        "descrizione": "Ortaggi",
-        "colore_listino": "62D900",
-        "ordine_listino": "3"
-      }
-    ]
-  }
+  "categorie": [
+    {
+      "id": "0",
+      "descrizione": "frutta",
+      "colore_listino": "FFFF33",
+      "ordine_listino": "1"
+    },
+    {
+      "id": "0",
+      "descrizione": "frutta",
+      "colore_listino": "FFFF33",
+      "ordine_listino": "1"
+    },
+    {
+      "id": "4",
+      "descrizione": "Ortaggi",
+      "colore_listino": "62D900",
+      "ordine_listino": "3"
+    }
+  ]
 }

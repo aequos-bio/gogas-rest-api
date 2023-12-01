@@ -1,7 +1,10 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.dto.OrderTypeAccountingDTO;
+import eu.aequos.gogas.dto.OrderTypeDTO;
+import eu.aequos.gogas.dto.OrderTypeSelectItemDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
@@ -13,7 +16,9 @@ import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -79,7 +84,20 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     public void synchronizeAequosOrderTypes() {
         Set<Integer> existingAequosOrderTypes = getAequosOrderTypes();
         List<OrderType> newAequosOrderTypes = aequosIntegrationService.synchronizeOrderTypes(existingAequosOrderTypes);
+        setAccountingCode(newAequosOrderTypes);
         orderTypeRepo.saveAll(newAequosOrderTypes);
+    }
+
+    private void setAccountingCode(List<OrderType> newAequosOrderTypes) {
+        String aequosAccountingCode = orderTypeRepo.findAequosAccountingCode();
+
+        if (aequosAccountingCode == null) {
+            return;
+        }
+
+        newAequosOrderTypes.stream()
+                .filter(OrderType::isBilledByAequos)
+                .forEach(orderType -> orderType.setAccountingCode(aequosAccountingCode));
     }
 
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {

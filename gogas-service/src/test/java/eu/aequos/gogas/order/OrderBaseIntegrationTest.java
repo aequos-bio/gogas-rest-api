@@ -133,7 +133,7 @@ public class OrderBaseIntegrationTest extends BaseGoGasIntegrationTest {
         User otherManager = mockUsersData.createSimpleUser("manager2", "password", "manager2", "manager2");
         mockOrdersData.addManager(otherManager, orderTypeNotComputed);
         mockOrdersData.addManager(otherManager, orderTypeAequos);
-        orderManagerId2 = otherManager.getId();
+        orderManagerId2 = otherManager.getId().toUpperCase();
     }
 
     @BeforeEach

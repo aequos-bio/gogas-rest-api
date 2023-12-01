@@ -33,8 +33,7 @@ public class PriceListSynchronizer {
         Map<String, Supplier> suppliersMap = externalPriceList.getProducts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> createOrUpdateSupplier(e.getKey(), e.getValue().get(0))));
 
-        Map<String, ProductCategory> categoriesMap = externalPriceList.getCategories().values().stream()
-                .flatMap(Collection::stream)
+        Map<String, ProductCategory> categoriesMap = externalPriceList.getCategories().stream()
                 .collect(Collectors.toMap(ExternalPriceListCategory::getDescription, c -> createOrUpdateCategory(orderType.getId(), c), (v1, v2) -> v2));
 
         Set<String> synchedProductIds = externalPriceList.getProducts().values().stream()

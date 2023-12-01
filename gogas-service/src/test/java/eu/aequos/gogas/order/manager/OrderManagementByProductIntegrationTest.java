@@ -1,10 +1,15 @@
 package eu.aequos.gogas.order.manager;
 
 import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.excel.order.*;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.Product;
+import eu.aequos.gogas.persistence.entity.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,10 +18,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,6 +72,10 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
         );
 
         createUserOrders(userQuantities);
+
+        // these users are created to verify that disabled users are not added into excel report
+        User disabledUser = mockUsersData.createDisabledUser("disabled.user", "disabled", "disabled", "user");
+        mockUsersData.createDisabledFriend("disabled.friend", "disabled", "disabled", "friend", disabledUser);
     }
 
     @AfterEach
@@ -1129,6 +1143,157 @@ class OrderManagementByProductIntegrationTest extends OrderManagementBaseIntegra
 
         mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/product/" + productsByCodeComputed.get("MELE1").getId() + "/availableUsers")
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void givenAClosedOrder_whenExtractingExcelReport_thenExcelServiceIsCorrectlyCalled() throws Exception {
+        Set<String> expectedUserIds = Set.of(userId1, userId2, userId3);
+
+        Set<String> expectedProductIds = Stream.of("MELE1", "PATATE", "MELE2", "BIRRA1", "BIRRA2")
+                .map(code -> productsByCodeComputed.get(code).getId().toUpperCase())
+                .collect(Collectors.toSet());
+
+        verifyExcelExportContent(expectedUserIds, expectedProductIds);
+    }
+
+    @Test
+    void givenAClosedOrderWithAllUsersFlagAndNoSummaryRequired_whenExtractingExcelReport_thenExcelServiceIsCalledWithAllUsersAndFriends() throws Exception {
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, true);
+
+        Set<String> expectedUserIds = mockUsersData.getAllUserIds(false, true);
+
+        Set<String> expectedProductIds = Stream.of("MELE1", "PATATE", "MELE2", "BIRRA1", "BIRRA2")
+                .map(code -> productsByCodeComputed.get(code).getId().toUpperCase())
+                .collect(Collectors.toSet());
+
+        verifyExcelExportContent(expectedUserIds, expectedProductIds);
+
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, false);
+    }
+
+    @Test
+    void givenAClosedOrderWithAllUsersFlagAndSummaryRequired_whenExtractingExcelReport_thenExcelServiceIsCalledWithAllUsers() throws Exception {
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, true);
+        mockOrdersData.forceSummaryRequired(orderTypeComputed, true);
+
+        Set<String> expectedUserIds = mockUsersData.getAllUserIds(true, true);
+
+        Set<String> expectedProductIds = Stream.of("MELE1", "PATATE", "MELE2", "BIRRA1", "BIRRA2")
+                .map(code -> productsByCodeComputed.get(code).getId().toUpperCase())
+                .collect(Collectors.toSet());
+
+        verifyExcelExportContent(expectedUserIds, expectedProductIds);
+
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, false);
+        mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
+    }
+
+    @Test
+    void givenAClosedOrderWithAllProductsFlag_whenExtractingExcelReport_thenExcelServiceIsCalledWithAllProducts() throws Exception {
+        mockOrdersData.forceExportAllProducts(orderTypeComputed, true);
+
+        Set<String> expectedUserIds = Set.of(userId1, userId2, userId3);
+
+        Set<String> expectedProductIds = productsByCodeComputed.values().stream()
+                .filter(Product::isAvailable)
+                .map(product -> product.getId().toUpperCase())
+                .collect(Collectors.toSet());
+
+        verifyExcelExportContent(expectedUserIds, expectedProductIds);
+
+        mockOrdersData.forceExportAllProducts(orderTypeComputed, false);
+    }
+
+    @Test
+    void givenAClosedOrderWithAllProductsFlagAndAllUsers_whenExtractingExcelReport_thenExcelServiceIsCalledWithAllProductAndAllUsers() throws Exception {
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, true);
+        mockOrdersData.forceExportAllProducts(orderTypeComputed, true);
+
+        Set<String> expectedUserIds = mockUsersData.getAllUserIds(false, true);
+
+        Set<String> expectedProductIds = productsByCodeComputed.values().stream()
+                .filter(Product::isAvailable)
+                .map(product -> product.getId().toUpperCase())
+                .collect(Collectors.toSet());
+
+        verifyExcelExportContent(expectedUserIds, expectedProductIds);
+
+        mockOrdersData.forceExportAllUsers(orderTypeComputed, false);
+        mockOrdersData.forceExportAllProducts(orderTypeComputed, false);
+    }
+
+    private void verifyExcelExportContent(Set<String> expectedUserIds, Set<String> expectedProductIds) throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+
+        when(excelServiceClient.order(any()))
+                .thenReturn("Response".getBytes());
+
+        MockHttpServletResponse response = mockMvcGoGas.get("/api/order/manage/" + order.getId() + "/export")
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        assertThat(response.getContentAsString()).isEqualTo("Response");
+        assertThat(response.getContentType()).isEqualTo("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        assertThat(response.getHeader("Content-Disposition")).isEqualTo("attachment; filename=\"Fresco_Settimanale-2022-04-01.xlsx\"");
+
+        ArgumentCaptor<OrderExportRequest> orderExportRequestCaptor = ArgumentCaptor.forClass(OrderExportRequest.class);
+        verify(excelServiceClient).order(orderExportRequestCaptor.capture());
+
+        OrderExportRequest orderExportRequest = orderExportRequestCaptor.getValue();
+
+        Set<String> actualUserIds = orderExportRequest.getUsers().stream()
+                .map(UserExport::getId)
+                .collect(Collectors.toSet());
+
+        assertThat(actualUserIds).isEqualTo(expectedUserIds);
+
+        Set<String> collect = orderExportRequest.getProducts().stream()
+                .map(ProductExport::getName)
+                .collect(Collectors.toSet());
+
+        Set<String> actualProductIds = orderExportRequest.getProducts().stream()
+                .map(ProductExport::getId)
+                .collect(Collectors.toSet());
+
+        assertThat(actualProductIds).isEqualTo(expectedProductIds);
+
+        Map<String, Map<String, Double>> quantityByUserAndProduct = orderExportRequest.getUserOrder().stream()
+                .collect(Collectors.groupingBy(OrderItemExport::getUserId, Collectors.toMap(OrderItemExport::getProductId, item -> item.getQuantity().doubleValue())));
+
+        Map<String, Map<String, Double>> expectedOrders = Map.of(
+                userId1, Map.of(
+                        productsByCodeComputed.get("MELE1").getId().toUpperCase(), 2.5,
+                        productsByCodeComputed.get("MELE2").getId().toUpperCase(), 1.5,
+                        productsByCodeComputed.get("PATATE").getId().toUpperCase(), 10.8,
+                        productsByCodeComputed.get("BIRRA1").getId().toUpperCase(), 1.0
+                ),
+                userId2, Map.of(
+                        productsByCodeComputed.get("BIRRA2").getId().toUpperCase(), 2.0,
+                        productsByCodeComputed.get("MELE1").getId().toUpperCase(), 2.0,
+                        productsByCodeComputed.get("PATATE").getId().toUpperCase(), 4.7
+                ),
+                userId3, Map.of(
+                        productsByCodeComputed.get("MELE1").getId().toUpperCase(), 4.0,
+                        productsByCodeComputed.get("MELE2").getId().toUpperCase(), 1.5,
+                        productsByCodeComputed.get("BIRRA2").getId().toUpperCase(), 2.0
+                )
+        );
+
+        assertThat(quantityByUserAndProduct).isEqualTo(expectedOrders);
+
+        Map<String, Double> actualQuantityByProduct = orderExportRequest.getSupplierOrder().stream()
+                .collect(Collectors.toMap(SupplierOrderItemExport::getProductId, item -> item.getQuantity().doubleValue()));
+
+        Map<String, Double> expectedQuantityByProduct = Map.of(
+                productsByCodeComputed.get("MELE1").getId().toUpperCase(), 1.0,
+                productsByCodeComputed.get("PATATE").getId().toUpperCase(), 1.0,
+                productsByCodeComputed.get("MELE2").getId().toUpperCase(), 3.0,
+                productsByCodeComputed.get("BIRRA1").getId().toUpperCase(), 10.0,
+                productsByCodeComputed.get("BIRRA2").getId().toUpperCase(), 8.0
+        );
+
+        assertThat(actualQuantityByProduct).isEqualTo(expectedQuantityByProduct);
     }
 
     private void verifyProductDTO(Map<String, OrderByProductDTO> products, String productCode,

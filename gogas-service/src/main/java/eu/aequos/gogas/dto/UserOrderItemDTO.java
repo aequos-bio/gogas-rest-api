@@ -19,6 +19,7 @@ public class UserOrderItemDTO extends SmallUserOrderItemDTO {
     @JsonProperty("name")
     String productName;
 
+    String categoryId;
     String category;
     String categoryColor;
 
@@ -69,6 +70,7 @@ public class UserOrderItemDTO extends SmallUserOrderItemDTO {
 
         this.productId = p.getId();
         this.productName = p.getDescription();
+        this.categoryId = p.getCategory().getId();
         this.category = p.getCategory().getDescription();
         this.categoryColor = p.getCategory().getPriceListColor();
         this.unitOfMeasure = p.getUm();
@@ -89,6 +91,7 @@ public class UserOrderItemDTO extends SmallUserOrderItemDTO {
 
         this.productId = p.getId();
         this.productName = p.getDescription();
+        this.categoryId = p.getCategory().getId();
         this.category = p.getCategory().getDescription();
         this.categoryColor = p.getCategory().getPriceListColor();
         this.unitOfMeasure = p.getUm();

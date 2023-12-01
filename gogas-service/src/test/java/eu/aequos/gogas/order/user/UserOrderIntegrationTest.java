@@ -24,14 +24,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
 
     private Order computedOrder;
-    private Order notComputedOrder;
-    private Order externalOrder;
 
     @BeforeEach
     void createOrders() {
         computedOrder = mockOrdersData.createOpenOrder(orderTypeComputed);
-        notComputedOrder = mockOrdersData.createOpenOrder(orderTypeNotComputed);
-        externalOrder = mockOrdersData.createOpenOrder(orderTypeExternal);
     }
 
     @Test
@@ -267,6 +263,7 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
 
         assertEquals(productsByCodeComputed.get(productCode).getId().toUpperCase(), userItem.getProductId());
         assertEquals(productName, userItem.getProductName());
+        assertEquals(categoriesComputed.get(categoryName).getId().toUpperCase(), userItem.getCategoryId());
         assertEquals(categoryName, userItem.getCategory());
         assertEquals(categoryColor, userItem.getCategoryColor());
         assertEquals(um, userItem.getUnitOfMeasure());
