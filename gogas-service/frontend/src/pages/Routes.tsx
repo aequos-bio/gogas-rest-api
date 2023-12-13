@@ -17,7 +17,7 @@ import ManagersPage from './admin/managers/ManagersPage';
 import PrivateRoute from '../components/PrivateRoute';
 import { init } from '../store/features/info.slice';
 import { useAppDispatch } from '../store/store';
-import LegacyOrderManagerPage from './test-iframe/iframe.tsx';
+import LegacyOrderManagerPage from './legacy/LegacyFrame';
 
 const privateRoutes = [
   { path: '/', component: HomePage },
