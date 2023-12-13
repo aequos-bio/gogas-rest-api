@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div class="panel panel-default" style="margin-bottom:10px">
+            <div class="panel-heading">
+                <h5 class="panel-title">
+                    Gestione ordini
+                    <a href="#" style="margin-left:10px" class="pull-right"><span id="collapse_icon" class="glyphicon glyphicon-chevron-down" data-toggle="collapse" data-target="#filter"></span></a>
+                </h5>
+            </div>
+            <div class="panel-body collapse" id="filter">
+                <div class="form-group">
+                    <label class="col-md-2 col-sm-2 control-label">Tipologia ordine</label>
+
+                    <div class="col-md-6 col-sm-10">
+                        <select name="FiltroTipologia" id="FiltroTipologia"><option></option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 col-sm-2 control-label">Data Chiusura Da</label>
+                    <div class="col-md-2 col-sm-4">
+                        <div id="DataChiusuraInizio"></div>
+                    </div>
+
+                    <label class="col-md-2 col-sm-2 control-label">Data Chiusura A</label>
+                    <div class="col-md-2 col-sm-4">
+                        <div id="DataChiusuraFine"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 col-sm-2 control-label">Data Consegna Da</label>
+                    <div class="col-md-2 col-sm-4">
+                        <div id="DataConsegnaInizio"></div>
+                    </div>
+
+                    <label class="col-md-2 col-sm-2 control-label">Data Consegna A</label>
+                    <div class="col-md-2 col-sm-4">
+                        <div id="DataConsegnaFine"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 col-sm-2 control-label">Stato</label>
+                    <div class="col-md-6 col-sm-8">
+                        <select name="FiltroStato" id="FiltroStato"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 col-sm-2 control-label">Evaso</label>
+                    <div class="col-md-2 col-sm-4">
+                        <select name="FiltroEvaso" id="FiltroEvaso"><option></option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-8 col-sm-12">
+                        <button type="button" class="btn btn-primary pull-right" onclick="cerca();">
+                            <span class="glyphicon glyphicon-search"></span>
+                            Ricerca
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="toolbar" style="margin-right: 10px; margin-bottom: 10px; text-align:right;">
+            <button id="storna" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Riapre l'ordine in modalità gestine del referente stornando le cifre addebitate ai gasisti ordinanti" onclick="changeStatus('tornachiuso');">
+                <span class="glyphicon glyphicon-share-alt gly-flip-horizontal"></span> Storna
+            </button>
+            <button id="contabilizza" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Chiude definitivamente la gestione dell'ordine addebitando le cifre risultanti ai gasisti ordinanti" onclick="changeStatus('contabilizza');">
+                <span class="glyphicon glyphicon-usd"></span> Contabilizza
+            </button>
+            <button id="chiudi" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Chiude l'ordine aggregando i valori ed impostando l'ordine verso il produttore" onclick="closeOrder();">
+                <span class="glyphicon glyphicon-folder-close"></span> Chiudi
+            </button>
+            <button id="dettaglio" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Apre la sezione di dettaglio in cui vedere le quantità per articolo o per utente" onclick="details();">
+                <span class="glyphicon glyphicon-eye-open"></span> Dettaglio
+            </button>
+            <button id="modifica" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Modifica i dati principali dell'ordine (ad esempio: data apertura, data chiusura)" onclick="editItem();">
+                <span class="glyphicon glyphicon-pencil"></span> Modifica
+            </button>
+            <button id="gestisci" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Apre la sezione di dettaglio in cui rivedere le quantità ordinate per riempire i colli" onclick="details();">
+                <span class="glyphicon glyphicon-wrench"></span> Gestisci
+            </button>
+            <button id="riapri" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Riapre l'ordine per la compilazione eliminando tutte le modifiche effettuate dal referente" onclick="changeStatus('reopen');">
+                <span class="glyphicon glyphicon-folder-open"></span> Riapri
+            </button>
+            <button id="elimina" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Elimina l'ordine" onclick="deleteItem();">
+                <span class="glyphicon glyphicon-trash"></span> Elimina
+            </button>
+            <button id="cancel" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Annulla l'ordine mantenendo gli eventuali ordini inseriti dagli utenti" onclick="changeStatus('cancel');">
+                <span class="glyphicon glyphicon-remove-circle"></span> Annulla
+            </button>
+            <button id="undocancel" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Ripristina l'ordine annullato e tutti gli eventuali ordini effettuati dagli utenti" onclick="changeStatus('undocancel');">
+                <span class="glyphicon glyphicon-share-alt gly-flip-horizontal"></span> Ripristina
+            </button>
+            <button id="nuovo" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Crea un nuovo ordine" onclick="newItem();">
+                <span class="glyphicon glyphicon-plus"></span> Nuovo ordine
+            </button>
+        </div>
+
+        <div id="ordiniTable"></div>
+
+        <div id="editDialog" style="display:none">
+            <div>Modifica data ordine</div>
+            <div style="overflow: hidden;">
+                <form action="/GestioneOrdini/Edit" id="editForm" method="post" name="editForm">
+                    <table>
+                        <tr>
+                            <td>
+                                Tipologia Ordine
+                            </td>
+                            <td>
+                                <div id="idTipoOrdine"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Data Apertura
+                            </td>
+                            <td>
+                                <div id="DataApertura"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Data Chiusura
+                            </td>
+                            <td>
+                                <div id="DataChiusura"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Ora Chiusura
+                            </td>
+                            <td>
+                                <div id="OraChiusura"></div>
+                            </td>
+                        </tr>
+                        <tr class="pre-separator">
+                            <td>
+                                Data Consegna
+                            </td>
+                            <td>
+                                <div id="DataConsegna"></div>
+                            </td>
+                        </tr>
+                        <tr class="separator pre-separator">
+                            <td>
+                                Link esterno
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                        <tr class="separator pre-separator">
+                            <td colspan="2"><div id='AggiornaListino'>Sincronizza il listino alla creazione</div></td>
+                        </tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="Save" value="Conferma" />
+                        <input id="Cancel" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="closeOrderDialog" style="display:none">
+            <div>Chiudi data ordine</div>
+            <div style="overflow: hidden;">
+                <div>Scegli l'arrotondamento da operare per creare automaticamente l'ordine produttore:</div>
+                <div>
+                    <select id="roundType">
+                        <option value="0">Secondo soglia</option>
+                        <option value="1">Per eccesso</option>
+                        <option value="2">Per difetto</option>
+                    </select>
+                    <input type="hidden" id="closeOrderId" />
+                </div>
+                <div>
+                    <input style="margin-right: 5px;" type="button" id="closeOrderSave" value="Conferma" />
+                    <input id="closeOrderCancel" type="button" value="Annulla" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+
+        var editrow = -1, selectedOrderId = null, aequosOrderNotify = [];
+
+        function newItem() {
+
+            editrow = -1;
+
+            $("#idTipoOrdine").jqxDropDownList('clearSelection');
+            $("#idTipoOrdine").jqxDropDownList({ disabled: false });
+            $('#DataApertura').jqxDateTimeInput('setDate', null);
+            $('#DataChiusura').jqxDateTimeInput('setDate', null);
+            $('#OraChiusura').jqxNumberInput('clear');
+            $('#DataConsegna').jqxDateTimeInput('setDate', null);
+
+            $("#ExternalLink").prop("disabled", true)
+            $("#ExternalLink").val("");
+
+            $('#AggiornaListino').jqxCheckBox({ checked: false, disabled: true });
+
+            $("#editDialog").jqxWindow('open');
+        }
+
+        function newItemFromAequos(notifyIndex, tipo, dataApertura, dataChiusura, dataConsegna) {
+
+            if (aequosOrderNotify[notifyIndex] != null)
+                aequosOrderNotify[notifyIndex].remove();
+
+            editrow = -1;
+
+            console.log(dataApertura.getMonth);
+
+            $("#idTipoOrdine").jqxDropDownList('val', tipo);
+            $("#idTipoOrdine").jqxDropDownList({ disabled: false });
+            $('#DataApertura').jqxDateTimeInput('setDate', dataApertura);
+            $('#DataChiusura').jqxDateTimeInput('setDate', dataChiusura);
+            $('#OraChiusura').jqxNumberInput('clear');
+            $('#DataConsegna').jqxDateTimeInput('setDate', dataConsegna);
+
+            $("#ExternalLink").prop("disabled", true)
+            $("#ExternalLink").val("");
+
+            $('#AggiornaListino').jqxCheckBox({ checked: true, disabled: false });
+
+            $("#editDialog").jqxWindow('open');
+        }
+
+        function editItem() {
+            editrow = $("#ordiniTable").jqxGrid('getselectedrowindex');
+
+            var offset = $("#ordiniTable").offset();
+            $("#editDialog").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60} });
+            // get the clicked row's data and initialize the input fields.
+            var dataRecord = $("#ordiniTable").jqxGrid('getrowdata', editrow);
+            $("#idTipoOrdine").jqxDropDownList("val", dataRecord.idtipoordine);
+            $("#idTipoOrdine").jqxDropDownList({ disabled: true });
+            $('#DataApertura').jqxDateTimeInput('setDate', dataRecord.dataapertura);
+            $('#DataChiusura').jqxDateTimeInput('setDate', dataRecord.datachiusura);
+            $("#OraChiusura").jqxNumberInput('val', dataRecord.orachiusura);
+            $('#DataConsegna').jqxDateTimeInput('setDate', dataRecord.dataconsegna);
+
+            $("#ExternalLink").prop("disabled", !dataRecord.external)
+            $("#ExternalLink").val(dataRecord.external ? dataRecord.externalLink : "");
+
+            $('#AggiornaListino').jqxCheckBox({ checked: false, disabled: true });
+
+            // show the popup window.
+            $("#editDialog").jqxWindow('open');
+
+        }
+
+        function deleteItem(rowNumber) {
+            if (confirm("L'ordine selezionato verrà cancellato, continuare?"))
+                $('#ordiniTable').jqxGrid('deleterow', selectedOrderId);
+        }
+
+        function changeStatus(action) {
+            var message = "";
+            if (action == "reopen")
+                message = "L'ordine selezionato verrà riaperto, tutte le modifiche effettuate sulle quantità andranno perse. Continuare?"
+            else if (action == "contabilizza")
+                message = "L'ordine selezionato verrà contabilizzato e gli importi saranno addebitati ai gasisti. Continuare?"
+            else if (action == "tornachiuso")
+                message = "L'ordine selezionato tornerà in stato chiuso, gli importi addebitati ai gasisti saranno stornati. Continuare?"
+            else if (action == "cancel")
+                message = "L'ordine selezionato verrà annullato, gli ordini inseriti dagli utenti non saranno rimossi ma solo annullati. Continuare?"
+            else if (action == "undocancel")
+                message = "L'ordine selezionato verrà ripristinato in stato aperto e gli ordini inseriti dagli utenti saranno ripristinati. Continuare?"
+
+            //TODO: cambiare in ajax
+            if (confirm(message))
+                doChangeStatus(selectedOrderId, action);
+        }
+
+        function doChangeStatus(orderId, action, roundType) {
+            var roundTypeParam = roundType ? '?roundType=' + roundType : '';
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/' + orderId + '/action/' + action + roundTypeParam,
+                async: false,
+                success: function (data, status, xhr) {
+                    //if (!data.error) {
+                        document.location.reload();
+                    //}
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function closeOrder() {
+            $('#closeOrderId').val(selectedOrderId);
+            $("#closeOrderDialog").jqxWindow('open');
+        }
+
+        function details() {
+            location.href = 'order-details?orderId=' + selectedOrderId;
+        }
+
+        function dateLessThan(date1, date2) {
+            if (date1 != null && date2 != null)
+                return date1 < date2;
+            else
+                return true;
+        }
+
+        function fillSelectAndSearch(selectedStatuses) {
+			return new Promise((resolve, reject) => {
+				$.ajax({
+					dataType: 'json',
+					method: 'get',
+					url: gogas.api.baseUrl + 'home/order/status',
+					async: true,
+					success: function (data, status, xhr) {
+						var filtroStato = $("#FiltroStato").select2({
+							data: convertItemsForSelect2(data),
+							multiple: true
+						});
+
+						filtroStato.val(selectedStatuses).trigger("change");
+
+						resolve();
+					},
+					error: function (error) {
+						reject(error);
+					}
+				});
+			});
+        }
+
+        function fillSelectOrderType(selectedType) {
+            return new Promise((resolve, reject) => {
+				$.ajax({
+					dataType: 'json',
+					method: 'get',
+					url: gogas.api.baseUrl + 'ordertype/select/manager',
+					data: { firstEmpty: false },
+					async: true,
+					success: function (data, status, xhr) {
+						var filtroTipologia = $("#FiltroTipologia").select2({
+							placeholder: 'Selezionare una tipologia...',
+							data: convertItemsForSelect2(data),
+							allowClear: true
+						});
+
+						if (fieldNotEmpty(selectedType)) {
+							$("#FiltroTipologia").val(selectedType).trigger("change");
+						}
+
+						resolve();
+					},
+					error: function (error) {
+						reject(error);
+					}
+				});
+			});
+        }
+
+        function cerca() {
+
+			console.log('cerca: ' + $('#FiltroTipologia').val());
+
+            tableSource.data = {
+                orderType: $('#FiltroTipologia').val(),
+                paid: $('#FiltroEvaso').val(),
+                dueDateFrom: $("#DataChiusuraInizio").jqxDateTimeInput('getText'),
+                dueDateTo: $("#DataChiusuraFine").jqxDateTimeInput('getText'),
+                deliveryDateFrom: $("#DataConsegnaInizio").jqxDateTimeInput('getText'),
+                deliveryDateTo: $("#DataConsegnaFine").jqxDateTimeInput('getText'),
+                status: []
+            };
+
+            $.each($("#FiltroStato").select2("data"), function (index) {
+                tableSource.data.status[index] = this.id;
+            });
+
+			saveFilter(tableSource.data);
+
+            $("#ordiniTable").jqxGrid('clearselection');
+            toggleActionButtons("");
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT});
+            $("#ordiniTable").jqxGrid({ source: dataAdapter });
+
+			var sorting = loadSorting();
+			if (sorting && sorting.sortcolumn) {
+				$("#ordiniTable").on('bindingcomplete', function() {
+					$("#ordiniTable").jqxGrid('sortby', sorting.sortcolumn, sorting.sortdirection.descending ? 'desc' : 'asc');
+				});
+			}
+
+            $("#filter").collapse("hide");
+        }
+
+        function checkAequosAvailableOrders() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'order/manage/aequos/available',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (!data.error) {
+                        $.each(data, function(index, value) {
+                            aequosOrderNotify[index] = new PNotify({
+                                title: 'Ordine disponibile',
+                                text: "E' disponibile un nuovo ordine di <i>" + value.tipoordine + "</i>, " +
+                                        "<a href='#' onclick=\"newItemFromAequos(" + index + ", '" + value.idtipoordine + "', '" + value.dataapertura + "', '" + value.datachiusura + "', '" + value.dataconsegna + "')\">aprilo ora!</a>",
+                                hide: false,
+                                width: "400px",
+                            });
+                        });
+                    }
+                }
+            });
+        }
+
+        var tableSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'tipoordine' },
+                { name: 'idtipoordine' },
+                { name: 'dataapertura', type: 'date', format: 'dd/MM/yyyy' },
+                { name: 'datachiusura', type: 'date', format: 'dd/MM/yyyy' },
+                { name: 'orachiusura' },
+                { name: 'dataconsegna', type: 'date', format: 'dd/MM/yyyy' },
+                { name: 'codicestato' },
+                { name: 'stato' },
+                { name: 'valutazione', type: 'boolean' },
+                { name: 'inviato', type: 'boolean' },
+                { name: 'evaso', type: 'boolean' },
+                { name: 'totaleordine', type: 'float' },
+                { name: 'totalefattura', type: 'float' },
+                { name: 'external', type: 'boolean' },
+                { name: 'externalLink' },
+                { name: 'actions' }
+            ],
+            id: 'id',
+            type: 'post',
+            contentType : 'application/json;charset=UTF-8',
+            formatData: function (data) {
+                return JSON.stringify(data);
+            },
+            //sortcolumn: 'nomeProdotto',
+            //sortdirection: 'asc',
+            addrow: function (rowid, rowdata, position, commit) {
+                $.ajax({
+                    dataType: 'json',
+                    method: 'post',
+                    url: gogas.api.baseUrl + 'order/manage',
+                    async: false,
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify($.extend(rowdata, { updateProductList: $('#AggiornaListino').jqxCheckBox('checked') })),
+                    success: function (data, status, xhr) {
+                        if (data.error) {
+                            commit(false);
+                            createNotification('error', data.errorMessage);
+                        } else {
+                            commit(true, data.data.id);
+                            createNotification('info', 'Ordine creato con successo' + ($('#AggiornaListino').jqxCheckBox('checked') ? ' e listino sincronizzato' : ''));
+                            $("#ordiniTable").jqxGrid("updatebounddata");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        ajaxError(xhr, error, commit);
+                    }
+                });
+            },
+            updaterow: function (rowid, rowdata, commit) {
+                $.ajax({
+                    dataType: 'json',
+                    method: 'put',
+                    url: gogas.api.baseUrl + 'order/manage/' + rowid,
+                    async: false,
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify(rowdata),
+                    success: function (data, status, xhr) {
+                        commit(!data.error);
+                        if (data.error)
+                            createNotification('error', data.errorMessage);
+                        else {
+                            createNotification('info', 'Ordine modificato con successo');
+                            $("#ordiniTable").jqxGrid("updatebounddata");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        ajaxError(xhr, error, commit);
+                    }
+                });
+            },
+            deleterow: function (rowid, commit) {
+                $.ajax({
+                    dataType: 'json',
+                    method: 'delete',
+                    url: gogas.api.baseUrl + 'order/manage/' + rowid,
+                    async: false,
+                    success: function (data, status, xhr) {
+                        commit(!data.error);
+
+                        if (data.error)
+                            createNotification('error', data.errorMessage);
+                        else
+                            createNotification('info', 'Ordine eliminato con successo');
+                    },
+                    error: function (xhr, status, error) {
+                        ajaxError(xhr, error, commit);
+                    }
+                });
+            }
+        };
+
+        function documentReady() {
+			var savedFilter = loadFilter();
+
+            $("#closeOrderDialog").jqxWindow({
+                width: 350,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#closeOrderCancel"),
+                modalOpacity: 0.3
+            });
+
+            $("#closeOrderCancel").jqxButton();
+            $("#closeOrderSave").jqxButton();
+            $("#closeOrderSave").click(function () {
+                doChangeStatus($('#closeOrderId').val(), 'close', $('#roundType').val());
+            });
+
+            $("#DataApertura").jqxDateTimeInput({ value: null, firstDayOfWeek: 1 });
+            $("#DataChiusura").jqxDateTimeInput({ value: null, firstDayOfWeek: 1 });
+            $("#DataConsegna").jqxDateTimeInput({ value: null, firstDayOfWeek: 1 });
+
+            var tipoSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'id' },
+                    { name: 'description' },
+                    { name: 'idordineaequos' },
+                    { name: 'external', type: 'boolean' },
+                    { name: 'externalLink' }
+                ],
+                url: gogas.api.baseUrl + 'ordertype/select/manager',
+                data: { firstEmpty: false, extended: true },
+                type: 'get'
+            };
+
+            var tipoAdapter;
+
+            tipoAdapter = new $.jqx.dataAdapter(tipoSource, { beforeSend: setJWT });
+
+            $('#idTipoOrdine').jqxDropDownList({
+                source: tipoAdapter,
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20
+            });
+
+            $('#idTipoOrdine').on('select', function (event) {
+                var args = event.args;
+                if (args) {
+                    // index represents the item's index.
+                    var index = args.index;
+
+                    var currentRecord = tipoAdapter.records[index];
+                    $("#ExternalLink").prop("disabled", !currentRecord.external)
+                    $("#ExternalLink").val(currentRecord.externalLink);
+
+                    $('#AggiornaListino').jqxCheckBox({ checked: currentRecord.idordineaequos != null, disabled: currentRecord.idordineaequos == null });
+                }
+            });
+
+            $('#OraChiusura').jqxNumberInput({
+                width: '150px',
+                height: '25px',
+                digits: 2,
+                decimalDigits: 0,
+                spinButtons: true,
+                inputMode: 'simple',
+                spinMode: 'simple',
+                min: 0,
+                max: 23,
+                value: 0
+            });
+
+            $("#editDialog").jqxWindow({
+                width: 380,
+                height: 300,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#Cancel"),
+                modalOpacity: 0.3
+            });
+
+            $('#AggiornaListino').jqxCheckBox({ width: 150, height: 20 });
+
+            $("#Cancel").jqxButton();
+            $("#Save").jqxButton();
+            // update the edited row when the user clicks the 'Save' button.
+            $("#Save").click(function () {
+                $('#editForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var idTipoOrdine = $("#idTipoOrdine").jqxDropDownList('getSelectedItem');
+
+                    var row = {
+                        idtipoordine: idTipoOrdine.value,
+                        tipoordine: idTipoOrdine.label,
+                        dataapertura: $('#DataApertura').jqxDateTimeInput('getText'),
+                        datachiusura: $('#DataChiusura').jqxDateTimeInput('getText'),
+                        orachiusura: $('#OraChiusura').jqxNumberInput('val'),
+                        dataconsegna: $('#DataConsegna').jqxDateTimeInput('getText'),
+                        externallink: $('#ExternalLink').val()
+                    };
+
+                    if (editrow >= 0) {
+                        var rowID = $('#ordiniTable').jqxGrid('getrowid', editrow);
+                        $('#ordiniTable').jqxGrid('updaterow', rowID, row);
+                    } else
+                        $('#ordiniTable').jqxGrid('addrow', null, row);
+
+                    $("#editDialog").jqxWindow('hide');
+                });
+            });
+
+            //Init validator
+            $('#editForm').jqxValidator({
+                rules: [
+                    { input: '#idTipoOrdine', message: 'Il tipo di ordine è obbligatorio', action: 'blur',
+                        rule: function () {
+                            return $("#idTipoOrdine").jqxDropDownList('getSelectedIndex') > -1;
+                        }
+                    },
+                    { input: '#DataApertura', message: 'La data apertura è obbligatoria', action: 'blur',
+                        rule: function () {
+                            return $("#DataApertura").jqxDateTimeInput('getDate') != null;
+                        }
+                    },
+                    { input: '#DataApertura', message: 'La data apertura è deve essere antecedente alle altre date', action: 'blur',
+                        rule: function () {
+                            return dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataChiusura").jqxDateTimeInput('getDate'))
+                                && dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataConsegna").jqxDateTimeInput('getDate'))
+                        }
+                    },
+                    { input: '#DataChiusura', message: 'La data chiusura è obbligatoria', action: 'blur',
+                        rule: function () {
+                            return $("#DataChiusura").jqxDateTimeInput('getDate') != null;
+                        }
+                    },
+                    { input: '#DataChiusura', message: 'La data chiusura deve essere compresa tra le altre date', action: 'blur',
+                        rule: function () {
+                            return dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataChiusura").jqxDateTimeInput('getDate'))
+                                && dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataConsegna").jqxDateTimeInput('getDate'))
+                        }
+                    },
+                    { input: '#DataConsegna', message: 'La data consegna è obbligatoria', action: 'blur',
+                        rule: function () {
+                            return $("#DataConsegna").jqxDateTimeInput('getDate') != null;
+                        }
+                    },
+                    { input: '#DataConsegna', message: 'La data consegna deve essere successiva alle altre date', action: 'blur',
+                        rule: function () {
+                            return dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataChiusura").jqxDateTimeInput('getDate'))
+                                && dateLessThan($("#DataApertura").jqxDateTimeInput('getDate'), $("#DataConsegna").jqxDateTimeInput('getDate'))
+                        }
+                    }
+                ]
+            });
+
+            $("#DataChiusuraInizio").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.dueDateFrom), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
+            $("#DataChiusuraFine").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.dueDateTo), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
+            $("#DataConsegnaInizio").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.deliveryDateFrom), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
+            $("#DataConsegnaFine").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.deliveryDateTol), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
+
+            tableSource.url = gogas.api.baseUrl + 'order/manage/list';
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { beforeSend: setJWT });
+
+            $("#ordiniTable").jqxGrid({
+                //source: dataAdapter,
+                editable: false,
+                //enabletooltips: true,
+                width: $( window ).width() - 20,
+                height: $( window ).height() - 235,
+                sortable: true,
+                columns: [
+                        { text: 'Tipo Ordine', datafield: 'idtipoordine', displayfield: 'tipoordine', width: 'auto' },
+                        { text: 'Data<br/>Apertura', datafield: 'dataapertura', width: 100, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Data<br/>Chiusura', datafield: 'datachiusura', width: 100, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Ora<br/>Chiusura', datafield: 'orachiusura', width: 60 },
+                        { text: 'Data<br/>Consegna', datafield: 'dataconsegna', width: 100, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Stato', datafield: 'codicestato', displayfield: 'stato', width: 100 },
+                        //{ text: 'Valutazione<br/>inviata', datafield: 'valutazione', width: 80, sortable: false },
+                        { text: 'Totale<br/>Ordine', datafield: 'totaleordine', cellsalign: 'right', cellsformat:'c2', width: 70, sortable: false },
+                        { text: 'Totale<br/>Fattura', datafield: 'totalefattura', cellsalign: 'right', cellsformat:'c2', width: 70, sortable: false },
+                        { text: 'Inviato', datafield: 'inviato', columntype: 'checkbox', width: 50, sortable: false },
+                        { text: 'Pagato', datafield: 'evaso', columntype: 'checkbox', width: 50, sortable: false }//,
+                        //{ text: 'Azioni', datafield: 'actions', width: 200, sortable: false }
+                    ],
+                localization: localizationobj
+                , theme: "bootstrap"
+            });
+
+            $("#ordiniTable").on('rowselect', function (event) {
+                selectedOrderId = event.args.row.uid;
+                toggleActionButtons(event.args.row.actions);
+            });
+
+			$("#ordiniTable").on('sort', function (event) {
+				saveSorting(event.args.sortinformation);
+            });
+
+            $( window ).resize(function() {
+                $("#ordiniTable").jqxGrid({ width: $( window ).width() - 20 });
+                $("#ordiniTable").jqxGrid({ height: $( window ).height() - 235});
+            });
+
+            $("#FiltroEvaso").select2({
+                placeholder: 'Tutti',
+                data: [
+                    {id: true, text: 'Evaso'},
+                    {id: false, text: 'Non Evaso'}
+                ],
+                allowClear: true
+            });
+
+			if (fieldNotEmpty(savedFilter.paid)) {
+				$("#FiltroEvaso").val(savedFilter.paid).trigger("change");
+			}
+
+            $("#filter").on("hide.bs.collapse", function(){
+                $("#collapse_icon").toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+            $("#filter").on("show.bs.collapse", function(){
+                $("#collapse_icon").toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+
+            Promise.all([
+				fillSelectOrderType(savedFilter.orderType),
+				fillSelectAndSearch(savedFilter.status)
+			])
+			.then((values) => { cerca(); });
+
+            checkAequosAvailableOrders();
+        }
+
+		function saveFilter(filter) {
+			var filterAsString = JSON.stringify(filter);
+			console.log("save: " + filterAsString);
+			sessionStorage.setItem('orderManagerSearchFilter', filterAsString);
+		}
+
+		function loadFilter() {
+			var filterAsString = sessionStorage.getItem('orderManagerSearchFilter');
+
+			if (filterAsString === null) {
+				return {
+					"orderType": "",
+					"dueDateFrom": moment().subtract(2, 'months').format('DD/MM/yyyy'),
+					"dueDateTo": "",
+					"deliveryDateFrom": "",
+					"deliveryDateTo": "",
+					"status": (gogas.api.user.role == 'A' ? [0,1,2] : [0,1]),
+					"paid": ""
+				};
+			}
+
+			console.log('load: ' + filterAsString)
+			return JSON.parse(filterAsString);
+		}
+
+		function fieldNotEmpty(value) {
+			return value && value !== ''
+		}
+
+		function formatDateForFilter(originalDate) {
+			if (!fieldNotEmpty(originalDate)) {
+				return null;
+			}
+
+			var parts = originalDate.split("/");
+			return parts[2] + '-' + parts[1] + '-' + parts[0];
+		}
+
+		function saveSorting(sortInformation) {
+			var sortInformationAsString = JSON.stringify(sortInformation);
+			console.log("save: " + sortInformationAsString);
+			sessionStorage.setItem('orderManagerTableSorting', sortInformationAsString);
+		}
+
+		function loadSorting() {
+			var sortInformationAsString = sessionStorage.getItem('orderManagerTableSorting');
+
+			if (sortInformationAsString === null) {
+				return null;
+			}
+
+			console.log('load: ' + sortInformationAsString)
+			return JSON.parse(sortInformationAsString);
+		}
+
+    </script>
+
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= Session["nomeGas"] %></title>
+    <link href="css/jquery-ui.min.css" rel="stylesheet" type="text/css" />
+    <link href="css/pnotify.custom.min.css" rel="stylesheet" type="text/css" />
+    <link href="Scripts/qTip/jquery.qtip.min.css" rel="stylesheet" type="text/css" />
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <link href="jqwidgets/styles/jqx.base.css" rel="stylesheet" type="text/css" />
+    <link href="jqwidgets/styles/jqx.bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="Content/css/select2.min.css" rel="stylesheet" />
+    <link href="Content/select2-bootstrap.css" rel="stylesheet" />
+    <link href="Content/bootstrap-datepicker3.min.css" rel="stylesheet" />
+    <link href="Content/font-awesome.min.css" rel="stylesheet" />
+    <link href="Content/awesome-bootstrap-checkbox.css" rel="stylesheet" />
+
+    <!-- test datatables -->
+    <link href="Content/DataTables/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+    <link href="Content/DataTables/css/fixedColumns.bootstrap.min.css" rel="Stylesheet" />
+</head>
+<body class="loading">
+    <div id="mainContent" class="m-scene">
+        <div class="modal">
+            <div class="message jqx-rc-all jqx-fill-state-normal" id="loadingBox">
+                <div style="float: left;">
+                    <div style="float: left; overflow: hidden; width: 32px; height: 32px;" class="jqx-grid-load"></div>
+                    <span style="margin-top: 10px; float: left; display: block; margin-left: 5px;" id="loadingMessage">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scene_element scene_element--fadein">
+            <div style="overflow: auto; min-height: 400px ">
+                <div layout:fragment="content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="modals"></div>
+
+    <script type="text/javascript" src="Scripts/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="Scripts/jquery-ui.min-1.11.1.js"></script>
+    <script type="text/javascript" src="Scripts/jquery.validate.min.js"></script>
+
+    <script type="text/javascript" src="jqwidgets/jqxcore.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxwindow.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdata.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdata.export.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxbuttons.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxscrollbar.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxmenu.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxlistbox.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdropdownlist.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.selection.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.columnsresize.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.filter.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.sort.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.pager.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.grouping.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.edit.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.aggregates.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxgrid.export.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdropdownlist.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxnumberinput.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxexpander.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxinput.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxvalidator.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxcheckbox.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxcalendar.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdatetimeinput.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdragdrop.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxtooltip.js"></script>
+    <script type="text/javascript" src="jqwidgets/globalization/jqxgrid-it.js"></script>
+    <script type="text/javascript" src="jqwidgets/globalization/globalize.js"></script>
+    <script type="text/javascript" src="jqwidgets/globalization/globalize.culture.it-IT.js"></script>
+
+    <script type="text/javascript" src="Scripts/pnotify.custom.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/qTip/jquery.qtip.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/jquery.smoothState.js"></script>
+
+    <script type="text/javascript" src="Scripts/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/select2.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/bootstrap-datepicker.min.js"></script>
+    <script type="text/javascript" src="Scripts/locales/bootstrap-datepicker.it.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/jwt-decode.min.js"></script>
+
+    <script type="text/javascript" src="Scripts/GoGas/utility.js?version=2"></script>
+    <script type="text/javascript" src="Scripts/GoGas/password.js?version=2"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+    <script layout:fragment="script"></script>
+
+    <script type="text/javascript">
+
+        var content;
+
+        PNotify.prototype.options.styling = "bootstrap3";
+        gogas.api = {
+            baseUrl: '/api/',
+            user: extractUser(readJWT())
+        };
+
+        function setJWT(jqXHR, settings) {
+            jqXHR.setRequestHeader("Authorization", "Bearer " + readJWT());
+        }
+
+        function readJWT() {
+            var state = JSON.parse(localStorage.getItem('state'));
+            return state.authentication.jwtToken;
+        }
+
+        function loadPage() {
+            //init current page
+            asynchLoad = documentReady();
+
+            gogas.password.tooltip();
+
+            if (asynchLoad == undefined || !asynchLoad)
+                pageLoaded();
+        }
+
+        function pageLoaded() {
+            //init bootstrap tooltips
+            $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover' });
+
+            //hide loader
+            $('body').removeClass("loading");
+        }
+
+        'use strict';
+        $(document).ready(function () {
+            jQuery.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    xhr.setRequestHeader("Authorization", "Bearer " + readJWT());
+                },
+                error : function(jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status == 401) {
+                        createNotification('error', 'Utente non autenticato o sessione scaduta');
+                        setTimeout('document.location.href = "/Home/Logout"', 2000);
+                    }
+                }
+            });
+
+
+            loadPage();
+        });
+    </script>
+</body>
+</html>

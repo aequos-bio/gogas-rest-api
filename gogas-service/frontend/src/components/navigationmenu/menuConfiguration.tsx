@@ -89,4 +89,14 @@ export const menuItems: MenuChapter[] = [
       },
     ],
   },
+  {
+      label: 'Referente',
+      items: [
+        {
+          label: 'Gestione ordini',
+          url: `/legacy/orderslist`,
+          icon: 4,
+        },
+      ],
+    },
 ];

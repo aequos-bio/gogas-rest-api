@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div class="panel panel-default" style="margin-bottom:10px">
+            <div class="panel-heading">
+                <h5>
+                    Ordine <span id="nomeTipologiaOrdine"></span> in consegna il <span id="dataConsegnaOrdine"></span>
+                    <a id="utenti" class="pull-right" data-toggle="tooltip" data-placement="bottom" title="Passa alla visualizzazione degli addebiti per utente" href="UsersDetail?idDataOrdine=[[${orderId}]]">
+                    <span class="glyphicon glyphicon-user"></span><span style="margin:0px 10px; ">Visualizzazione per utenti</span><span class="glyphicon glyphicon-arrow-right"></span>
+                    </a>
+                </h5>
+            </div>
+            <div class="panel-body collapse"></div>
+        </div>
+
+        <div id="toolbar" style="margin-right: 10px; margin-bottom: 10px;">
+            <div id="edit_buttons" style="display:none">
+                <button id="smi" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta il file per la gestione 'offline' dello smistamento. Il file deve essere aperto con il tool per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'delivery/[[${orderId}]]/file'">
+                <span class="glyphicon glyphicon-scale"></span> Esporta per smistamento
+                </button>
+                <button id="upload_qta" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Aggiorna le quantità consegnate a partire dal file di smistamento" onclick="">
+                    <span class="glyphicon glyphicon-open"></span> Aggiorna quantità
+                </button>
+                <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="window.open('/report/PrtSchedeUtentiordine.aspx?idDataOrdine=[[${orderId}]]', 'window','top=50,left=50,toolbar=no,scrollbars=yes,resizable=no');">
+                <span class="glyphicon glyphicon-print"></span> Stampa schede utenti
+                </button>
+                <button id="excel" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta l'ordine in formato excel" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/[[${orderId}]]/export'">
+                <span class="glyphicon glyphicon-save"></span> Export in excel
+                </button>
+                <button id="send" style="display:none" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Invia l'ordine ad aequos. L'ordine potrà essere inviato nuovamente fino alla data di chiusura" onclick="inviaOrdine();">
+                    <span class="glyphicon glyphicon-send"></span> Invia ad aequos
+                </button>
+                <button id="sendWieghts" style="display:none" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Invia ad Aequos i pesi degli articoli ordinati a pezzi da pesare (angurie, meloni, zucche, ecc...)" onclick="inviaPesi();">
+                    <span class="glyphicon glyphicon-copy"></span> Invia pesi ad aequos
+                </button>
+            </div>
+            <div>
+                <button id="synchro" style="display:none" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Sincronizza le quantità ordinate ad aequos con quanto effettivamente consegnato e fatturato al GAS" onclick="sincronizzaOrdine();">
+                    <span class="glyphicon glyphicon-refresh"></span> Sincronizza ordine aequos
+                </button>
+                <span id="lastSynchro" style="display:none" data-toggle="tooltip" data-placement="bottom"><i class="fa fa-history"></i></span>
+            </div>
+        </div>
+
+        <div>
+            <div id="summaryTable" style="float:left"></div>
+            <div id="rightColumn" style="float:left">
+                <div id='jqxExpanderEditable' style="margin-left:7px; margin-bottom:9px; display:none">
+                    <div>Funzioni</div>
+                    <div id="buttons_" style="padding: 2px 5px;">
+                        <span id="sent_span"></span>
+                    </div>
+                </div>
+                <div id='jqxExpanderContabilizzato' style="margin-left:7px; margin-bottom:9px; display:none">
+                    <div>
+                        <div style="width:270px">
+                            Dati contabili
+                            <button id="edit_contabilita" type="button" style="display:none" class="btn btn-default btn-sm pull-right" data-toggle="modal" data-target="#dialogContabilita">
+                                <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-placement="bottom" title="Modifica i dati contabili dell'ordine"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="buttons" style="padding: 2px 5px;">
+                        <div>
+                            <dl class="dl-horizontal">
+                                <dt>Numero fattura</dt><dd id="numero_fattura"></dd>
+                                <dt>Importo fattura</dt><dd id="importo_fattura"></dd>
+                                <dt>Data fattura</dt><dd id="data_fattura"></dd>
+                                <dt>Pagato</dt><dd id="pagato"></dd>
+                                <dt>Data pagamento</dt><dd id="data_pagamento"><dd></dd>
+                                <dt>Allegato</dt>
+                                <dd>
+                                    <span id="allegato"></span>
+                                    <button id="upload_invoice" type="button" style="display:none" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Carica l'allegato della fattura" onclick="">
+                                        <span class="glyphicon glyphicon-open"></span>
+                                    </button>
+                                </dd>
+                                <span id="info_pesi" style="display:none"><dt>Pesi inviati</dt><dd id="pesi_inviati"></span>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div id="productDetailTable" style="float:left; margin-left:8px;"></div>
+            </div>
+        </div>
+
+        <div id="nuovoOrdineDialog" style="display:none;">
+            <div>Aggiungi ordine utente</div>
+            <div style="overflow: hidden;">
+                <form id="nuovoOrdineForm" action="">
+                    <table>
+                        <tr><td><label>Prodotto:</label></td><td><input type="text" style="width:100%" disabled="disabled" id="nomeProdotto" name="nomeProdotto" /></td></tr>
+                        <tr><td><label>Utente:</label></td><td><div id="nomeUtente"></div></td></tr>
+                        <tr><td><label>Qta:</label></td><td><div id="nuovaQta" style="width:100%"></div></td></tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="saveNuovoOrdine" value="Conferma" />
+                        <input id="cancelNuovoOrdine" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="modificaPrezzoDialog" style="display:none;">
+            <div>Modifica prezzo del prodotto</div>
+            <div style="overflow: hidden;">
+                <form id="modificaPrezzoForm" action="">
+                    <table>
+                        <tr><td><label>Prodotto:</label></td><td><input type="text" style="width:100%" disabled="disabled" id="nomeProdottoPrezzo" name="nomeProdotto" /></td></tr>
+                        <tr><td><label>Prezzo:</label></td><td><div id="nuovoPrezzo" style="width:100%"></div></td></tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="saveModificaPrezzo" value="Conferma" />
+                        <input id="cancelModificaPrezzo" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="display:none; padding: 12px 2px 8px 0px; position:relative;" id="uploadSmi">
+            <form action="/GestioneOrdini/UpdateOrderFromFile" class="form-horizontal" enctype="multipart/form-data" method="post">
+                <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                <div class="form-group form-group-sm" id="fileSmiDiv">
+                    <label class="col-sm-4 control-label" for="uploadedFileSmi">File da caricare:</label>
+                    <div class="col-sm-8">
+                        <input type="file" class="form-control" name="uploadedFile" id="uploadedFileSmi" />
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="checkFileSmi('uploadedFileSmi', 'dialog-footer-upload-smi');">Conferma</button>
+                    <button type="button" class="btn btn-default btn-sm" id="cancelUploadFileSmi">Annulla</button>
+                </div>
+            </form>
+            <div id="dialog-footer-upload-smi" class="dialog-footer"></div>
+        </div>
+
+        <div style="display:none; padding: 12px 2px 8px 0px; position:relative;" id="uploadInvoice">
+            <form action="/Attachment/Invoice" class="form-horizontal" enctype="multipart/form-data" method="post">
+                <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                <div class="form-group form-group-sm" id="Div2">
+                    <label class="col-sm-4 control-label" for="invoiceFile">File da caricare:</label>
+                    <div class="col-sm-8">
+                        <input type="file" class="form-control" id="invoiceFile" name="uploadedFile" />
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="checkFileInvoice('invoiceFile', 'dialog-footer-upload-invoice')">Conferma</button>
+                    <button type="button" class="btn btn-default btn-sm" id="cancelUploadInvoice">Annulla</button>
+                </div>
+            </form>
+            <div id="dialog-footer-upload-invoice" class="dialog-footer"></div>
+        </div>
+    </div>
+
+    <div layout:fragment="modals">
+        <div class="modal fade" id="dialogContabilita" tabindex="-1" role="dialog" aria-labelledby="dialogContabilitaLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form onsubmit="return sendInvoiceData()" class="form-horizontal">
+                        <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="dialogContabilitaLabel">Dati contabili</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group form-group-sm">
+                                <label for="numeroFattura" class="col-sm-4 control-label">Numero Fattura</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="numeroFattura" name="numeroFattura" />
+                                </div>
+                            </div>
+                            <div class="form-group form-group-sm">
+                                <label for="importoFattura" class="col-sm-4 control-label">Importo Fattura</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="importoFattura" name="importoFattura" onkeydown="AllowOnlyNumbersComma(event);" />
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-eur"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group form-group-sm">
+                                <label for="dataFattura" class="col-sm-4 control-label">Data Fattura</label>
+                                <div class="col-sm-8">
+                                    <div id="dataFatturaContainer" class="input-group date">
+                                        <input type="text" class="form-control" id="dataFattura" name="dataFattura" readonly />
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group form-group-sm">
+                                <label for="pagato" class="col-sm-4 control-label">Pagato</label>
+                                <div class="col-sm-8">
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" class="styled" id="pagato_chk" name="pagato" />
+                                        <label></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group form-group-sm">
+                                <label for="dataPagamento" class="col-sm-4 control-label">Data Pagamento</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group date">
+                                        <input type="text" class="form-control" id="dataPagamento" name="dataPagamento" readonly />
+                                        <div class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Annulla</button>
+                            <button type="submit" class="btn btn-primary">Conferma</button>
+                        </div>
+                        <!--input type="submit" style="margin-top:3px;" value="Carica Fattura" /-->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        var dropTargetReached = false;
+        var fileNotification = null;
+        var orderDetails = null;
+
+        var nonOrdinantiSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'id' },
+                { name: 'description' }
+            ],
+            url: '',
+            type: 'get'
+        };
+
+        function sendInvoiceData() {
+
+            var invoiceData = {
+                numeroFattura: $("#numeroFattura").val(),
+                importoFattura: $("#importoFattura").val().replace(',', '.'),
+                dataFattura: $("#dataFattura").val(),
+                pagato: $("#pagato_chk").prop("checked"),
+                dataPagamento: $("#dataPagamento").val()
+            };
+
+            $('#loadingBox').width('210px');
+            $('#loadingMessage').text('Salvataggio dati in corso...');
+            $('body').addClass('loading');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/invoice/data',
+                async: true,
+                contentType : 'application/json;charset=UTF-8',
+                data: JSON.stringify(invoiceData),
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        $('body').removeClass('loading');
+                        $('#dialogContabilita').modal('hide');
+                        createNotification('info', 'Dati contabili aggiornati con successo');
+                        setTimeout('document.location.reload()', 3000);
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return false;
+        }
+
+        function azioneOrdine(azione, tabella, tipo, rowindex) {
+            var message, action, boolParam;
+
+            switch (azione) {
+                case "c": //cancel
+                    message = "Annullare l'ordine selezionato?";
+                    action = "cancel";
+                    break;
+
+                case "e": //enable
+                    message = "Ripristinare l'ordine selezionato?";
+                    action = "restore";
+                    break;
+
+                case "u": //undo
+                    message = "Riportare l'ordine selezionato ai valori iniziali?";
+                    action = "restore";
+                    break;
+            }
+
+            if (!confirm(message))
+                return;
+
+            if (rowindex > -1) {
+                var rowId = $('#' + tabella).jqxGrid('getrowid', rowindex);
+                ajaxAzioneOrdine(action, tipo, rowId)
+            }
+        }
+
+        function ajaxAzioneOrdine(action, tipo, rowId) {
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/' + tipo + '/' + rowId + '/' + action,
+                async: false,
+                contentType : 'application/json;charset=UTF-8',
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        createNotification('info', 'Operazione effettuata con successo');
+                        $("#summaryTable").jqxGrid("updatebounddata");
+                        $("#productDetailTable").jqxGrid("updatebounddata");
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function modificaPrezzo(rowindex) {
+            var prodotto = $('#summaryTable').jqxGrid('getrowdata', rowindex);
+
+            $('#nomeProdottoPrezzo').val(prodotto.nomeProdotto);
+            $('#nuovoPrezzo').jqxNumberInput('setDecimal', prodotto.prezzoKg);
+
+            $('#modificaPrezzoDialog').jqxWindow('open');
+        }
+
+        function inviaOrdine() {
+
+            if (!confirm("L'ordine verrà automaticamente inviato ad Aequos, continuare?"))
+                return;
+
+            $('#loadingBox').width('210px');
+            $('#loadingMessage').text('Invio ordine in corso...');
+            $('body').addClass('loading');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/aequos/order/send',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        createNotification('info', 'invio completato con successo');
+                        setTimeout('document.location.reload()', 3000);
+                    }
+                },
+                error: ajaxErrorNoCommit,
+                complete: function (xhr, status) {
+                    $('body').removeClass("loading");
+                }
+            });
+        }
+
+        function sincronizzaOrdine() {
+            if (!confirm("Le quantità dei colli ordinati ad Aequos verranno sincronizzati, continuare?"))
+                return;
+
+            $('#loadingBox').width('260px');
+            $('#loadingMessage').text('Sincronizzazione ordine in corso...');
+            $('body').addClass('loading');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/aequos/order/synch',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        createNotification('info', 'Sincronizzazione completata con successo');
+                        setTimeout('document.location.reload()', 3000);
+                    }
+                },
+                error: ajaxErrorNoCommit,
+                complete: function (xhr, status) {
+                    $('body').removeClass("loading");
+                }
+            });
+        }
+
+        function inviaPesi() {
+
+            if (!confirm("I pesi dell'ordine verranno automaticamente inviati ad Aequos, continuare?"))
+                return;
+
+            $('#loadingBox').width('210px');
+            $('#loadingMessage').text('Invio pesi in corso...');
+            $('body').addClass('loading');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/aequos/order/weights',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        createNotification('info', 'invio pesi completato con successo, ' + data.data + ' prodotti aggiornati');
+                        setTimeout('document.location.reload()', 3000);
+                    }
+                },
+                error: ajaxErrorNoCommit,
+                complete: function (xhr, status) {
+                    $('body').removeClass("loading");
+                }
+            });
+        }
+
+        function sostituisciOrdine(idRigaOrdine, idProdotto) {
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/item/' + idRigaOrdine + '/replace',
+                async: false,
+                contentType : 'application/json;charset=UTF-8',
+                data: idProdotto,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', "Errore durante la sostituzione del prodotto: " + data.errorMessage);
+                    } else {
+                        createNotification('info', "Sostituzione prodotto effettuata con successo");
+                        $("#summaryTable").jqxGrid("updatebounddata");
+                        $("#productDetailTable").jqxGrid("updatebounddata");
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function nuovoOrdine() {
+            var selectedIndex = $('#summaryTable').jqxGrid('getselectedrowindex');
+            if (selectedIndex < 0) {
+                createNotification('info', "Selezionare un prodotto per aggiungere l'ordine di un utente");
+                return;
+            }
+
+            var prodotto = $('#summaryTable').jqxGrid('getrowdata', selectedIndex);
+            $('#nomeProdotto').val(prodotto.nomeProdotto);
+
+            nonOrdinantiSource.url = gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/' + prodotto.uid + '/availableUsers';
+            var nonOrdinantiAdapter = new $.jqx.dataAdapter(nonOrdinantiSource, { beforeSend: setJWT });
+            $('#nomeUtente').jqxDropDownList({ source: nonOrdinantiAdapter });
+
+            $('#nuovaQta').jqxNumberInput('clear');
+            $('#nuovaQta').jqxNumberInput({ symbol: ' ' + prodotto.umProdotto });
+
+            $('#nuovoOrdineDialog').jqxWindow('open');
+        }
+
+        function distributeQta() {
+            var selectedIndex = $('#summaryTable').jqxGrid('getselectedrowindex');
+            if (selectedIndex < 0) {
+                createNotification('info', "Selezionare un prodotto per distribuire la quantità rimanente");
+                return;
+            }
+
+            if (!confirm("Le quantità verranno ridistribuite per raggiungere il numero di colli, continuare?"))
+                return;
+
+            var product = $('#summaryTable').jqxGrid('getrowdata', selectedIndex);
+
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/' + product.uid + '/distribute',
+                async: false,
+                contentType : 'application/json;charset=UTF-8',
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', "Errore durante la della quantità rimanente: " + data.errorMessage);
+                    } else {
+                        createNotification('info', "Distribuzione della quantità rimanente effettuata con successo");
+                        $("#summaryTable").jqxGrid("updatebounddata");
+                        $("#productDetailTable").jqxGrid("updatebounddata");
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function barrato(row, columnfield, value) {
+            var cssClass = "";
+            if (orderDetails.editable && columnfield == 'colliOrdinati')
+                cssClass = "table_editable_field";
+
+            if ($("#summaryTable").jqxGrid('getrowdata', row).annullato)
+                cssClass += " barrato";
+
+            return cssClass;
+        }
+
+        function barratoDetail(row, columnfield, value) {
+            var cssClass = "";
+            if (orderDetails.editable && columnfield == 'qtaRitirata')
+                cssClass = "table_editable_field";
+
+            if ($("#productDetailTable").jqxGrid('getrowdata', row).annullato)
+                cssClass += " barrato";
+
+            return cssClass;
+        }
+
+        function semaphore(row, columnfield, value) {
+            var rowData = $("#summaryTable").jqxGrid('getrowdata', row);
+            var result = "";
+
+            if (rowData.colliOrdinati == 0)
+                result = "barrato ";
+
+            if (rowData.qtaOrdinata.round(3) == rowData.qta.round(3))
+                return result + "green";
+
+            //scostamento rispetto a quanto ordinato per ogni singolo ordinante
+            var scostamento = Math.abs((rowData.qtaOrdinata - rowData.qta) / rowData.qta);
+
+            if (rowData.colliOrdinati == 0 || scostamento > 0.15)
+                return result + "red";
+            else
+                return result + "orange";
+        }
+
+        function checkFileInvoice(id, footerId) {
+            var loadingMessage = 'Caricamento allegato in corso...';
+            var url = 'order/manage/' + orderDetails.id + '/invoice/attachment';
+
+            var successFunction = function (data, status, xhr) {
+                $('body').removeClass('loading');
+                createNotification('info', "Allegato caricato con successo");
+                $('#upload_invoice').qtip('hide');
+
+                $('#allegato').html('<a href="' + gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/invoice/attachment" target="_blank">Sì</a>');
+                $('#upload_invoice').hide();
+            }
+
+            checkFile(id, footerId, loadingMessage, url, successFunction);
+        }
+
+        function checkFileSmi(id, footerId) {
+            var loadingMessage = 'Caricamento quantità aggiornate in corso...';
+            var url = 'delivery/' + orderDetails.id + '/file';
+
+            var successFunction = function (data, status, xhr) {
+                $('body').removeClass('loading');
+                createNotification('info', "Quantità caricate con successo");
+                $('#upload_qta').qtip('hide');
+                $('#upload_qta').hide();
+                setTimeout('document.location.reload()', 3000);
+            }
+
+            checkFile(id, footerId, loadingMessage, url, successFunction);
+        }
+
+        function checkFile(id, footerId, loadingMessage, url, successFunction) {
+            if ($('#' + id).val() == '') {
+                fileNotification = createFooterAlert('#' + footerId, 'error', 'Selezionare il file da inviare.');
+                $('#' + footerId).css('height', '14px');
+                return false;
+            }
+
+            $('#loadingBox').width('250px');
+            $('#loadingMessage').text(loadingMessage);
+            $('body').addClass('loading');
+
+            var file = document.getElementById(id).files[0];
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + url,
+                data: formData,
+                async: true,
+                processData: false,
+                contentType: false,
+                success: successFunction,
+                error: function (xhr, status, error) {
+                    $('body').removeClass('loading');
+                    ajaxErrorNoCommit(xhr, status, error);
+                }
+            });
+        }
+
+        function preparePage() {
+            if (!orderDetails)
+                return;
+
+            if (orderDetails.editable) {
+                $('#edit_buttons').show();
+                $('#jqxExpanderEditable').show();
+
+                if (orderDetails.idaequos != null)
+                    $('#send').show();
+            }
+
+            if (orderDetails.invioPesiRichiesto && orderDetails.invioPesiConsentito)
+                $('#sendWieghts').show();
+
+            if ((orderDetails.editable || orderDetails.contabilizzato) && orderDetails.idaequos != null && orderDetails.inviato && orderDetails.numeroOrdineEsterno != null)
+                $('#synchro').show();
+
+            if (orderDetails.idaequos != null)
+                 $('#sent_span').html('Inviato ad aequos: ' + (orderDetails.numeroOrdineEsterno != null ? 'Sì (Ordine numero ' + orderDetails.numeroOrdineEsterno + ')' : 'No'));
+
+            if (orderDetails.sincronizzato != null) {
+                $('#lastSynchro').prop('title', 'Ultima sincronizzazione effettuata: ' + orderDetails.sincronizzato);
+                $('#lastSynchro').show();
+            }
+
+            if (orderDetails.contabilizzato) {
+                $('#jqxExpanderContabilizzato').show();
+
+                $('#numero_fattura').html(orderDetails.numerofattura != null ? orderDetails.numerofattura : '-');
+                $('#importo_fattura').html(orderDetails.totalefattura != null ? orderDetails.totalefattura : '-');
+                $('#data_fattura').html(orderDetails.datafattura != null ? orderDetails.datafattura : '-');
+                $('#pagato').html(orderDetails.evaso ? 'Sì' : 'No');
+                $('#data_pagamento').html(orderDetails.datapagamento != null ? orderDetails.datapagamento : '-');
+
+                if (orderDetails.hasAttachment)
+                    $('#allegato').html('<a href="' + gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/invoice/attachment" target="_blank">Sì</a>');
+                else {
+                    $('#allegato').html('No');
+                    $('#upload_invoice').show();
+                }
+
+                if (orderDetails.invioPesiRichiesto) {
+                    $('#info_pesi').show();
+
+                    if (orderDetails.pesiInviati != null)
+                        $('#pesi_inviati').html('Sì <span data-toggle="tooltip" data-placement="bottom" title="Ultimo invio effettuato: ' + orderDetails.pesiInviati +'"><i class="fa fa-history"></i></span>');
+                    else
+                        $('#pesi_inviati').html('No');
+                }
+
+                if (orderDetails.idaequos != null) {
+                    $('#numeroFattura').prop('readonly', true);
+                    $('#importoFattura').prop('readonly', true);
+                    $('#dataFatturaContainer').removeClass('date');
+                }
+
+                $('#dialogContabilita').on('show.bs.modal', function (e) {
+                    $('#numeroFattura').val(orderDetails.numerofattura);
+                    $('#importoFattura').val(orderDetails.totalefattura);
+                    $('#dataFattura').val(orderDetails.datafattura);
+                    $('#pagato_chk').prop('checked', orderDetails.evaso);
+                    $('#dataPagamento').val(orderDetails.datapagamento);
+                });
+            }
+
+            if (gogas.api.user.role == 'A')
+                $('#edit_contabilita').show();
+        }
+
+        function documentReady() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', "Errore durante il recupero del dettaglio dell'ordine: " + data.errorMessage);
+                    } else {
+                        orderDetails = data;
+                        console.log('Order details', orderDetails)
+                        documentReadyAsynch();
+
+                        $("#nomeTipologiaOrdine").html(orderDetails.tipoordine);
+                        $("#dataConsegnaOrdine").html(orderDetails.dataconsegna);
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return true;
+        }
+
+        function documentReadyAsynch() {
+
+            // prepare the data
+            var summarySource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'nomeProdotto' },
+                    { name: 'category' },
+                    { name: 'prezzoKg', type: 'float' },
+                    { name: 'pesoCollo', type: 'float' },
+                    { name: 'qta', type: 'float' },
+                    { name: 'umProdotto' },
+                    { name: 'colliRisultanti', type: 'float' },
+                    { name: 'numeroOrdinanti', type: 'int' },
+                    { name: 'colliOrdinati', type: 'float' },
+                    { name: 'qtaOrdinata', type: 'float' },
+                    { name: 'totale', type: 'float' },
+                    { name: 'totaleColli', type: 'float' },
+                    { name: 'totaleConsegnato', type: 'float' },
+                    { name: 'totaleDiff', type: 'float' },
+                    { name: 'rimanenze', type: 'float' },
+                    { name: 'annullato', type: 'boolean' }
+                ],
+                id: 'idProdotto',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product',
+                updaterow: function (rowid, rowdata, commit) {
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'put',
+                        url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/' + rowid + '/supplier',
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: JSON.stringify(rowdata.colliOrdinati),
+                        success: function (data, status, xhr) {
+                            commit(!data.error);
+
+                            if (data.error)
+                                createNotification('error', data.errorMessage);
+                            else
+                                $("#summaryTable").jqxGrid("updatebounddata");
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error, commit);
+                        }
+                    });
+                }
+            };
+
+            var summaryDataAdapter = new $.jqx.dataAdapter(summarySource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+            $("#summaryTable").jqxGrid({
+                source: summaryDataAdapter,
+                editable: orderDetails.editable && orderDetails.totaleCalcolato,
+                editmode: 'click',
+                selectionmode: 'singlerow',
+                showstatusbar: true,
+                statusbarheight: 20,
+                width: $( window ).width() - 330,
+                height: $( window ).height() - 185,
+                columns: [
+                    { text: 'Prodotto', datafield: 'nomeProdotto', width: 'auto', cellbeginedit: function (row) { return false }, cellclassname: barrato },
+                    //{ text: 'Categoria', datafield: 'category', width: 100 },
+                    { text: 'Prezzo<br/>Unità', datafield: 'prezzoKg', width: 50, cellsalign: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false }, cellclassname: barrato },
+                    { text: 'Peso<br/>Collo', datafield: 'pesoCollo', width: 50, cellsalign: 'right', cellsformat: 'f2', cellbeginedit: function (row) { return false }, cellclassname: barrato },
+                    { text: '<div title="Quantità ordinata al produttore">Qta ord.<br/>produtt.</div>', datafield: 'qtaOrdinata', width: 65, cellsalign: 'center', cellsformat: 'f2', cellclassname: barrato, hidden: orderDetails.sincronizzato == null, aggregates: ['sum'],
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                    { text: 'Colli da<br/>ordinare', datafield: 'colliOrdinati', width: 60, cellsalign: 'center', cellsformat: 'f2', columntype: 'numberinput', cellclassname: barrato, hidden: orderDetails.sincronizzato != null, aggregates: ['sum'],
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title='Clicca per modificare i colli da ordinare al produttore'>" + defaulthtml + "</div>";
+                        },
+                        cellbeginedit: function (row) {
+                            var rowData = $("#summaryTable").jqxGrid('getrowdata', row);
+                            return !rowData.annullato;
+                        },
+                        createeditor: function (row, cellvalue, editor) {
+                            editor.jqxNumberInput({ digits: 5, decimalDigits : 0, inputMode: 'simple', spinButtons: false,  min: 0 });
+                        },
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                    { text: 'Colli<br/>Risultanti', datafield: 'colliRisultanti', cellsalign: 'right', cellsformat: 'f2', width: 60, cellbeginedit: function (row) { return false }, cellclassname: semaphore, hidden: orderDetails.sincronizzato != null },
+                    { text: '<div title="Quantità risultante dagli ordini dei gasisti">Qta<br/>' + (orderDetails.sincronizzato != null ? 'cons' : 'ord') + '.</div>', datafield: 'qta', width: 50, cellsalign: 'right', cellsformat: 'f2', cellbeginedit: function (row) { return false }, cellclassname: barrato },
+                    { text: '<div title="Quantità rimanente per il completamento del collo">Qta<br/>Rim.</div>', datafield: 'rimanenze', width: 45, cellsalign: 'right', cellsformat: 'f2', cellclassname: orderDetails.sincronizzato != null ? semaphore : '' },
+                    { text: '<div style="width:100%" title="Numero di gasisti ordinanti">Pers.</div>', datafield: 'numeroOrdinanti', width: 35, cellsalign: 'right', cellbeginedit: function (row) { return false }, cellclassname: barrato },
+                    { text: 'Totale<br/>Colli', datafield: 'totaleColli', width: 55, cellsalign: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false }, cellclassname: barrato, aggregates: ['sum'],
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                        { text: 'Totale<br/>Cons.', datafield: 'totaleConsegnato', width: 55, cellsalign: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false }, cellclassname: barrato, hidden: !orderDetails.contabilizzato, aggregates: ['sum'],
+                            aggregatesrenderer: function (aggregates) {
+                                var renderstring = "";
+                                $.each(aggregates, function (key, value) {
+                                    renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                                });
+                                return renderstring;
+                            }
+                        },
+                        { text: 'Totale<br/>Diff.', datafield: 'totaleDiff', width: 55, cellsalign: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false }, cellclassname: barrato, hidden: !orderDetails.contabilizzato, aggregates: ['sum'],
+                            aggregatesrenderer: function (aggregates) {
+                                var renderstring = "";
+                                $.each(aggregates, function (key, value) {
+                                    renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                                });
+                                return renderstring;
+                            }
+                        },
+                        { text: '', datafield: 'annullato', width: 25, hidden: orderDetails.contabilizzato, cellbeginedit: function (row) { return false },
+                            cellsrenderer: function (row, column, value) {
+                                if (orderDetails.editable && orderDetails.totaleCalcolato)
+                                    return "<div style='margin:5px 0 0 2px; text-align:center; cursor:pointer;'><span class='tableButton " + (value ? "enable" : "cancel") + "' title=\"" + (value ? "Ripristina l'ordine per il prodotto" : "Annulla l'ordine per il prodotto") + "\" onclick=\"azioneOrdine('" + (value ? "e" : "c") + "', 'summaryTable', 'product', " + row + ")\">" + (!value ? "" : "") + "</span></div>";
+                                else
+                                    return "";
+                            }
+                        },
+                        { text: '', width: 25, hidden: orderDetails.contabilizzato, cellbeginedit: function (row) { return false },
+                            cellsrenderer: function (row, column, value) {
+                                if (orderDetails.editable && orderDetails.totaleCalcolato)
+                                    return "<div style='margin:5px 0 0 2px; text-align:center; cursor:pointer;'><span class='tableButton undo' title=\"Annulla le modifiche e ripristina le quantità originali ordinate dagli utente per il prodotto\" onclick=\"azioneOrdine('u', 'summaryTable', 'product', " + row + ")\"></span></div>";
+                                else
+                                    return "";
+                            }
+                        },
+                        { text: '', width: 25, hidden: orderDetails.contabilizzato, cellbeginedit: function (row) { return false },
+                            cellsrenderer: function (row, column, value) {
+                                if (orderDetails.editable && orderDetails.totaleCalcolato)
+                                    return "<div style='text-align:center; cursor:pointer;'><span class='tableButton price' title=\"Modifica il prezzo del prodotto per questo ordine\" onclick=\"modificaPrezzo(" + row + ")\"></span></div>";
+                                else
+                                    return "";
+                            }
+                        }
+                ],
+                showaggregates: true,
+                localization: localizationobj
+            });
+
+            $("#summaryTable").on('rowselect', function (event) {
+                detailSource.url = gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/' + event.args.row.uid;
+                var adapter = new $.jqx.dataAdapter(detailSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+                $("#productDetailTable").jqxGrid({ source: adapter });
+            });
+
+
+
+            var detailSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'utente' },
+                    { name: 'um' },
+                    { name: 'qta', type: 'float' },
+                    { name: 'qtaRitirata', type: 'float' },
+                    { name: 'idOrdine' },
+                    { name: 'annullato', type: 'boolean' }
+                ],
+                id: 'idOrdine',
+                url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/',
+                updaterow: function (rowid, rowdata, commit) {
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'put',
+                        url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/item/' + rowid,
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: JSON.stringify(rowdata.qtaRitirata),
+                        success: function (data, status, xhr) {
+                           commit(!data.error);
+
+                            if (data.error)
+                                createNotification('error', data.errorMessage);
+                            else
+                                $("#summaryTable").jqxGrid("updatebounddata");
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error, commit);
+                        }
+                    });
+                }
+            };
+
+            $("#productDetailTable").jqxGrid({
+                editable: orderDetails.editable && orderDetails.totaleCalcolato,
+                editmode: 'click',
+                selectionmode: 'multiplecellsadvanced',
+                showstatusbar: false,
+                localization: localizationobj,
+                width: 280,
+                height: $( window ).height() - (orderDetails.contabilizzato ? 370 : 270),
+                columns: [
+                    { text: 'Utente ' + (orderDetails.editable && orderDetails.totaleCalcolato ? ' <span title="aggiungi un nuovo ordine" class="tableButton addorder" onclick="nuovoOrdine();"></span> <span title="Distribuisci le quantità rimanenti" class="tableButton redistribute" onclick="distributeQta();"></span>' : ''), datafield: 'utente', width: 130, cellclassname: barratoDetail, cellbeginedit: function (row) { return false } },
+                    { text: 'U.M.', datafield: 'um', width: 60, cellclassname: barratoDetail,  cellbeginedit: function (row) { return false } },
+                    { text: 'Qta<br/>Ord.', datafield: 'qta', width: 40, cellsalign: 'right', cellsformat: 'f2', cellclassname: barratoDetail,  cellbeginedit: function (row) { return false } },
+                    { text: 'Qta<br/>Rit.', datafield: 'qtaRitirata', width: 50, cellsalign: 'right', cellsformat: 'f3', columntype: 'numberinput',
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title=\"Clicca per modificare la quantità da consegnare all'utente\">" + defaulthtml + "</div>";
+                        },
+                        cellbeginedit: function (row) {
+                            var rowData = $("#productDetailTable").jqxGrid('getrowdata', row);
+                            return !rowData.annullato;
+                        },
+                        createeditor: function (row, cellvalue, editor) {
+                            editor.jqxNumberInput({ digits: 5, decimalDigits: 3, inputMode: 'simple', spinButtons: isMobile, min: 0 });
+                            if (isMobile)
+                                editor.jqxNumberInput({ decimalSeparator: '.', groupSeparator: ','});
+                        },
+                        initeditor: function (row, cellvalue, editor) {
+                            setTimeout("setCaretPosition($('#numbereditorproductDetailTableqtaRitirata input')[0], 0)", 60);
+                        },
+                        cellclassname: function (row, columnfield, value) {
+                            var barratoClass = barratoDetail(row, columnfield, value);
+
+                            if (barratoClass != '')
+                                return barratoClass;
+
+                            if (value == 0)
+                                return  + " red";
+                        }
+                    },
+                    { text: '', datafield: 'annullato', cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, column, value) {
+                            if (orderDetails.editable && orderDetails.totaleCalcolato)
+                                return "<div style='margin:5px 0 0 2px; text-align:center; cursor:pointer;'><span class='tableButton " + (value ? "enable" : "cancel") + "' title=\"" + (value ? "Ripristina l'ordine dell'utente per questo prodotto" : "Annulla l'ordine dell'utente per questo prodotto") + "\" onclick=\"azioneOrdine('" + (value ? "e" : "c") + "', 'productDetailTable', 'item', " + row + ")\">" + (!value ? "" : "") + "</span></div>";
+                            else
+                                return "";
+                        }
+                    },
+                    { text: '', cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, column, value) {
+                            if (orderDetails.editable && orderDetails.totaleCalcolato)
+                                return "<div style='margin:5px 0 0 2px; text-align:center; cursor:pointer;'><span class='tableButton undo' title=\"Annulla le modifiche e ripristina le quantità originali ordinate dall'utente per questo prodotto\" onclick=\"azioneOrdine('u', 'productDetailTable', 'item', " + row + ")\"></span></div>";
+                            else
+                                return "";
+                        }
+                    }
+                ],
+                showaggregates: true,
+                rendered: function(type)
+                {
+                    // select all grid cells.
+                    var gridCells = $('#productDetailTable').find('.jqx-grid-cell');
+                    // initialize the jqxDragDrop plug-in. Set its drop target to the second Grid.
+                    gridCells.jqxDragDrop({
+                        appendTo: 'body',  dragZIndex: 99999,
+                        dropAction: 'none',
+                        initFeedback: function (feedback) {
+                            feedback.height(25);
+                        },
+                        dropTarget: $('#summaryTable'),
+                        revert: true
+                    });
+
+                    //reset drag callbacks
+                    gridCells.off('dragStart');
+                    gridCells.off('dragEnd');
+                    gridCells.off('dropTargetEnter');
+                    gridCells.off('dropTargetLeave');
+
+                    // disable revert when the dragged cell is over the second Grid.
+                    gridCells.on('dropTargetEnter', function () {
+                        dropTargetReached = true;
+                    });
+                    // enable revert when the dragged cell is outside the second Grid.
+                    gridCells.on('dropTargetLeave', function () {
+                        dropTargetReached = false;
+                    });
+                    // initialize the dragged object.
+                    gridCells.on('dragStart', function (event) {
+                        //var value = $(this).text();
+                        var position = $.jqx.position(event.args);
+                        var cell = $("#productDetailTable").jqxGrid('getcellatposition', position.left, position.top);
+                        $(this).jqxDragDrop({ data: $("#productDetailTable").jqxGrid('getrowid', cell.row) });
+                    });
+                    // set the new cell value when the dragged cell is dropped over the second Grid.
+                    gridCells.on('dragEnd', function (event) {
+                        if (dropTargetReached) {
+                            var orderId = $(this).jqxDragDrop('data');
+                            var position = $.jqx.position(event.args);
+                            var cell = $("#summaryTable").jqxGrid('getcellatposition', position.left, position.top);
+                            if (cell != null && cell.column != undefined) {
+                                var productId = $("#summaryTable").jqxGrid('getrowid', cell.row);
+                                var rowData = $("#summaryTable").jqxGrid('getrowdata', cell.row);
+                                if (confirm("L'ordine selezionato verrà sostituito con il prodotto " + rowData.nomeProdotto + ", continuare?"))
+                                    sostituisciOrdine(orderId, productId);
+                            }
+                        }
+                    });
+
+                    var gridCellsNotDraggable = $('#productDetailTable').find('.barrato, .jqx-grid-empty-cell, .jqx-grid-cleared-cell');
+                    if (gridCellsNotDraggable.length > 0)
+                        gridCellsNotDraggable.jqxDragDrop({disabled:true});
+                }
+            });
+
+            if (orderDetails.editable) {
+                $("#jqxExpanderEditable").jqxExpander({
+                    width: '280px',
+                    height: '75px',
+                    toggleMode: 'none',
+                    showArrow: false
+                });
+            }
+
+            if (orderDetails.contabilizzato) {
+                $("#jqxExpanderContabilizzato").jqxExpander({
+                    width: '280px',
+                    height: '175px',
+                    toggleMode: 'none',
+                    showArrow: false
+                });
+            }
+
+            $( window ).resize(function() {
+                $("#summaryTable").jqxGrid({ width: $( window ).width() - 320 });
+                $("#summaryTable").jqxGrid({ height: $( window ).height() - 185 });
+
+                $("#productDetailTable").jqxGrid({ height: $( window ).height() - (orderDetails.contabilizzato ? 370 : 270) });
+            });
+
+
+            //NUOVO ORDINE
+
+            $('#nomeUtente').jqxDropDownList({
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20
+            });
+
+            $('#nuovaQta').jqxNumberInput({
+                decimalDigits: 2,
+                inputMode: 'simple',
+                spinButtons: false,
+                symbolPosition: 'right',
+                decimalSeparator: ',',
+                groupSeparator: '.'
+            });
+
+            $("#nuovoOrdineDialog").jqxWindow({
+                width: 400,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#cancelNuovoOrdine"),
+                modalOpacity: 0.3
+            });
+
+            $("#cancelNuovoOrdine").jqxButton();
+            $("#saveNuovoOrdine").jqxButton();
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#saveNuovoOrdine").click(function () {
+                $('#nuovoOrdineForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var prodotto = $('#summaryTable').jqxGrid('getrowdata', $('#summaryTable').jqxGrid('getselectedrowindex'));
+
+                    var userItem = $("#nomeUtente").jqxDropDownList('getSelectedItem');
+                    var qta = $('#nuovaQta').jqxNumberInput('getDecimal');
+
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'post',
+                        contentType : 'application/json;charset=UTF-8',
+                        url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/item/',
+                        async: false,
+                        data: JSON.stringify({
+                            id: prodotto.uid,
+                            idUtente: userItem.value,
+                            um: prodotto.umProdotto,
+                            qta: qta
+                        }),
+                        success: function (data, status, xhr) {
+                           if (data.error)
+                                createNotification('error', data.errorMessage);
+                           else {
+                                $("#productDetailTable").jqxGrid("updatebounddata");
+                                $("#summaryTable").jqxGrid("updatebounddata");
+                                $("#nuovoOrdineDialog").jqxWindow('hide');
+
+                                createNotification('info', "Ordine inserito correttamente");
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error);
+                        }
+                    });
+                });
+            });
+
+            //Init validator
+            $('#nuovoOrdineForm').jqxValidator({
+                rules: [
+                    { input: '#nomeUtente', message: 'Il nome utente è obbligatorio', action: 'blur',
+                        rule: function () {
+                            return $("#nomeUtente").jqxDropDownList('getSelectedIndex') > -1;
+                        }
+                    },
+                    { input: '#nuovaQta', message: 'La quantità deve essere maggiore di zero', action: 'blur',
+                        rule: function () {
+                            return $("#nuovaQta").jqxNumberInput('getDecimal') > 0;
+                        }
+                    }
+                ]
+            });
+
+
+
+            //MODIFICA PREZZO
+
+           $('#nuovoPrezzo').jqxNumberInput({
+                decimalDigits: 2,
+                inputMode: 'simple',
+                spinButtons: false,
+                symbolPosition: 'right',
+                decimalSeparator: ',',
+                groupSeparator: '.'
+            });
+
+            $("#modificaPrezzoDialog").jqxWindow({
+                width: 400,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#cancelModificaPrezzo"),
+                modalOpacity: 0.3
+            });
+
+            $("#cancelModificaPrezzo").jqxButton();
+            $("#saveModificaPrezzo").jqxButton();
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#saveModificaPrezzo").click(function () {
+                $('#modificaPrezzoForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var prodotto = $('#summaryTable').jqxGrid('getrowdata', $('#summaryTable').jqxGrid('getselectedrowindex'));
+                    var prezzo = $('#nuovoPrezzo').jqxNumberInput('getDecimal');
+
+                    if (!confirm("Attenzione! Il prezzo del prodotto " + prodotto.nomeProdotto + " relativo a questo ordine verrà sostituito, continuare?"))
+                        return;
+
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'put',
+                        url: gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/product/' + prodotto.uid + '/price',
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: JSON.stringify(prezzo),
+                        success: function (data, status, xhr) {
+                           if (data.error)
+                                createNotification('error', data.errorMessage);
+                           else {
+                                $("#productDetailTable").jqxGrid("updatebounddata");
+                                $("#summaryTable").jqxGrid("updatebounddata");
+                                $("#modificaPrezzoDialog").jqxWindow('hide');
+
+                                createNotification('info', "Prezzo aggiornato correttamente per il prodotto " + prodotto.nomeProdotto);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error);
+                        }
+                    });
+                });
+            });
+
+            //Init validator
+            $('#modificaPrezzoForm').jqxValidator({
+                rules: [
+                    { input: '#nuovoPrezzo', message: 'Il prezzo deve essere maggiore di zero', action: 'blur',
+                        rule: function () {
+                            return $("#nuovoPrezzo").jqxNumberInput('getDecimal') > 0;
+                        }
+                    }
+                ]
+            });
+
+            //popover for smi upload
+            $('#upload_qta').qtip({
+                content: {
+                    //title: 'Cambio password',
+                    text: $("#uploadSmi")
+                },
+                show: {
+                    event: 'click',
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 1, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                hide: {
+                    event: 'click unfocus',
+                    target: $('#cancelUploadFileSmi'),
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 0, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                style: {
+                    classes: 'qtip-rounded qtip-shadow qtip-jtools'
+                },
+                position: {
+                    at: 'bottom center',
+                    my: 'top center'
+                },
+                events: {
+                    hidden: function (event, api) {
+                        $("#uploadedFileSmi").val("");
+
+                        if (fileNotification != null && fileNotification.remove) {
+                            fileNotification.remove();
+                            $('#dialog-footer-upload-smi').css('height', '0px');
+                        }
+                    }
+                }
+            });
+
+            //popover for invoice
+            $('#upload_invoice').qtip({
+                content: {
+                    //title: 'Cambio password',
+                    text: $("#uploadInvoice")
+                },
+                show: {
+                    event: 'click',
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 1, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                hide: {
+                    event: 'click unfocus',
+                    target: $('#cancelUploadInvoice'),
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 0, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                style: {
+                    classes: 'qtip-rounded qtip-shadow qtip-jtools'
+                },
+                position: {
+                    at: 'left center',
+                    my: 'right center'
+                },
+                events: {
+                    hidden: function (event, api) {
+                        $("#uploadedInvoice").val("");
+
+                        if (fileNotification != null && fileNotification.remove) {
+                            fileNotification.remove();
+                            $('#dialog-footer-upload-invoice').css('height', '0px');
+                        }
+                    }
+                }
+            });
+
+            $('div.date').datepicker({
+                format: 'dd/mm/yyyy',
+                autoclose: true,
+                clearBtn: true,
+                todayHighlight: true,
+                language: 'it-IT',
+                container:'#dialogContabilita'
+            });
+
+            preparePage();
+
+            //complete page loading
+            pageLoaded();
+        }
+    </script>
+</html>

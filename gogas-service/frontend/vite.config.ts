@@ -14,6 +14,9 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8081/',
       },
+      '^/legacy/.*': {
+        target: 'http://localhost:8081/',
+      }
     }
   }
 })
