@@ -22,7 +22,7 @@
                 <button id="upload_qta" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Aggiorna le quantità consegnate a partire dal file di smistamento" onclick="">
                     <span class="glyphicon glyphicon-open"></span> Aggiorna quantità
                 </button>
-                <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="window.open('/report/PrtSchedeUtentiordine.aspx?idDataOrdine=' + orderDetails.id, 'window','top=50,left=50,toolbar=no,scrollbars=yes,resizable=no');">
+                <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/byUser/sheets'">
                 <span class="glyphicon glyphicon-print"></span> Stampa schede utenti
                 </button>
                 <button id="excel" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta l'ordine in formato excel" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/export'">

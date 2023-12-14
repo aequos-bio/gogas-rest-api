@@ -161,7 +161,12 @@ public class OrderManagerController {
     public BasicResponseDTO deleteEntryByUser(@PathVariable String orderId, @PathVariable String userId) {
         orderManagerService.deleteUserCost(orderId, userId);
         return new BasicResponseDTO("OK");
+    }
 
+    @GetMapping(value = "{orderId}/byUser/sheets")
+    public void exportByUserSheets(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException, GoGasException {
+        AttachmentDTO excelAttachment = orderManagerService.extractUserSheets(orderId);
+        excelAttachment.writeToHttpResponse(response);
     }
 
     @PostMapping(value = "{orderId}/shippingCost")

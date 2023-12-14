@@ -61,6 +61,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     private final NotificationSender notificationSender;
     private final AttachmentService attachmentService;
     private final ExcelGenerationService reportService;
+    private final PdfReportService pdfReportService;
     private final OrderPlaningService orderPlaningService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
@@ -69,7 +70,8 @@ public class OrderManagerService extends CrudService<Order, String> {
                                UserService userService, OrderTypeService orderTypeService, ProductService productService,
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
                                NotificationSender notificationSender, AttachmentService attachmentService,
-                               ExcelGenerationService reportService, OrderPlaningService orderPlaningService) {
+                               ExcelGenerationService reportService, PdfReportService pdfReportService,
+                               OrderPlaningService orderPlaningService) {
 
         super(orderRepo, "order");
         this.orderRepo = orderRepo;
@@ -86,6 +88,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.notificationSender = notificationSender;
         this.attachmentService = attachmentService;
         this.reportService = reportService;
+        this.pdfReportService = pdfReportService;
         this.orderPlaningService = orderPlaningService;
     }
 
@@ -533,6 +536,13 @@ public class OrderManagerService extends CrudService<Order, String> {
         byte[] excelReportContent = reportService.extractOrderDetails(order, aequosIntegrationService.requiresWeightColumns(order));
         String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
+    }
+
+    public AttachmentDTO extractUserSheets(String orderId) throws GoGasException {
+        Order order = getRequiredWithType(orderId);
+        byte[] pdfReportContent = pdfReportService.generateUserSheets(order);
+        String contentType = "application/pdf";
+        return attachmentService.buildAttachmentDTO(order, pdfReportContent, contentType);
     }
 
     public String sendOrderToAequos(String orderId, String currentUserId) throws GoGasException {

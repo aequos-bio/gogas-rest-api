@@ -55,6 +55,10 @@
         <div style="display:none" id="tooltipTable" />
     </div>
 
+    <div layout:fragment="modals">
+        <script type="text/javascript" src="Scripts/GoGas/tables-definition.js?version=2"></script>
+    </div>
+
     <script layout:fragment="script">
         var orderDetails = null;
 
@@ -326,7 +330,7 @@
                     content: {
                         title: 'Il gasista ha il conto in rosso',
                         text: function(event, api) {
-                            tableContabilita.loadData('/Contabilita/SchedaContabileAjax', $(this).attr('user-id'), null, null, 10);
+                            tableContabilita.loadData($(this).attr('user-id'), null, null, 10);
                             return $(tableContabilita.containerId);
                         }
                     },
@@ -490,7 +494,7 @@
                 $("#userDetailTable").jqxGrid({ height: $( window ).height() - 270 });
             });
 
-            tableContabilita.initTable("#tooltipTable");
+            tableContabilita.initTable("#tooltipTable", "user");
 
             //prepare page
             if (orderDetails.editable)
