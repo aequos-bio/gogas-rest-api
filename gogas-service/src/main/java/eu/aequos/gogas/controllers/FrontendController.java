@@ -26,4 +26,11 @@ public class FrontendController {
         model.addAttribute("orderId", orderId);
         return "legacy/referenti/order-details";
     }
+
+    @GetMapping(value = {"/legacy/order-details-byuser"})
+    public String legacyOrderDetailsByUser(@RequestParam String orderId,
+                                           Model model) {
+        model.addAttribute("orderId", orderId);
+        return "legacy/referenti/order-details-byuser";
+    }
 }

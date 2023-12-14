@@ -6,7 +6,7 @@
             <div class="panel-heading">
                 <h5>
                     Ordine <span id="nomeTipologiaOrdine"></span> in consegna il <span id="dataConsegnaOrdine"></span>
-                    <a id="utenti" class="pull-right" data-toggle="tooltip" data-placement="bottom" title="Passa alla visualizzazione degli addebiti per utente" href="UsersDetail?idDataOrdine=[[${orderId}]]">
+                    <a id="utenti" class="pull-right" data-toggle="tooltip" data-placement="bottom" title="Passa alla visualizzazione degli addebiti per utente" th:href="|order-details-byuser?orderId=${orderId}|">
                     <span class="glyphicon glyphicon-user"></span><span style="margin:0px 10px; ">Visualizzazione per utenti</span><span class="glyphicon glyphicon-arrow-right"></span>
                     </a>
                 </h5>
@@ -16,16 +16,16 @@
 
         <div id="toolbar" style="margin-right: 10px; margin-bottom: 10px;">
             <div id="edit_buttons" style="display:none">
-                <button id="smi" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta il file per la gestione 'offline' dello smistamento. Il file deve essere aperto con il tool per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'delivery/[[${orderId}]]/file'">
+                <button id="smi" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta il file per la gestione 'offline' dello smistamento. Il file deve essere aperto con il tool per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'delivery/' + orderDetails.id + '/file'">
                 <span class="glyphicon glyphicon-scale"></span> Esporta per smistamento
                 </button>
                 <button id="upload_qta" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Aggiorna le quantità consegnate a partire dal file di smistamento" onclick="">
                     <span class="glyphicon glyphicon-open"></span> Aggiorna quantità
                 </button>
-                <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="window.open('/report/PrtSchedeUtentiordine.aspx?idDataOrdine=[[${orderId}]]', 'window','top=50,left=50,toolbar=no,scrollbars=yes,resizable=no');">
+                <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="window.open('/report/PrtSchedeUtentiordine.aspx?idDataOrdine=' + orderDetails.id, 'window','top=50,left=50,toolbar=no,scrollbars=yes,resizable=no');">
                 <span class="glyphicon glyphicon-print"></span> Stampa schede utenti
                 </button>
-                <button id="excel" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta l'ordine in formato excel" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/[[${orderId}]]/export'">
+                <button id="excel" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta l'ordine in formato excel" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/export'">
                 <span class="glyphicon glyphicon-save"></span> Export in excel
                 </button>
                 <button id="send" style="display:none" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Invia l'ordine ad aequos. L'ordine potrà essere inviato nuovamente fino alla data di chiusura" onclick="inviaOrdine();">
@@ -120,7 +120,7 @@
 
         <div style="display:none; padding: 12px 2px 8px 0px; position:relative;" id="uploadSmi">
             <form action="/GestioneOrdini/UpdateOrderFromFile" class="form-horizontal" enctype="multipart/form-data" method="post">
-                <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                <input id="idDataOrdine" name="idDataOrdine" type="hidden" th:value="${orderId}">
                 <div class="form-group form-group-sm" id="fileSmiDiv">
                     <label class="col-sm-4 control-label" for="uploadedFileSmi">File da caricare:</label>
                     <div class="col-sm-8">
@@ -137,7 +137,7 @@
 
         <div style="display:none; padding: 12px 2px 8px 0px; position:relative;" id="uploadInvoice">
             <form action="/Attachment/Invoice" class="form-horizontal" enctype="multipart/form-data" method="post">
-                <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                <input id="idDataOrdine" name="idDataOrdine" type="hidden" th:value="${orderId}">
                 <div class="form-group form-group-sm" id="Div2">
                     <label class="col-sm-4 control-label" for="invoiceFile">File da caricare:</label>
                     <div class="col-sm-8">
@@ -158,7 +158,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <form onsubmit="return sendInvoiceData()" class="form-horizontal">
-                        <input id="idDataOrdine" name="idDataOrdine" type="hidden" value="[[${orderId}]]">
+                        <input id="idDataOrdine" name="idDataOrdine" type="hidden" th:value="${orderId}">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             <h4 class="modal-title" id="dialogContabilitaLabel">Dati contabili</h4>

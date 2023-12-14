@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div class="panel panel-default" style="margin-bottom:10px">
+            <div class="panel-heading">
+                <h5>
+                    Ordine <span id="nomeTipologiaOrdine"></span> in consegna il <span id="dataConsegnaOrdine"></span>
+                    <a id="utenti" class="pull-right" data-toggle="tooltip" data-placement="bottom" title="Passa alla visualizzazione degli ordini per prodotto" th:href="|order-details?orderId=${orderId}|">
+                    <span class="glyphicon glyphicon-user"></span><span style="margin:0px 10px; ">Visualizzazione per prodotti</span><span class="glyphicon glyphicon-arrow-right"></span>
+                    </a>
+                </h5>
+            </div>
+            <div class="panel-body collapse"></div>
+        </div>
+
+        <div>
+            <div id="summaryTable" style="float:left"></div>
+            <div id="rightColumn" style="float:left">
+
+                <div id='jqxExpanderFunzioni' style="margin-left:7px; margin-bottom:9px; display:none;">
+                    <div>Funzioni</div>
+                    <div id="buttons" style="padding: 2px 5px;">
+                        <table>
+                            <tr>
+                                <td>Costo di trasporto: </span></td>
+                                <td><div id="costoTrasporto"></div></td>
+                                <td><span class="help" id="costoTrasportoHelp"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="userDetailTable" style="float:left; margin-left:8px;"></div>
+            </div>
+        </div>
+
+        <div id="nuovoMovimentoDialog">
+            <div>Aggiungi movimento utente</div>
+            <div style="overflow: hidden;">
+                <form id="nuovoMovimentoForm" action="">
+                    <table>
+                        <tr><td><label>Utente:</label></td><td><div id="nomeUtente"></div></td></tr>
+                        <tr><td><label>Importo:</label></td><td><div id="importo" style="width:100%"></div></td></tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="saveNuovoMovimento" value="Conferma" />
+                        <input style="margin-right: 5px;" type="button" id="saveContinue" value="Conferma e continua" />
+                        <input id="cancelNuovoMovimento" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="display:none" id="tooltipTable" />
+    </div>
+
+    <script layout:fragment="script">
+        var orderDetails = null;
+
+        function barratoDetail(row, columnfield, value) {
+            if ($("#userDetailTable").jqxGrid('getrowdata', row).annullato)
+                return "barrato";
+            else
+                return "";
+        }
+
+        function updateSpeseTrasporto(notifica) {
+            var value = $("#costoTrasporto").jqxNumberInput('getDecimal');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/shippingCost',
+                async: true,
+                contentType : 'application/json;charset=UTF-8',
+                data: JSON.stringify(value),
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        var speseTrasporto = data;
+                        console.log(JSON.stringify(speseTrasporto));
+                        for (var i = 0; i < speseTrasporto.length; i++) {
+                            $("#summaryTable").jqxGrid('setcellvaluebyid', speseTrasporto[i].IdUtente, "CostoTrasporto", speseTrasporto[i].CostoTrasporto);
+                            $("#summaryTable").jqxGrid('setcellvaluebyid', speseTrasporto[i].IdUtente, "TotaleOrdine", speseTrasporto[i].TotaleOrdine);
+                        }
+
+                        if (notifica)
+                            createNotification('info', 'Spese di trasporto aggiornate con successo');
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function nuovoMovimento() {
+            var nonOrdinantiSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'id' },
+                    { name: 'description' }
+                ],
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/availableUsers',
+                type: 'get'
+            };
+
+            var nonOrdinantiAdapter = new $.jqx.dataAdapter(nonOrdinantiSource, { beforeSend: setJWT });
+            $('#nomeUtente').jqxDropDownList({ source: nonOrdinantiAdapter });
+            $('#importo').jqxNumberInput('clear');
+            $('#nuovoMovimentoDialog').jqxWindow('open');
+        }
+
+        function cancellaMovimento(idUtente, nome) {
+            if (!confirm("L'addebito per l'utente " + nome + " verrà eliminato, continuare?"))
+                return;
+
+            $.ajax({
+                dataType: 'json',
+                method: 'delete',
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/' + idUtente,
+                async: false,
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        $("#summaryTable").jqxGrid("updatebounddata");
+
+                        createNotification('info', "Movimento eliminato correttamente");
+                        updateSpeseTrasporto(true);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error);
+                }
+            });
+        }
+
+        function saveMovimento(continua) {
+            $('#nuovoMovimentoForm').jqxValidator('validate', function (isValid) {
+
+                if (!isValid)
+                    return;
+
+                var userItem = $("#nomeUtente").jqxDropDownList('getSelectedItem');
+                var importo = $('#importo').jqxNumberInput('getDecimal');
+
+                $.ajax({
+                    //dataType: 'json',
+                    method: 'post',
+                    url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/' + userItem.value,
+                    async: false,
+                    contentType : 'application/json;charset=UTF-8',
+                    data: JSON.stringify(importo),
+                    success: function (data, status, xhr) {
+                        if (data.error)
+                            createNotification('error', data.errorMessage);
+                        else {
+                            $("#summaryTable").jqxGrid("updatebounddata");
+
+                            if (continua) {
+                                $("#nomeUtente").jqxDropDownList('clearSelection');
+                                $('#importo').jqxNumberInput('clear');
+                            } else
+                                $("#nuovoMovimentoDialog").jqxWindow('hide');
+
+                            createNotification('info', "Movimento inserito correttamente");
+                            updateSpeseTrasporto(false);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        ajaxError(xhr, error);
+                    }
+                });
+            });
+        }
+
+        function documentReady() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', "Errore durante il recupero del dettaglio dell'ordine: " + data.errorMessage);
+                    } else {
+                        orderDetails = data;
+                        console.log('Order details', orderDetails)
+                        documentReadyAsynch();
+
+                        $("#nomeTipologiaOrdine").html(orderDetails.tipoordine);
+                        $("#dataConsegnaOrdine").html(orderDetails.dataconsegna);
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return true;
+        }
+
+        function documentReadyAsynch() {
+
+            // prepare the data
+            var summarySource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'IdUtente' },
+                    { name: 'NomeUtente' },
+                    { name: 'ArticoliOrdinati' },
+                    { name: 'TotaleNetto' },
+                    { name: 'CostoTrasporto' },
+                    { name: 'TotaleOrdine' },
+                    { name: 'InRosso', type: 'boolean' }
+                ],
+                id: 'IdUtente',
+                url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/list'
+            };
+
+            var summaryDataAdapter = new $.jqx.dataAdapter(summarySource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+            $("#summaryTable").jqxGrid({
+                source: summaryDataAdapter,
+                editable: orderDetails.editable,
+                editmode: 'click',
+                selectionmode: orderDetails.editable && !orderDetails.totaleCalcolato ? 'singlecell' : 'singlerow',
+                showstatusbar: true,
+                statusbarheight: 20,
+                width: 640,
+                height: $( window ).height() - 150,
+                columns: [
+                    { text: 'Utente ' + (orderDetails.editable && orderDetails.external ? '<span title="aggiungi un nuovo utente" class="tableButton addorder" onclick="nuovoMovimento();">' : ''), datafield: 'IdUtente', displayField: 'NomeUtente', width: 300, cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title='" + value + "'>" + defaulthtml + "</div>";
+                        }
+                    },
+                    { text: 'N. Art.', datafield: 'ArticoliOrdinati', width: 50, cellsalign: 'right', align: 'right', cellbeginedit: function (row) { return false } },
+                    { text: 'Costo<br/>Netto', datafield: 'TotaleNetto', width: 80, cellsalign: 'right', align: 'right', cellsformat: 'c2', columntype: 'numberinput', aggregates: ['sum'], cellclassname: (orderDetails.editable && !orderDetails.totaleCalcolato ? 'table_editable_field' : ''),
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title='Clicca per modificare il costo da addebitare al gasista'>" + defaulthtml + "</div>";
+                        },
+                        createeditor: function (row, cellvalue, editor) {
+                            editor.jqxNumberInput({ digits: 5, decimalDigits : 2, inputMode: 'simple', spinButtons: false,  min: 0 });
+                        },
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                    { text: 'Costo<br/>Trasporto', datafield: 'CostoTrasporto', width: 80, cellsalign: 'right', align: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false } },
+                    { text: 'Costo<br/>Totale', datafield: 'TotaleOrdine', width: 80, cellsalign: 'right', align: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false }, aggregates: ['sum'],
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                renderstring += "<div style='margin-top:2px;'><b>" + value + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                    { text: '', datafield: 'InRosso', width: 25, cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, column, value) {
+                            if (value) {
+                                var rowdata = $('#summaryTable').jqxGrid('getrowdata', row);
+                                return "<div style='margin:5px 0 0 -15px; text-align:center; cursor:pointer;'><span class='tableButton warning tooltip' user-id=\"" + rowdata.IdUtente + "\" onclick=\"ultimiMovimenti(" + row + ")\"></span></div>";
+                                //Il gasista ha il conto in rosso, clicca per vedere gli ultimi movimenti
+                            } else
+                                return "";
+                        }
+                    },
+                    { text: '', datafield: '', width: 25, cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, column, value) {
+                            if (orderDetails.editable && !orderDetails.totaleCalcolato) {
+                                var rowdata = $('#summaryTable').jqxGrid('getrowdata', row);
+                                return "<div style='margin:5px 0 0 2px; text-align:center; cursor:pointer;'><span class='tableButton cancel' title=\"Elimina l'addebito per il gasista\" onclick=\"cancellaMovimento('" + rowdata.uid + "', '" + rowdata.NomeUtente + "')\"></span></div>";
+                            } else
+                                return "";
+                        }
+                    }
+                ],
+                showaggregates: true,
+                localization: localizationobj
+            });
+
+            $("#summaryTable").on('cellvaluechanged', function (event) {
+                // event arguments.
+                var args = event.args;
+                // column data field.
+                var datafield = event.args.datafield;
+                // row's bound index.
+                var rowBoundIndex = args.rowindex;
+                // new cell value.
+                var value = args.newvalue;
+                // old cell value.
+                var oldvalue = args.oldvalue;
+
+                var rowid = $('#summaryTable').jqxGrid('getrowid', rowBoundIndex);
+                var rowdata = $('#summaryTable').jqxGrid('getrowdatabyid', rowid);
+
+                if (datafield == 'TotaleNetto') {
+                    $.ajax({
+                        //dataType: 'json',
+                        method: 'post',
+                        url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/' + rowid,
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: JSON.stringify(rowdata.TotaleNetto),
+                        success: function (data, status, xhr) {
+                            if (data.error)
+                                createNotification('error', data.errorMessage);
+                            else
+                                //$("#summaryTable").jqxGrid('setcellvaluebyid', rowid, "TotaleOrdine", data.data.tot);
+                                createNotification('info', "Movimento aggiornato correttamente");
+                                updateSpeseTrasporto(false);
+                        },
+                        error: ajaxErrorNoCommit
+                    });
+                }
+            });
+
+
+            $("#summaryTable").on("bindingcomplete", function (event) {
+                $('.tooltip').qtip({
+                    content: {
+                        title: 'Il gasista ha il conto in rosso',
+                        text: function(event, api) {
+                            tableContabilita.loadData('/Contabilita/SchedaContabileAjax', $(this).attr('user-id'), null, null, 10);
+                            return $(tableContabilita.containerId);
+                        }
+                    },
+                    show: {
+                        effect: function(offset) {
+                            $(this).fadeTo(250, 1, 'easeInExpo'); // "this" refers to the tooltip
+                        }
+                    },
+                    hide: {
+                        effect: function(offset) {
+                            $(this).fadeTo(250, 0, 'easeInExpo'); // "this" refers to the tooltip
+                        }
+                    },
+                    style: {
+                        classes: 'qtip-rounded qtip-shadow qtip-jtools'//,
+                    },
+                    position: {
+                        at: 'center right',
+                        my: 'center left'
+                    }
+                });
+            });
+
+            if ($("#jqxExpanderFunzioni").length) {
+                $("#jqxExpanderFunzioni").jqxExpander({
+                    width: '350px',
+                    height: '105px',
+                    toggleMode: 'none',
+                    showArrow: false
+                });
+            }
+
+            if ($("#costoTrasporto").length) {
+                $("#costoTrasporto").jqxNumberInput({
+                    digits: 3,
+                    inputMode: 'simple',
+                    spinButtons: false,
+                    decimalSeparator: ',',
+                    groupSeparator: '.',
+                    symbol: ' €',
+                    symbolPosition: 'right',
+                    min: 0,
+                    width: '70px' });
+
+                $("#costoTrasporto").jqxNumberInput('setDecimal', orderDetails.speseTrasporto);
+
+                $("#costoTrasporto").on('change', function (event) {
+                    updateSpeseTrasporto(true);
+                });
+
+                $("#costoTrasportoHelp").jqxTooltip({
+                    content: '<div style="text-align:left">Inserire il costo di trasporto totale dell\'ordine.<br/>Il costo viene suddiviso sugli ordinanti<br/>in proporzione all\'importo.</div>',
+                    position: 'right',
+                    name: 'costoTrasportoTooltip'
+                });
+            }
+
+            //VISUALIZZAZIONE DETTAGLIO ORDINE UTENTE
+
+            if (orderDetails.totaleCalcolato) {
+
+                $("#summaryTable").on('rowselect', function (event) {
+                    detailSource.url = gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/' + event.args.row.uid;
+                    var adapter = new $.jqx.dataAdapter(detailSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+                    $("#userDetailTable").jqxGrid({ source: adapter });
+                });
+
+                var detailSource = {
+                    datatype: "json",
+                    datafields: [
+                        { name: 'name' },
+                        { name: 'um' },
+                        { name: 'qtaRitirata', type: 'float' },
+                        { name: 'tot', type: 'float' },
+                        { name: 'idOrdine' },
+                        { name: 'annullato', type: 'boolean' }
+                    ],
+                    id: 'idOrdine',
+                    url: gogas.api.baseUrl + 'order/manage/[[${orderId}]]/byUser/',
+                    type: 'get'
+                };
+
+                $("#userDetailTable").jqxGrid({
+                    editable: false,
+                    selectionmode: 'singlerow',
+                    showstatusbar: false,
+                    localization: localizationobj,
+                    enabletooltips: true,
+                    width: 350,
+                    height: $( window ).height() - 270,
+                    columns: [
+                        { text: 'Prodotto', datafield: 'name', width: 200, cellclassname: barratoDetail },
+                        { text: 'Qta<br/>Rit.', datafield: 'qtaRitirata', width: 50, cellsalign: 'right', align: 'right', cellsformat: 'f3', cellclassname: barratoDetail },
+                        { text: 'U.M.', datafield: 'um', width: 50, cellclassname: barratoDetail },
+                        { text: 'Prezzo', datafield: 'tot', width: 50, cellsalign: 'right', align: 'right', cellsformat: 'c2', cellclassname: barratoDetail }
+                    ],
+                    showaggregates: true
+                });
+
+            }
+
+            //NUOVO MOVIMENTO
+
+            $('#nomeUtente').jqxDropDownList({
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20
+            });
+
+            $('#importo').jqxNumberInput({
+                decimalDigits: 2,
+                inputMode: 'simple',
+                spinButtons: false,
+                symbolPosition: 'right',
+                symbol: '€',
+                decimalSeparator: ',',
+                groupSeparator: '.'
+            });
+
+            $("#nuovoMovimentoDialog").jqxWindow({
+                width: 400,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#cancelNuovoMovimento"),
+                modalOpacity: 0.3
+            });
+
+            $("#cancelNuovoMovimento").jqxButton();
+            $("#saveNuovoMovimento").jqxButton();
+            $("#saveContinue").jqxButton();
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#saveNuovoMovimento").click(function () {
+                saveMovimento(false);
+            });
+
+             $("#saveContinue").click(function () {
+                saveMovimento(true);
+            });
+
+            //Init validator
+            $('#nuovoMovimentoForm').jqxValidator({
+                rules: [
+                    { input: '#nomeUtente', message: 'Il nome utente è obbligatorio', action: 'blur',
+                        rule: function () {
+                            return $("#nomeUtente").jqxDropDownList('getSelectedIndex') > -1;
+                        }
+                    },
+                    { input: '#importo', message: 'L\'importo deve essere maggiore di zero', action: 'blur',
+                        rule: function () {
+                            return $("#importo").jqxNumberInput('getDecimal') > 0;
+                        }
+                    }
+                ]
+            });
+
+            $( window ).resize(function() {
+                $("#summaryTable").jqxGrid({ height: $( window ).height() - 135 });
+                $("#userDetailTable").jqxGrid({ height: $( window ).height() - 270 });
+            });
+
+            tableContabilita.initTable("#tooltipTable");
+
+            //prepare page
+            if (orderDetails.editable)
+                $('#jqxExpanderFunzioni').show();
+
+            //complete page loading
+            pageLoaded();
+        }
+    </script>
+</html>
