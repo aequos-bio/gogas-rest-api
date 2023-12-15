@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div id="configurazioneTable"></div>
+    </div>
+
+    <script layout:fragment="script">
+        function documentReady() {
+            // prepare the data
+            var tableSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'key' },
+                    { name: 'value' },
+                    { name: 'description' }
+                ],
+                id: 'key',
+                url: gogas.api.baseUrl + 'configuration',
+                type: 'get',
+                updaterow: function (rowid, rowdata, commit) {
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'put',
+                        url: gogas.api.baseUrl + 'configuration',
+                        async: false,
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify(rowdata),
+                        success: function (data, status, xhr) {
+                            ajaxUpdateCommit(data, status, xhr, commit);
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error, commit);
+                        }
+                    });
+                }
+            };
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+            $("#configurazioneTable").jqxGrid({
+                source: dataAdapter,
+                editable: true,
+                enabletooltips: true,
+                width: '805px',
+                height: $(window).height() - 155,
+                sortable: true,
+                columns: [
+                    { text: 'Chiave', datafield: 'key', width: 200, cellbeginedit: function (row) { return false } },
+                    { text: 'Descrizione', datafield: 'description', width: 400, cellbeginedit: function (row) { return false } },
+                    { text: 'Valore', datafield: 'value', width: 200, cellclassname: 'table_editable_field',
+                      validation: function (cell, value) {
+                            if (value == null || value == '')
+                                return { result: false, message: "Il campo non può essere vuoto.<br/> Cambiare il valore o premere 'esc' per annullare."};
+
+                            return { result: true };
+                        }
+                    }
+                ],
+                localization: localizationobj
+            });
+
+            $(window).resize(function () {
+                $("#configurazioneTable").jqxGrid({ height: $(window).height() - 155 });
+            });
+        }
+    </script>
+</html>

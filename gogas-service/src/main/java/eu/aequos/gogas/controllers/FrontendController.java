@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -48,5 +49,11 @@ public class FrontendController {
     @GetMapping(value = {"/legacy/suppliers"})
     public String legacySuppliers() {
         return "legacy/admin/suppliers";
+    }
+
+    @IsAdmin
+    @GetMapping(value = {"/legacy/configuration"})
+    public String legacyConfiguration() {
+        return "legacy/admin/configuration";
     }
 }

@@ -15,6 +15,10 @@ export const LegacySuppliersManagerPage: React.FC = () => {
   return render('suppliers');
 };
 
+export const LegacyConfigurationPage: React.FC = () => {
+  return render('configuration');
+};
+
 function render(page : string) {
   return (
     <Container maxWidth={false}>

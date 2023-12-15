@@ -10,55 +10,57 @@
                 </h5>
             </div>
             <div class="panel-body collapse" id="filter">
-                <div class="form-group">
-                    <label class="col-md-2 col-sm-2 control-label">Tipologia ordine</label>
+                <form name="filtroOrdini" method="post" class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Tipologia ordine</label>
 
-                    <div class="col-md-6 col-sm-10">
-                        <select name="FiltroTipologia" id="FiltroTipologia"><option></option></select>
+                        <div class="col-md-6 col-sm-10">
+                            <select name="FiltroTipologia" id="FiltroTipologia"><option></option></select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-2 col-sm-2 control-label">Data Chiusura Da</label>
-                    <div class="col-md-2 col-sm-4">
-                        <div id="DataChiusuraInizio"></div>
-                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Data Chiusura Da</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div id="DataChiusuraInizio"></div>
+                        </div>
 
-                    <label class="col-md-2 col-sm-2 control-label">Data Chiusura A</label>
-                    <div class="col-md-2 col-sm-4">
-                        <div id="DataChiusuraFine"></div>
+                        <label class="col-md-2 col-sm-2 control-label">Data Chiusura A</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div id="DataChiusuraFine"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-2 col-sm-2 control-label">Data Consegna Da</label>
-                    <div class="col-md-2 col-sm-4">
-                        <div id="DataConsegnaInizio"></div>
-                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Data Consegna Da</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div id="DataConsegnaInizio"></div>
+                        </div>
 
-                    <label class="col-md-2 col-sm-2 control-label">Data Consegna A</label>
-                    <div class="col-md-2 col-sm-4">
-                        <div id="DataConsegnaFine"></div>
+                        <label class="col-md-2 col-sm-2 control-label">Data Consegna A</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div id="DataConsegnaFine"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-2 col-sm-2 control-label">Stato</label>
-                    <div class="col-md-6 col-sm-8">
-                        <select name="FiltroStato" id="FiltroStato"></select>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Stato</label>
+                        <div class="col-md-6 col-sm-8">
+                            <select name="FiltroStato" id="FiltroStato"></select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-2 col-sm-2 control-label">Evaso</label>
-                    <div class="col-md-2 col-sm-4">
-                        <select name="FiltroEvaso" id="FiltroEvaso"><option></option></select>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Evaso</label>
+                        <div class="col-md-2 col-sm-4">
+                            <select name="FiltroEvaso" id="FiltroEvaso"><option></option></select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-md-8 col-sm-12">
-                        <button type="button" class="btn btn-primary pull-right" onclick="cerca();">
-                            <span class="glyphicon glyphicon-search"></span>
-                            Ricerca
-                        </button>
+                    <div class="form-group">
+                        <div class="col-md-8 col-sm-12">
+                            <button type="button" class="btn btn-primary pull-right" onclick="cerca();">
+                                <span class="glyphicon glyphicon-search"></span>
+                                Ricerca
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
