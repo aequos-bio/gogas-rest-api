@@ -2,8 +2,12 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 
-const LegacyOrderManagerPage: React.FC = () => {
+export const LegacyOrderManagerPage: React.FC = () => {
   return render('orders-list');
+};
+
+export const LegacyProductsManagerPage: React.FC = () => {
+  return render('products');
 };
 
 function render(page : string) {
@@ -13,5 +17,3 @@ function render(page : string) {
     </div>
   );
 };
-
-export default LegacyOrderManagerPage;

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <form name="filtroProdotti" id="filtroProdotti" class="no-smoothState form-horizontal" method="post">
+            <div class="panel panel-default" style="margin-bottom:10px">
+                <div class="panel-heading">
+                    <h5 class="panel-title">
+                        Gestione prodotti
+                    </h5>
+                </div>
+                <div class="panel-body" id="filter">
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Tipologia prodotto</label>
+                        <div class="col-md-6 col-sm-10">
+                            <select id="FiltroTipologia" name="FiltroTipologia" onchange="loadCategorie(this.value);" class="form-control">
+                                <option value="">Selezionare una tipologia...</option>
+                            </select>
+                            <input type="hidden" id="idOrdineAequos" name="idOrdineAequos" />
+                        </div>
+                        <label class="col-md-1 col-sm-2 control-label">Stato</label>
+                        <div class="col-md-2 col-sm-10">
+                            <select id="FiltroOrdinabili" name="FiltroOrdinabili" class="form-control">
+                                <option value="">Tutti</option>
+                                <option value="true">Ordinabili</option>
+                                <option value="false">Non ordinabili</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Categoria prodotto</label>
+                        <div class="col-md-6 col-sm-10">
+                            <select id="FiltroCategoria" name="FiltroCategoria" class="form-control"></select>
+                        </div>
+                        <label class="col-md-1 col-sm-2 control-label">Annullati</label>
+                        <div class="col-md-2 col-sm-10">
+                            <select id="FiltroAnnullati" name="FiltroAnnullati" class="form-control">
+                                <option></option>
+                                <option value="true">Sì</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div id="toolbar" class="col-md-10 col-sm-10" style="text-align:right;">
+                            <button id="importaListinoExcel" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Importa il listino dei prodotti da un file excel"><!-- onclick="uploadListinoExcel();"-->
+                                <span class="glyphicon glyphicon-open"></span> Importa listino
+                            </button>
+                            <button id="esportaListinoExcel" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Esporta il listino dei prodotti in formato excel" onclick="downloadListinoExcel();">
+                                <span class="glyphicon glyphicon-save"></span> Esporta listino
+                            </button>
+                            <button id="nuovoProdottoButton" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Aggiungi un nuovo prodotto" onclick="newItem();">
+                                <span class="glyphicon glyphicon-plus"></span> Nuovo prodotto
+                            </button>
+                            <span id="lastSynchro"></span>
+                            <button id="sincroListinoButton" type="button" class="btn btn-default btn-sm btn-action" data-toggle="tooltip" data-placement="bottom" title="Sincronizza il listino dei prodotti con quello pubblicato da aequos per la tipologia selezionata" onclick="sincroListino();">
+                                <span class="glyphicon glyphicon-refresh"></span> Sincronizza listino
+                            </button>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-primary btn-sm pull-right" onclick="cerca()">
+                                <span class="glyphicon glyphicon-search"></span>
+                                Ricerca
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+
+        <div id="prodottiTable"></div>
+
+        <div id="editDialog" style="display:none;">
+            <div>Modifica prodotto</div>
+            <div style="overflow: hidden;">
+                <form name="editForm" id="editForm" method="post">
+                    <table>
+                        <tr>
+                            <td>Descrizione</td>
+                            <td><input id="Descrizione" name="Descrizione" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Codice (Ext)</td>
+                            <td><input id="CodiceEsterno" name="CodiceEsterno" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Unità di Misura</td>
+                            <td><input id="UnitaMisura" name="UnitaMisura" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Prezzo Unitario</td>
+                            <td><input id="PrezzoUnitario" name="PrezzoUnitario" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Unità di misura collo</td>
+                            <td><input id="UnitaMisuraCollo" name="UnitaMisuraCollo" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Peso collo</td>
+                            <td><input id="PesoCassa" name="PesoCassa" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Ordinabile a multipli di</td>
+                            <td><input id="Multiplo" name="Multiplo" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Tipo ordine</td>
+                            <td>
+                                <div id="idTipo"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Categoria Prodotto</td>
+                            <td>
+                                <div id="idCategoria"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Produttore</td>
+                            <td>
+                                <div id="idProduttore"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Cadenza</td>
+                            <td><input id="Cadenza" name="Cadenza" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td>Note</td>
+                            <td><input id="Note" name="Note" type="text" value=""></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <div id='SoloColloIntero'>Acquistabile solo a collo</div>
+                                <input id="Ordinabile" name="Ordinabile" type="hidden" value="true">
+                                <input id="Annullato" name="Annullato" type="hidden" value="false">
+                                <input id="OrdineAequos" name="OrdineAequos" type="hidden" value="false">
+                            </td>
+                        </tr>
+                    </table>
+                    <div><input style="margin-right: 5px;" type="button" id="Save" value="Conferma" /><input id="Cancel" type="button" value="Annulla" /></div>
+                </form>
+            </div>
+        </div>
+
+        <div style="display:none; padding: 12px 2px 8px 0px; position:relative;" id="uploadListino">
+            <form class="form-horizontal" enctype="multipart/form-data" method="post">
+                <div class="form-group form-group-sm" id="fileSmiDiv">
+                    <label class="col-sm-4 control-label">File da caricare:</label>
+                    <div class="col-sm-8">
+                        <input type="file" class="form-control" name="uploadedFile" id="uploadedFileListino" />
+                        <input type="hidden" id="uploadTipoOrdine" name="FiltroTipologia" />
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="checkFile('uploadedFileListino', 'dialog-footer-upload-listino');">Conferma</button>
+                    <button type="button" class="btn btn-default btn-sm" id="cancelUploadFileListino">Annulla</button>
+                </div>
+            </form>
+            <div id="dialog-footer-upload-listino" class="dialog-footer"></div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        /****************** OVERRIDE CRUD FUNCTIONS *************************/
+
+        function productAddRow(rowid, rowdata, position, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'products',
+                async: false,
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(rowdata),
+                success: function (data, status, xhr) {
+                    ajaxInsertCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        function productUpdateRow(rowid, rowdata, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'products/' + rowid,
+                async: false,
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(rowdata),
+                success: function (data, status, xhr) {
+                    ajaxUpdateCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        function productDeleteRow(rowid, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'delete',
+                url: gogas.api.baseUrl + 'products/' + rowid,
+                async: false,
+                success: function (data, status, xhr) {
+                    ajaxDeleteCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        /****************************************************************************************/
+
+        var editrow = -1;
+
+        var categorieSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'id' },
+                { name: 'description' }
+            ],
+            url: '',
+            type: 'get'
+        };
+
+        // prepare the data
+        var tableSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'descrizione' },
+                { name: 'unitamisura' },
+                { name: 'prezzounitario', type: 'float' },
+                { name: 'unitamisuracollo' },
+                { name: 'pesocassa', type: 'float' },
+                { name: 'cadenza' },
+                { name: 'codiceesterno' },
+                { name: 'note' },
+                { name: 'idproduttore' },
+                { name: 'nomeproduttore' },
+                { name: 'idtipo' },
+                { name: 'nometipo' },
+                { name: 'idcategoria' },
+                { name: 'nomecategoria' },
+                { name: 'ordinabile', type: 'boolean' },
+                { name: 'annullato', type: 'boolean' },
+                { name: 'solocollointero', type: 'boolean' },
+                { name: 'ordineaequos', type: 'boolean' },
+                { name: 'multiplo', type: 'float' }
+            ],
+            id: 'id',
+            url: '',
+            type: 'get',
+            data: {
+                category: $('#FiltroCategoria').val(),
+                available: $('#FiltroOrdinabili').val(),
+                cancelled: $('#FiltroAnnullati').val()
+            },
+            addrow: productAddRow,
+            updaterow: productUpdateRow,
+            deleterow: productDeleteRow
+        };
+
+        function newItem() {
+
+            editrow = -1;
+
+            $('#Descrizione').val("");
+            $('#UnitaMisura').val("");
+            $('#PrezzoUnitario').val("");
+            $('#UnitaMisuraCollo').val("");
+            $('#PesoCassa').val("");
+            //$('#idTipo').jqxDropDownList('selectIndex', 0);
+            $('#idCategoria').jqxDropDownList("val", '');
+            $('#idProduttore').jqxDropDownList('selectIndex', 0);
+            $('#Cadenza').val("");
+            $('#CodiceEsterno').val("");
+            $('#Note').val("");
+            $('#Multiplo').val("");
+            $('#SoloColloIntero').jqxCheckBox({ checked: false });
+            $('#Ordinabile').val(true);
+            $('#Annullato').val(false);
+            $('#OrdineAequos').val(false);
+
+            disableDialogFields(false);
+
+            $('#editDialog').jqxWindow('open');
+        }
+
+        function disableDialogFields(disabled) {
+            //disabilita modifica campi se ordine aequos
+            $("#Descrizione").jqxInput({disabled: disabled });
+            $("#UnitaMisura").jqxInput({disabled: disabled });
+            $("#PrezzoUnitario").jqxInput({disabled: disabled });
+            $("#UnitaMisuraCollo").jqxInput({disabled: disabled });
+            $("#PesoCassa").jqxInput({disabled: disabled });
+            $("#Cadenza").jqxInput({disabled: disabled });
+            $("#CodiceEsterno").jqxInput({disabled: disabled });
+            $("#idProduttore").jqxDropDownList({disabled: disabled });
+            //$("#idTipo").jqxDropDownList({disabled: disabled });
+            $("#idCategoria").jqxDropDownList({disabled: disabled });
+        }
+
+        function loadCategorie(idTipologiaOrdine) {
+            $("#FiltroCategoria").select2();
+            $("#lastSynchro").html("");
+            toggleActionButtons("");
+
+            if (idTipologiaOrdine == null || idTipologiaOrdine == '') {
+                return;
+            }
+
+            $("#uploadTipoOrdine").val(idTipologiaOrdine);
+
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'category/list/' + idTipologiaOrdine,
+                async: false,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', returnObj.errorMessage);
+                        return;
+                    }
+
+                    $('#FiltroCategoria').html('<option value="">Tutte</option>');
+
+                    for (var i = 0; i < data.length; i++)
+                        $('#FiltroCategoria').append('<option value="' + data[i].id + '">' + data[i].description + '</option>');
+
+                    $("#FiltroCategoria").select2();
+
+                    updateActionButtons(idTipologiaOrdine);
+
+                    $('#idTipo').val(idTipologiaOrdine);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, null);
+                }
+            });
+        }
+
+        function sincroListino() {
+
+            if ($('#FiltroTipologia').val() == '') {
+                createNotification('error', 'Selezionare una tipologia di ordine');
+                return;
+            }
+
+            if (!confirm("Il listino della tipologia di ordine selezionata verrà sincronizzato, continuare?"))
+                return;
+
+            $('#loadingBox').width('250px');
+            $('#loadingMessage').text('Sincronizzazione listino in corso...');
+            $('body').addClass('loading');
+
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'products/' + $('#FiltroTipologia').val() + '/sync',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        createNotification('info', "Sincronizzazione effettuata con successo");
+                        $("#lastSynchro").html("(Ultima sincronizzazione: " + data.lastSynchro + ")");
+                        $("#prodottiTable").jqxGrid("updatebounddata");
+                    }
+                },
+                error: ajaxErrorNoCommit,
+                complete: function (xhr, status) {
+                    $('body').removeClass("loading");
+                }
+            });
+        }
+
+        function checkFile(id, footerId) {
+            if ($('#' + id).val() == '') {
+                fileNotification = createFooterAlert('#' + footerId, 'error', 'Selezionare il file da inviare.');
+                $('#' + footerId).css('height', '14px');
+                return false;
+            }
+
+            $('#loadingBox').width('250px');
+            $('#loadingMessage').text('Caricamento listino in corso...');
+            $('body').addClass('loading');
+
+            var file = document.getElementById(id).files[0];
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'products/' + $('#FiltroTipologia').val() + '/import',
+                data: formData,
+                async: true,
+                processData: false,
+                contentType: false,
+                success: function (data, status, xhr) {
+                    console.log(data);
+                    $('body').removeClass('loading');
+                    createNotification('info', "Listino caricato con successo (" + data.updatedProducts + " articoli)");
+                    $('#importaListinoExcel').qtip('hide');
+                    cerca();
+                },
+                error: function(xhr, status, error) {
+                    $('body').removeClass('loading');
+                    ajaxErrorNoCommit(xhr, status, error);
+                }
+            });
+        }
+
+        function downloadListinoExcel() {
+            document.location.href = gogas.api.baseUrl + 'products/list/' + $('#FiltroTipologia').val() + '/export';
+        }
+
+        function updateActionButtons(idTipologiaOrdine) {
+
+            if (idTipologiaOrdine == null || idTipologiaOrdine == "") {
+                $("#lastSynchro").html("");
+                $("#idOrdineAequos").val("");
+                toggleActionButtons("");
+                return;
+            }
+
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'ordertype/' + idTipologiaOrdine + '/synchro/info',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', data.errorMessage);
+                        return;
+                    }
+
+                    if (data.aequosOrderId == null) {
+                        $("#lastSynchro").html("");
+                        $("#idOrdineAequos").val("");
+                        toggleActionButtons("importaListinoExcel,esportaListinoExcel,nuovoProdottoButton");
+                    } else {
+                        $("#idOrdineAequos").val(data.aequosOrderId);
+                        $("#lastSynchro").html("(Ultima sincronizzazione: " + data.lastSynchro + ")");
+                        toggleActionButtons("sincroListinoButton");
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function cerca() {
+            tableSource.url = gogas.api.baseUrl + 'products/list/' + $('#FiltroTipologia').val(),
+            tableSource.data = {
+                category: $('#FiltroCategoria').val(),
+                available: $('#FiltroOrdinabili').val(),
+                cancelled: $('#FiltroAnnullati').val()
+            };
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT});
+
+            $("#prodottiTable").jqxGrid({ source: dataAdapter });
+        }
+
+        function documentReady() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'ordertype/select/manager',
+                data: { firstEmpty: false },
+                async: true,
+                success: function (data, status, xhr) {
+                    var filtroTipologia = $("#FiltroTipologia").select2({
+                        placeholder: 'Selezionare una tipologia...',
+                        data: convertItemsForSelect2(data),
+                        allowClear: true
+                    });
+
+                    documentReadyAsynch();
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return true;
+        }
+
+        function documentReadyAsynch() {
+
+            $('#Descrizione').jqxInput();
+            $('#UnitaMisura').jqxInput();
+            $('#PrezzoUnitario').jqxInput();
+            $('#UnitaMisuraCollo').jqxInput();
+            $('#PesoCassa').jqxInput();
+            $('#Cadenza').jqxInput();
+            $('#CodiceEsterno').jqxInput();
+            $('#Note').jqxInput();
+            $('#Multiplo').jqxInput();
+            $('#SoloColloIntero').jqxCheckBox({ width: 150, height: 20 });
+
+            var produttoriSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'id' },
+                    { name: 'description' }
+                ],
+                url: gogas.api.baseUrl + 'supplier/select',
+                type: 'get'
+            };
+
+            var produttoriAdapter = new $.jqx.dataAdapter(produttoriSource, { beforeSend: setJWT });
+
+            $('#idProduttore').jqxDropDownList({
+                source: produttoriAdapter,
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20
+            });
+
+            var tipoSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'id' },
+                    { name: 'description' }
+                ],
+                url: gogas.api.baseUrl + 'ordertype/select/manager',
+                data: { firstEmpty: true },
+                type: 'get'
+            };
+
+            var tipoAdapter = new $.jqx.dataAdapter(tipoSource, { beforeSend: setJWT });
+
+            $('#idTipo').jqxDropDownList({
+                source: tipoAdapter,
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20,
+                disabled: true
+            });
+
+            $('#idTipo').on('change', function (event) {
+                var args = event.args;
+                if (args.item.value != null && args.item.value != '') {
+                    categorieSource.url = gogas.api.baseUrl + 'category/list/' + args.item.value;
+                    var adapter = new $.jqx.dataAdapter(categorieSource, { beforeSend: setJWT });
+                    $("#idCategoria").jqxDropDownList({ source: adapter });
+                }
+            });
+
+            $('#idCategoria').jqxDropDownList({
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20,
+                disabled: true
+            });
+
+            $("#editDialog").jqxWindow({
+                width: 350,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#Cancel"),
+                modalOpacity: 0.3
+            });
+
+            $("#Cancel").jqxButton();
+            $("#Save").jqxButton();
+            // update the edited row when the user clicks the 'Save' button.
+            $("#Save").click(function () {
+                $('#editForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var produttoreItem = $("#idProduttore").jqxDropDownList('getSelectedItem');
+                    var tipologiaItem = $("#idTipo").jqxDropDownList('getSelectedItem');
+                    var categoriaItem = $("#idCategoria").jqxDropDownList('getSelectedItem');
+                    var multiploTxt = $("#Multiplo").val();
+
+                    var row = {
+                        descrizione: $("#Descrizione").val(),
+                        unitamisura: $("#UnitaMisura").val(),
+                        prezzounitario: parseFloat($("#PrezzoUnitario").val()),
+                        unitamisuracollo: $("#UnitaMisuraCollo").val(),
+                        pesocassa: parseFloat($("#PesoCassa").val()),
+                        cadenza: $("#Cadenza").val(),
+                        codiceesterno: $("#CodiceEsterno").val(),
+                        note: $('#Note').val(),
+                        idproduttore: produttoreItem.value,
+                        nomeproduttore: produttoreItem.label,
+                        idtipo: tipologiaItem.value,
+                        nometipo: tipologiaItem.label,
+                        idcategoria: categoriaItem.value,
+                        nomecategoria: categoriaItem.label,
+                        ordinabile: $('#Ordinabile').val(),
+                        annullato: $('#Annullato').val(),
+                        ordineaequos: $('#OrdineAequos').val() == 'true',
+                        solocollointero: $('#SoloColloIntero').jqxCheckBox('checked'),
+                        multiplo: multiploTxt != null && multiploTxt != '' ? parseFloat(multiploTxt) : null
+                    };
+
+                    if (editrow >= 0) {
+                        var rowID = $('#prodottiTable').jqxGrid('getrowid', editrow);
+                        $('#prodottiTable').jqxGrid('updaterow', rowID, row);
+                    } else
+                        $('#prodottiTable').jqxGrid('addrow', null, row);
+
+                    $("#editDialog").jqxWindow('hide');
+                });
+            });
+
+            //Init validator
+            $('#editForm').jqxValidator({
+                rules: [
+                    { input: '#Descrizione', message: 'La descrizione è obbligatoria', action: 'blur', rule: 'required' },
+                    { input: '#UnitaMisura', message: 'L\'unità di misura è obbligatoria', action: 'blur', rule: 'required' },
+                    { input: '#PrezzoUnitario', message: 'Il prezzo è obbligatorio', action: 'blur', rule: 'required' },
+                    { input: '#PrezzoUnitario', message: 'Inserire un numero valido', action: 'keyup, blur', rule: 'number' },
+                    //{ input: '#UnitaMisuraCollo', message: 'L\'unità di misura del collo è obbligatoria', action: 'blur', rule: 'required' },
+                    { input: '#PesoCassa', message: 'Il peso collo è obbligatorio', action: 'blur', rule: 'required' },
+                    { input: '#PesoCassa', message: 'Inserire un numero valido', action: 'keyup, blur', rule: 'number' },
+                    { input: '#PesoCassa', message: 'Inserire un numero maggiore di zero', action: 'keyup, blur',
+                        rule: function() {
+                            var peso = $('#PesoCassa').val();
+                            return peso>0
+                        }
+                    },
+                    { input: '#idProduttore', message: 'Il produttore è obbligatorio', action: 'blur',
+                        rule: function () {
+                            //cambiare in div altrimenti non funzionano eventi
+                            return $("#idProduttore").jqxDropDownList('getSelectedIndex') > 0;
+                        }
+                    },
+                    { input: '#idTipo', message: 'Il tipo di ordine è obbligatorio', action: 'blur',
+                        rule: function () {
+                            //cambiare in div altrimenti non funzionano eventi
+                            return $("#idTipo").jqxDropDownList('getSelectedIndex') > 0;
+                        }
+                    },
+                    { input: '#idCategoria', message: 'La categoria di prodotto è obbligatoria', action: 'blur',
+                        rule: function () {
+                            return $("#idCategoria").jqxDropDownList('getSelectedIndex') > -1;
+                        }
+                    },
+                    { input: '#Multiplo', message: 'Inserire un numero valido', action: 'keyup, blur', rule: 'number' },
+                    { input: '#Multiplo', message: 'Inserire un numero valido', action: 'keyup, blur',
+                        rule: function () {
+                            var multiplo = $("#Multiplo").val();
+                            if (multiplo != null && multiplo != '')
+                                return parseFloat(multiplo) > 0;
+                            else
+                                return true;
+                        }
+                    },
+                    { input: '#UnitaMisuraCollo', message: 'L\'unità di misura è obbligatoria se acquistabile solo a collo', action: 'blur',
+                        rule: function () {
+                            if ($('#SoloColloIntero').jqxCheckBox('checked'))
+                                return $('#UnitaMisuraCollo').val() != '';
+                            else
+                                return true;
+                        }
+                    }
+                ]
+            });
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT});
+
+            $("#prodottiTable").jqxGrid({
+                source: dataAdapter,
+                editable: true,
+                enabletooltips: true,
+                width: $(window).width() - 20,
+                height: $(window).height() - 305,
+                altrows: true,
+                sortable: true,
+                columns: [
+                    { text: 'A<br/>listino', datafield: 'ordinabile', width: '40px', columntype: 'checkbox', sortable: false },
+                    { text: 'Descrizione', datafield: 'descrizione', width: 'auto', cellbeginedit: function (row) { return false } },
+                    { text: 'U.M.', datafield: 'unitamisura', width: '35px', cellbeginedit: function (row) { return false } },
+                    { text: 'Prezzo<br/>unità', datafield: 'prezzounitario', cellsalign: 'right', cellsformat: 'c2', width: '55px', cellbeginedit: function (row) { return false } },
+                    { text: 'U.M.<br/>Collo', datafield: 'unitamisuracollo', width: '50px', cellbeginedit: function (row) { return false } },
+                    { text: 'Peso<br/>Collo', datafield: 'pesocassa', width: '45px', cellsformat: 'f2', cellbeginedit: function (row) { return false } },
+                //{ text: 'Tipo Ord.', datafield: 'idtipo', displayfield: 'nometipo', width: 100, cellbeginedit: function (row) { return false } },
+                    {text: 'Categoria', datafield: 'idcategoria', displayfield: 'nomecategoria', width: '80px', cellbeginedit: function (row) { return false } },
+                    { text: 'Produttore', datafield: 'idproduttore', displayfield: 'nomeproduttore', width: '150px', cellbeginedit: function (row) { return false } },
+                    { text: 'Cadenza', datafield: 'cadenza', width: '60px', cellbeginedit: function (row) { return false } },
+                    { text: 'Solo<br/>collo', datafield: 'solocollointero', width: '35px', sortable: false, columntype: 'checkbox', cellbeginedit: function (row) { return false } },
+                //{ text: 'Annullato', datafield: 'annullato', width: 40, columntype: 'checkbox' },
+                    {text: '', datafield: 'edit', width: '70px', sortable: false, columntype: 'button',
+                    cellsrenderer: function () {
+                        return "Modifica";
+                    },
+                    buttonclick: function (row) {
+                        // open the popup window when the user clicks a button.
+                        editrow = row;
+                        var offset = $("#prodottiTable").offset();
+                        //$("#editDialog").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60} });
+                        // get the clicked row's data and initialize the input fields.
+                        var dataRecord = $("#prodottiTable").jqxGrid('getrowdata', editrow);
+
+                        $("#Descrizione").val(dataRecord.descrizione);
+                        $("#UnitaMisura").val(dataRecord.unitamisura);
+                        $("#PrezzoUnitario").val(dataRecord.prezzounitario);
+                        $("#UnitaMisuraCollo").val(dataRecord.unitamisuracollo);
+                        $("#PesoCassa").val(dataRecord.pesocassa);
+                        $("#Cadenza").val(dataRecord.cadenza);
+                        $("#CodiceEsterno").val(dataRecord.codiceesterno);
+                        $('#Note').val(dataRecord.note);
+                        $('#Ordinabile').val(dataRecord.ordinabile);
+                        $('#Annullato').val(dataRecord.annullato);
+                        $('#SoloColloIntero').jqxCheckBox({ checked: dataRecord.solocollointero });
+                        $("#idProduttore").jqxDropDownList('val', dataRecord.idproduttore.toUpperCase());
+                        $("#idTipo").jqxDropDownList('val', dataRecord.idtipo);
+                        $('#OrdineAequos').val(dataRecord.ordineaequos);
+                        $('#Multiplo').val(dataRecord.multiplo);
+
+                        categorieSource.url = gogas.api.baseUrl + 'category/list/' + dataRecord.idtipo;
+                        var adapter = new $.jqx.dataAdapter(categorieSource, { beforeSend: setJWT });
+                        $("#idCategoria").jqxDropDownList({ source: adapter });
+                        $("#idCategoria").on('bindingComplete', function (event) {
+                            $("#idCategoria").jqxDropDownList('val', dataRecord.idcategoria.toUpperCase());
+                        });
+
+                        //disabilita modifica campi se ordine aequos
+                        disableDialogFields(dataRecord.ordineaequos);
+
+                        // show the popup window.
+                        $("#editDialog").jqxWindow('open');
+                    }
+                },
+                    { text: '', datafield: 'delete', width: '70px', sortable: false, columntype: 'button',
+                        cellsrenderer: function () {
+                            return "Elimina";
+                        },
+                        buttonclick: function (row) {
+                            // open the popup window when the user clicks a button.
+                            var dataRecord = $("#prodottiTable").jqxGrid('getrowdata', row);
+
+                            if (dataRecord.ordineaequos) {
+                                createNotification('info', "Il prodotto " + dataRecord.descrizione + " non può essere eliminato perchè inserito automaticamente");
+                                return;
+                            }
+
+                            if (confirm("Il prodotto " + dataRecord.descrizione + " verrà cancellato, continuare?"))
+                                $('#prodottiTable').jqxGrid('deleterow', $('#prodottiTable').jqxGrid('getrowid', row));
+                        }
+                    }
+                ],
+                localization: localizationobj
+            });
+
+            $("#FiltroCategoria,#FiltroOrdinabili,#FiltroAnnullati").select2({ minimumResultsForSearch: 5 });
+
+            //popover for smi upload
+            $('#importaListinoExcel').qtip({
+                content: {
+                    //title: 'Cambio password',
+                    text: $("#uploadListino")
+                },
+                show: {
+                    event: 'click',
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 1, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                hide: {
+                    event: 'click unfocus',
+                    target: $('#cancelUploadFileListino'),
+                    effect: function (offset) {
+                        $(this).fadeTo(250, 0, 'easeInExpo'); // "this" refers to the tooltip
+                    }
+                },
+                style: {
+                    classes: 'qtip-rounded qtip-shadow qtip-jtools'
+                },
+                position: {
+                    at: 'bottom center',
+                    my: 'top center'
+                },
+                events: {
+                    hidden: function (event, api) {
+                        $("#uploadedFileListino").val("");
+
+                        if (fileNotification != null && fileNotification.remove) {
+                            fileNotification.remove();
+                            $('#dialog-footer-upload-listino').css('height', '0px');
+                        }
+                    }
+                }
+            });
+
+            $( window ).resize(function() {
+                $("#prodottiTable").jqxGrid({ width: $( window ).width() - 20 });
+                $("#prodottiTable").jqxGrid({ height: $( window ).height() - 305});
+            });
+
+            //complete page loading
+            pageLoaded();
+        }
+    </script>
+</html>
