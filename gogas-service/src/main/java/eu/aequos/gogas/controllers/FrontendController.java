@@ -12,19 +12,20 @@ public class FrontendController {
 
     @GetMapping(value = {"/", "/login",
         "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
-        "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers"})
+        "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers",
+        "/legacy/orderslist", "/legacy/products", "/legacy/suppliers", "/legacy/configuration"})
     public String home() {
         return "singlepage";
     }
 
     @IsOrderManager
-    @GetMapping(value = {"/legacy/orders-list"})
+    @GetMapping(value = {"/legacy-ui/orders-list"})
     public String legacyOrdersList() {
         return "legacy/referenti/orders-list";
     }
 
     @IsOrderManager
-    @GetMapping(value = {"/legacy/order-details"})
+    @GetMapping(value = {"/legacy-ui/order-details"})
     public String legacyOrderDetails(@RequestParam String orderId,
                                      Model model) {
         model.addAttribute("orderId", orderId);
@@ -32,7 +33,7 @@ public class FrontendController {
     }
 
     @IsOrderManager
-    @GetMapping(value = {"/legacy/order-details-byuser"})
+    @GetMapping(value = {"/legacy-ui/order-details-byuser"})
     public String legacyOrderDetailsByUser(@RequestParam String orderId,
                                            Model model) {
         model.addAttribute("orderId", orderId);
@@ -40,19 +41,19 @@ public class FrontendController {
     }
 
     @IsOrderManager
-    @GetMapping(value = {"/legacy/products"})
+    @GetMapping(value = {"/legacy-ui/products"})
     public String legacyProducts() {
         return "legacy/admin/products";
     }
 
     @IsOrderManager
-    @GetMapping(value = {"/legacy/suppliers"})
+    @GetMapping(value = {"/legacy-ui/suppliers"})
     public String legacySuppliers() {
         return "legacy/admin/suppliers";
     }
 
     @IsAdmin
-    @GetMapping(value = {"/legacy/configuration"})
+    @GetMapping(value = {"/legacy-ui/configuration"})
     public String legacyConfiguration() {
         return "legacy/admin/configuration";
     }
