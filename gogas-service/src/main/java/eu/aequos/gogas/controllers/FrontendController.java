@@ -43,4 +43,10 @@ public class FrontendController {
     public String legacyProducts() {
         return "legacy/admin/products";
     }
+
+    @IsOrderManager
+    @GetMapping(value = {"/legacy/suppliers"})
+    public String legacySuppliers() {
+        return "legacy/admin/suppliers";
+    }
 }

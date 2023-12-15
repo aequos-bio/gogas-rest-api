@@ -17,7 +17,7 @@ import ManagersPage from './admin/managers/ManagersPage';
 import PrivateRoute from '../components/PrivateRoute';
 import { init } from '../store/features/info.slice';
 import { useAppDispatch } from '../store/store';
-import { LegacyOrderManagerPage, LegacyProductsManagerPage } from './legacy/LegacyFrame';
+import { LegacyOrderManagerPage, LegacyProductsManagerPage, LegacySuppliersManagerPage } from './legacy/LegacyFrame';
 
 const privateRoutes = [
   { path: '/', component: HomePage },
@@ -34,6 +34,7 @@ const privateRoutes = [
   { path: '/managers', component: ManagersPage },
   { path: '/legacy/orderslist', component: LegacyOrderManagerPage },
   { path: '/legacy/products', component: LegacyProductsManagerPage },
+  { path: '/legacy/suppliers', component: LegacySuppliersManagerPage },
 ];
 
 export const Routes = () => {

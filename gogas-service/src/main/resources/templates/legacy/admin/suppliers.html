@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+<div layout:fragment="content">
+    <input type="button" value="Nuovo" class="Bottone" onclick="newItem();" />
+    <br /><br />
+
+    <div id="produttoriTable"></div>
+
+    <div id="editDialog">
+        <div>Modifica produttore</div>
+        <div style="overflow: hidden;">
+            <form name="editForm" id="editForm" method="post">
+                <table>
+                    <tr>
+                        <td>Ragione Sociale</td>
+                        <td><input id="RagioneSociale" name="RagioneSociale" type="text" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Provincia</td>
+                        <td><input id="Provincia" name="Provincia" type="text" value=""></td>
+                    </tr>
+                </table>
+                <div>
+                    <input style="margin-right: 5px;" type="button" id="Save" value="Conferma" /><input id="Cancel" type="button" value="Annulla" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="script">
+    function supplierAddRow(rowid, rowdata, position, commit) {
+        $.ajax({
+            dataType: 'json',
+            method: 'post',
+            url: gogas.api.baseUrl + 'supplier',
+            async: false,
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(rowdata),
+            success: function (data, status, xhr) {
+                ajaxInsertCommit(data, status, xhr, commit);
+            },
+            error: function (xhr, status, error) {
+                ajaxError(xhr, error, commit);
+            }
+        });
+    }
+
+    function supplierUpdateRow(rowid, rowdata, commit) {
+        $.ajax({
+            dataType: 'json',
+            method: 'put',
+            url: gogas.api.baseUrl + 'supplier/' + rowid,
+            async: false,
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(rowdata),
+            success: function (data, status, xhr) {
+                ajaxUpdateCommit(data, status, xhr, commit);
+            },
+            error: function (xhr, status, error) {
+                ajaxError(xhr, error, commit);
+            }
+        });
+    }
+
+    function supplierDeleteRow(rowid, commit) {
+        $.ajax({
+            dataType: 'json',
+            method: 'delete',
+            url: gogas.api.baseUrl + 'supplier/' + rowid,
+            async: false,
+            success: function (data, status, xhr) {
+                ajaxDeleteCommit(data, status, xhr, commit);
+            },
+            error: function (xhr, status, error) {
+                ajaxError(xhr, error, commit);
+            }
+        });
+    }
+
+    /****************************************************************************************/
+
+    var editrow = -1;
+
+    function newItem() {
+        editrow = -1;
+
+        $('#RagioneSociale').val("");
+        $('#Provincia').val("");
+
+        $('#editDialog').jqxWindow('open');
+    }
+
+    function documentReady() {
+
+        //Init popup and input fields
+        $("#RagioneSociale").jqxInput();
+        $('#Provincia').jqxInput();
+
+        $("#editDialog").jqxWindow({
+            width: 250,
+            resizable: false,
+            isModal: true,
+            autoOpen: false,
+            cancelButton: $("#Cancel"),
+            modalOpacity: 0.3
+        });
+
+        $("#Cancel").jqxButton();
+        $("#Save").jqxButton();
+        // update the edited row when the user clicks the 'Save' button.
+        $("#Save").click(function () {
+            $('#editForm').jqxValidator('validate', function (isValid) {
+
+                if (!isValid)
+                    return;
+
+                var previousData = $('#produttoriTable').jqxGrid('getrowdata', editrow);
+
+                var row = {
+                    ragionesociale: $("#RagioneSociale").val(),
+                    provincia: $("#Provincia").val(),
+                    idesterno: previousData != null ? previousData.idesterno : null
+                };
+
+                if (editrow >= 0) {
+                    var rowID = $('#produttoriTable').jqxGrid('getrowid', editrow);
+                    $('#produttoriTable').jqxGrid('updaterow', rowID, row);
+                } else
+                    $('#produttoriTable').jqxGrid('addrow', null, row);
+
+                $("#editDialog").jqxWindow('hide');
+            });
+        });
+
+        //Init validator
+        $('#editForm').jqxValidator({
+            rules: [
+                { input: '#RagioneSociale', message: 'La ragione sociale è obbligatoria', action: 'blur', rule: 'required' },
+                { input: '#Provincia', message: 'La provincia è obbligatoria', action: 'blur', rule: 'required' }
+            ]
+        });
+
+        // prepare the data
+        var tableSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'ragionesociale' },
+                { name: 'provincia' },
+                { name: 'idesterno' }
+            ],
+            id: 'id',
+            url: gogas.api.baseUrl + 'supplier/list',
+            type: 'get',
+            addrow: supplierAddRow,
+            updaterow: supplierUpdateRow,
+            deleterow: supplierDeleteRow
+        };
+
+        var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+        $("#produttoriTable").jqxGrid({
+            source: dataAdapter,
+            editable: false,
+            enabletooltips: true,
+            width: '705px',
+            height: $(window).height() - 170,
+            sortable: true,
+            columns: [
+                { text: 'Ragiona sociale', datafield: 'ragionesociale', width: 400 },
+                { text: 'Provincia', datafield: 'provincia', width: 70 },
+                { text: 'Codice<br/>esterno', datafield: 'idesterno', width: 70 },
+                { text: '', datafield: 'edit', width: 73, sortable: false, columntype: 'button',
+                    cellsrenderer: function () {
+                        return "Modifica";
+                    },
+                    buttonclick: function (row) {
+
+                        var dataRecord = $("#produttoriTable").jqxGrid('getrowdata', row);
+
+                        if (dataRecord.idesterno != null) {
+                            createNotification('info', "Il produttore non è modificabile perchè inserito automaticamente");
+                            return;
+                        }
+
+                        // open the popup window when the user clicks a button.
+                        editrow = row;
+                        var offset = $("#produttoriTable").offset();
+                        $("#editDialog").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60} });
+                        // get the clicked row's data and initialize the input fields.
+
+                        $("#RagioneSociale").val(dataRecord.ragionesociale);
+                        $("#Provincia").val(dataRecord.provincia);
+
+                        // show the popup window.
+                        $("#editDialog").jqxWindow('open');
+                    }
+                },
+                { text: '', datafield: 'delete', width: 72, sortable: false, columntype: 'button',
+                    cellsrenderer: function () {
+                        return "Elimina";
+                    },
+                    buttonclick: function (row) {
+                        // open the popup window when the user clicks a button.
+                        var dataRecord = $("#produttoriTable").jqxGrid('getrowdata', row);
+
+                        if (dataRecord.idesterno != null) {
+                            createNotification('info', "Il produttore non è eliminabile perchè inserito automaticamente");
+                            return;
+                        }
+
+                        if (confirm("Il produttore " + dataRecord.ragionesociale + " verrà cancellato, continuare?"))
+                            $('#produttoriTable').jqxGrid('deleterow', $('#produttoriTable').jqxGrid('getrowid', row));
+                    }
+                }
+            ],
+            localization: localizationobj
+        });
+
+        $(window).resize(function () {
+            $("#produttoriTable").jqxGrid({ height: $(window).height() - 170 });
+        });
+    }
+</script>
+</html>
