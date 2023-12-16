@@ -9,6 +9,9 @@ import {
   CodeSharp as CodeIcon,
   AccountBalanceSharp as AccountBalanceIcon,
   ReceiptSharp as BillIcon,
+  StoreSharp as StoreIcon,
+  ShoppingBasketSharp as ShoppingBasketIcon,
+  ShoppingCartSharp as ShoppingCartIcon
 } from '@material-ui/icons';
 import { MenuChapter } from './types';
 
@@ -23,6 +26,9 @@ export const menuIcons = [
   <CodeIcon />,
   <AccountBalanceIcon />,
   <BillIcon />,
+  <StoreIcon />,
+  <ShoppingBasketIcon />,
+  <ShoppingCartIcon />
 ];
 
 export const menuItems: MenuChapter[] = [
@@ -77,9 +83,15 @@ export const menuItems: MenuChapter[] = [
         icon: 5,
       },
       { label: 'Referenti', url: '/managers', restrictions: ['A'], icon: 6 },
-      { label: 'Prodotti', url: '/legacy/products', restrictions: ['A'], icon: 4 },
-      { label: 'Produttori', url: '/legacy/suppliers', restrictions: ['A'], icon: 4 },
+      { label: 'Produttori', url: '/legacy/suppliers', restrictions: ['A'], icon: 10 },
       { label: 'Configurazione generale', url: '/legacy/configuration', restrictions: ['A'], icon: 4 },
+    ],
+  },
+  {
+    label: 'Referente',
+    items: [
+      { label: 'Prodotti', url: '/legacy/products', restrictions: ['A'], icon: 12 },
+      { label: 'Gestione ordini', url: `/legacy/orderslist`, icon: 11 },
     ],
   },
   {
@@ -92,14 +104,4 @@ export const menuItems: MenuChapter[] = [
       },
     ],
   },
-  {
-      label: 'Referente',
-      items: [
-        {
-          label: 'Gestione ordini',
-          url: `/legacy/orderslist`,
-          icon: 4,
-        },
-      ],
-    },
 ];

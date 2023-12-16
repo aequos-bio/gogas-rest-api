@@ -18,11 +18,11 @@ import PrivateRoute from '../components/PrivateRoute';
 import { init } from '../store/features/info.slice';
 import { useAppDispatch } from '../store/store';
 import {
-    LegacyOrderManagerPage,
-    LegacyProductsManagerPage,
-    LegacySuppliersManagerPage,
-    LegacyConfigurationPage
-} from './legacy/LegacyFrame';
+  LegacyOrderManagerPage,
+  LegacyProductsManagerPage,
+  LegacySuppliersManagerPage,
+  LegacyConfigurationPage
+} from './legacy/LegacyPage';
 
 const privateRoutes = [
   { path: '/', component: HomePage },

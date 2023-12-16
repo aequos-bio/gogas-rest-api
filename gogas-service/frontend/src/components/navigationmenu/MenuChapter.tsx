@@ -9,12 +9,13 @@ const drawerWidth = '280px';
 const useStyles = makeStyles((theme) => ({
   menuContainer: {
     width: drawerWidth,
-    padding: theme.spacing(1, 0),
+    padding: theme.spacing(0, 0, 1),
     display: 'flex',
     flexDirection: 'column',
   },
   menuChapter: {
     paddingLeft: theme.spacing(2),
+    fontSize: '70%'
   },
   menuItemList: {
     padding: 0,
