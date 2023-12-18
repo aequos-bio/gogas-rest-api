@@ -35,7 +35,7 @@
                     <span class="glyphicon glyphicon-copy"></span> Invia pesi ad aequos
                 </button>
             </div>
-            <div>
+            <div style="display: inline">
                 <button id="synchro" style="display:none" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Sincronizza le quantità ordinate ad aequos con quanto effettivamente consegnato e fatturato al GAS" onclick="sincronizzaOrdine();">
                     <span class="glyphicon glyphicon-refresh"></span> Sincronizza ordine aequos
                 </button>
@@ -600,7 +600,7 @@
                 return;
 
             if (orderDetails.editable) {
-                $('#edit_buttons').show();
+                $('#edit_buttons').css('display', 'inline');
                 $('#jqxExpanderEditable').show();
 
                 if (orderDetails.idaequos != null)
