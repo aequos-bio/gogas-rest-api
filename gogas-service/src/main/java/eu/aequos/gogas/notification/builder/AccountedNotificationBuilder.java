@@ -22,7 +22,7 @@ public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public boolean eventSupported(OrderEvent orderEvent) {
-        return OrderEvent.Opened.equals(orderEvent);
+        return OrderEvent.Accounted.equals(orderEvent);
     }
 
     @Override
