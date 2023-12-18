@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div style="margin-bottom: 10px; width: 835px">
+            Ordine <span id="nomeTipologiaOrdine"></span> in consegna il <span id="dataConsegnaOrdine"></span>
+            <input type="button" style="float:right" value="Esporta in excel" onclick="document.location.href=gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/export'" />
+        </div>
+
+        <div id='jqxWidget'>
+            <div id="summaryTable" style="float:left"></div>
+            <div id="rightColumn" style="float:left">
+                <div id="amiciDetailTable" style="float:left; margin-left:8px;"></div>
+            </div>
+        </div>
+
+        <div id="nuovoOrdineDialog" style="display:none;">
+            <div>Aggiungi ordine utente</div>
+            <div style="overflow: hidden;">
+                <form id="nuovoOrdineForm" action="">
+                    <table>
+                        <tr><td><label>Prodotto:</label></td><td><input type="text" style="width:100%" disabled="disabled" id="nomeProdotto" name="nomeProdotto" /></td></tr>
+                        <tr><td><label>Utente:</label></td><td><div id="nomeUtente"></div></td></tr>
+                        <tr><td><label>Qta:</label></td><td><div id="nuovaQta" style="width:100%"></div></td></tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="saveNuovoOrdine" value="Conferma" />
+                        <input id="cancelNuovoOrdine" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        var summaryTableSelectedRow = -1;
+        var summaryTableSelectedRowUM = '';
+        var editing = false;
+
+        var nonOrdinantiSource = {
+            datatype: "json",
+            datafields: [
+                { name: 'description' },
+                { name: 'id' }
+            ],
+            url: '',
+            type: 'get'
+        };
+
+        function qtaCheck(value, colname) {
+            if (value == '' || value.match(/^\d(,\d{1,2})?$/))
+                return [true, ""];
+            else
+                return [false, "Inserire un numero valido"];
+        }
+
+        function reloadTable() {
+            $('#listinoTable').trigger('reloadGrid');
+            lastsel = -1;
+        }
+
+        function unsetSelected() {
+            lastsel = -1;
+        }
+
+        var toThemeProperty = function (className) {
+            return className + " " + className + "-" + theme;
+        }
+
+        function barrato(row, columnfield, value) {
+            if ($("#summaryTable").jqxGrid('getrowdata', row).annullato)
+                return "barrato";
+        }
+
+        function barratoDetail(row, columnfield, value) {
+           if ($("#amiciDetailTable").jqxGrid('getrowdata', row).annullato)
+                return "barrato";
+        }
+
+        var groupsrenderer = function (text, group, expanded, data) {
+            if (data.subItems.length > 0)
+                var aggregate = this.getcolumnaggregateddata(data.groupcolumn.datafield, ['count'], true, data.subItems);
+
+            return "<div class='jqx-grid-groups-row' style='position:absolute; background-color:#" + data.subItems[0].categoryColor + "; width: 100%; height: 20px; top: 8px; padding-top: 5px;'><span>" + text + "</span> <span class='jqx-grid-groups-row-details'>(" + aggregate.count  + ")</span></div>";
+        }
+
+        function nuovoOrdine() {
+            var selectedIndex = $('#summaryTable').jqxGrid('getselectedrowindex');
+            if (selectedIndex < 0) {
+                createNotification('info', "Selezionare un prodotto per aggiungere l'ordine di un amico");
+                return;
+            }
+
+            var prodotto = $('#summaryTable').jqxGrid('getrowdata', selectedIndex);
+            $('#nomeProdotto').val(prodotto.name);
+
+            nonOrdinantiSource.url = gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + prodotto.uid + '/availableUsers';
+            var nonOrdinantiAdapter = new $.jqx.dataAdapter(nonOrdinantiSource, { beforeSend: setJWT });
+            $('#nomeUtente').jqxDropDownList({ source: nonOrdinantiAdapter });
+
+            $('#nuovaQta').jqxNumberInput('clear');
+            $('#nuovaQta').jqxNumberInput({ symbol: ' ' + prodotto.um });
+
+            $('#nuovoOrdineDialog').jqxWindow('open');
+        }
+
+        function documentReady() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'order/user/<%= ViewData["idDataOrdine"] %>',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (data.error) {
+                        createNotification('error', "Errore durante il recupero del dettaglio dell'ordine: " + data.errorMessage);
+                    } else {
+                        orderDetails = data;
+                        console.log('Order details', orderDetails)
+                        documentReadyAsynch();
+
+                        $("#nomeTipologiaOrdine").html(orderDetails.tipoordine);
+                        $("#dataConsegnaOrdine").html(orderDetails.dataconsegna);
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return true;
+        }
+
+        function documentReadyAsynch() {
+
+            // prepare the data
+            var source = {
+                datatype: "json",
+                datafields: [
+                    { name: 'category' },
+                    { name: 'categoryColor' },
+                    { name: 'name' },
+                    { name: 'price', type: 'float' },
+                    { name: 'weight', type: 'float' },
+                    { name: 'um' },
+                    { name: 'qta', type: 'float' },
+                    { name: 'qtaRitirata', type: 'float' },
+                    { name: 'sommaOrdiniAmici', type: 'float' },
+                    { name: 'contabilizzato', type: 'bool' },
+                    { name: 'umcollo' },
+                    { name: 'umunita' },
+                    { name: 'note' },
+                    { name: 'tot', type: 'float' }
+                ],
+                id: 'idProdotto',
+                url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/items',
+                updaterow: function (rowid, rowdata, commit) {
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'put',
+                        url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + rowid + '/accounted',
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: '' + rowdata.contabilizzato,
+                        success: function (data, status, xhr) {
+                            commit(!data.error);
+
+                            if (data.error)
+                                createNotification('error', data.errorMessage);
+                            else
+                                $('#summaryTable').jqxGrid('refresh');
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error, commit);
+                        }
+                    });
+                }
+            };
+
+            var dataAdapter = new $.jqx.dataAdapter(source, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+            $("#summaryTable").jqxGrid({
+                source: dataAdapter,
+                editable: true,
+                selectionmode: 'singlerow',
+                showstatusbar: true,
+                statusbarheight: 25,
+                width: '715px',
+                height: '510px',
+                columns: [
+                    { text: 'Categoria', datafield: 'category', width: 0 },
+                    { text: 'Descrizione', datafield: 'name', width: 400, cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title='" + value + "'>" + defaulthtml + "</div>";
+                        },
+                    },
+                    { text: '', datafield: 'note', width: 20, cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return (value != null && value != '') ? "<div title=\"" + value.replace("\"", "\\\"") + "\" style='padding: 5px 0px 0px 5px;'><span class='ui-icon ui-icon-info'></span></div>" : "";
+                        },
+                    },
+                    { text: 'Prezzo<br/>Unità', datafield: 'price', width: 50, cellsalign: 'right', cellsformat: 'c2', cellbeginedit: function (row) { return false } },
+                    { text: 'Quantità<br/>ritirata', datafield: 'qtaRitirata', width: 80, cellsalign: 'right', cellsformat: 'f3', cellclassname: 'table_editable_field', cellbeginedit: function (row) { return false },
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return defaulthtml.replace('</div>', ' ' + $('#summaryTable').jqxGrid('getrowdata', row)['umunita'] + '</div>');
+                        },
+                        aggregates: [{ 'Art.':
+                            function (aggregatedValue, currentValue) {
+                                if (currentValue)
+                                    return aggregatedValue + 1;
+
+                                return aggregatedValue;
+                            }
+                        }],
+                        aggregatesrenderer: function (aggregates) {
+                            var renderstring = "";
+                            $.each(aggregates, function (key, value) {
+                                if (key == 'Art.')
+                                    renderstring += "<div style='margin-right:1px; margin-top:5px'><b>" + key + ": " + ((typeof value) == 'number' && isNaN(value) ? 0 : value.replace(',000', '')) + "</b></div>";
+                            });
+                            return renderstring;
+                        }
+                    },
+                    { text: 'Quantità<br/>ritirata amici', datafield: 'sommaOrdiniAmici', width: 80, cellbeginedit: function (row) { return false }, cellsformat: 'f3', cellsalign: 'right',
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return defaulthtml.replace('</div>', ' ' + $('#summaryTable').jqxGrid('getrowdata', row)['umunita'] + '</div>');
+                        },
+                        cellclassname: function (row, columnfield, value) {
+
+                            var rowData = $("#summaryTable").jqxGrid('getrowdata', row);
+
+                            if (rowData.qtaRitirata == value)
+                                return "green";
+                            else
+                                return "red";
+                        }
+                    },
+                    { text: 'Contab.<br/>amici', datafield: 'contabilizzato', width: 50, columntype: 'checkbox' },
+                ],
+                groupable: true,
+                groups: ['category'],
+                groupsrenderer: groupsrenderer,
+                showgroupsheader: false,
+                showgroupmenuitems: false,
+                closeablegroups: false,
+                showaggregates: true,
+                scrollmode: 'logical',
+                altrows: true,
+                autoheight: true,
+                localization: localizationobj,
+                handlekeyboardnavigation: function (event) {
+                    var key = event.charCode ? event.charCode : event.keyCode ? event.keyCode : 0;
+
+                    //key up
+                    if (key == 38) {
+                        var cell = $('#summaryTable').jqxGrid('getselectedcell');
+
+                        if (cell != null && cell.rowindex > 0) {
+                            $('#summaryTable').jqxGrid('selectcell', cell.rowindex - 1, cell.datafield);
+                            console.log(cell.rowindex - 1);
+
+                            var topCell = $('#summaryTable').jqxGrid('getcellatposition', 1, 180);
+                            if (bottomCell == null || bottomCell.row == undefined)
+                                topCell = $('#summaryTable').jqxGrid('getcellatposition', 1, 200);
+
+                            if (cell.row <= topCell.row) {
+                                var position = $('#summaryTable').jqxGrid('scrollposition');
+                                $('#summaryTable').jqxGrid('scrolloffset', position.top - 420, 0);
+                            }
+                        }
+                        return true;
+                    }
+
+                    //key down
+                    if (key == 40) {
+                        var cell = $('#summaryTable').jqxGrid('getselectedcell');
+
+                       var rowscount = $('#summaryTable').jqxGrid('getdatainformation').rowscount;
+                        if (cell != null && cell.rowindex < (rowscount - 1)) {
+                            $('#summaryTable').jqxGrid('selectcell', cell.rowindex + 1, cell.datafield);
+                            console.log(cell.rowindex + 1);
+
+                            var bottomCell = $('#summaryTable').jqxGrid('getcellatposition', 1, 570);
+                            if (bottomCell == null || bottomCell.row == undefined)
+                                bottomCell = $('#summaryTable').jqxGrid('getcellatposition', 1, 550);
+
+                            if (cell.row >= bottomCell.row) {
+                                var position = $('#summaryTable').jqxGrid('scrollposition');
+                                $('#summaryTable').jqxGrid('scrolloffset', position.top + 420, 0);
+                            }
+                        }
+                        return true;
+                    }
+
+                    //if editing left and right arrows are managed by the editor
+                    if (editing)
+                        return false;
+
+                    //key left
+                    if (key == 37) {
+                        var cell = $('#summaryTable').jqxGrid('getselectedcell');
+                        if (cell != null)
+                            var columnIndex = $('#summaryTable').jqxGrid('columns').indexOf($('#summaryTable').jqxGrid('getcolumn', cell.datafield));
+                        if (columnIndex > 2)
+                            $('#summaryTable').jqxGrid('selectcell', cell.rowindex, $('#summaryTable').jqxGrid('columns').records[columnIndex - 1].datafield);
+                        return true;
+                    }
+
+                    //key right
+                    if (key == 39) {
+                        var cell = $('#summaryTable').jqxGrid('getselectedcell');
+                        if (cell != null)
+                            var columnIndex = $('#summaryTable').jqxGrid('columns').indexOf($('#summaryTable').jqxGrid('getcolumn', cell.datafield));
+                        if (columnIndex < 7)
+                            $('#summaryTable').jqxGrid('selectcell', cell.rowindex, $('#summaryTable').jqxGrid('columns').records[columnIndex + 1].datafield);
+                        return true;
+                    }
+                }
+            });
+
+            // apply localization.
+            $("#summaryTable").on("bindingcomplete", function (event) {
+                $("#summaryTable").jqxGrid('hidecolumn', 'category');
+                $('#summaryTable').jqxGrid('expandallgroups');
+            });
+
+            $("#summaryTable").on('rowselect', function (event) {
+                summaryTableSelectedRow = event.args.rowindex;
+                summaryTableSelectedRowUM = event.args.row.umunita;
+                detailSource.url = gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + event.args.row.uid;
+                detailSource.idProdotto = event.args.row.uid;
+                var adapter = new $.jqx.dataAdapter(detailSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+                $("#amiciDetailTable").jqxGrid({ source: adapter });
+            });
+
+
+            // Dettaglio amici
+            var detailSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'utente' },
+                    { name: 'idUtente' },
+                    { name: 'um' },
+                    { name: 'qta', type: 'float' },
+                    { name: 'qtaRitirata', type: 'float' },
+                    { name: 'idOrdine' },
+                    { name: 'annullato', type: 'boolean' }
+                ],
+                id: 'idOrdine',
+                url: '',
+                updaterow: function (rowid, rowdata, commit) {
+                    $.ajax({
+						dataType: 'json',
+						method: 'put',
+						url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + detailSource.idProdotto + '/item/' + rowid,
+						async: false,
+						contentType : 'application/json;charset=UTF-8',
+						data: rowdata.qtaRitirata + '',
+						success: function (data, status, xhr) {
+                        	commit(!data.error);
+
+							if (data.error)
+								createNotification('error', "Errore durante il salvataggio del valore: " + data.errorMessage + ". Aggiornare la pagina e riprovare.");
+							else {
+								console.log('idordine: ' + data.idOrdine);
+
+                                if (data.idOrdine && data.idOrdine != '')
+								    $("#amiciDetailTable").jqxGrid('setcellvaluebyid', data.idOrdine, "qtaRitirata", parseFloat(data.qtaRitirata));
+
+								$("#summaryTable").jqxGrid("updatebounddata", "data");
+							}
+						},
+						error: function (xhr, status, error) {
+							ajaxError(xhr, error, commit);
+						}
+					});
+				}
+            };
+
+            $("#amiciDetailTable").jqxGrid({
+                editable: true,
+                editmode: 'click',
+                selectionmode: 'multiplecellsadvanced',
+                showstatusbar: false,
+                width: 330,
+                //height: 396,
+                columns: [
+                    { text: 'Utente <span title=\"aggiungi un nuovo ordine\" class=\"tableButton addorder\" onclick=\"nuovoOrdine();\"></span>', datafield: 'utente', width: 160, cellclassname: barratoDetail, cellbeginedit: function (row) { return false } },
+                    { text: 'U.M.', datafield: 'um', width: 60, cellclassname: barratoDetail,  cellbeginedit: function (row) { return false } },
+                    { text: 'Qta<br/>Ord.', datafield: 'qta', width: 40, cellsalign: 'right', cellsformat: 'f2', cellclassname: barratoDetail,  cellbeginedit: function (row) { return false } },
+                    { text: 'Qta<br/>Ripartita', datafield: 'qtaRitirata', width: 70, cellsalign: 'right', cellsformat: 'f3', columntype: 'numberinput', cellclassname: 'table_editable_field',
+                        cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
+                            return "<div title=\"Clicca per modificare la quantità da consegnare all'amico\">" + defaulthtml.replace('</div>', ' ' + summaryTableSelectedRowUM + '</div>') + "</div>";
+                        },
+                        cellbeginedit: function (row) {
+                            var rowData = $("#amiciDetailTable").jqxGrid('getrowdata', row);
+                            var productData = $('#summaryTable').jqxGrid('getrowdata', summaryTableSelectedRow);
+                            return !rowData.annullato && !productData.contabilizzato && rowData.idUtente.toLowerCase() != gogas.api.user.id.toLowerCase();
+                        },
+                        createeditor: function (row, cellvalue, editor) {
+                            editor.jqxNumberInput({ digits: 5, decimalDigits: 3, inputMode: 'simple', spinButtons: isMobile, min: 0 });
+                            if (isMobile)
+                                editor.jqxNumberInput({ decimalSeparator: '.', groupSeparator: ','});
+                        },
+                        initeditor: function (row, cellvalue, editor) {
+                            setTimeout("setCaretPosition($('#numbereditoramiciDetailTableqtaRitirata input')[0], 0)", 60);
+                        }
+                    }
+                ],
+                showaggregates: true,
+                autoheight: true,
+                localization: localizationobj
+            });
+
+            $("#amiciDetailTable").on('cellbeginedit', function (event) {
+                editing = true;
+            });
+
+            $("#amiciDetailTable").on('cellendedit', function (event) {
+                editing = false;
+            });
+
+
+            //NUOVO ORDINE
+
+            $('#nomeUtente').jqxDropDownList({
+                displayMember: "description",
+                valueMember: "id",
+                width: 250,
+                height: 20
+            });
+
+            $('#nuovaQta').jqxNumberInput({
+                decimalDigits: 2,
+                inputMode: 'simple',
+                spinButtons: false,
+                symbolPosition: 'right',
+                decimalSeparator: ',',
+                groupSeparator: '.'
+            });
+
+            $("#nuovoOrdineDialog").jqxWindow({
+                width: 400,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#cancelNuovoOrdine"),
+                modalOpacity: 0.3
+            });
+
+            $("#cancelNuovoOrdine").jqxButton();
+            $("#saveNuovoOrdine").jqxButton();
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#saveNuovoOrdine").click(function () {
+                $('#nuovoOrdineForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var prodotto = $('#summaryTable').jqxGrid('getrowdata', $('#summaryTable').jqxGrid('getselectedrowindex'));
+
+                    var userItem = $("#nomeUtente").jqxDropDownList('getSelectedItem');
+                    var qta = $('#nuovaQta').jqxNumberInput('getDecimal');
+
+                    $.ajax({
+                        dataType: 'json',
+                        method: 'post',
+                        url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/item/',
+                        async: false,
+                        contentType : 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            idDataOrdine: '<%= ViewData["idDataOrdine"] %>',
+                            id: prodotto.uid,
+                            idUtente: userItem.value,
+                            um: prodotto.um,
+                            qta: qta
+                        }),
+                        success: function (data, status, xhr) {
+                           if (data.error)
+                                createNotification('error', data.errorMessage);
+                           else {
+                                $("#amiciDetailTable").jqxGrid("updatebounddata");
+                                $("#summaryTable").jqxGrid("updatebounddata");
+                                $("#nuovoOrdineDialog").jqxWindow('hide');
+
+                                createNotification('info', "Ordine inserito correttamente");
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            ajaxError(xhr, error);
+                        }
+                    });
+                });
+            });
+
+            //Init validator
+            $('#nuovoOrdineForm').jqxValidator({
+                rules: [
+                    { input: '#nomeUtente', message: 'Il nome utente è obbligatorio', action: 'blur',
+                        rule: function () {
+                            return $("#nomeUtente").jqxDropDownList('getSelectedIndex') > -1;
+                        }
+                    },
+                    { input: '#nuovaQta', message: 'La quantità deve essere maggiore di zero', action: 'blur',
+                        rule: function () {
+                            return $("#nuovaQta").jqxNumberInput('getDecimal') > 0;
+                        }
+                    }
+                ]
+            });
+
+            //complete page loading
+            pageLoaded();
+        }
+    </script>
+</html>

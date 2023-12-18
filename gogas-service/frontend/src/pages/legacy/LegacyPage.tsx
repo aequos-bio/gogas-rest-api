@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+import queryString from 'query-string';
 
 const useStyles = makeStyles(() => ({
   appContainer: {
@@ -48,3 +49,12 @@ export const LegacySuppliersManagerPage: React.FC = () => {
 export const LegacyConfigurationPage: React.FC = () => {
   return (<LegacyPage page='configuration' />)
 };
+
+export const LegacyUserOrderPage: React.FC = () => {
+  return (<LegacyPage page='user-orders-list' />)
+};
+
+export const LegacyUserOrderDetailsPage: React.FC = () => {
+  const search = queryString.parse(location.search);
+  return (<LegacyPage page={'user-order-details?orderId=' + search.orderId + '&userId=' + search.userId} />);
+}

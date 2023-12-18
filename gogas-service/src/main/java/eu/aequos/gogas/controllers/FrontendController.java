@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class FrontendController {
 
-    @GetMapping(value = {"/", "/login",
-        "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
-        "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers",
-        "/legacy/orderslist", "/legacy/products", "/legacy/suppliers", "/legacy/configuration"})
+    @GetMapping(value = {
+            "/", "/login",
+            "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
+            "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers",
+            "/legacy/orderslist", "/legacy/products", "/legacy/suppliers", "/legacy/configuration",
+            "/legacy/ordershistory",
+    })
     public String home() {
         return "singlepage";
     }
@@ -56,5 +59,19 @@ public class FrontendController {
     @GetMapping(value = {"/legacy-ui/configuration"})
     public String legacyConfiguration() {
         return "legacy/admin/configuration";
+    }
+
+    @GetMapping(value = {"/legacy-ui/user-orders-list"})
+    public String legacyUserOrdersList() {
+        return "legacy/user/orders-list";
+    }
+
+    @GetMapping(value = {"/legacy-ui/user-order-details"})
+    public String legacyUserOrderDetails(@RequestParam String orderId, @RequestParam String userId,
+                                         Model model) {
+
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("userId", userId);
+        return "legacy/user/order-details";
     }
 }
