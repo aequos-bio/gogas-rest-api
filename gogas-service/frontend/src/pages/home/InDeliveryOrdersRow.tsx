@@ -1,8 +1,8 @@
 import { IconButton, TableCell, TableRow } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
 import { ArrowForwardIosSharp as EditIcon } from '@material-ui/icons';
-import { UserAccountingTotal } from "./types";
 import useJwt from '../../hooks/JwtHooks';
+import { UserDeliveryOrder } from "./types";
 
 const useStyles = makeStyles((theme) => ({
   tdAmount: {
@@ -36,7 +36,7 @@ const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail }) => {
       </TableCell>
       <TableCell className={classes.tdLink}>
         <IconButton
-          onClick={() => onOpenDetail(order.id, jwt.id)}
+          onClick={() => { if (jwt) { onOpenDetail(order.id, jwt.id); }}}
           size='small'
         >
           <EditIcon fontSize='small' />

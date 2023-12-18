@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import useJwt from "../../hooks/JwtHooks";
 import { apiGetJson, apiPostJson } from "../../utils/axios_utils";
 import { UserOpenOrder, UserDeliveryOrder } from "./types";
-import { Friend } from '../users/types';
+import { UserSelect } from './types';
 
 export const useUserOrdersAPI = () => {
   const [openOrders, setOpenOrders] = useState<UserOpenOrder[]>([]);
@@ -21,7 +21,7 @@ export const useUserOrdersAPI = () => {
       setUserSelect(orderBy(userSelect, (f) => f.description, 'asc')),
     );
     apiPostJson<UserDeliveryOrder[]>('/api/order/user/list', {inDelivery: true}).then((orders) =>
-      setDeliveryOrders(orders),
+        setDeliveryOrders(orders ?? []),
     );
   }, [jwt]);
 

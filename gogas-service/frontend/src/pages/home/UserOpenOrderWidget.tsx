@@ -3,8 +3,8 @@ import { Avatar, Card, CardContent, CardHeader, Grid, IconButton, Menu, MenuItem
 import { CheckSharp as CheckIcon, AddSharp as PlusIcon, EditSharp as EditIcon } from '@material-ui/icons';
 import { green } from '@material-ui/core/colors';
 import { makeStyles } from '@material-ui/core/styles';
-import { UserOpenOrder } from "./types";
-import { Friend } from "../users/types";
+import { UserOpenOrder, UserSelect } from "./types";
+import { Friend } from "../admin/users/types";
 import { filter } from "lodash";
 
 interface Props {

@@ -16,6 +16,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import LoadingRow from '../../components/LoadingRow';
 import { useHistory } from 'react-router';
 import InDeliveryOrdersRow from './InDeliveryOrdersRow';
+import { UserDeliveryOrder } from "./types";
 
 interface Props {
   orders: UserDeliveryOrder[];
