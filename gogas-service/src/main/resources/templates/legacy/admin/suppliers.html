@@ -165,7 +165,7 @@
             editable: false,
             enabletooltips: true,
             width: '705px',
-            height: $(window).height() - 170,
+            height: $(window).height() - 70,
             sortable: true,
             columns: [
                 { text: 'Ragiona sociale', datafield: 'ragionesociale', width: 400 },
@@ -219,7 +219,7 @@
         });
 
         $(window).resize(function () {
-            $("#produttoriTable").jqxGrid({ height: $(window).height() - 170 });
+            $("#produttoriTable").jqxGrid({ height: $(window).height() - 70 });
         });
     }
 </script>

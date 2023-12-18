@@ -693,7 +693,7 @@
                 editable: false,
                 //enabletooltips: true,
                 width: $( window ).width() - 20,
-                height: $( window ).height() - 235,
+                height: $( window ).height() - 110,
                 sortable: true,
                 columns: [
                         { text: 'Tipo Ordine', datafield: 'idtipoordine', displayfield: 'tipoordine', width: 'auto' },
@@ -724,7 +724,7 @@
 
             $( window ).resize(function() {
                 $("#ordiniTable").jqxGrid({ width: $( window ).width() - 20 });
-                $("#ordiniTable").jqxGrid({ height: $( window ).height() - 235});
+                $("#ordiniTable").jqxGrid({ height: $( window ).height() - 110 });
             });
 
             $("#FiltroEvaso").select2({

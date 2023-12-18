@@ -43,7 +43,7 @@
                 editable: true,
                 enabletooltips: true,
                 width: '805px',
-                height: $(window).height() - 155,
+                height: $(window).height() - 20,
                 sortable: true,
                 columns: [
                     { text: 'Chiave', datafield: 'key', width: 200, cellbeginedit: function (row) { return false } },
@@ -61,7 +61,7 @@
             });
 
             $(window).resize(function () {
-                $("#configurazioneTable").jqxGrid({ height: $(window).height() - 155 });
+                $("#configurazioneTable").jqxGrid({ height: $(window).height() - 20 });
             });
         }
     </script>

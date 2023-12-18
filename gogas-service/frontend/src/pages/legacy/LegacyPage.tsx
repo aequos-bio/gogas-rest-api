@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 const useStyles = makeStyles(() => ({
   appContainer: {
     display: "flex",
-    height: "750px",
+    height: "calc(100vh - 140px)",
     width: "100%"
   },
   appFrame: {

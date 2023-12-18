@@ -231,7 +231,7 @@
                 showstatusbar: true,
                 statusbarheight: 20,
                 width: 640,
-                height: $( window ).height() - 150,
+                height: $( window ).height() - 75,
                 columns: [
                     { text: 'Utente ' + (orderDetails.editable && orderDetails.external ? '<span title="aggiungi un nuovo utente" class="tableButton addorder" onclick="nuovoMovimento();">' : ''), datafield: 'IdUtente', displayField: 'NomeUtente', width: 300, cellbeginedit: function (row) { return false },
                         cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
@@ -239,7 +239,7 @@
                         }
                     },
                     { text: 'N. Art.', datafield: 'ArticoliOrdinati', width: 50, cellsalign: 'right', align: 'right', cellbeginedit: function (row) { return false } },
-                    { text: 'Costo<br/>Netto', datafield: 'TotaleNetto', width: 80, cellsalign: 'right', align: 'right', cellsformat: 'c2', columntype: 'numberinput', aggregates: ['sum'], cellclassname: (orderDetails.editable && !orderDetails.totaleCalcolato ? 'table_editable_field' : ''),
+                    { text: 'Costo<br/>Netto', datafield: 'TotaleNetto', width: 80, cellsalign: 'right', align: 'right', cellsformat: 'c2', columntype: 'numberinput', aggregates: ['sum'], cellclassname: (orderDetails.editable && !orderDetails.totaleCalcolato ? 'table_editable_field' : ''), cellbeginedit: function (row) { return orderDetails.editable && !orderDetails.totaleCalcolato },
                         cellsrenderer: function (row, columnfield, value, defaulthtml, columnproperties) {
                             return "<div title='Clicca per modificare il costo da addebitare al gasista'>" + defaulthtml + "</div>";
                         },
@@ -324,9 +324,8 @@
                 }
             });
 
-
             $("#summaryTable").on("bindingcomplete", function (event) {
-                $('.tooltip').qtip({
+                $('.tooltip.warning').qtip({
                     content: {
                         title: 'Il gasista ha il conto in rosso',
                         text: function(event, api) {
@@ -420,7 +419,7 @@
                     localization: localizationobj,
                     enabletooltips: true,
                     width: 350,
-                    height: $( window ).height() - 270,
+                    height: $( window ).height() - 210,
                     columns: [
                         { text: 'Prodotto', datafield: 'name', width: 200, cellclassname: barratoDetail },
                         { text: 'Qta<br/>Rit.', datafield: 'qtaRitirata', width: 50, cellsalign: 'right', align: 'right', cellsformat: 'f3', cellclassname: barratoDetail },
@@ -490,8 +489,8 @@
             });
 
             $( window ).resize(function() {
-                $("#summaryTable").jqxGrid({ height: $( window ).height() - 135 });
-                $("#userDetailTable").jqxGrid({ height: $( window ).height() - 270 });
+                $("#summaryTable").jqxGrid({ height: $( window ).height() - 75 });
+                $("#userDetailTable").jqxGrid({ height: $( window ).height() - 210 });
             });
 
             tableContabilita.initTable("#tooltipTable", "user");

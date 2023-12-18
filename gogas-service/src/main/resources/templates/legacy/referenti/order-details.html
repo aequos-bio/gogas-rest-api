@@ -746,8 +746,8 @@
                 selectionmode: 'singlerow',
                 showstatusbar: true,
                 statusbarheight: 20,
-                width: $( window ).width() - 330,
-                height: $( window ).height() - 185,
+                width: $( window ).width() - 390,
+                height: $( window ).height() - 115,
                 columns: [
                     { text: 'Prodotto', datafield: 'nomeProdotto', width: 'auto', cellbeginedit: function (row) { return false }, cellclassname: barrato },
                     //{ text: 'Categoria', datafield: 'category', width: 100 },
@@ -890,7 +890,7 @@
                 selectionmode: 'multiplecellsadvanced',
                 showstatusbar: false,
                 localization: localizationobj,
-                width: 280,
+                width: 330,
                 height: $( window ).height() - (orderDetails.contabilizzato ? 370 : 270),
                 columns: [
                     { text: 'Utente ' + (orderDetails.editable && orderDetails.totaleCalcolato ? ' <span title="aggiungi un nuovo ordine" class="tableButton addorder" onclick="nuovoOrdine();"></span> <span title="Distribuisci le quantità rimanenti" class="tableButton redistribute" onclick="distributeQta();"></span>' : ''), datafield: 'utente', width: 130, cellclassname: barratoDetail, cellbeginedit: function (row) { return false } },
@@ -999,7 +999,7 @@
 
             if (orderDetails.editable) {
                 $("#jqxExpanderEditable").jqxExpander({
-                    width: '280px',
+                    width: '330px',
                     height: '75px',
                     toggleMode: 'none',
                     showArrow: false
@@ -1008,7 +1008,7 @@
 
             if (orderDetails.contabilizzato) {
                 $("#jqxExpanderContabilizzato").jqxExpander({
-                    width: '280px',
+                    width: '330px',
                     height: '175px',
                     toggleMode: 'none',
                     showArrow: false
@@ -1016,8 +1016,8 @@
             }
 
             $( window ).resize(function() {
-                $("#summaryTable").jqxGrid({ width: $( window ).width() - 320 });
-                $("#summaryTable").jqxGrid({ height: $( window ).height() - 185 });
+                $("#summaryTable").jqxGrid({ width: $( window ).width() - 390 });
+                $("#summaryTable").jqxGrid({ height: $( window ).height() - 115 });
 
                 $("#productDetailTable").jqxGrid({ height: $( window ).height() - (orderDetails.contabilizzato ? 370 : 270) });
             });
