@@ -1,6 +1,6 @@
 import { IconButton, TableCell, TableRow } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
-import { ArrowForwardIosSharp as EditIcon } from '@material-ui/icons';
+import { ArrowForwardIosSharp as DetailsIcon, LinkSharp as LinkIcon } from '@material-ui/icons';
 import useJwt from '../../hooks/JwtHooks';
 import { UserDeliveryOrder } from "./types";
 
@@ -13,6 +13,11 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
     width: '70px',
   },
+  link: {
+    verticalAlign: 'middle',
+    color: '#337ab7',
+    textDecoration:'none',
+  }
 }));
 
 interface Props {
@@ -35,12 +40,16 @@ const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail }) => {
         {order.totaleordine.toFixed(2)} €
       </TableCell>
       <TableCell className={classes.tdLink}>
-        <IconButton
-          onClick={() => { if (jwt) { onOpenDetail(order.id, jwt.id); }}}
-          size='small'
-        >
-          <EditIcon fontSize='small' />
-        </IconButton>
+        {order.external ? (
+            <a href={order.externallink} target='blank' className={classes.link}><LinkIcon fontSize='small' /></a>
+        ) : (
+            <IconButton
+              onClick={() => { if (jwt) { onOpenDetail(order.id, jwt.id); }}}
+              size='small'
+            >
+              <DetailsIcon fontSize='small' />
+            </IconButton>
+        )}
       </TableCell>
     </TableRow>
 

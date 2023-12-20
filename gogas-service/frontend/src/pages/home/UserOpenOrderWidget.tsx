@@ -1,6 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Avatar, Card, CardContent, CardHeader, Grid, IconButton, Menu, MenuItem } from "@material-ui/core";
-import { CheckSharp as CheckIcon, AddSharp as PlusIcon, EditSharp as EditIcon } from '@material-ui/icons';
+import {
+    CheckSharp as CheckIcon,
+    AddSharp as PlusIcon,
+    EditSharp as EditIcon,
+    LinkSharp as LinkIcon
+} from '@material-ui/icons';
 import { green } from '@material-ui/core/colors';
 import { makeStyles } from '@material-ui/core/styles';
 import { UserOpenOrder, UserSelect } from "./types";
@@ -20,6 +25,11 @@ const useStyles = makeStyles(() => ({
   },
   add: {
     float: 'right',
+  },
+  link: {
+    verticalAlign: 'middle',
+    color: '#337ab7',
+    textDecoration:'none',
   }
 }));
 
@@ -61,7 +71,10 @@ export const UserOpenOrderWidget: React.FC<Props> = ({ order, userNameOrder, onO
           }
         />
         <CardContent>
-          {order.userOrders && order.userOrders.length ? (
+          {order.external ? (
+            <span>Per compilare l'ordine fare click <a className={classes.link} href={order.externallink} target='blank'>qui <LinkIcon fontSize="small" className={classes.link} /></a></span>
+          ) : (
+          order.userOrders && order.userOrders.length ? (
             <span>
               {order.userOrders.map((suborder) => (
                 <div key={`userorder-${order.id}-${suborder.userId}`}>
@@ -82,8 +95,8 @@ export const UserOpenOrderWidget: React.FC<Props> = ({ order, userNameOrder, onO
             </span>
           ) : (
             <span>Nessun ordine compilato</span>
-          )}
-          {!addUsers.length ? null :
+          ))}
+          {!addUsers.length || order.external ? null :
             users.length > 1 ? (
             <span className={classes.add}>
               <IconButton onClick={handleOpenMenu} size='small'>
