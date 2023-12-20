@@ -48,16 +48,24 @@ const Home: React.FC = () => {
       history.push(`/legacy/ordersdetails?orderId=${orderId}&userId=${userId}`)
   }, [history]);
 
+  const onFriendAccounting = useCallback((orderId: string, userId: string) => {
+      history.push(`/legacy/friendorders?orderId=${orderId}&userId=${userId}`)
+  }, [history]);
+
   return (
     <Container maxWidth={false}>
       <Typography className={classes.title} component="h5" variant="h5">
         Ordini aperti
       </Typography>
-      <Grid container spacing={3} className={classes.open}>
-        {openOrders.map((o) => (
-          <UserOpenOrderWidget key={`order-${o.id}`} order={o} userNameOrder={info['visualizzazione.utenti']} onOpenDetail={onOpenDetail} users={userSelect} />
-        ))}
-      </Grid>
+      {openOrders.length > 0 ? (
+          <Grid container spacing={3} className={classes.open}>
+            {openOrders.map((o) => (
+              <UserOpenOrderWidget key={`order-${o.id}`} order={o} userNameOrder={info['visualizzazione.utenti']} onOpenDetail={onOpenDetail} users={userSelect} />
+            ))}
+          </Grid>
+      ) : (
+        <div className={classes.open}>Nessun ordine aperto.</div>
+      )}
       <div>
           <Typography className={classes.title} component="h5" variant="h5">
             Ordini in consegna
@@ -66,7 +74,11 @@ const Home: React.FC = () => {
             <a href="legacy/ordershistory"className={classes.subtitleLink}>Vai allo storico <EditIcon className={classes.arrow} /></a>
           </div>
       </div>
-      <InDeliveryOrdersTable orders={deliveryOrders} onOpenDetail={onOpenDetail} />
+      {deliveryOrders.length > 0 ? (
+        <InDeliveryOrdersTable orders={deliveryOrders} onOpenDetail={onOpenDetail} onFriendAccounting={onFriendAccounting} />
+        ) : (
+        <div>Nessun ordine in consegna.</div>
+      )}
     </Container>
   );
 };

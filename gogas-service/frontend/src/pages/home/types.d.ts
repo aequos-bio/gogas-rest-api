@@ -37,4 +37,5 @@ export interface UserDeliveryOrder {
   numarticoli: number;
   totaleordine: number;
   amici: boolean;
+  contabilizzabile: boolean;
 }

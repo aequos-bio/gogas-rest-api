@@ -8,10 +8,6 @@ import {
   TableCell,
   TableBody,
 } from '@material-ui/core';
-import {
-  AddSharp as PlusIcon,
-  SaveAltSharp as SaveIcon,
-} from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import LoadingRow from '../../components/LoadingRow';
 import { useHistory } from 'react-router';
@@ -21,6 +17,7 @@ import { UserDeliveryOrder } from "./types";
 interface Props {
   orders: UserDeliveryOrder[];
   onOpenDetail: (orderId: string, userId: string) => void;
+  onFriendAccounting: (orderId: string, userId: string) => void;
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -29,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const InDeliveryOrdersTable: React.FC<Props> = ({ orders, onOpenDetail }) => {
+const InDeliveryOrdersTable: React.FC<Props> = ({ orders, onOpenDetail, onFriendAccounting }) => {
   const history = useHistory();
   const classes = useStyles();
 
@@ -43,12 +40,13 @@ const InDeliveryOrdersTable: React.FC<Props> = ({ orders, onOpenDetail }) => {
               <TableCell className={classes.header}>Num. Articoli</TableCell>
               <TableCell className={classes.header}>Importo</TableCell>
               <TableCell/>
+              <TableCell/>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {orders.map((order) => (
-                <InDeliveryOrdersRow key={order.id} order={order} onOpenDetail={onOpenDetail} />
+                <InDeliveryOrdersRow key={order.id} order={order} onOpenDetail={onOpenDetail} onFriendAccounting={onFriendAccounting} />
               ))
             }
           </TableBody>

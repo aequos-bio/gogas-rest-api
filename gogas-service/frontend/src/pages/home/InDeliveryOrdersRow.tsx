@@ -1,6 +1,10 @@
 import { IconButton, TableCell, TableRow } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
-import { ArrowForwardIosSharp as DetailsIcon, LinkSharp as LinkIcon } from '@material-ui/icons';
+import {
+    ArrowForwardIosSharp as DetailsIcon,
+    LinkSharp as LinkIcon,
+    LocalGroceryStoreSharp as FriendsIcon
+} from '@material-ui/icons';
 import useJwt from '../../hooks/JwtHooks';
 import { UserDeliveryOrder } from "./types";
 
@@ -23,9 +27,10 @@ const useStyles = makeStyles((theme) => ({
 interface Props {
   order: UserDeliveryOrder;
   onOpenDetail: (orderId: string, userId: string) => void;
+  onFriendAccounting: (orderId: string, userId: string) => void;
 }
 
-const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail }) => {
+const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail, onFriendAccounting }) => {
   const classes = useStyles();
   const jwt = useJwt();
 
@@ -50,6 +55,16 @@ const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail }) => {
               <DetailsIcon fontSize='small' />
             </IconButton>
         )}
+      </TableCell>
+      <TableCell className={classes.tdLink}>
+        {order.amici && order.contabilizzabile ? (
+            <IconButton
+              onClick={() => { if (jwt) { onFriendAccounting(order.id, jwt.id); }}}
+              size='small'
+            >
+              <FriendsIcon fontSize='small' />
+            </IconButton>
+        ) : null }
       </TableCell>
     </TableRow>
 

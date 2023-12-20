@@ -4,7 +4,7 @@
     <div layout:fragment="content">
         <div style="margin-bottom: 10px; width: 835px">
             Ordine <span id="nomeTipologiaOrdine"></span> in consegna il <span id="dataConsegnaOrdine"></span>
-            <input type="button" style="float:right" value="Esporta in excel" onclick="document.location.href=gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/export'" />
+            <input type="button" style="float:right" value="Esporta in excel" onclick="document.location.href=gogas.api.baseUrl + 'order/friend/' + orderId + '/export'" />
         </div>
 
         <div id='jqxWidget'>
@@ -36,6 +36,7 @@
         var summaryTableSelectedRow = -1;
         var summaryTableSelectedRowUM = '';
         var editing = false;
+        var orderId = '[[${orderId}]]';
 
         var nonOrdinantiSource = {
             datatype: "json",
@@ -94,7 +95,7 @@
             var prodotto = $('#summaryTable').jqxGrid('getrowdata', selectedIndex);
             $('#nomeProdotto').val(prodotto.name);
 
-            nonOrdinantiSource.url = gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + prodotto.uid + '/availableUsers';
+            nonOrdinantiSource.url = gogas.api.baseUrl + 'order/friend/' + orderId + '/product/' + prodotto.uid + '/availableUsers';
             var nonOrdinantiAdapter = new $.jqx.dataAdapter(nonOrdinantiSource, { beforeSend: setJWT });
             $('#nomeUtente').jqxDropDownList({ source: nonOrdinantiAdapter });
 
@@ -108,7 +109,7 @@
             $.ajax({
                 dataType: 'json',
                 method: 'get',
-                url: gogas.api.baseUrl + 'order/user/<%= ViewData["idDataOrdine"] %>',
+                url: gogas.api.baseUrl + 'order/user/' + orderId,
                 async: true,
                 success: function (data, status, xhr) {
                     if (data.error) {
@@ -150,12 +151,12 @@
                     { name: 'tot', type: 'float' }
                 ],
                 id: 'idProdotto',
-                url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/items',
+                url: gogas.api.baseUrl + 'order/friend/' + orderId + '/items',
                 updaterow: function (rowid, rowdata, commit) {
                     $.ajax({
                         dataType: 'json',
                         method: 'put',
-                        url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + rowid + '/accounted',
+                        url: gogas.api.baseUrl + 'order/friend/' + orderId + '/product/' + rowid + '/accounted',
                         async: false,
                         contentType : 'application/json;charset=UTF-8',
                         data: '' + rowdata.contabilizzato,
@@ -324,7 +325,7 @@
             $("#summaryTable").on('rowselect', function (event) {
                 summaryTableSelectedRow = event.args.rowindex;
                 summaryTableSelectedRowUM = event.args.row.umunita;
-                detailSource.url = gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + event.args.row.uid;
+                detailSource.url = gogas.api.baseUrl + 'order/friend/' + orderId + '/product/' + event.args.row.uid;
                 detailSource.idProdotto = event.args.row.uid;
                 var adapter = new $.jqx.dataAdapter(detailSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
                 $("#amiciDetailTable").jqxGrid({ source: adapter });
@@ -349,7 +350,7 @@
                     $.ajax({
 						dataType: 'json',
 						method: 'put',
-						url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/product/' + detailSource.idProdotto + '/item/' + rowid,
+						url: gogas.api.baseUrl + 'order/friend/' + orderId + '/product/' + detailSource.idProdotto + '/item/' + rowid,
 						async: false,
 						contentType : 'application/json;charset=UTF-8',
 						data: rowdata.qtaRitirata + '',
@@ -463,11 +464,11 @@
                     $.ajax({
                         dataType: 'json',
                         method: 'post',
-                        url: gogas.api.baseUrl + 'order/friend/<%= ViewData["idDataOrdine"] %>/item/',
+                        url: gogas.api.baseUrl + 'order/friend/' + orderId + '/item/',
                         async: false,
                         contentType : 'application/json;charset=UTF-8',
                         data: JSON.stringify({
-                            idDataOrdine: '<%= ViewData["idDataOrdine"] %>',
+                            idDataOrdine: orderId,
                             id: prodotto.uid,
                             idUtente: userItem.value,
                             um: prodotto.um,
