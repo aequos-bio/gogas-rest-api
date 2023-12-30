@@ -71,9 +71,12 @@ public class MailNotificationChannel implements NotificationChannel {
         helper.setFrom("noreply@aequos.bio");
         helper.setTo(to);
         helper.setCc(cc);
-        helper.setReplyTo(replyTo);
         helper.setSubject(subject);
         helper.setText(body, true);
+
+        if (replyTo != null) {
+            helper.setReplyTo(replyTo);
+        }
 
         if (attachments != null) {
             attachments.forEach(attachment -> attachment.addToMail(helper));
