@@ -898,7 +898,7 @@ public class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrati
 
         mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1),LocalDate.now().plusDays(7));
 
-        when(yearRepo.existsYearByYearAndClosed(LocalDate.now().getYear(), true)).thenReturn(true);
+        when(yearRepo.existsYearByYearAndClosed(LocalDate.now().plusDays(7).getYear(), true)).thenReturn(true);
 
         performAction(orderId, "close");
 

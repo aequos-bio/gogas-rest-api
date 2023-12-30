@@ -158,10 +158,6 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     private void validateOrderDates(OrderDTO dto) {
-        if (dto.getDueDate().isBefore(LocalDate.now())) {
-            throw new MissingOrInvalidParameterException("Data di chiusura non valida");
-        }
-
         if (!dto.getOpeningDate().isBefore(dto.getDueDate()) || !dto.getDueDate().isBefore(dto.getDeliveryDate())) {
             throw new MissingOrInvalidParameterException("Date ordine non valide");
         }
