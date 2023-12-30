@@ -201,15 +201,14 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
     }
 
     @Test
-    void givenDueDateInThePast_whenCreatingOrder_thenErrorIsReturned() throws Exception {
+    void givenDueDateInThePast_whenCreatingOrder_thenDateIsAccepted() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
         OrderDTO orderDTO = buildOrderDTO(orderTypeComputed.getId(), LocalDate.now().minusDays(10),
                 LocalDate.now().minusDays(5), 10, LocalDate.now().plusDays(6), null);
 
         mockMvcGoGas.post("/api/order/manage", orderDTO)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Data di chiusura non valida")));
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -340,7 +339,7 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
     }
 
     @Test
-    void givenDueDateInThePast_whenUpdatingOrder_thenErrorIsReturned() throws Exception {
+    void givenDueDateInThePast_whenUpdatingOrder_thenDateIsAccepted() throws Exception {
         mockMvcGoGas.loginAs("manager", "password");
 
         OrderDTO createOrderDTO = buildValidOrderDTO(orderTypeComputed.getId());
@@ -351,8 +350,7 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
                 LocalDate.now().minusDays(5), 10, LocalDate.now().plusDays(6), null);
 
         mockMvcGoGas.put("/api/order/manage/" + orderId, updateOrderDTO)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Data di chiusura non valida")));
+                .andExpect(status().isOk());
     }
 
     @Test
