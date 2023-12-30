@@ -1,6 +1,7 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.security.annotations.IsAdmin;
+import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,7 +22,7 @@ public class FrontendController {
         return "singlepage";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/orders-list"})
     public String legacyOrdersList() {
         return "legacy/referenti/orders-list";
@@ -43,13 +44,13 @@ public class FrontendController {
         return "legacy/referenti/order-details-byuser";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/products"})
     public String legacyProducts() {
         return "legacy/admin/products";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/suppliers"})
     public String legacySuppliers() {
         return "legacy/admin/suppliers";
@@ -82,5 +83,10 @@ public class FrontendController {
         model.addAttribute("orderId", orderId);
         model.addAttribute("userId", userId);
         return "legacy/user/friend-order";
+    }
+
+    @GetMapping(value = {"/legacy-ui/manage-friends"})
+    public String legacyManageFriends() {
+        return "legacy/user/manage-friends";
     }
 }

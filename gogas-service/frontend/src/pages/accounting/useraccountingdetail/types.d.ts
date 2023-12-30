@@ -23,15 +23,10 @@ export interface UserMovement { // usato nel dialogo di modifica (insert/edit)
 }
 
 export interface UserTransaction { // usato nella lista
-  amount: number;
-  date: string; // 2022-06-18
-  description: string;
-  friend?: string;
-  id: string;
-  reason: string;
-  recorded: boolean;
-  sign: '+' | '-';
-  type: string;
-  userId: string;
+  importo: number;
+  data: string; // 18/06/2022
+  descrizione: string;
+  idRiga: string;
   saldo: number;
+  orderId: string;
 }

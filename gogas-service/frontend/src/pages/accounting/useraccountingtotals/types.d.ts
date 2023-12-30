@@ -16,6 +16,9 @@ interface User {
 }
 
 export interface UserAccountingTotal {
-  user: User;
-  total: number;
+  idUtente: string;
+  nome:  string;
+  cognome: string;
+  attivo: boolean;
+  Saldo: number;
 }

@@ -21,6 +21,7 @@ import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import ExportTypeSelectionDialog from '../components/ExportTypeSelectionDialog';
 import { useHistory } from 'react-router';
+import queryString from 'query-string';
 import UserAccountingTotalRow from './UserAccountingTotalRow';
 import { useUserAccountingTotalsAPI } from './useUserAccountingTotalsAPI';
 
@@ -55,7 +56,11 @@ function UserAccountingTotals() {
   const [showDlg, setShowDlg] = useState(false);
   const [exportDlgOpen, setExportDlgOpen] = useState(false);
   const history = useHistory();
-  const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI();
+  const search = queryString.parse(location.search);
+
+  const manageFriends = !!search.friends;
+
+  const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI(manageFriends);
 
   const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
@@ -84,7 +89,7 @@ function UserAccountingTotals() {
   }, [reload]);
 
   const onOpenDetail = useCallback((userId: string) => {
-    history.push(`/useraccountingdetails?userId=${userId}`)
+    history.push(`/useraccountingdetails?userId=${userId}&friends=${manageFriends}`)
   }, [history])
 
   return (
@@ -123,7 +128,7 @@ function UserAccountingTotals() {
               <LoadingRow colSpan={4} />
             ) : (
               userTotals.map((userTotal) => (
-                <UserAccountingTotalRow key={`user-${userTotal.user.id}`} userTotal={userTotal} onOpenDetail={onOpenDetail} />
+                <UserAccountingTotalRow key={`user-${userTotal.idUtente}`} userTotal={userTotal} onOpenDetail={onOpenDetail} />
               ))
             )}
           </TableBody>

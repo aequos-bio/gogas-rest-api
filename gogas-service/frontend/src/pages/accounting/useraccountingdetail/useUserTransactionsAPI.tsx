@@ -5,15 +5,17 @@ import { apiDelete, apiGetJson } from "../../../utils/axios_utils";
 import { ErrorResponse } from "../../../store/types";
 import { UserTransaction } from './types';
 
-export const useUserTransactionsAPI = (id: string) => {
+export const useUserTransactionsAPI = (id: string, friend: boolean) => {
   const { enqueueSnackbar } = useSnackbar();
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [totals, setTotals] = useState({ accrediti: 0, addebiti: 0 });
   const [loading, setLoading] = useState(false);
 
+  const apiPath = friend ? 'friend' : 'user';
+
   const reload = useCallback(() => {
     return apiGetJson<{ data: UserTransaction[] } | ErrorResponse>(
-      `/api/useraccounting/userTransactions?userId=${id}`,
+      `/api/accounting/${apiPath}/balance/${id}`,
       {},
     ).then((response) => {
       setLoading(false);
@@ -22,17 +24,16 @@ export const useUserTransactionsAPI = (id: string) => {
         setTransactions([]);
         setTotals({ accrediti: 0, addebiti: 0 });
       } else {
-        const tt = orderBy((response as { data: UserTransaction[] }).data, 'date', 'desc');
+        const tt = orderBy((response as { movimenti: UserTransaction[] }).movimenti, 'data', 'desc');
         let saldo = 0;
         let accrediti = 0;
         let addebiti = 0;
         if (tt.length)
           for (let f = tt.length - 1; f >= 0; f--) {
-            const m = tt[f].amount * (tt[f].sign === '-' ? -1 : 1);
-            tt[f].saldo = saldo + m;
+            tt[f].saldo = saldo + tt[f].importo;
             saldo = tt[f].saldo;
-            if (m < 0) {
-              addebiti += -1 * m;
+            if (tt[f].importo < 0) {
+              addebiti += -1 * tt[f].importo;
             } else {
               accrediti += m;
             }
@@ -44,7 +45,7 @@ export const useUserTransactionsAPI = (id: string) => {
   }, []);
 
   const deleteTransaction = useCallback((id: string) => {
-    return apiDelete(`/api/accounting/user/entry/${id}`)
+    return apiDelete(`/api/accounting/${apiPath}/entry/${id}`)
       .then(() => {
         reload();
         enqueueSnackbar('Movimento eliminato', { variant: 'success' });

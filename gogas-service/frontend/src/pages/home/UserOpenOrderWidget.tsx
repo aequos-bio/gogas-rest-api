@@ -114,7 +114,7 @@ export const UserOpenOrderWidget: React.FC<Props> = ({ order, userNameOrder, onO
                 }}
               >
                 {addUsers.map((user) => (
-                  <MenuItem onClick={() => onOpenDetail(order.id, user.id)} key="{user.id}">
+                  <MenuItem onClick={() => onOpenDetail(order.id, user.id)} key={`useradd-${order.id}-${user.id}`}>
                     {user.description}
                   </MenuItem>
                 ))}

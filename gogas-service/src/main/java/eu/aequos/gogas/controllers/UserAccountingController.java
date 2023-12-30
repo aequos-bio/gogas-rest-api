@@ -6,6 +6,7 @@ import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.persistence.utils.UserTotal;
 import eu.aequos.gogas.persistence.utils.UserTotalProjection;
 import eu.aequos.gogas.persistence.utils.UserTransactionFull;
+import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.ExcelGenerationService;
@@ -73,7 +74,7 @@ public class UserAccountingController {
         return new RestResponse<>(ttt);
     }
 
-    @IsAdminOrCurrentUser
+    @CanViewBalance
     @GetMapping("/userTransactions")
     public RestResponse<List<UserTransactionFull>> getUserTransactions(@RequestParam(name = "userId") String userId) {
         List<UserTransactionFull> movimenti = userAccountingSrv.getUserTransactions(userId);

@@ -24,7 +24,8 @@ import {
   LegacyConfigurationPage,
   LegacyUserOrderPage,
   LegacyUserOrderDetailsPage,
-  LegacyFriendOrderDetailsPage
+  LegacyFriendOrderDetailsPage,
+  LegacyManageFriendsPage
 } from './legacy/LegacyPage';
 
 const privateRoutes = [
@@ -47,6 +48,7 @@ const privateRoutes = [
   { path: '/legacy/ordershistory', component: LegacyUserOrderPage },
   { path: '/legacy/ordersdetails', component: LegacyUserOrderDetailsPage },
   { path: '/legacy/friendorders', component: LegacyFriendOrderDetailsPage },
+  { path: '/legacy/managefriends', component: LegacyManageFriendsPage },
 ];
 
 export const Routes = () => {

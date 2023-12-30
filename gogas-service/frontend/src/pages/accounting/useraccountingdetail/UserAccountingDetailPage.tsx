@@ -63,7 +63,9 @@ const UserAccountingDetail: React.FC = () => {
   const jwt = useJwt();
   const { years: yearList, reload: reloadYears } = useYearsAPI();
   const { getUser } = useUsersAPI("NC");
-  const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string)
+
+  const manageFriends = !!search.friends;
+  const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string, manageFriends)
 
   const reload = useCallback(() => {
     if (!search.userId) return;
@@ -135,7 +137,7 @@ const UserAccountingDetail: React.FC = () => {
     let lastYearMinus = 0;
 
     transactions.forEach((t, i) => {
-      const year = Number.parseInt(moment(t.date).format('YYYY'), 10);
+      const year = Number.parseInt(moment(t.data, 'DD/MM/YYYY').format('YYYY'), 10);
       console.log('comparing', lastYear, year);
       if (year !== lastYear) {
         if (lastYear !== 0) {
@@ -177,7 +179,7 @@ const UserAccountingDetail: React.FC = () => {
           yearIsClosed={years[year]}
           onEditTransaction={editTransaction}
           onDeleteTransaction={_deleteTransaction}
-          admin={jwt?.role === 'A'} />
+          admin={jwt?.role === 'A' || manageFriends} />
       );
     });
 
@@ -222,7 +224,7 @@ const UserAccountingDetail: React.FC = () => {
         </Button>
       </PageTitle>
 
-      {jwt && jwt.sub && jwt.role === 'A' ? (
+      {(jwt && jwt.sub && jwt.role === 'A') || manageFriends ? (
         <Fab className={classes.fab} color='secondary' onClick={newTransaction}>
           <PlusIcon />
         </Fab>
@@ -241,6 +243,7 @@ const UserAccountingDetail: React.FC = () => {
         open={showDlg}
         onClose={dialogClosed}
         transactionId={selectedId}
+        friends={manageFriends}
       />
       <ActionDialog
         open={deleteDlgOpen}

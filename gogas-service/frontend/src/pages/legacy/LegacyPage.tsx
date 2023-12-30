@@ -63,3 +63,7 @@ export const LegacyFriendOrderDetailsPage: React.FC = () => {
   const search = queryString.parse(location.search);
   return (<LegacyPage page={'friend-order-details?orderId=' + search.orderId + '&userId=' + search.userId} />);
 }
+
+export const LegacyManageFriendsPage: React.FC = () => {
+  return (<LegacyPage page='manage-friends' />)
+}
