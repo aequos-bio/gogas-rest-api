@@ -14,7 +14,7 @@ export const useUserTransactionsAPI = (id: string, friend: boolean) => {
   const apiPath = friend ? 'friend' : 'user';
 
   const reload = useCallback(() => {
-    return apiGetJson<{ data: UserTransaction[] } | ErrorResponse>(
+    return apiGetJson<{ movimenti: UserTransaction[] } | ErrorResponse>(
       `/api/accounting/${apiPath}/balance/${id}`,
       {},
     ).then((response) => {
@@ -24,7 +24,7 @@ export const useUserTransactionsAPI = (id: string, friend: boolean) => {
         setTransactions([]);
         setTotals({ accrediti: 0, addebiti: 0 });
       } else {
-        const tt = orderBy((response as { movimenti: UserTransaction[] }).movimenti, 'data', 'desc');
+        const tt = (response as { movimenti: UserTransaction[] }).movimenti; //orderBy((response as { movimenti: UserTransaction[] }).movimenti, 'data', 'desc');
         let saldo = 0;
         let accrediti = 0;
         let addebiti = 0;
@@ -35,7 +35,7 @@ export const useUserTransactionsAPI = (id: string, friend: boolean) => {
             if (tt[f].importo < 0) {
               addebiti += -1 * tt[f].importo;
             } else {
-              accrediti += m;
+              accrediti += tt[f].importo;
             }
           }
         setTransactions(tt);

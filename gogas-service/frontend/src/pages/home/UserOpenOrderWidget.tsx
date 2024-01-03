@@ -1,9 +1,9 @@
 import React from 'react';
-import { Avatar, Card, CardContent, CardHeader, Grid } from "@material-ui/core";
+import { Avatar, Card, CardContent, CardHeader, Grid, Typography } from "@material-ui/core";
 import {
-  CheckSharp as CheckIcon,
+  CheckSharp as CheckIcon, EventBusy, LocalShipping,
 } from '@material-ui/icons';
-import { green } from '@material-ui/core/colors';
+import { green, grey } from '@material-ui/core/colors';
 import { makeStyles } from '@material-ui/core/styles';
 import { UserOpenOrder, UserSelect } from "./types";
 import { UserOpenOrderStatus } from './UserOpenOrderStatus';
@@ -26,6 +26,18 @@ const useStyles = makeStyles(() => ({
   ordered: {
     backgroundColor: green[500],
   },
+  unordered: {
+    border: '1px solid ' + grey[500],
+    backgroundColor: 'white'
+  },
+  dateAndIcon: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    '& *:first-child': {
+      marginRight: '8px'
+    }
+  }
 }));
 
 export const UserOpenOrderWidget: React.FC<Props> = ({ order, users }) => {
@@ -38,18 +50,26 @@ export const UserOpenOrderWidget: React.FC<Props> = ({ order, users }) => {
           avatar={
             <Avatar
               className={
-                order.userOrders && order.userOrders.length ? classes.ordered : undefined
+                order.userOrders && order.userOrders.length ? classes.ordered : classes.unordered
               }
             >
               {order.userOrders && order.userOrders.length ? <CheckIcon /> : <div />}
             </Avatar>
           }
-          title={order.tipoordine}
+          title={
+            <Typography variant="button">{order.tipoordine}</Typography>
+          }
           subheader={
             <div>
-              Consegna {order.dataconsegna}
-              <br />
-              Chiusura {order.datachiusura} {order.orachiusura}:00
+              <div className={classes.dateAndIcon}>
+                <EventBusy />{' '}
+                {order.datachiusura} {order.orachiusura}:00
+              </div>
+              <div className={classes.dateAndIcon}>
+                <LocalShipping />{' '}
+                {order.dataconsegna}
+
+              </div>
             </div>
           }
         />

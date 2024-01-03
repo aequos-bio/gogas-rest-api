@@ -4,10 +4,10 @@ import { ErrorResponse } from "../../../store/types";
 import { useSnackbar } from "notistack";
 import { apiGetJson, apiPost, apiPut } from "../../../utils/axios_utils";
 
-export const useUserMovementsAPI = (friend: boolean) => {
+export const useUserMovementsAPI = (friends: boolean) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const apiPath = friend ? 'friend' : 'user';
+  const apiPath = friends ? 'friend' : 'user';
 
   const getUserMovement = useCallback((id: string) => {
     return apiGetJson<UserMovementView | ErrorResponse>(`/api/accounting/${apiPath}/entry/${id}`, {})

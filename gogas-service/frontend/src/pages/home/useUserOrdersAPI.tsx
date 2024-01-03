@@ -6,6 +6,7 @@ import { UserOpenOrder, UserDeliveryOrder } from "./types";
 import { UserSelect } from './types';
 
 export const useUserOrdersAPI = () => {
+  const [loading, setLoading] = useState(false);
   const [openOrders, setOpenOrders] = useState<UserOpenOrder[]>([]);
   const [userSelect, setUserSelect] = useState<UserSelect[]>([]);
   const [deliveryOrders, setDeliveryOrders] = useState<UserDeliveryOrder[]>([]);
@@ -14,17 +15,19 @@ export const useUserOrdersAPI = () => {
 
   useEffect(() => {
     if (!jwt || !jwt.id || jwt.expired) return;
-    apiGetJson<UserOpenOrder[]>('/api/order/user/open').then((orders) =>
-      setOpenOrders(orderBy(orders, (o) => o.userOrders.length, 'desc')),
-    );
+    setLoading(true);
+    apiGetJson<UserOpenOrder[]>('/api/order/user/open').then((orders) => {
+      setOpenOrders(orderBy(orders, ['userOrders.length', 'datachiusura', 'orachiusura'], 'desc')),
+        setLoading(false);
+    });
     apiGetJson<UserSelect[]>('/api/friend/select?includeReferral=true').then((userSelect) =>
       setUserSelect(orderBy(userSelect, (f) => f.description, 'asc')),
     );
-    apiPostJson<UserDeliveryOrder[]>('/api/order/user/list', {inDelivery: true}).then((orders) =>
-        setDeliveryOrders(orders ?? []),
+    apiPostJson<UserDeliveryOrder[]>('/api/order/user/list', { inDelivery: true }).then((orders) =>
+      setDeliveryOrders(orders ?? []),
     );
   }, [jwt]);
 
-  return { openOrders, userSelect, deliveryOrders };
+  return { loading, openOrders, userSelect, deliveryOrders };
 
 }

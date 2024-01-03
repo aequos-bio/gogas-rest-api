@@ -36,6 +36,8 @@ const privateRoutes = [
   { path: '/invoices', component: InvoiceManagementPage },
   { path: '/useraccounting', component: UserAccountingTotalsPage },
   { path: '/useraccountingdetails', component: UserAccountingDetailPage },
+  { path: '/friendsaccounting', render: () => <UserAccountingTotalsPage friends={true} /> },
+  { path: '/friendaccountingdetails', render: () => <UserAccountingDetailPage friends={true} /> },
   { path: '/users', component: UsersPage },
   { path: '/reasons', component: ReasonsPage },
   { path: '/ordertypes', component: OrderTypesPage },
@@ -75,6 +77,7 @@ export const Routes = () => {
               exact
               path={pr.path}
               component={pr.component}
+              render={pr.render}
             />
           ))}
         </Switch>

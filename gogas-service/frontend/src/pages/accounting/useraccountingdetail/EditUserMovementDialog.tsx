@@ -37,7 +37,7 @@ interface Props {
   onClose: (refresh: boolean) => void;
   user?: User;
   transactionId?: string;
-  friends: boolean
+  friends?: boolean
 }
 
 const userLabel = (u: User, sort: string) => {
@@ -59,7 +59,7 @@ const EditUserMovementDialog: React.FC<Props> = ({
   onClose,
   user,
   transactionId,
-  friends,
+  friends
 }) => {
   const classes = useStyles();
   const [date, setDate] = useState<string | undefined>(undefined);
@@ -76,7 +76,7 @@ const EditUserMovementDialog: React.FC<Props> = ({
     user ? { value: user, label: userLabel(user, sort) } : undefined,
   );
   const { reasons, reload: reloadReasons } = useReasonsAPI();
-  const { getUserMovement, insertUserMovement, updateUserMovement } = useUserMovementsAPI(friends);
+  const { getUserMovement, insertUserMovement, updateUserMovement } = useUserMovementsAPI(!!friends);
 
   useEffect(() => {
     if (!open) return;

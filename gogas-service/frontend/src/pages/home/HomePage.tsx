@@ -1,6 +1,7 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
+  CircularProgress,
   Container,
   Grid,
   Typography
@@ -11,6 +12,10 @@ import InDeliveryOrdersTable from './InDeliveryOrdersTable';
 import { ArrowForwardIosSharp as EditIcon } from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) => ({
+  container: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
   title: {
     paddingTop: '10px',
     paddingBottom: '30px',
@@ -36,15 +41,17 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Home: React.FC = () => {
-  const { openOrders, userSelect, deliveryOrders } = useUserOrdersAPI();
+  const { loading, openOrders, userSelect, deliveryOrders } = useUserOrdersAPI();
   const classes = useStyles();
 
   return (
-    <Container maxWidth={false}>
+    <Container maxWidth={false} className={classes.container}>
       <Typography className={classes.title} component="h5" variant="h5">
         Ordini aperti
       </Typography>
-      {openOrders.length > 0 ? (
+      {loading ? (
+        <CircularProgress />
+      ) : openOrders.length > 0 ? (
         <Grid container spacing={2} className={classes.open}>
           {openOrders.map((o) => (
             <UserOpenOrderWidget key={`order-${o.id}`} order={o} users={userSelect} />
@@ -53,6 +60,7 @@ const Home: React.FC = () => {
       ) : (
         <div className={classes.open}>Nessun ordine aperto.</div>
       )}
+
       <div>
         <Typography className={classes.title} component="h5" variant="h5">
           Ordini in consegna

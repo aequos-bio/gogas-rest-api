@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const UserAccountingDetail: React.FC = () => {
+const UserAccountingDetail = ({ friends }: { friends?: boolean }) => {
   const classes = useStyles();
   const location = useLocation();
   const search = queryString.parse(location.search);
@@ -64,7 +64,7 @@ const UserAccountingDetail: React.FC = () => {
   const { years: yearList, reload: reloadYears } = useYearsAPI();
   const { getUser } = useUsersAPI("NC");
 
-  const manageFriends = !!search.friends;
+  const manageFriends = !!friends;
   const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string, manageFriends)
 
   const reload = useCallback(() => {
@@ -138,7 +138,6 @@ const UserAccountingDetail: React.FC = () => {
 
     transactions.forEach((t, i) => {
       const year = Number.parseInt(moment(t.data, 'DD/MM/YYYY').format('YYYY'), 10);
-      console.log('comparing', lastYear, year);
       if (year !== lastYear) {
         if (lastYear !== 0) {
           rr.push(
@@ -169,8 +168,8 @@ const UserAccountingDetail: React.FC = () => {
         lastYearMinus = 0;
         lastYear = year;
       }
-      lastYearPlus += t.sign === '+' ? Math.abs(t.amount) : 0;
-      lastYearMinus += t.sign === '-' ? Math.abs(t.amount) : 0;
+      lastYearPlus += t.importo >= 0 ? Math.abs(t.importo) : 0;
+      lastYearMinus += t.importo < 0 ? Math.abs(t.importo) : 0;
 
       rr.push(
         <UserAccountingDetailRow

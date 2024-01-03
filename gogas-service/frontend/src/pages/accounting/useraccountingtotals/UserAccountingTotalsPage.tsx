@@ -21,7 +21,6 @@ import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import ExportTypeSelectionDialog from '../components/ExportTypeSelectionDialog';
 import { useHistory } from 'react-router';
-import queryString from 'query-string';
 import UserAccountingTotalRow from './UserAccountingTotalRow';
 import { useUserAccountingTotalsAPI } from './useUserAccountingTotalsAPI';
 
@@ -51,14 +50,12 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccountingTotals() {
+const UserAccountingTotals = ({ friends }: { friends?: boolean }) => {
   const classes = useStyles();
   const [showDlg, setShowDlg] = useState(false);
   const [exportDlgOpen, setExportDlgOpen] = useState(false);
   const history = useHistory();
-  const search = queryString.parse(location.search);
-
-  const manageFriends = !!search.friends;
+  const manageFriends = !!friends;
 
   const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI(manageFriends);
 
@@ -89,7 +86,7 @@ function UserAccountingTotals() {
   }, [reload]);
 
   const onOpenDetail = useCallback((userId: string) => {
-    history.push(`/useraccountingdetails?userId=${userId}&friends=${manageFriends}`)
+    history.push(manageFriends ? `/friendaccountingdetails?userId=${userId}` : `/useraccountingdetails?userId=${userId}`)
   }, [history])
 
   return (
@@ -104,13 +101,15 @@ function UserAccountingTotals() {
         </Button>
       </PageTitle>
 
-      <Fab
-        className={classes.fab}
-        color='secondary'
-        onClick={() => setShowDlg(true)}
-      >
-        <PlusIcon />
-      </Fab>
+      {manageFriends ? <></> : (
+        <Fab
+          className={classes.fab}
+          color='secondary'
+          onClick={() => setShowDlg(true)}
+        >
+          <PlusIcon />
+        </Fab>
+      )}
 
       <TableContainer>
         <Table size='small'>

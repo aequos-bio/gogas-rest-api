@@ -48,26 +48,27 @@ export const menuItems: MenuChapter[] = [
     ],
   },
   {
-      label: 'Amici',
-      items: [
-        {
-          label: 'Gestione amici',
-          url: '/legacy/managefriends',
-          restrictions: { friendsEnabled: true },
-          icon: 3
-        },
-        {
-          label: 'Situazione contabile',
-          url: '/useraccounting?friends=true',
-          restrictions: { friendsEnabled: true },
-          icon: 3
-        },
-      ],
-    },
+    label: 'Amici',
+    items: [
+      {
+        label: 'Gestione amici',
+        url: '/legacy/managefriends',
+        restrictions: { friendsEnabled: true },
+        icon: 3
+      },
+      {
+        label: 'Situazione contabile amici',
+        url: '/friendsaccounting',
+        restrictions: { friendsEnabled: true },
+        icon: 3
+      },
+    ],
+  },
   {
     label: 'Contabilità [year]',
     items: [
-      { label: 'Anni contabili',
+      {
+        label: 'Anni contabili',
         url: '/years',
         restrictions: { roles: ['A'] },
         icon: 1

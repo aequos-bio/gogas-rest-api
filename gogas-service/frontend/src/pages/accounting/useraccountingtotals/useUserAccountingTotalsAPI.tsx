@@ -15,11 +15,9 @@ export const useUserAccountingTotalsAPI = (manageFriends: boolean) => {
     var apiPath = manageFriends ? 'friend' : 'user';
 
     setLoading(true);
-    apiGetJson<DataResponse<UserAccountingTotal[]>>('/api/accounting/' + apiPath + '/balance', {}).then((response) => {
+    apiGetJson<UserAccountingTotal[]>('/api/accounting/' + apiPath + '/balance', {}).then((response) => {
       setLoading(false);
-      if (response && response.error) {
-        enqueueSnackbar(response.errorMessage, { variant: 'error' });
-      } else if (response) {
+      if (response) {
         let tot = 0;
         response.forEach((t) => {
           tot += t.Saldo;
