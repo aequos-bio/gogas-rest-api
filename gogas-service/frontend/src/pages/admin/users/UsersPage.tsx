@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import {
   Container,
   Fab,
@@ -14,7 +13,7 @@ import UserRow from './UserRow';
 import LoadingListItem from '../../../components/LoadingListItem';
 import UserEditDialog from './UserEditDialog';
 import ActionDialog from '../../../components/ActionDialog';
-import { RootState } from '../../../store/store';
+import { useAppSelector } from '../../../store/store';
 import { useUsersAPI } from './useUsersAPI';
 import { User } from './types';
 import { useSnackbar } from 'notistack';
@@ -51,7 +50,7 @@ const Users: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
-  const info = useSelector((state: RootState) => state.info);
+  const info = useAppSelector((state) => state.info);
   const sort = info['visualizzazione.utenti']
     ? info['visualizzazione.utenti']
     : 'NC';

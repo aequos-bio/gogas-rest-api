@@ -1,12 +1,14 @@
 import { IconButton, TableCell, TableRow } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
 import {
-    ArrowForwardIosSharp as DetailsIcon,
-    LinkSharp as LinkIcon,
-    LocalGroceryStoreSharp as FriendsIcon
+  ArrowForwardIosSharp as DetailsIcon,
+  LinkSharp as LinkIcon,
+  LocalGroceryStoreSharp as FriendsIcon
 } from '@material-ui/icons';
 import useJwt from '../../hooks/JwtHooks';
 import { UserDeliveryOrder } from "./types";
+import { useHistory } from "react-router-dom";
+import { useCallback } from "react";
 
 const useStyles = makeStyles((theme) => ({
   tdAmount: {
@@ -20,19 +22,26 @@ const useStyles = makeStyles((theme) => ({
   link: {
     verticalAlign: 'middle',
     color: '#337ab7',
-    textDecoration:'none',
+    textDecoration: 'none',
   }
 }));
 
 interface Props {
   order: UserDeliveryOrder;
-  onOpenDetail: (orderId: string, userId: string) => void;
-  onFriendAccounting: (orderId: string, userId: string) => void;
 }
 
-const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail, onFriendAccounting }) => {
+const InDeliveryOrdersRow: React.FC<Props> = ({ order }) => {
   const classes = useStyles();
   const jwt = useJwt();
+  const history = useHistory();
+
+  const onFriendAccounting = useCallback((orderId: string, userId: string) => {
+    history.push(`/legacy/friendorders?orderId=${orderId}&userId=${userId}`)
+  }, [history]);
+
+  const onOpenDetail = useCallback((orderId: string, userId: string) => {
+    history.push(`/legacy/ordersdetails?orderId=${orderId}&userId=${userId}`)
+  }, [history]);
 
   return (
     <TableRow hover>
@@ -46,25 +55,25 @@ const InDeliveryOrdersRow: React.FC<Props> = ({ order, onOpenDetail, onFriendAcc
       </TableCell>
       <TableCell className={classes.tdLink}>
         {order.external ? (
-            <a href={order.externallink} target='blank' className={classes.link}><LinkIcon fontSize='small' /></a>
+          <a href={order.externallink} target='blank' className={classes.link}><LinkIcon fontSize='small' /></a>
         ) : (
-            <IconButton
-              onClick={() => { if (jwt) { onOpenDetail(order.id, jwt.id); }}}
-              size='small'
-            >
-              <DetailsIcon fontSize='small' />
-            </IconButton>
+          <IconButton
+            onClick={() => { if (jwt) { onOpenDetail(order.id, jwt.id); } }}
+            size='small'
+          >
+            <DetailsIcon fontSize='small' />
+          </IconButton>
         )}
       </TableCell>
       <TableCell className={classes.tdLink}>
         {order.amici && order.contabilizzabile ? (
-            <IconButton
-              onClick={() => { if (jwt) { onFriendAccounting(order.id, jwt.id); }}}
-              size='small'
-            >
-              <FriendsIcon fontSize='small' />
-            </IconButton>
-        ) : null }
+          <IconButton
+            onClick={() => { if (jwt) { onFriendAccounting(order.id, jwt.id); } }}
+            size='small'
+          >
+            <FriendsIcon fontSize='small' />
+          </IconButton>
+        ) : null}
       </TableCell>
     </TableRow>
 

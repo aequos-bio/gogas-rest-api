@@ -16,8 +16,6 @@ import { UserDeliveryOrder } from "./types";
 
 interface Props {
   orders: UserDeliveryOrder[];
-  onOpenDetail: (orderId: string, userId: string) => void;
-  onFriendAccounting: (orderId: string, userId: string) => void;
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -26,32 +24,32 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const InDeliveryOrdersTable: React.FC<Props> = ({ orders, onOpenDetail, onFriendAccounting }) => {
+const InDeliveryOrdersTable: React.FC<Props> = ({ orders }) => {
   const history = useHistory();
   const classes = useStyles();
 
   return (
-      <TableContainer>
-        <Table size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell className={classes.header}>Tipo ordine</TableCell>
-              <TableCell className={classes.header}>Data Consegna</TableCell>
-              <TableCell className={classes.header}>Num. Articoli</TableCell>
-              <TableCell className={classes.header}>Importo</TableCell>
-              <TableCell/>
-              <TableCell/>
-            </TableRow>
-          </TableHead>
+    <TableContainer>
+      <Table size='small'>
+        <TableHead>
+          <TableRow>
+            <TableCell className={classes.header}>Tipo ordine</TableCell>
+            <TableCell className={classes.header}>Data Consegna</TableCell>
+            <TableCell className={classes.header}>Num. Articoli</TableCell>
+            <TableCell className={classes.header}>Importo</TableCell>
+            <TableCell />
+            <TableCell />
+          </TableRow>
+        </TableHead>
 
-          <TableBody>
-            {orders.map((order) => (
-                <InDeliveryOrdersRow key={order.id} order={order} onOpenDetail={onOpenDetail} onFriendAccounting={onFriendAccounting} />
-              ))
-            }
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <TableBody>
+          {orders.map((order) => (
+            <InDeliveryOrdersRow key={order.id} order={order} />
+          ))
+          }
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 

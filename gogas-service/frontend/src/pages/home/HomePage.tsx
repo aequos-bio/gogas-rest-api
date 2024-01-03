@@ -1,13 +1,10 @@
-import React, { useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router';
+import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   Container,
   Grid,
   Typography
 } from '@material-ui/core';
-import { RootState } from '../../store/store';
 import { useUserOrdersAPI } from './useUserOrdersAPI';
 import { UserOpenOrderWidget } from './UserOpenOrderWidget';
 import InDeliveryOrdersTable from './InDeliveryOrdersTable';
@@ -39,18 +36,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Home: React.FC = () => {
-  const info = useSelector((state: RootState) => state.info);
   const { openOrders, userSelect, deliveryOrders } = useUserOrdersAPI();
   const classes = useStyles();
-  const history = useHistory();
-
-  const onOpenDetail = useCallback((orderId: string, userId: string) => {
-      history.push(`/legacy/ordersdetails?orderId=${orderId}&userId=${userId}`)
-  }, [history]);
-
-  const onFriendAccounting = useCallback((orderId: string, userId: string) => {
-      history.push(`/legacy/friendorders?orderId=${orderId}&userId=${userId}`)
-  }, [history]);
 
   return (
     <Container maxWidth={false}>
@@ -58,25 +45,25 @@ const Home: React.FC = () => {
         Ordini aperti
       </Typography>
       {openOrders.length > 0 ? (
-          <Grid container spacing={3} className={classes.open}>
-            {openOrders.map((o) => (
-              <UserOpenOrderWidget key={`order-${o.id}`} order={o} userNameOrder={info['visualizzazione.utenti']} onOpenDetail={onOpenDetail} users={userSelect} />
-            ))}
-          </Grid>
+        <Grid container spacing={2} className={classes.open}>
+          {openOrders.map((o) => (
+            <UserOpenOrderWidget key={`order-${o.id}`} order={o} users={userSelect} />
+          ))}
+        </Grid>
       ) : (
         <div className={classes.open}>Nessun ordine aperto.</div>
       )}
       <div>
-          <Typography className={classes.title} component="h5" variant="h5">
-            Ordini in consegna
-          </Typography>
-          <div className={classes.subtitle}>
-            <a href="legacy/ordershistory"className={classes.subtitleLink}>Vai allo storico <EditIcon className={classes.arrow} /></a>
-          </div>
+        <Typography className={classes.title} component="h5" variant="h5">
+          Ordini in consegna
+        </Typography>
+        <div className={classes.subtitle}>
+          <a href="legacy/ordershistory" className={classes.subtitleLink}>Vai allo storico <EditIcon className={classes.arrow} /></a>
+        </div>
       </div>
       {deliveryOrders.length > 0 ? (
-        <InDeliveryOrdersTable orders={deliveryOrders} onOpenDetail={onOpenDetail} onFriendAccounting={onFriendAccounting} />
-        ) : (
+        <InDeliveryOrdersTable orders={deliveryOrders} />
+      ) : (
         <div>Nessun ordine in consegna.</div>
       )}
     </Container>

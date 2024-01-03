@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 import jwt_decode from 'jwt-decode';
 import moment from 'moment-timezone';
-import { RootState } from '../store/store';
+import { useAppSelector } from '../store/store';
 import { JwtToken } from '../store/types';
 
 const useJwt = () => {
-  const authentication = useSelector((state: RootState) => state.authentication);
+  const authentication = useAppSelector((state) => state.authentication);
 
   const decodedJwt = useMemo(() => {
     if (authentication.jwtToken) {

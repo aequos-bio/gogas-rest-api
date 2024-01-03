@@ -37,22 +37,22 @@ const MenuChapter: React.FC<Props> = ({ chapter, onMenuClick }) => {
     var restrictions = menu.restrictions;
 
     if (!restrictions) {
-        return true;
+      return true;
     }
 
     if (restrictions.roles) {
-        const matchingRoles = restrictions.roles.filter((r) => r === jwt?.role);
-        if (!matchingRoles.length > 0) {
-            return false;
-        };
+      const matchingRoles = restrictions.roles.filter((r) => r === jwt?.role);
+      if (matchingRoles.length <= 0) {
+        return false;
+      };
     }
 
     if ((restrictions.orderManager ?? false) && !jwt?.manager) {
-        return false;
+      return false;
     }
 
     if ((restrictions.friendsEnabled ?? false) && !info['friends.enabled']) {
-        return false;
+      return false;
     }
 
     return true;
