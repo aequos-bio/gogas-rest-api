@@ -22,7 +22,7 @@ const defaultFilter: ManagedOrderQueryFilter = {
   status: ["0", "1"]
 }
 
-export const useOrderManaggementAPI = () => {
+export const useOrderListManagementAPI = () => {
   const [filter, setFilter] = useState(defaultFilter);
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<ManagedOrder[]>([]);
