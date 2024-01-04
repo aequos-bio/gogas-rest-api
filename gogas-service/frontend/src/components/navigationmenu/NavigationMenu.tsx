@@ -4,7 +4,6 @@ import {
   Typography,
   Drawer,
   Avatar,
-  Divider,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import Logo from '../../assets/logo_aequos.png';
@@ -78,7 +77,6 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
           menuItems.map((menuChapter, i) => (
             <div key={`manuchapter-${i}`} >
               <MenuChapter chapter={menuChapter} onMenuClick={menuClick} />
-              <Divider />
             </div>
           ))
         ) : <></>

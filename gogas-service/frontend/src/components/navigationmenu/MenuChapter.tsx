@@ -1,4 +1,4 @@
-import { List, Typography } from "@material-ui/core";
+import { Divider, List, Typography } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
 import { MenuChapter as MenuChapterType, MenuItem as MenuItemType } from "./types";
 import { useAppSelector } from "../../store/store";
@@ -63,6 +63,9 @@ const MenuChapter: React.FC<Props> = ({ chapter, onMenuClick }) => {
           ))}
 
         </List>
+        {menus.length ? (
+          <Divider />
+        ) : null}
       </div>
     </>
   );
