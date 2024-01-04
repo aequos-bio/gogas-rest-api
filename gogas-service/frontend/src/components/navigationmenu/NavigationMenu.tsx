@@ -93,7 +93,7 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
           gutterBottom
           color='textSecondary'
         >
-          Copyright 2019-2023 AEQUOS.BIO
+          Copyright 2019-2024 AEQUOS.BIO
         </Typography>
       </div>
     </Drawer>
