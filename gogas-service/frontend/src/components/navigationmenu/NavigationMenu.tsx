@@ -62,7 +62,11 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
   const menuClick = useCallback((menu) => {
     if (!jwt) return;
     const url = menu.url.replace(':userId', jwt.id);
-    history.push(url);
+    if (menu.newWindow) {
+      window.open(url, '_blank');
+    } else {
+      history.push(url);
+    }
     onClose();
   }, [history, jwt, onClose],
   );

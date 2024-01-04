@@ -1,39 +1,44 @@
 import {
-  HomeSharp as HomeIcon,
-  EventSharp as EventIcon,
-  EuroSharp as EuroIcon,
-  GroupSharp as GroupIcon,
-  Settings as SettingsIcon,
-  ViewListSharp as ListIcon,
-  ExploreSharp as ExploreIcon,
-  CodeSharp as CodeIcon,
-  AccountBalanceSharp as AccountBalanceIcon,
-  ReceiptSharp as BillIcon,
-  StoreSharp as StoreIcon,
-  ShoppingBasketSharp as ShoppingBasketIcon,
-  ShoppingCartSharp as ShoppingCartIcon
+  HomeSharp,
+  EventSharp,
+  EuroSharp,
+  GroupSharp,
+  SettingsSharp,
+  ViewListSharp,
+  ExploreSharp,
+  CodeSharp,
+  AccountBalanceSharp,
+  ReceiptSharp,
+  StoreSharp,
+  ShoppingBasketSharp,
+  ShoppingCartSharp,
+  HelpOutlineSharp
 } from '@material-ui/icons';
 import { MenuChapter } from './types';
 
 export const menuIcons = [
-  <HomeIcon />,
-  <EventIcon />,
-  <EuroIcon />,
-  <GroupIcon />,
-  <SettingsIcon />,
-  <ListIcon />,
-  <ExploreIcon />,
-  <CodeIcon />,
-  <AccountBalanceIcon />,
-  <BillIcon />,
-  <StoreIcon />,
-  <ShoppingBasketIcon />,
-  <ShoppingCartIcon />
+  <HomeSharp />,
+  <EventSharp />,
+  <EuroSharp />,
+  <GroupSharp />,
+  <SettingsSharp />,
+  <ViewListSharp />,
+  <ExploreSharp />,
+  <CodeSharp />,
+  <AccountBalanceSharp />,
+  <ReceiptSharp />,
+  <StoreSharp />,
+  <ShoppingBasketSharp />,
+  <ShoppingCartSharp />,
+  <HelpOutlineSharp />
 ];
 
 export const menuItems: MenuChapter[] = [
   {
-    items: [{ label: 'Home', url: '/', icon: 0 }],
+    items: [
+      { label: 'Home', url: '/', icon: 0 },
+      { label: 'Guida', url: '/documentation/GoGas.pdf', icon: 13, newWindow: true }
+    ],
   },
   {
     label: 'Contabilità [year]',
