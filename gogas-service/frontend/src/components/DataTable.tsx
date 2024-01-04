@@ -9,11 +9,15 @@ import {
   TableBody,
   TablePagination,
   IconButton,
+  Checkbox,
+  Hidden,
 } from '@material-ui/core';
 import {
-  AddSharp as PlusIcon,
-  EditSharp as EditIcon,
-  DeleteSharp as DeleteIcon,
+  AddSharp,
+  EditSharp,
+  DeleteSharp,
+  ArrowForwardIosSharp,
+  MoreVertSharp,
 } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import moment from 'moment-timezone';
@@ -21,30 +25,38 @@ import LoadingRow from './LoadingRow';
 
 export interface Column {
   label: string;
-  type: 'String' | 'Date' | 'DateTime' | 'Time' | 'Number' | 'Amount' | 'Icon';
+  type: 'String' | 'Date' | 'DateTime' | 'Time' | 'Number' | 'Amount' | 'Icon' | 'Boolean';
   alignment: 'Left' | 'Center' | 'Right';
-  property: string;
+  property: string | ((value: any) => any);
+  hidden?: 'xsUp' | 'smUp' | 'mdUp' | 'lgUp' | 'xlUp' | 'xsDown' | 'smDown' | 'mdDown' | 'lgDown' | 'xlDown'
 }
 
 export interface Settings {
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdd: boolean;
+  showEdit: boolean;
+  showDelete: boolean;
+  showEnter: boolean;
+  showMenu: boolean;
+  showAdd: boolean;
   showHeader: boolean;
   showFooter: boolean;
   pagination: boolean;
 }
 
 const default_settings: Settings = {
-  canEdit: true,
-  canDelete: true,
-  canAdd: true,
+  showEdit: false,
+  showDelete: false,
+  showEnter: false,
+  showMenu: false,
+  showAdd: false,
   showHeader: true,
   showFooter: false,
   pagination: false,
 };
 
 const useStyles = makeStyles(theme => ({
+  cellBold: {
+    fontWeight: 'bold'
+  },
   cellLeft: {
     textAlign: 'left',
   },
@@ -79,6 +91,8 @@ interface Props {
   loading: boolean;
   onAdd?: () => void;
   onEdit?: (value: any) => void;
+  onEnter?: (value: any) => void;
+  onMenu?: (value: any) => void;
   onDelete?: (value: any) => void;
 }
 
@@ -89,6 +103,8 @@ const DataTable: React.FC<Props> = ({
   loading = false,
   onAdd,
   onEdit,
+  onEnter,
+  onMenu,
   onDelete,
 }) => {
   const classes = useStyles();
@@ -133,15 +149,28 @@ const DataTable: React.FC<Props> = ({
   const headers = useMemo(() => {
     const hh = columns.map((col, i) => {
       return (
-        <TableCell
-          key={`header-${i}`}
-          className={cellClasses(col.alignment, col.type)}
+        <Hidden
+          xsDown={col.hidden === 'xsDown'}
+          xsUp={col.hidden === 'xsUp'}
+          smDown={col.hidden === 'smDown'}
+          smUp={col.hidden === 'smUp'}
+          mdDown={col.hidden === 'mdDown'}
+          mdUp={col.hidden === 'mdUp'}
+          lgDown={col.hidden === 'lgDown'}
+          lgUp={col.hidden === 'lgUp'}
+          xlDown={col.hidden === 'xlDown'}
+          xlUp={col.hidden === 'xlUp'}
         >
-          {col.label}
-        </TableCell>
+          <TableCell
+            key={`header-${i}`}
+            className={`${classes.cellBold} ${cellClasses(col.alignment, col.type)}`}
+          >
+            {col.label}
+          </TableCell>
+        </Hidden>
       );
     });
-    if (settings.canEdit || settings.canDelete) {
+    if (settings.showEdit || settings.showDelete || settings.showEnter || settings.showMenu) {
       hh.push(<TableCell key='header-commands' className={classes.cellCommands} />);
     }
     return hh;
@@ -152,7 +181,7 @@ const DataTable: React.FC<Props> = ({
       return (
         <LoadingRow
           colSpan={
-            columns.length + (settings.canEdit || settings.canDelete ? 1 : 0)
+            columns.length + (settings.showEdit || settings.showDelete || settings.showEnter || settings.showMenu ? 1 : 0)
           }
         />
       );
@@ -167,7 +196,7 @@ const DataTable: React.FC<Props> = ({
       rr.push(
         <TableRow key={`row-${i}`}>
           {columns.map((col, j) => {
-            const value = row.value[col.property];
+            const value = (typeof col.property === 'string') ? row.value[col.property] : col.property(row.value);
             let val;
             if (col.type === 'Date') {
               let date = moment(value);
@@ -179,6 +208,8 @@ const DataTable: React.FC<Props> = ({
               val = moment(value).format('HH:mm');
             } else if (col.type === 'Amount') {
               val = value.toFixed(2);
+            } else if (col.type === 'Boolean') {
+              val = <Checkbox disableRipple checked={value === true} />
             } else {
               val = value;
             }
@@ -186,32 +217,63 @@ const DataTable: React.FC<Props> = ({
             const cls = cellClasses(col.alignment, col.type);
 
             return (
-              <TableCell key={`cell-${i}-${j}`} className={cls}>
-                {val}
-              </TableCell>
+              <Hidden
+                xsDown={col.hidden === 'xsDown'}
+                xsUp={col.hidden === 'xsUp'}
+                smDown={col.hidden === 'smDown'}
+                smUp={col.hidden === 'smUp'}
+                mdDown={col.hidden === 'mdDown'}
+                mdUp={col.hidden === 'mdUp'}
+                lgDown={col.hidden === 'lgDown'}
+                lgUp={col.hidden === 'lgUp'}
+                xlDown={col.hidden === 'xlDown'}
+                xlUp={col.hidden === 'xlUp'}
+              >
+                <TableCell key={`cell-${i}-${j}`} className={cls}>
+                  {val}
+                </TableCell>
+              </Hidden>
             );
           })}
-          {settings.canEdit || settings.canDelete ? (
-            <TableCell
+          {settings.showEdit || settings.showDelete || settings.showEnter || settings.showMenu ? (
+            <TableCell size='small'
               key={`cell-${i}-commands`}
               className={classes.cellCommands}
             >
-              {settings.canEdit && onEdit ? (
+              {settings.showEdit && onEdit ? (
                 <IconButton
                   onClick={() => {
                     onEdit(row.value);
                   }}
                 >
-                  <EditIcon fontSize="small" />
+                  <EditSharp fontSize="small" />
                 </IconButton>
               ) : null}
-              {settings.canDelete && onDelete ? (
+              {settings.showDelete && onDelete ? (
                 <IconButton
                   onClick={() => {
                     onDelete(row.value);
                   }}
                 >
-                  <DeleteIcon fontSize="small" />
+                  <DeleteSharp fontSize="small" />
+                </IconButton>
+              ) : null}
+              {settings.showMenu && onMenu ? (
+                <IconButton
+                  onClick={() => {
+                    onMenu(row.value);
+                  }}
+                >
+                  <MoreVertSharp fontSize="small" />
+                </IconButton>
+              ) : null}
+              {settings.showEnter && onEnter ? (
+                <IconButton
+                  onClick={() => {
+                    onEnter(row.value);
+                  }}
+                >
+                  <ArrowForwardIosSharp fontSize="small" />
                 </IconButton>
               ) : null}
             </TableCell>
@@ -235,9 +297,9 @@ const DataTable: React.FC<Props> = ({
 
   return (
     <>
-      {settings.canAdd ? (
+      {settings.showAdd ? (
         <Fab className={classes.fab} color="secondary" onClick={onAdd}>
-          <PlusIcon />
+          <AddSharp />
         </Fab>
       ) : null}
 

@@ -25,7 +25,6 @@ import CategoriesDialog from './CategoriesDialog';
 import { useOrderTypesAPI } from './useOrderTypesAPI';
 import ManagersDialog from './ManagersDialog';
 import { OrderType } from './typed';
-import { Order } from '../../accounting/invoicemanagement/types';
 
 const useStyles = makeStyles(theme => ({
   fab: {

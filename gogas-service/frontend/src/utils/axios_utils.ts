@@ -20,3 +20,7 @@ export function apiGetJson<T>(url: string, data?: any) {
   if (params.length) _url += `?${params.join('&')}`;
   return apiGet(_url).then(json<T>);
 };
+
+export function apiPostJson<T>(url: string, data?: any) {
+  return apiPost(url, data).then(json<T>);
+}

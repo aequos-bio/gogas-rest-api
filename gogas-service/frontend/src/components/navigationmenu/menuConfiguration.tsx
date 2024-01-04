@@ -91,7 +91,7 @@ export const menuItems: MenuChapter[] = [
     label: 'Referente',
     items: [
       { label: 'Prodotti', url: '/legacy/products', restrictions: ['A'], icon: 12 },
-      { label: 'Gestione ordini', url: `/legacy/orderslist`, icon: 11 },
+      { label: 'Gestione ordini', url: `/ordermanagement`, icon: 11 },
     ],
   },
   {

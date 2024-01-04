@@ -23,6 +23,7 @@ import {
   LegacySuppliersManagerPage,
   LegacyConfigurationPage
 } from './legacy/LegacyPage';
+import OrderManagementPage from './management/orders/OrderManagementPage';
 
 const privateRoutes = [
   { path: '/', component: HomePage },
@@ -37,6 +38,7 @@ const privateRoutes = [
   { path: '/ordertypes', component: OrderTypesPage },
   { path: '/accountingcodes', component: AccountingCodesPage },
   { path: '/managers', component: ManagersPage },
+  { path: '/ordermanagement', component: OrderManagementPage },
   { path: '/legacy/orderslist', component: LegacyOrderManagerPage },
   { path: '/legacy/products', component: LegacyProductsManagerPage },
   { path: '/legacy/suppliers', component: LegacySuppliersManagerPage },

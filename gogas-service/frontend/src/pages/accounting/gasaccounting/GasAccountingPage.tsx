@@ -71,9 +71,9 @@ const GasAccounting: React.FC = () => {
 
       <DataTable
         settings={{
-          canEdit: false,
-          canDelete: false,
-          canAdd: false,
+          showEdit: false,
+          showDelete: false,
+          showAdd: false,
           pagination: false,
           showHeader: true,
           showFooter: false,

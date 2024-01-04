@@ -78,9 +78,9 @@ const GasMovements: React.FC = () => {
 
       <DataTable
         settings={{
-          canEdit: true,
-          canDelete: true,
-          canAdd: true,
+          showEdit: true,
+          showDelete: true,
+          showAdd: true,
           pagination: false,
           showHeader: true,
           showFooter: false,

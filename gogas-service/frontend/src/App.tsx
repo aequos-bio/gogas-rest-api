@@ -12,6 +12,13 @@ const theme = createTheme({
     primary,
     secondary,
   },
+  overrides: {
+    MuiTableCell: {
+      head: {
+        fontWeight: 'bold'
+      }
+    }
+  }
 });
 
 function App() {
