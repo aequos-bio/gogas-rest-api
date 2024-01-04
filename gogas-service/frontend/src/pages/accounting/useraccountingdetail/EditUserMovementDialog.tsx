@@ -105,7 +105,10 @@ const EditUserMovementDialog: React.FC<Props> = ({
       setAmount(0);
     }
 
-    reloadUsers();
+    if (!friends) {
+      reloadUsers();
+    }
+
     reloadReasons();
   }, [info, open, sort, user, userLabel, transactionId]);
 

@@ -76,8 +76,11 @@ const UserAccountingDetail = ({ friends }: { friends?: boolean }) => {
 
   const downloadXls = useCallback(() => {
     if (!user) return;
+
+    const apiPath = manageFriends ? 'friend' : 'user';
+
     window.open(
-      `/api/useraccounting/exportUserDetails?userId=${user.idUtente}`,
+      `/api/accounting/${apiPath}/exportDetails?userId=${user.idUtente}`,
       '_blank',
     );
   }, [user]);

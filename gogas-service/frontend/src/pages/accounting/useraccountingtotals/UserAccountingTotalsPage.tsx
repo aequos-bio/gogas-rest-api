@@ -62,11 +62,13 @@ const UserAccountingTotals = ({ friends }: { friends?: boolean }) => {
   const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
 
+    const apiPath = manageFriends ? 'friend' : 'user';
+
     if (type === 'simple')
-      window.open('/api/useraccounting/exportUserTotals', '_blank');
+      window.open(`/api/accounting/${apiPath}/exportTotals`, '_blank');
     else if (type === 'full')
       window.open(
-        '/api/useraccounting/exportUserTotals?includeUsers=true',
+        `/api/accounting/${apiPath}/exportTotals?includeUsers=true`,
         '_blank',
       );
   }, []);
