@@ -1,7 +1,7 @@
 package eu.aequos.gogas.service;
 
-import eu.aequos.gogas.persistence.entity.Menu;
 import eu.aequos.gogas.dto.MenuDTO;
+import eu.aequos.gogas.persistence.entity.Menu;
 import eu.aequos.gogas.persistence.entity.MenuByRole;
 import eu.aequos.gogas.persistence.repository.MenuRepo;
 import org.springframework.stereotype.Service;
@@ -34,5 +34,9 @@ public class MenuService {
                 .sorted(Comparator.comparingInt(MenuByRole::getOrder))
                 .map(MenuByRole::getMenu)
                 .collect(Collectors.toList());
+    }
+
+    public boolean friendsEnabled() {
+        return menuRepo.countFriendsMenu() > 0;
     }
 }

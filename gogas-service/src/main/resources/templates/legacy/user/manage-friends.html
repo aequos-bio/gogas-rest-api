@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div id="userTable"></div>
+
+        <br />
+        <input type="button" value="Nuovo" class="Bottone" onclick="newItem();" />
+
+        <div id="editDialog">
+            <div>Modifica utente</div>
+            <div style="overflow: hidden;">
+                <form action="/Utenti/Edit" id="editForm" method="post" name="editForm">
+                    <table>
+                        <tr>
+                            <td>
+                                <span class="obbligatorio"><label for="Username">Username</label></span>
+                            </td>
+                            <td>
+                                <input id="Username" name="Username" type="text" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="obbligatorio"><label for="Password">Password</label></span>
+                            </td>
+                            <td>
+                                <input id="Password" name="Password" type="text" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="obbligatorio"><label for="Nome">Nome</label></span>
+                            </td>
+                            <td>
+                                <input id="Nome" name="Nome" type="text" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="obbligatorio"><label for="Cognome">Cognome</label></span>
+                            </td>
+                            <td>
+                                <input id="Cognome" name="Cognome" type="text" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label>E-mail</label>
+                            </td>
+                            <td>
+                                <input id="Email" name="Email" type="text" />
+                                <input type="hidden" name="Ruolo" id="Ruolo" value="S" />
+                                <input type="hidden" name="Attivo" id="Attivo" />
+                                <input type="hidden" name="idReferente" id="idReferente" />
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <input style="margin-right: 5px;" type="button" id="Save" value="Conferma" />
+                        <input id="Cancel" type="button" value="Annulla" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script layout:fragment="script">
+        function utentiAddRow(rowid, rowdata, position, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'post',
+                url: gogas.api.baseUrl + 'friend',
+                async: false,
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(rowdata),
+                success: function (data, status, xhr) {
+                    ajaxInsertCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        function utentiUpdateRow(rowid, rowdata, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'put',
+                url: gogas.api.baseUrl + 'friend/' + rowid,
+                async: false,
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(rowdata),
+                success: function (data, status, xhr) {
+                    ajaxUpdateCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        function utentiDeleteRow(rowid, commit) {
+            $.ajax({
+                dataType: 'json',
+                method: 'delete',
+                url: gogas.api.baseUrl + 'friend/' + rowid,
+                async: false,
+                success: function (data, status, xhr) {
+                    ajaxDeleteCommit(data, status, xhr, commit);
+                },
+                error: function (xhr, status, error) {
+                    ajaxError(xhr, error, commit);
+                }
+            });
+        }
+
+        /****************************************************************************************/
+
+        var editrow = -1;
+
+
+        function newItem() {
+
+            editrow = -1
+
+            $('#Nome').val("");
+            $('#Cognome').val("");
+            $('#Username').val("");
+            $('#Username').jqxInput({ disabled: false });
+            $('#Password').val("");
+            $('#Email').val("");
+            $('#Attivo').val("true");
+
+            $('#editDialog').jqxWindow('open');
+        }
+
+
+        function documentReady() {
+
+            //Init popup and input fields
+            $("#Nome").jqxInput();
+            $('#Cognome').jqxInput();
+            $('#Username').jqxInput();
+            $('#Password').jqxInput();
+            $('#Email').jqxInput();
+
+            $("#editDialog").jqxWindow({
+                width: 250,
+                resizable: false,
+                isModal: true,
+                autoOpen: false,
+                cancelButton: $("#Cancel"),
+                modalOpacity: 0.3
+            });
+
+            $("#Cancel").jqxButton();
+            $("#Save").jqxButton();
+            // update the edited row when the user clicks the 'Save' button.
+            $("#Save").click(function () {
+                $('#editForm').jqxValidator('validate', function (isValid) {
+
+                    if (!isValid)
+                        return;
+
+                    var row = {
+                        nome: $("#Nome").val(),
+                        cognome: $("#Cognome").val(),
+                        username: $("#Username").val(),
+                        password: $("#Password").val(),
+                        email: $("#Email").val(),
+                        ruolo: $("#Ruolo").val(),
+                        idReferente: $("#idReferente").val(),
+                        attivo: $('#Attivo').val()
+                    };
+
+                    if (editrow >= 0) {
+                        var rowID = $('#userTable').jqxGrid('getrowid', editrow);
+                        $('#userTable').jqxGrid('updaterow', rowID, row);
+                    } else
+                        $('#userTable').jqxGrid('addrow', null, row);
+
+                    $("#editDialog").jqxWindow('hide');
+                });
+            });
+
+            //Init validator
+            $('#editForm').jqxValidator({
+                rules: [
+                    { input: '#Nome', message: 'Il nome è obbligatorio', action: 'blur', rule: 'required' },
+                    { input: '#Cognome', message: 'Il cognome è obbligatorio', action: 'blur', rule: 'required' },
+                    { input: '#Username', message: 'La username è obbligatoria', action: 'blur', rule: 'required' },
+                    { input: '#Username', message: 'Username già esistente', action: 'blur',
+                        rule: function (input, commit) {
+                            if (editrow >= 0) {
+                                commit(true);
+                                return true;
+                            }
+
+                            $.ajax({
+                                dataType: 'json',
+                                method: 'get',
+                                url: gogas.api.baseUrl + 'user/exists',
+                                async: false,
+                                data: { username: input.val() },
+                                success: function (response, status, xhr) {
+                                    commit(!response.data);
+                                    return !response.data;
+                                },
+                                error: function () {
+                                    commit(false);
+                                    return false;
+                                }
+
+                            });
+                        }
+                    },
+                    { input: '#Password', message: 'la password è obbligatoria', action: 'blur',
+                        rule: function (input, commit) {
+                            return editrow >= 0 || input.val().length > 0;
+                        }
+                    },
+                    { input: '#Email', message: 'L\'indirizzo e-mail non è valido', action: 'blur', rule: 'email' }
+                ]
+            });
+
+            // prepare the data
+            var tableSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'nome' },
+                    { name: 'cognome' },
+                    { name: 'username' },
+                    { name: 'password' },
+                    { name: 'email' },
+                    { name: 'ruolo' },
+                    { name: 'ruololabel' },
+                    { name: 'idReferente' },
+                    { name: 'nomeReferente' },
+                    { name: 'attivo', type: 'boolean' }
+                ],
+                id: 'idUtente',
+                url: gogas.api.baseUrl + 'friend/list',
+                type: 'get',
+                addrow: utentiAddRow,
+                updaterow: utentiUpdateRow,
+                deleterow: utentiDeleteRow
+            };
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+
+            $("#userTable").jqxGrid({
+                source: dataAdapter,
+                editable: true,
+                enabletooltips: true,
+                width: '95%',
+                sortable: true,
+                columns: [
+                    { text: 'Nome', datafield: 'nome', width: 200, cellbeginedit: function (row) { return false } },
+                    { text: 'Cognome', datafield: 'cognome', width: 200, cellbeginedit: function (row) { return false } },
+                    { text: 'Username', datafield: 'username', width: 100, cellbeginedit: function (row) { return false } },
+                    { text: 'Password', datafield: 'password', width: 100, sortable: false, cellbeginedit: function (row) { return false } },
+                    { text: 'E-mail', datafield: 'email', width: 200, cellbeginedit: function (row) { return false } },
+                    { text: 'Attivo', datafield: 'attivo', width: 40, columntype: 'checkbox' },
+                    { text: '', datafield: 'edit', width: 73, sortable: false, columntype: 'button',
+                        cellsrenderer: function () {
+                            return "Modifica";
+                        },
+                        buttonclick: function (row) {
+                            // open the popup window when the user clicks a button.
+                            editrow = row;
+                            var offset = $("#userTable").offset();
+                            $("#editDialog").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60} });
+                            // get the clicked row's data and initialize the input fields.
+                            var dataRecord = $("#userTable").jqxGrid('getrowdata', editrow);
+                            $("#Nome").val(dataRecord.nome);
+                            $("#Cognome").val(dataRecord.cognome);
+                            $("#Username").val(dataRecord.username);
+                            $('#Username').jqxInput({disabled: true });
+                            $("#Password").val("");
+                            $("#Email").val(dataRecord.email);
+
+                            $("#Attivo").val(dataRecord.attivo);
+                            // show the popup window.
+                            $("#editDialog").jqxWindow('open');
+                        }
+                    },
+                    { text: '', datafield: 'delete', width: 72, columntype: 'button',
+                        cellsrenderer: function () {
+                            return "Elimina";
+                        },
+                        buttonclick: function (row) {
+                            // open the popup window when the user clicks a button.
+                            var dataRecord = $("#userTable").jqxGrid('getrowdata', row);
+                            if (confirm("L'utente " + dataRecord.nome + " " + dataRecord.cognome + " verrà cancellato, continuare?"))
+                                $('#userTable').jqxGrid('deleterow', $('#userTable').jqxGrid('getrowid', row));
+                        }
+                    }
+                ],
+                autoheight: true
+            });
+
+            $('#idReferente').val(gogas.api.user.id);
+        }
+    </script>
+</html>

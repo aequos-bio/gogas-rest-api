@@ -21,7 +21,11 @@ import {
   LegacyOrderManagerPage,
   LegacyProductsManagerPage,
   LegacySuppliersManagerPage,
-  LegacyConfigurationPage
+  LegacyConfigurationPage,
+  LegacyUserOrderPage,
+  LegacyUserOrderDetailsPage,
+  LegacyFriendOrderDetailsPage,
+  LegacyManageFriendsPage
 } from './legacy/LegacyPage';
 
 const privateRoutes = [
@@ -32,6 +36,8 @@ const privateRoutes = [
   { path: '/invoices', component: InvoiceManagementPage },
   { path: '/useraccounting', component: UserAccountingTotalsPage },
   { path: '/useraccountingdetails', component: UserAccountingDetailPage },
+  { path: '/friendsaccounting', render: () => <UserAccountingTotalsPage friends={true} /> },
+  { path: '/friendaccountingdetails', render: () => <UserAccountingDetailPage friends={true} /> },
   { path: '/users', component: UsersPage },
   { path: '/reasons', component: ReasonsPage },
   { path: '/ordertypes', component: OrderTypesPage },
@@ -41,6 +47,10 @@ const privateRoutes = [
   { path: '/legacy/products', component: LegacyProductsManagerPage },
   { path: '/legacy/suppliers', component: LegacySuppliersManagerPage },
   { path: '/legacy/configuration', component: LegacyConfigurationPage },
+  { path: '/legacy/ordershistory', component: LegacyUserOrderPage },
+  { path: '/legacy/ordersdetails', component: LegacyUserOrderDetailsPage },
+  { path: '/legacy/friendorders', component: LegacyFriendOrderDetailsPage },
+  { path: '/legacy/managefriends', component: LegacyManageFriendsPage },
 ];
 
 export const Routes = () => {
@@ -67,6 +77,7 @@ export const Routes = () => {
               exact
               path={pr.path}
               component={pr.component}
+              render={pr.render}
             />
           ))}
         </Switch>

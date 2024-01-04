@@ -5,31 +5,31 @@ import { DataResponse, ErrorResponse } from "../../../store/types";
 import { apiGetJson } from "../../../utils/axios_utils";
 import { orderBy } from "lodash";
 
-export const useUserAccountingTotalsAPI = () => {
+export const useUserAccountingTotalsAPI = (manageFriends: boolean) => {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [userTotals, setUserTotals] = useState<UserAccountingTotal[]>([]);
 
   const reload = useCallback(() => {
+    var apiPath = manageFriends ? 'friend' : 'user';
+
     setLoading(true);
-    apiGetJson<DataResponse<UserAccountingTotal[]>>('/api/useraccounting/userTotals', {}).then((response) => {
+    apiGetJson<UserAccountingTotal[]>('/api/accounting/' + apiPath + '/balance', {}).then((response) => {
       setLoading(false);
-      if (response && response.error) {
-        enqueueSnackbar(response.errorMessage, { variant: 'error' });
-      } else if (response) {
+      if (response) {
         let tot = 0;
-        response.data.forEach((t) => {
-          tot += t.total;
+        response.forEach((t) => {
+          tot += t.Saldo;
         });
 
         setUserTotals(
           orderBy(
-            response.data,
+            response,
             [
-              (total: UserAccountingTotal) => total.user.enabled,
-              (total: UserAccountingTotal) => total.user.firstName,
-              (total: UserAccountingTotal) => total.user.lastName
+              (total: UserAccountingTotal) => total.attivo,
+              (total: UserAccountingTotal) => total.nome,
+              (total: UserAccountingTotal) => total.cognome
             ],
             ['desc', 'asc', 'asc'],
           )

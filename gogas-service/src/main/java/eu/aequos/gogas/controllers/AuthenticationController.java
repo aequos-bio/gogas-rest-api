@@ -10,6 +10,7 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
 import eu.aequos.gogas.security.JwtTokenHandler;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.MenuService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.info.BuildProperties;
@@ -41,6 +42,7 @@ public class AuthenticationController {
     private final ConfigurationService configurationService;
     private final TenantRegistry tenantRegistry;
     private final BuildProperties buildProperties;
+    private final MenuService menuService;
 
     @PostMapping(value = "authenticate")
     public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp,
@@ -98,8 +100,12 @@ public class AuthenticationController {
 
     @GetMapping(value = "info")
     public @ResponseBody Map<String,Object> getInfo() {
-        return configurationService.getVisibleConfigurationItems().stream()
+        Map<String, Object> configurationItems = configurationService.getVisibleConfigurationItems().stream()
                 .collect(Collectors.toMap(ConfigurationItemDTO::getKey, ConfigurationItemDTO::getValue));
+
+        configurationItems.put("friends.enabled", menuService.friendsEnabled());
+
+        return configurationItems;
     }
 
     @GetMapping(value = "info/gas")

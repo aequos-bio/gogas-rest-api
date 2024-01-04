@@ -5,16 +5,18 @@ import { apiGetJson, apiPost, apiPut } from "../../../utils/axios_utils";
 import { useSnackbar } from "notistack";
 import { ErrorResponse } from "../../../store/types";
 import { orderBy } from "lodash";
+import useJwt from "../../../hooks/JwtHooks";
 
 export const useYearsAPI = () => {
   const [years, setYears] = useState<Year[]>([]);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const jwt = useJwt();
 
   const checkCurrentYear = (_years: Year[]) => {
     const currentYear = Number.parseInt(moment().format('YYYY'), 10);
     const existing = _years.filter((y) => y.year === currentYear);
-    if (!existing.length) {
+    if (!existing.length && jwt?.role === 'A') {
       const result = confirm(
         `Vuoi aprire un nuovo anno contabile per il ${currentYear}?`,
       );

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <form method="post" name="filtroOrdini">
+            <table style="border-spacing: 3px; border-collapse: separate;">
+                <tr>
+                    <td>
+                        <label>Tipologia ordine</label>
+                    </td>
+                    <td>
+                        <select name="FiltroTipologia" id="FiltroTipologia"><option></option></select>
+                    </td>
+                    <td>
+                        <label>Data Chiusura Da</label>
+                    </td>
+                    <td>
+                        <div id="DataChiusuraInizio"></div>
+                    </td>
+                    <td>
+                        <label>Data Consegna Da</label>
+                    </td>
+                    <td>
+                        <div id="DataConsegnaInizio"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Stato</label>
+                    </td>
+                    <td>
+                        <select id="FiltroStato" name="FiltroStato" class="CampoDDL"></select>
+                    </td>
+                    <td>
+                        <label>Data Chiusura A</label>
+                    </td>
+                    <td>
+                        <div id="DataChiusuraFine"></div>
+                    </td>
+                    <td>
+                        <label>Data Consegna A</label>
+                    </td>
+                    <td>
+                        <div id="DataConsegnaFine"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    </td>
+                    <td align="center">
+                        <input type="button" value="Ricerca" class="Bottone" onclick="cerca();" />
+                    </td>
+                </tr>
+            </table>
+
+        </form>
+
+        <div id="ordiniTable"></div>
+    </div>
+
+    <div layout:fragment="modals">
+
+    </div>
+
+    <script layout:fragment="script">
+
+        var hasFriends = false;
+
+        function fillSelectAndSearch() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'home/order/status',
+                async: true,
+                success: function (data, status, xhr) {
+                    var filtroStato = $("#FiltroStato").select2({
+                        data: convertItemsForSelect2(data),
+                        multiple: true
+                    });
+                    filtroStato.val([0,1]).trigger("change");
+                    cerca();
+                }
+            });
+        }
+
+        function fillSelectOrderType() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'ordertype/select',
+                data: { firstEmpty: false },
+                async: true,
+                success: function (data, status, xhr) {
+                    var filtroTipologia = $("#FiltroTipologia").select2({
+                        placeholder: 'Selezionare una tipologia...',
+                        data: convertItemsForSelect2(data),
+                        allowClear: true
+                    });
+                }
+            });
+        }
+
+        function cerca() {
+            tableSource.data = {
+                orderType: $('#FiltroTipologia').val(),
+                dueDateFrom: $('#DataChiusuraInizio').jqxDateTimeInput('getText'),
+                dueDateTo: $('#DataChiusuraFine').jqxDateTimeInput('getText'),
+                deliveryDateFrom: $('#DataConsegnaInizio').jqxDateTimeInput('getText'),
+                deliveryDateTo: $('#DataConsegnaFine').jqxDateTimeInput('getText'),
+                status: []
+            };
+
+            $.each($("#FiltroStato").select2("data"), function (index) {
+                tableSource.data.status[index] = this.id;
+            });
+
+            var dataAdapter = new $.jqx.dataAdapter(tableSource, { loadError: adapterLoadError, beforeLoadComplete: adapterBeforeLoadComplete, beforeSend: setJWT });
+            $("#ordiniTable").jqxGrid({ source: dataAdapter });
+        }
+
+        var tableSource = {};
+
+        function documentReady() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'friend/select',
+                async: true,
+                success: function (data, status, xhr) {
+                    if (!data.error) {
+                        hasFriends = data && data.length;
+                    }
+                    documentReadyAsynch();
+                },
+                error: ajaxErrorNoCommit
+            });
+
+            return true;
+        }
+
+        function documentReadyAsynch() {
+
+            $("#DataChiusuraInizio").jqxDateTimeInput({ value: getFormattedDateForFilter(2), firstDayOfWeek: 1, showFooter: true });
+            $("#DataChiusuraFine").jqxDateTimeInput({ value: null, firstDayOfWeek: 1, showFooter: true });
+            $("#DataConsegnaInizio").jqxDateTimeInput({ value: null, firstDayOfWeek: 1, showFooter: true });
+            $("#DataConsegnaFine").jqxDateTimeInput({ value: null, firstDayOfWeek: 1, showFooter: true });
+
+            tableSource = {
+                datatype: "json",
+                datafields: [
+                    { name: 'tipoordine' },
+                    { name: 'idtipoordine' },
+                    { name: 'dataapertura', type: 'date', format: 'dd/MM/yyyy' },
+                    { name: 'datachiusura', type: 'date', format: 'dd/MM/yyyy' },
+                    { name: 'orachiusura' },
+                    { name: 'dataconsegna', type: 'date', format: 'dd/MM/yyyy' },
+                    { name: 'codicestato' },
+                    { name: 'stato' },
+                    { name: 'numarticoli', type: 'int' },
+                    { name: 'totaleordine', type: 'float' },
+                    { name: 'amici', type: 'boolean' },
+                    { name: 'contabilizzabile', type: 'boolean' },
+                    { name: 'contabilizzato', type: 'boolean' }
+                ],
+                id: 'id',
+                url: gogas.api.baseUrl + 'order/user/list',
+                type: 'post',
+                contentType : 'application/json;charset=UTF-8',
+                formatData: function (data) {
+                    return JSON.stringify(data);
+                },
+                data: { orderType: $('#FiltroTipologia').val(), status: $('#FiltroStato').val() }
+            };
+
+            $("#ordiniTable").jqxGrid({
+                editable: false,
+                width: $( window ).width() - 20,
+                height: $( window ).height() - 140,
+                sortable: true,
+                columns: [
+                        { text: 'Tipo Ordine', datafield: 'idtipoordine', displayfield: 'tipoordine', width: 'auto' },
+                        { text: 'Data<br/>Apertura', datafield: 'dataapertura', width: 80, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Data<br/>Chiusura', datafield: 'datachiusura', width: 80, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Ora<br/>Chiusura', datafield: 'orachiusura', width: 60 },
+                        { text: 'Data<br/>Consegna', datafield: 'dataconsegna', width: 80, cellsformat: 'dd/MM/yyyy' },
+                        { text: 'Stato', datafield: 'codicestato', displayfield: 'stato', width: 100 },
+                        { text: 'Num.<br/>Articoli', datafield: 'numarticoli', width: 50 },
+                        { text: 'Importo', datafield: 'totaleordine', width: 100, cellsformat: 'c2' },
+                        { text: 'Contab.to<br/>amici', datafield: 'contabilizzato', width: 50, columntype: 'checkbox', hidden: !hasFriends },
+                        { text: '', datafield: '', width: 210, sortable: false,
+                            cellsrenderer: function (row, column, value) {
+                                var idDataOrdine = $('#ordiniTable').jqxGrid('getrowid', row);
+                                var rowData = $('#ordiniTable').jqxGrid('getrowdata', row);
+                                var html = "<div style='margin-top:5px; margin-left:5px; cursor:pointer;'><a title=\"Clicca per visualizzare il dettaglio dell'ordine\" href='user-order-details?orderId=" + idDataOrdine + "&userId=" + gogas.api.user.id + "'><span class='comando'>dettaglio</span></a>";
+
+                                if (rowData.amici && rowData.contabilizzabile)
+                                    html += " <a title=\"Clicca per gestire la ripartizione con gli amici delle quantità ritirate\" href='GestioneOrdineAmici?idDataOrdine=" + idDataOrdine + "&idTipologiaOrdine=" + rowData.idtipoordine + "'><span class='comando'>Gestisci ripartizione amici</span></a>";
+
+                                html += "</div>";
+
+                                return html;
+                            }
+                        }
+                ],
+                localization: localizationobj
+            });
+
+            $( window ).resize(function() {
+                $("#ordiniTable").jqxGrid({ width: $( window ).width() - 20 });
+                $("#ordiniTable").jqxGrid({ height: $( window ).height() - 140 });
+            });
+
+            fillSelectOrderType()
+
+            fillSelectAndSearch();
+
+            //complete page loading
+            pageLoaded();
+        }
+    </script>
+</html>

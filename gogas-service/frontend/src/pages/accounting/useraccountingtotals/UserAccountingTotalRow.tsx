@@ -43,18 +43,18 @@ const UserAccountingTotalRow: React.FC<Props> = ({ userTotal, onOpenDetail }) =>
   return (
     <TableRow hover>
       <TableCell className={classes.tdIcon}>
-        {userTotal.user.enabled ? [] : <BlockIcon fontSize='small' />}
+        {userTotal.attivo ? [] : <BlockIcon fontSize='small' />}
       </TableCell>
-      <TableCell>{`${userTotal.user.firstName} ${userTotal.user.lastName}`}</TableCell>
+      <TableCell>{`${userTotal.nome} ${userTotal.cognome}`}</TableCell>
       <TableCell
         className={classes.tdAmount}
-        style={{ color: userTotal.total < 0 ? 'red' : 'inheried' }}
+        style={{ color: userTotal.Saldo < 0 ? 'red' : 'inheried' }}
       >
-        {userTotal.total.toFixed(2)}
+        {userTotal.Saldo.toFixed(2)}
       </TableCell>
       <TableCell className={classes.tdLink}>
         <IconButton
-          onClick={() => onOpenDetail(userTotal.user.id)}
+          onClick={() => onOpenDetail(userTotal.idUtente)}
           size='small'
         >
           <EditIcon fontSize='small' />

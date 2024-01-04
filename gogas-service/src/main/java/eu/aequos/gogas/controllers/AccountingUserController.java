@@ -11,12 +11,14 @@ import eu.aequos.gogas.security.annotations.IsAdmin;
 import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.ExcelGenerationService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,6 +34,7 @@ public class AccountingUserController {
 
     private final AccountingService accountingService;
     private final ConfigurationService configurationService;
+    private final ExcelGenerationService excelGenerationService;
 
     @CanViewBalance
     @GetMapping(value = "{userId}/balance", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -93,5 +96,21 @@ public class AccountingUserController {
         LocalDate parsedDateTo = configurationService.parseLocalDate(dateTo);
 
         return accountingService.getPaginatedUserBalance(userId, parsedDateFrom, parsedDateTo, false, skipItems, maxItems);
+    }
+
+    @GetMapping(value = "/exportTotals", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody byte[] exportUserTotals(HttpServletResponse response,
+                                                 @RequestParam(name = "includeUsers", required = false) boolean includeUsers) throws Exception {
+
+        return excelGenerationService.exportUserTotals(includeUsers);
+    }
+
+    @CanViewBalance
+    @GetMapping(value = "/exportDetails", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody byte[] exportUserDetails(HttpServletResponse response, @RequestParam(name = "userId") String userId) throws Exception {
+        byte[] bytes = excelGenerationService.exportUserEntries(userId);
+        if (bytes == null)
+            response.sendError(406);
+        return bytes;
     }
 }

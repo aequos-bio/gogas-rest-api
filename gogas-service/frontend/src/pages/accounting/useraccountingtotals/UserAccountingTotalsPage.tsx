@@ -50,21 +50,25 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function UserAccountingTotals() {
+const UserAccountingTotals = ({ friends }: { friends?: boolean }) => {
   const classes = useStyles();
   const [showDlg, setShowDlg] = useState(false);
   const [exportDlgOpen, setExportDlgOpen] = useState(false);
   const history = useHistory();
-  const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI();
+  const manageFriends = !!friends;
+
+  const { total, userTotals, loading, reload } = useUserAccountingTotalsAPI(manageFriends);
 
   const exportXls = useCallback((type) => {
     setExportDlgOpen(false);
 
+    const apiPath = manageFriends ? 'friend' : 'user';
+
     if (type === 'simple')
-      window.open('/api/useraccounting/exportUserTotals', '_blank');
+      window.open(`/api/accounting/${apiPath}/exportTotals`, '_blank');
     else if (type === 'full')
       window.open(
-        '/api/useraccounting/exportUserTotals?includeUsers=true',
+        `/api/accounting/${apiPath}/exportTotals?includeUsers=true`,
         '_blank',
       );
   }, []);
@@ -84,7 +88,7 @@ function UserAccountingTotals() {
   }, [reload]);
 
   const onOpenDetail = useCallback((userId: string) => {
-    history.push(`/useraccountingdetails?userId=${userId}`)
+    history.push(manageFriends ? `/friendaccountingdetails?userId=${userId}` : `/useraccountingdetails?userId=${userId}`)
   }, [history])
 
   return (
@@ -99,13 +103,15 @@ function UserAccountingTotals() {
         </Button>
       </PageTitle>
 
-      <Fab
-        className={classes.fab}
-        color='secondary'
-        onClick={() => setShowDlg(true)}
-      >
-        <PlusIcon />
-      </Fab>
+      {manageFriends ? <></> : (
+        <Fab
+          className={classes.fab}
+          color='secondary'
+          onClick={() => setShowDlg(true)}
+        >
+          <PlusIcon />
+        </Fab>
+      )}
 
       <TableContainer>
         <Table size='small'>
@@ -123,7 +129,7 @@ function UserAccountingTotals() {
               <LoadingRow colSpan={4} />
             ) : (
               userTotals.map((userTotal) => (
-                <UserAccountingTotalRow key={`user-${userTotal.user.id}`} userTotal={userTotal} onOpenDetail={onOpenDetail} />
+                <UserAccountingTotalRow key={`user-${userTotal.idUtente}`} userTotal={userTotal} onOpenDetail={onOpenDetail} />
               ))
             )}
           </TableBody>

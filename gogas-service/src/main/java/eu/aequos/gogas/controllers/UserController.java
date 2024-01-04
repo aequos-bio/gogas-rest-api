@@ -6,8 +6,8 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.GoGasUserDetails;
+import eu.aequos.gogas.security.annotations.CanViewBalance;
 import eu.aequos.gogas.security.annotations.IsAdmin;
-import eu.aequos.gogas.security.annotations.IsAdminOrCurrentUser;
 import eu.aequos.gogas.service.UserService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class UserController {
         @ApiResponse(code = 404, message = "Item not found. Type: user, Id: <userId>"),
     })
     @GetMapping(value = "{userId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @IsAdminOrCurrentUser
+    @CanViewBalance
     public UserDTO getUser(@PathVariable String userId) {
         return new UserDTO().fromModel(userService.getRequired(userId));
     }
