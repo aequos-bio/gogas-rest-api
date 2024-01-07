@@ -25,10 +25,9 @@ import {
 } from '@material-ui/icons';
 import { useSnackbar } from 'notistack';
 import { makeStyles } from '@material-ui/core/styles';
-import { useSelector } from 'react-redux';
 import { apiPut, apiPost, apiGetJson } from '../../../utils/axios_utils';
 import { Friend, User } from './types';
-import { RootState } from '../../../store/store';
+import { useAppSelector } from '../../../store/store';
 
 const MIN_PASSWORD_LEN = 6;
 
@@ -66,7 +65,7 @@ const UserEditDialog: React.FC<Props> = ({ open, onClose, user }) => {
   const [role, setRole] = useState('U');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendRef, setFriendRef] = useState<string | undefined>(user?.idReferente || '');
-  const info = useSelector((state: RootState) => state.info);
+  const info = useAppSelector((state) => state.info);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {

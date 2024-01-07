@@ -35,44 +35,86 @@ export const menuIcons = [
 
 export const menuItems: MenuChapter[] = [
   {
+    label: 'Utente',
     items: [
-      { label: 'Home', url: '/', icon: 0 },
-      { label: 'Guida', url: '/documentation/GoGas.pdf', icon: 13, newWindow: true }
+      {
+        label: 'Home',
+        url: '/',
+        icon: 0
+      },
+      {
+        label: 'Situazione contabile',
+        url: `/useraccountingdetails?userId=:userId`,
+        icon: 2,
+      },
+      {
+        label: 'Guida',
+        url: '/documentation/GoGas.pdf',
+        icon: 13,
+        newWindow: true
+      },
+    ],
+  },
+  {
+    label: 'Amici',
+    items: [
+      {
+        label: 'Gestione amici',
+        url: '/legacy/managefriends',
+        restrictions: { friendsEnabled: true },
+        icon: 3
+      },
+      {
+        label: 'Situazione contabile amici',
+        url: '/friendsaccounting',
+        restrictions: { friendsEnabled: true },
+        icon: 3
+      },
     ],
   },
   {
     label: 'Contabilità [year]',
     items: [
-      { label: 'Anni contabili', url: '/years', restrictions: ['A'], icon: 1 },
-      { label: 'Causali', url: '/reasons', restrictions: ['A'], icon: 4 },
+      {
+        label: 'Anni contabili',
+        url: '/years',
+        restrictions: { roles: ['A'] },
+        icon: 1
+      },
+      {
+        label: 'Causali',
+        url: '/reasons',
+        restrictions: { roles: ['A'] },
+        icon: 4
+      },
       {
         label: 'Codici contabili',
         url: '/accountingcodes',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 7,
       },
       {
         label: 'Movimenti del gas',
         url: '/gasmovements',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 2,
       },
       {
         label: 'Situazione utenti',
         url: '/useraccounting',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 2,
       },
       {
         label: 'Fatture',
         url: '/invoices',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 9,
       },
       {
         label: 'Contabilità del GAS',
         url: '/gasaccounting',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 8,
       },
     ],
@@ -80,32 +122,52 @@ export const menuItems: MenuChapter[] = [
   {
     label: 'Gestione',
     items: [
-      { label: 'Utenti', url: '/users', restrictions: ['A'], icon: 3 },
+      {
+        label: 'Utenti',
+        url: '/users',
+        restrictions: { roles: ['A'] },
+        icon: 3
+      },
       {
         label: 'Tipi ordine',
         url: '/ordertypes',
-        restrictions: ['A'],
+        restrictions: { roles: ['A'] },
         icon: 5,
       },
-      { label: 'Referenti', url: '/managers', restrictions: ['A'], icon: 6 },
-      { label: 'Produttori', url: '/legacy/suppliers', restrictions: ['A'], icon: 10 },
-      { label: 'Configurazione generale', url: '/legacy/configuration', restrictions: ['A'], icon: 4 },
+      {
+        label: 'Referenti',
+        url: '/managers',
+        restrictions: { roles: ['A'] },
+        icon: 6
+      },
+      {
+        label: 'Produttori',
+        url: '/legacy/suppliers',
+        restrictions: { roles: ['A'] },
+        icon: 10
+      },
+      {
+        label: 'Configurazione generale',
+        url: '/legacy/configuration',
+        restrictions: { roles: ['A'] },
+        icon: 4
+      },
     ],
   },
   {
     label: 'Referente',
     items: [
-      { label: 'Prodotti', url: '/legacy/products', restrictions: ['A'], icon: 12 },
-      { label: 'Gestione ordini', url: `/legacy/orderslist`, icon: 11 },
-    ],
-  },
-  {
-    label: 'Utente',
-    items: [
       {
-        label: 'Situazione contabile',
-        url: `/useraccountingdetails?userId=:userId`,
-        icon: 2,
+        label: 'Prodotti',
+        url: '/legacy/products',
+        restrictions: { orderManager: true },
+        icon: 12
+      },
+      {
+        label: 'Gestione ordini',
+        url: `/legacy/orderslist`,
+        restrictions: { orderManager: true },
+        icon: 11
       },
     ],
   },

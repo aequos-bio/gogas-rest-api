@@ -37,21 +37,19 @@ const UserAccountingDetailRow: React.FC<Props> = ({ transaction, onEditTransacti
   return (
     <TableRow hover>
       <TableCell align='center'>
-        {moment(transaction.date).format('DD/MM/YYYY')}
+        {moment(transaction.data, 'DD/MM/YYYY').format('DD/MM/YYYY')}
       </TableCell>
       <TableCell>
-        {transaction.reason ? `${transaction.reason} - ` : ''}
-        {transaction.friend ? `(${transaction.friend}) ` : ''}
-        {transaction.description}
+        {transaction.descrizione}
       </TableCell>
       <TableCell className={classes.tdAmount}>
-        {transaction.sign === '+' || transaction.amount < 0
-          ? Math.abs(transaction.amount).toFixed(2)
+        {transaction.importo >= 0
+          ? Math.abs(transaction.importo).toFixed(2)
           : ''}
       </TableCell>
       <TableCell className={classes.tdAmount}>
-        {transaction.sign === '-' && transaction.amount >= 0
-          ? Math.abs(transaction.amount).toFixed(2)
+        {transaction.importo < 0
+          ? Math.abs(transaction.importo).toFixed(2)
           : ''}
       </TableCell>
       <TableCell
@@ -63,25 +61,25 @@ const UserAccountingDetailRow: React.FC<Props> = ({ transaction, onEditTransacti
       </TableCell>
       {admin && !yearIsClosed ? (
         <TableCell>
-          {transaction.type === 'M' ? (
+          {transaction.orderId ? null : (
             <IconButton
               onClick={() => {
-                onEditTransaction(transaction.id);
+                onEditTransaction(transaction.idRiga);
               }}
             >
               <EditIcon fontSize='small' />
             </IconButton>
-          ) : null}
+          )}
 
-          {transaction.type === 'M' ? (
+          {transaction.orderId ? null : (
             <IconButton
               onClick={() => {
-                onDeleteTransaction(transaction.id);
+                onDeleteTransaction(transaction.idRiga);
               }}
             >
               <DeleteIcon fontSize='small' />
             </IconButton>
-          ) : null}
+          )}
         </TableCell>
       ) : <TableCell />}
     </TableRow>

@@ -59,19 +59,23 @@ const EditOrderTypeDialog: React.FC<Props> = ({
 
   useEffect(() => {
     if (!mode) return;
-    setDescription('');
-    setGroupFriends(false);
-    setCalculateTotal(false);
-    setExternalOrder(false);
-    setNeedShifts(false);
-    setShowCount(false);
-    setShowCompleteness(false);
-    setExcelAllUsers(false);
-    setExcelAllProducts(false);
-    setExternalLink('');
-    setAccountingCode('');
-    setOrderToAequos(false);
-    setBilledByAequos(false);
+
+    if (mode == 'new') {
+        setDescription('');
+        setGroupFriends(false);
+        setCalculateTotal(false);
+        setExternalOrder(false);
+        setNeedShifts(false);
+        setShowCount(false);
+        setShowCompleteness(false);
+        setExcelAllUsers(false);
+        setExcelAllProducts(false);
+        setExternalLink('');
+        setAccountingCode('');
+        setOrderToAequos(false);
+        setBilledByAequos(false);
+        return;
+    }
 
     setDescription(orderType.descrizione || '');
     setGroupFriends(orderType.riepilogo || false);

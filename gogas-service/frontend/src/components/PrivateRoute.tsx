@@ -3,12 +3,13 @@ import { Route, Redirect } from 'react-router-dom';
 import useJwt from '../hooks/JwtHooks';
 
 interface Props {
-  component: React.FC | any;
+  component?: React.FC | any;
+  render?: (props: any) => void,
   exact?: boolean;
   path: string;
 }
 
-const PrivateRoute: React.FC<Props> = ({ component: Component, ...rest }) => {
+const PrivateRoute: React.FC<Props> = ({ component: Component, render, ...rest }) => {
   const validJwt = useJwt();
 
   return (
@@ -16,7 +17,7 @@ const PrivateRoute: React.FC<Props> = ({ component: Component, ...rest }) => {
       {...rest}
       render={(props) => {
         if (validJwt) {
-          return <Component {...props} />;
+          return render ? render(props) : <Component {...props} />;
         }
 
         return (

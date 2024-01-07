@@ -1,24 +1,79 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { makeStyles } from '@material-ui/core/styles';
 import {
+  CircularProgress,
   Container,
   Grid,
+  Typography
 } from '@material-ui/core';
-import { RootState } from '../../store/store';
 import { useUserOrdersAPI } from './useUserOrdersAPI';
 import { UserOpenOrderWidget } from './UserOpenOrderWidget';
+import InDeliveryOrdersTable from './InDeliveryOrdersTable';
+import { ArrowForwardIosSharp as EditIcon } from '@material-ui/icons';
+
+const useStyles = makeStyles((theme) => ({
+  container: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  title: {
+    paddingTop: '10px',
+    paddingBottom: '30px',
+    display: 'inline-block'
+  },
+  subtitle: {
+    display: 'inline-block',
+    float: 'right',
+    paddingTop: '15px'
+  },
+  subtitleLink: {
+    textDecoration: 'none',
+    color: '#337ab7',
+    fontSize: '1.1rem',
+  },
+  open: {
+    paddingBottom: '60px'
+  },
+  arrow: {
+    fontSize: '0.9rem',
+    color: '#337ab7',
+  },
+}));
 
 const Home: React.FC = () => {
-  const info = useSelector((state: RootState) => state.info);
-  const { openOrders } = useUserOrdersAPI();
+  const { loading, openOrders, userSelect, deliveryOrders } = useUserOrdersAPI();
+  const classes = useStyles();
 
   return (
-    <Container maxWidth={false}>
-      <Grid container spacing={3}>
-        {openOrders.map((o) => (
-          <UserOpenOrderWidget key={`order-${o.id}`} order={o} userNameOrder={info['visualizzazione.utenti']} />
-        ))}
-      </Grid>
+    <Container maxWidth={false} className={classes.container}>
+      <Typography className={classes.title} component="h5" variant="h5">
+        Ordini aperti
+      </Typography>
+      {loading ? (
+        <CircularProgress />
+      ) : openOrders.length > 0 ? (
+        <Grid container spacing={2} className={classes.open}>
+          {openOrders.map((o) => (
+            <UserOpenOrderWidget key={`order-${o.id}`} order={o} users={userSelect} />
+          ))}
+        </Grid>
+      ) : (
+        <div className={classes.open}>Nessun ordine aperto.</div>
+      )}
+
+      <div>
+        <Typography className={classes.title} component="h5" variant="h5">
+          Ordini in consegna
+        </Typography>
+        <div className={classes.subtitle}>
+          <a href="legacy/ordershistory" className={classes.subtitleLink}>Vai allo storico <EditIcon className={classes.arrow} /></a>
+        </div>
+      </div>
+      {deliveryOrders.length > 0 ? (
+        <InDeliveryOrdersTable orders={deliveryOrders} />
+      ) : (
+        <div>Nessun ordine in consegna.</div>
+      )}
     </Container>
   );
 };

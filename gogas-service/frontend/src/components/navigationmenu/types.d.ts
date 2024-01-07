@@ -7,7 +7,13 @@ export interface MenuItem {
   label: string;
   url: string;
   icon: number;
-  restrictions?: string[];
+  restrictions?: Restrictions;
   newWindow?: boolean;
+}
+
+export interface Restrictions {
+  roles?: string[];
+  orderManager?: boolean;
+  friendsEnabled?: boolean;
 }
 

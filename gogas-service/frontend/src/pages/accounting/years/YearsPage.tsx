@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   Container,
-  Button,
   TableContainer,
   Table,
   TableHead,
@@ -14,7 +12,7 @@ import PageTitle from '../../../components/PageTitle';
 import LoadingRow from '../../../components/LoadingRow';
 import ActionDialog from '../../../components/ActionDialog';
 import { setAccountingYear } from '../../../store/features/accounting.slice';
-import { RootState, useAppDispatch } from '../../../store/store';
+import { useAppDispatch, useAppSelector } from '../../../store/store';
 import { useYearsAPI } from './useYearsAPI';
 import { Year } from './types';
 import YearRow from './YearRow';
@@ -22,7 +20,7 @@ import YearRow from './YearRow';
 const Years: React.FC = () => {
   const [confirmDlgOpen, setConfigDlgOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<Year | undefined>(undefined);
-  const accounting = useSelector((state: RootState) => state.accounting);
+  const accounting = useAppSelector((state) => state.accounting);
   const dispatch = useAppDispatch();
   const { years, loading, reload, closeYear } = useYearsAPI();
 

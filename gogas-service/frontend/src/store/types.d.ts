@@ -4,6 +4,7 @@ export interface InfoState {
   'aequos.password': string;
   'aequos.username': string;
   'visualizzazione.utenti': 'NC' | 'CN';
+  'friends.enabled': string | undefined;
 }
 
 export interface AccountingState {

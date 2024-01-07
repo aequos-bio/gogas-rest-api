@@ -281,9 +281,18 @@ public class ExcelGenerationService {
     }
 
     public byte[] exportUserTotals(boolean includeUserDetails) throws IOException {
+        List<UserBalanceDTO> userBalanceList = accountingService.getUserBalanceList();
+        return exportTotals(userBalanceList, includeUserDetails);
+    }
 
-        List<UserBalanceDTO> userTotals = accountingService.getUserBalanceList()
-                .stream()
+    public byte[] exportFriendTotals(String friendReferralId, boolean includeUserDetails) throws IOException {
+        List<UserBalanceDTO> friendBalanceList = accountingService.getFriendBalanceList(friendReferralId);
+        return exportTotals(friendBalanceList, includeUserDetails);
+    }
+
+    public byte[] exportTotals(List<UserBalanceDTO> balanceList, boolean includeUserDetails) throws IOException {
+
+        List<UserBalanceDTO> userTotals = balanceList.stream()
                 .sorted(Comparator.comparing(UserBalanceDTO::isEnabled).reversed()
                         .thenComparing(UserBalanceDTO::getFullName))
                 .collect(Collectors.toList());
