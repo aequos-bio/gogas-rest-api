@@ -3,12 +3,11 @@ import { Container, Button, TextField } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import { makeStyles } from '@material-ui/core/styles';
 import { Redirect } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import queryString from 'query-string';
 import Logo from '../../assets/logo_aequos.png';
 import useJwt from '../../hooks/JwtHooks';
 import { login } from '../../store/features/authentication.slice';
-import { RootState, useAppDispatch } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '../../store/store';
 import { History, Location } from 'history';
 
 const useStyles = makeStyles((theme) => ({
@@ -38,8 +37,8 @@ interface Props {
 const Login: React.FC<Props> = ({ location, history }) => {
   const classes = useStyles();
   const search = queryString.parse(location.search);
-  const info = useSelector((state: RootState) => state.info);
-  const authentication = useSelector((state: RootState) => state.authentication);
+  const info = useAppSelector((state) => state.info);
+  const authentication = useAppSelector((state) => state.authentication);
   const dispatch = useAppDispatch();
   const validJwt = useJwt();
 

@@ -31,14 +31,31 @@ const MenuChapter: React.FC<Props> = ({ chapter, onMenuClick }) => {
   const classes = useStyles();
   const jwt = useJwt();
   const accounting = useAppSelector((state) => state.accounting);
+  const info = useAppSelector((state) => state.info);
 
   const menus = chapter.items.filter((menu) => {
-    if (!menu.restrictions) return true;
-    const matching = menu.restrictions.filter((r) => r === jwt?.role);
-    if (matching.length > 0) {
+    var restrictions = menu.restrictions;
+
+    if (!restrictions) {
       return true;
     }
-    return false;
+
+    if (restrictions.roles) {
+      const matchingRoles = restrictions.roles.filter((r) => r === jwt?.role);
+      if (matchingRoles.length <= 0) {
+        return false;
+      };
+    }
+
+    if ((restrictions.orderManager ?? false) && !jwt?.manager) {
+      return false;
+    }
+
+    if ((restrictions.friendsEnabled ?? false) && !info['friends.enabled']) {
+      return false;
+    }
+
+    return true;
   });
 
   if (!menus.length) return <></>;

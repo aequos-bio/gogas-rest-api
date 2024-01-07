@@ -1,6 +1,7 @@
 package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.security.annotations.IsAdmin;
+import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.security.annotations.IsOrderManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,15 +11,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class FrontendController {
 
-    @GetMapping(value = {"/", "/login",
-        "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
-        "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers",
-        "/legacy/orderslist", "/legacy/products", "/legacy/suppliers", "/legacy/configuration"})
+    @GetMapping(value = {
+            "/", "/login",
+            "/years", "/useraccounting", "/useraccountingdetails", "/gasaccounting", "/invoices",
+            "/users", "/reasons", "/ordertypes", "/accountingcodes", "/managers",
+            "/legacy/orderslist", "/legacy/products", "/legacy/suppliers", "/legacy/configuration",
+            "/legacy/ordershistory",
+    })
     public String home() {
         return "singlepage";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/orders-list"})
     public String legacyOrdersList() {
         return "legacy/referenti/orders-list";
@@ -40,13 +44,13 @@ public class FrontendController {
         return "legacy/referenti/order-details-byuser";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/products"})
     public String legacyProducts() {
         return "legacy/admin/products";
     }
 
-    @IsOrderManager
+    @IsManager
     @GetMapping(value = {"/legacy-ui/suppliers"})
     public String legacySuppliers() {
         return "legacy/admin/suppliers";
@@ -56,5 +60,33 @@ public class FrontendController {
     @GetMapping(value = {"/legacy-ui/configuration"})
     public String legacyConfiguration() {
         return "legacy/admin/configuration";
+    }
+
+    @GetMapping(value = {"/legacy-ui/user-orders-list"})
+    public String legacyUserOrdersList() {
+        return "legacy/user/orders-list";
+    }
+
+    @GetMapping(value = {"/legacy-ui/user-order-details"})
+    public String legacyUserOrderDetails(@RequestParam String orderId, @RequestParam String userId,
+                                         Model model) {
+
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("userId", userId);
+        return "legacy/user/order-details";
+    }
+
+    @GetMapping(value = {"/legacy-ui/friend-order-details"})
+    public String legacyFriendOrderDetails(@RequestParam String orderId, @RequestParam String userId,
+                                           Model model) {
+
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("userId", userId);
+        return "legacy/user/friend-order";
+    }
+
+    @GetMapping(value = {"/legacy-ui/manage-friends"})
+    public String legacyManageFriends() {
+        return "legacy/user/manage-friends";
     }
 }

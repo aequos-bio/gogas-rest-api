@@ -8,7 +8,8 @@ const initialState: InfoState = {
   'colli.soglia_arrotondamento': '',
   'aequos.password': '',
   'aequos.username': '',
-  'visualizzazione.utenti': 'NC'
+  'visualizzazione.utenti': 'NC',
+  'friends.enabled': undefined
 };
 
 export const infoSlice = createSlice({

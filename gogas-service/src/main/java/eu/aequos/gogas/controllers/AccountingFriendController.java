@@ -11,11 +11,14 @@ import eu.aequos.gogas.security.AuthorizationService;
 import eu.aequos.gogas.security.annotations.IsCurrentUserFriend;
 import eu.aequos.gogas.service.AccountingService;
 import eu.aequos.gogas.service.ConfigurationService;
+import eu.aequos.gogas.service.ExcelGenerationService;
 import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -23,20 +26,14 @@ import java.util.List;
 @Api("Friends accounting")
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("api/accounting/friend")
 public class AccountingFriendController {
 
-    private AccountingService accountingService;
-    private ConfigurationService configurationService;
-    private AuthorizationService authorizationService;
-
-    public AccountingFriendController(AccountingService accountingService, ConfigurationService configurationService,
-                                      AuthorizationService authorizationService) {
-
-        this.accountingService = accountingService;
-        this.configurationService = configurationService;
-        this.authorizationService = authorizationService;
-    }
+    private final AccountingService accountingService;
+    private final ConfigurationService configurationService;
+    private final AuthorizationService authorizationService;
+    private final ExcelGenerationService excelGenerationService;
 
     @GetMapping(value = "entry/list", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<AccountingEntryDTO> getAccountingEntries(@RequestParam(required = false) String userId,
@@ -111,5 +108,22 @@ public class AccountingFriendController {
     private boolean isFriendAccountingEntry(@PathVariable String accountingEntryId) {
         String accountingEntryUserId = accountingService.getRequired(accountingEntryId).getUser().getId();
         return authorizationService.isFriend(accountingEntryUserId);
+    }
+
+    @GetMapping(value = "/exportTotals", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody byte[] exportUserTotals(HttpServletResponse response,
+                                                 @RequestParam(name = "includeUsers", required = false) boolean includeUsers) throws Exception {
+
+        String currentUserId = authorizationService.getCurrentUser().getId();
+        return excelGenerationService.exportFriendTotals(currentUserId, includeUsers);
+    }
+
+    @IsCurrentUserFriend
+    @GetMapping(value = "/exportDetails", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public @ResponseBody byte[] exportUserDetails(HttpServletResponse response, @RequestParam(name = "userId") String userId) throws Exception {
+        byte[] bytes = excelGenerationService.exportUserEntries(userId);
+        if (bytes == null)
+            response.sendError(406);
+        return bytes;
     }
 }

@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const UserAccountingDetail: React.FC = () => {
+const UserAccountingDetail = ({ friends }: { friends?: boolean }) => {
   const classes = useStyles();
   const location = useLocation();
   const search = queryString.parse(location.search);
@@ -63,7 +63,9 @@ const UserAccountingDetail: React.FC = () => {
   const jwt = useJwt();
   const { years: yearList, reload: reloadYears } = useYearsAPI();
   const { getUser } = useUsersAPI("NC");
-  const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string)
+
+  const manageFriends = !!friends;
+  const { loading, reload: reloadTransactions, transactions, totals, deleteTransaction } = useUserTransactionsAPI(search.userId as string, manageFriends)
 
   const reload = useCallback(() => {
     if (!search.userId) return;
@@ -74,8 +76,11 @@ const UserAccountingDetail: React.FC = () => {
 
   const downloadXls = useCallback(() => {
     if (!user) return;
+
+    const apiPath = manageFriends ? 'friend' : 'user';
+
     window.open(
-      `/api/useraccounting/exportUserDetails?userId=${user.idUtente}`,
+      `/api/accounting/${apiPath}/exportDetails?userId=${user.idUtente}`,
       '_blank',
     );
   }, [user]);
@@ -135,8 +140,7 @@ const UserAccountingDetail: React.FC = () => {
     let lastYearMinus = 0;
 
     transactions.forEach((t, i) => {
-      const year = Number.parseInt(moment(t.date).format('YYYY'), 10);
-      console.log('comparing', lastYear, year);
+      const year = Number.parseInt(moment(t.data, 'DD/MM/YYYY').format('YYYY'), 10);
       if (year !== lastYear) {
         if (lastYear !== 0) {
           rr.push(
@@ -167,8 +171,8 @@ const UserAccountingDetail: React.FC = () => {
         lastYearMinus = 0;
         lastYear = year;
       }
-      lastYearPlus += t.sign === '+' ? Math.abs(t.amount) : 0;
-      lastYearMinus += t.sign === '-' ? Math.abs(t.amount) : 0;
+      lastYearPlus += t.importo >= 0 ? Math.abs(t.importo) : 0;
+      lastYearMinus += t.importo < 0 ? Math.abs(t.importo) : 0;
 
       rr.push(
         <UserAccountingDetailRow
@@ -177,7 +181,7 @@ const UserAccountingDetail: React.FC = () => {
           yearIsClosed={years[year]}
           onEditTransaction={editTransaction}
           onDeleteTransaction={_deleteTransaction}
-          admin={jwt?.role === 'A'} />
+          admin={jwt?.role === 'A' || manageFriends} />
       );
     });
 
@@ -222,7 +226,7 @@ const UserAccountingDetail: React.FC = () => {
         </Button>
       </PageTitle>
 
-      {jwt && jwt.sub && jwt.role === 'A' ? (
+      {(jwt && jwt.sub && jwt.role === 'A') || manageFriends ? (
         <Fab className={classes.fab} color='secondary' onClick={newTransaction}>
           <PlusIcon />
         </Fab>
@@ -241,6 +245,7 @@ const UserAccountingDetail: React.FC = () => {
         open={showDlg}
         onClose={dialogClosed}
         transactionId={selectedId}
+        friends={manageFriends}
       />
       <ActionDialog
         open={deleteDlgOpen}
