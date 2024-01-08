@@ -7,10 +7,6 @@ import {
   DialogActions,
   TextField,
   InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@material-ui/core';
 import { EuroSharp as EuroIcon } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
