@@ -18,6 +18,7 @@ import { logout } from '../../store/features/authentication.slice';
 import { useHistory } from 'react-router-dom';
 import { useUserBalanceAPI } from './useUserBalanceAPI';
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import ChangePasswordDialog from './ChangePasswordDialog'
 
 const useStyles = makeStyles((theme) => ({
   appbar: {
@@ -59,6 +60,7 @@ const NavBar: React.FC = () => {
   const history = useHistory();
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showDlg, setShowDlg] = useState(false);
   const open = Boolean(anchorEl);
   const { balance } = useUserBalanceAPI();
   const info = useAppSelector((state) => state.info);
@@ -74,7 +76,6 @@ const NavBar: React.FC = () => {
     setAnchorEl(null);
   };
 
-
   const disconnect = useCallback(() => {
     dispatch(logout());
     history.push('/login?disconnect');
@@ -84,6 +85,15 @@ const NavBar: React.FC = () => {
     if (!jwt) return;
     history.push(`/userAccountingDetails?userId=${jwt.id}`);
   }, [history, jwt]);
+
+  const changePassword = useCallback(() => {
+    setShowDlg(true);
+    handleClose();
+  }, [handleClose]);
+
+  const closeChangePassword = useCallback(() => {
+    setShowDlg(false);
+  }, []);
 
   return (
     <>
@@ -138,6 +148,7 @@ const NavBar: React.FC = () => {
                 open={open}
                 onClose={handleClose}
               >
+                <MenuItem onClick={changePassword}>Cambio password</MenuItem>
                 <MenuItem onClick={disconnect}>Disconnetti</MenuItem>
               </Menu>
             </div>
@@ -147,6 +158,7 @@ const NavBar: React.FC = () => {
         <NavigationMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       </AppBar>
       <Toolbar className={classes.gutter} />
+      <ChangePasswordDialog open={showDlg} handleClose={closeChangePassword} />
     </>
   );
 };
