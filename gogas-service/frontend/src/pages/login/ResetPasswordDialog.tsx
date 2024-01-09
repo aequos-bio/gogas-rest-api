@@ -63,7 +63,7 @@ const ResetPasswordDialog: React.FC<Props> = ({
       resetForm();
       handleClose();
     },
-    [handleClose, resetStatus]
+    [handleClose, resetForm]
   );
 
   const send = useCallback(
