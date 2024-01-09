@@ -4,7 +4,6 @@ import {
   Typography,
   Drawer,
   Avatar,
-  Divider,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import Logo from '../../assets/logo_aequos.png';
@@ -62,7 +61,11 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
   const menuClick = useCallback((menu) => {
     if (!jwt) return;
     const url = menu.url.replace(':userId', jwt.id);
-    history.push(url);
+    if (menu.newWindow) {
+      window.open(url, '_blank');
+    } else {
+      history.push(url);
+    }
     onClose();
   }, [history, jwt, onClose],
   );
@@ -74,7 +77,6 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
           menuItems.map((menuChapter, i) => (
             <div key={`manuchapter-${i}`} >
               <MenuChapter chapter={menuChapter} onMenuClick={menuClick} />
-              <Divider />
             </div>
           ))
         ) : <></>
@@ -91,7 +93,7 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
           gutterBottom
           color='textSecondary'
         >
-          Copyright 2019-2023 AEQUOS.BIO
+          Copyright 2019-2024 AEQUOS.BIO
         </Typography>
       </div>
     </Drawer>

@@ -8,6 +8,7 @@ export interface MenuItem {
   url: string;
   icon: number;
   restrictions?: Restrictions;
+  newWindow?: boolean;
 }
 
 export interface Restrictions {
