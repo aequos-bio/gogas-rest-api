@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Container, Button, TextField } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import { makeStyles } from '@material-ui/core/styles';
@@ -9,6 +9,7 @@ import useJwt from '../../hooks/JwtHooks';
 import { login } from '../../store/features/authentication.slice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { History, Location } from 'history';
+import ResetPasswordDialog from './ResetPasswordDialog'
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -26,6 +27,16 @@ const useStyles = makeStyles((theme) => ({
   copyright: {
     textAlign: 'center',
     color: theme.palette.grey[500],
+    fontSize: 'small',
+  },
+  reset: {
+    textAlign: 'center',
+    color: theme.palette.grey[500],
+    margin: '30px 0px',
+  },
+  resetLink: {
+    color: 'blue',
+    cursor: 'pointer'
   },
 }));
 
@@ -39,6 +50,7 @@ const Login: React.FC<Props> = ({ location, history }) => {
   const search = queryString.parse(location.search);
   const info = useAppSelector((state) => state.info);
   const authentication = useAppSelector((state) => state.authentication);
+  const [showDlg, setShowDlg] = useState(false);
   const dispatch = useAppDispatch();
   const validJwt = useJwt();
 
@@ -53,6 +65,14 @@ const Login: React.FC<Props> = ({ location, history }) => {
     },
     [dispatch, history],
   );
+
+  const resetPassword = useCallback(() => {
+    setShowDlg(true);
+  }, []);
+
+  const closeResetPassword = useCallback(() => {
+    setShowDlg(false);
+  }, []);
 
   return validJwt ? (
     <Redirect to={location.state ? location.state.from : '/'} />
@@ -98,6 +118,10 @@ const Login: React.FC<Props> = ({ location, history }) => {
         </form>
       )}
 
+      <div className={classes.reset}>
+        Hai dimenticato la password? <a onClick={resetPassword} className={classes.resetLink}> Clicca qui per il reset.</a>
+      </div>
+
       {authentication.running ? null : (
         <div className={classes.copyright}>
           Copyright 2019-2020 Cooperativa Aequos
@@ -113,6 +137,7 @@ const Login: React.FC<Props> = ({ location, history }) => {
       {'disconnect' in search ? (
         <Alert severity='success'>Ti sei disconnesso</Alert>
       ) : null}
+      <ResetPasswordDialog open={showDlg} handleClose={closeResetPassword} />
     </Container>
   );
 };
