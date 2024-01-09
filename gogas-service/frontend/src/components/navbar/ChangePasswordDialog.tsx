@@ -67,7 +67,7 @@ const ChangePasswordDialog: React.FC<Props> = ({
       resetForm();
       handleClose();
     },
-    [handleClose, resetStatus]
+    [handleClose, resetForm]
   );
 
   const save = useCallback(
