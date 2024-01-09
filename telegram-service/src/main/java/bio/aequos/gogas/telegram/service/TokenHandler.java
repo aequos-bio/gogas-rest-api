@@ -1,14 +1,13 @@
 package bio.aequos.gogas.telegram.service;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Component
+@Slf4j
 public class TokenHandler {
 
     private static final int EXPIRATION_MILLISECONDS = 3600000;
@@ -20,14 +19,15 @@ public class TokenHandler {
         return token.toString();
     }
 
-    public TokenInfo getUserByToken(String token) throws Exception {
+    public Optional<TokenInfo> getUserByToken(String token) throws Exception {
         TokenInfo tokenInfo = TEMP_TOKEN_MAP.remove(token);
 
         if (tokenInfo == null || new Date().getTime() > tokenInfo.creationTs + EXPIRATION_MILLISECONDS) {
-            throw new Exception("Invalid or expired token");
+            log.warn("Invalid or expired token");
+            return Optional.empty();
         }
 
-        return tokenInfo;
+        return Optional.ofNullable(tokenInfo);
     }
 
     @Getter

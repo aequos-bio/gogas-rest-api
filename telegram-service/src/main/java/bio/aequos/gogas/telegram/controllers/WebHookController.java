@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -55,9 +56,13 @@ public class WebHookController {
 
         String activationCode = messgeTokens[1];
         log.info("Activation code {}, chat id {}", activationCode, message.getChat().getId());
-        TokenHandler.TokenInfo userByToken = tokenHandler.getUserByToken(activationCode);
+        Optional<TokenHandler.TokenInfo> userByToken = tokenHandler.getUserByToken(activationCode);
 
-        UserChatEntity userChatEntity = buildUserChat(message, userByToken);
+        if (userByToken.isEmpty()) {
+            return;
+        }
+
+        UserChatEntity userChatEntity = buildUserChat(message, userByToken.get());
         userChatRepo.save(userChatEntity);
 
         telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go!Gas_. Riceverai aggiornamenti sui tuoi ordini.", message.getChat().getFirstName()));
