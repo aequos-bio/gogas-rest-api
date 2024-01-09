@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import Cookies from 'cookies-js';
-import { apiPost } from '../../utils/axios_utils';
+import { apiPost, extractResponseFromError } from '../../utils/axios_utils';
 import { AppDispatch, RootState } from '../store';
 import { AuthenticationState } from '../types';
 const jwt = Cookies.get('jwt-token');
@@ -42,8 +42,18 @@ export const authenticationSlice = createSlice({
 export const login = createAsyncThunk<any, { username: string, password: any }, { rejectValue: string, state: RootState }>(
   'authentication',
   async ({ username, password }, thunkApi) => {
-    const auth = await apiPost('/authenticate', { username, password });
-    return auth.data.data;
+    try {
+      const auth = await apiPost('/authenticate', { username, password });
+      return auth.data.data;
+    } catch (error) {
+      var response = extractResponseFromError(error);
+
+      if (!response) {
+        return thunkApi.rejectWithValue('Error generico: ' + error);
+      }
+
+      return thunkApi.rejectWithValue(response.data.message)
+    }
   },
 );
 

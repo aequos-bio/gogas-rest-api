@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -69,6 +70,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleJWTVerificationError(JWTVerificationException ex) {
         log.warn("JWT Token expired: {} ", ex.getMessage());
         return buildResponseEntity(new RestApiError(HttpStatus.UNAUTHORIZED, "Token non valido o scaduto", ex));
+    }
+
+    @ExceptionHandler({BadCredentialsException.class})
+    public ResponseEntity<Object> handleInvalidCredentialsException(BadCredentialsException ex) {
+        log.warn("Bad credentials");
+        return buildResponseEntity(new RestApiError(HttpStatus.UNAUTHORIZED, "Credenziali non valide", ex));
     }
 
     @ExceptionHandler(DuplicatedItemException.class)

@@ -4,7 +4,7 @@ import Alert from '@material-ui/lab/Alert';
 import { makeStyles } from '@material-ui/core/styles';
 import { Redirect } from 'react-router-dom';
 import queryString from 'query-string';
-import Logo from '../../assets/logo_aequos.png';
+import Logo from '../../components/Logo';
 import useJwt from '../../hooks/JwtHooks';
 import { login } from '../../store/features/authentication.slice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
@@ -28,6 +28,7 @@ const useStyles = makeStyles((theme) => ({
     textAlign: 'center',
     color: theme.palette.grey[500],
     fontSize: 'small',
+    marginBottom: '20px',
   },
   reset: {
     textAlign: 'center',
@@ -83,7 +84,7 @@ const Login: React.FC<Props> = ({ location, history }) => {
       ) : (
         <form className='' noValidate autoComplete='off' onSubmit={dologin}>
           <div className={classes.title}>
-            <img src={Logo} width='50px' height='50px' alt='' />
+            <Logo height='50px' />
             <h1 style={{ margin: '0px 15px' }}>
               {info['gas.nome'] || 'GoGas'}
             </h1>
@@ -131,7 +132,7 @@ const Login: React.FC<Props> = ({ location, history }) => {
       )}
       {authentication.error_message ? (
         <Alert severity='error'>
-          Username/password non validi o nessun diritto di accedere
+          {authentication.error_message}
         </Alert>
       ) : null}
       {'disconnect' in search ? (
