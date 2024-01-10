@@ -1,12 +1,14 @@
 import React, { useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
+  Divider,
   Typography,
   Drawer,
   Avatar,
 } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
-import Logo from '../../assets/logo_aequos.png';
+import Logo from '../../components/Logo';
+import LogoAequos from '../../assets/logo_aequos.png';
 import useJwt from '../../hooks/JwtHooks';
 import { menuItems } from './menuConfiguration';
 import MenuChapter from './MenuChapter';
@@ -14,6 +16,9 @@ import MenuChapter from './MenuChapter';
 const drawerWidth = '280px';
 const useStyles = makeStyles((theme) => ({
   drawer: {},
+  logoHeader: {
+     margin: '10px',
+  },
   drawerHeader: {
     display: 'flex',
     alignItems: 'center',
@@ -41,6 +46,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     width: drawerWidth,
+    padding: '10px',
   },
   copyright: {
     width: drawerWidth,
@@ -72,6 +78,8 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
 
   return (
     <Drawer className={classes.drawer} open={open} onClose={onClose}>
+      <div className={classes.logo}><Logo height="80px" /></div>
+      <Divider />
       <div className={classes.menu}>
         {jwt ? (
           menuItems.map((menuChapter, i) => (
@@ -84,7 +92,7 @@ const NavigationMenu: React.FC<Props> = ({ open, onClose }) => {
       </div>
       <div className={classes.credits}>
         <div className={classes.logo}>
-          <Avatar src={Logo} />
+          <Avatar src={LogoAequos} />
         </div>
         <Typography
           className={classes.copyright}

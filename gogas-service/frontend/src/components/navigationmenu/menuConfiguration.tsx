@@ -61,13 +61,13 @@ export const menuItems: MenuChapter[] = [
       {
         label: 'Gestione amici',
         url: '/legacy/managefriends',
-        restrictions: { friendsEnabled: true },
+        restrictions: { friendsEnabled: true, roles: ['U'] },
         icon: 3
       },
       {
         label: 'Situazione contabile amici',
         url: '/friendsaccounting',
-        restrictions: { friendsEnabled: true },
+        restrictions: { friendsEnabled: true, roles: ['U'] },
         icon: 3
       },
     ],
