@@ -19,6 +19,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
@@ -26,6 +27,14 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     public static final String TOKEN_HEADER = "Authorization";
     public static final String TOKEN_PREFIX = "Bearer ";
     public static final String COOKIE_NAME = "jwt-token";
+
+    private static final List<String> SKIP_EXACT_PATHS = List.of(
+            "/authenticate", "/favicon.png", "/api/user/password/reset"
+    );
+
+    private static final List<String> SKIP_STARTING_PATHS = List.of(
+            "/login", "/info", "/static", "/assets"
+    );
 
     @Autowired
     private JwtTokenHandler jwtTokenHandler;
@@ -47,35 +56,53 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+
+        if (skipFilter(request)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         try {
-            if (request.getServletPath().equals("/authenticate") || request.getServletPath().equals("/favicon.png") || request.getServletPath().startsWith("/login") || request.getServletPath().startsWith("/static")) {
-                chain.doFilter(request, response);
-            } else {
-                String authToken = extractAuthTokenFromRequest(request);
-                GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
+            String authToken = extractAuthTokenFromRequest(request);
+            GoGasUserDetails userDetails = jwtTokenHandler.getUserDetails(authToken);
 
-                if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
-                    log.warn("Missing or mismatching tenant id, user not authorized");
-                    throw new UserNotAuthorizedException();
-                }
-
-                if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                    MDC.put("user", userDetails.getUsername());
-                }
-
-                chain.doFilter(request, response);
+            if (userDetails != null && !isValidTenant(userDetails.getTenant(), request)) {
+                log.warn("Missing or mismatching tenant id, user not authorized");
+                throw new UserNotAuthorizedException();
             }
+
+            if (userDetails != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                MDC.put("user", userDetails.getUsername());
+            }
+
+            chain.doFilter(request, response);
+
         } catch (TokenExpiredException ex) {
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token expired");
+            if (isApiEndpoint(request))
+                response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token expired");
+            else {
+                response.sendRedirect("/login");
+            }
         } catch (JWTVerificationException ex) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Token expired or not valid");
         } catch (UserNotAuthorizedException ex) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Utente o tenant non valido");
         }
+    }
+
+    private static boolean isApiEndpoint(HttpServletRequest request) {
+        return request.getServletPath().startsWith("/api");
+    }
+
+    private boolean skipFilter(HttpServletRequest request) {
+        String servletPath = request.getServletPath();
+
+        return SKIP_EXACT_PATHS.stream().anyMatch(servletPath::equals) ||
+                SKIP_STARTING_PATHS.stream().anyMatch(servletPath::startsWith);
     }
 
     private String extractAuthTokenFromRequest(HttpServletRequest request) {
