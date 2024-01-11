@@ -83,6 +83,9 @@ public class OrderDTO implements ConvertibleDTO<Order> {
     @JsonProperty("contabilizzabile")
     private boolean accountable;
 
+    @JsonProperty("idaequos")
+    private Integer aequosId;
+
     //output only
     private String actions;
 
@@ -131,6 +134,7 @@ public class OrderDTO implements ConvertibleDTO<Order> {
         this.id = order.getId();
         this.orderTypeId = order.getOrderType().getId();
         this.orderTypeName = order.getOrderType().getDescription();
+        this.aequosId = order.getOrderType().getAequosOrderId();
         this.openingDate = order.getOpeningDate();
         this.dueDate = order.getDueDate();
         this.dueHour = order.getDueHour();

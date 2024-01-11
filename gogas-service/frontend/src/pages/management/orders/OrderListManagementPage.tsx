@@ -13,7 +13,7 @@ const columns: Column[] = [
   { label: 'Consegna', type: 'String', alignment: 'Center', property: 'dataconsegna' },
   { label: 'Stato', type: 'String', alignment: 'Center', property: 'stato' },
   { label: 'Totale ordine', type: 'Amount', alignment: 'Right', property: 'totaleordine' },
-  { label: 'Inviato', type: 'Boolean', alignment: 'Right', property: 'inviato' },
+  { label: 'Inviato', type: 'Boolean', alignment: 'Right', property: (order: ManagedOrder) => (order.idaequos === undefined ? undefined : order.inviato), attributes: { hideUndefined: true } },
 ];
 
 const OrderManagementPage: React.FC = () => {
@@ -42,6 +42,7 @@ const OrderManagementPage: React.FC = () => {
           pagination: false,
           showHeader: true,
           showFooter: false,
+          selectable: true
         }}
         columns={columns}
         rows={orders.map(order => ({ value: order }))}

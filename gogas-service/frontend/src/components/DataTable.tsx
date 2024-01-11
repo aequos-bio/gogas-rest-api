@@ -29,6 +29,7 @@ export interface Column {
   alignment: 'Left' | 'Center' | 'Right';
   property: string | ((value: any) => any);
   hidden?: 'xsUp' | 'smUp' | 'mdUp' | 'lgUp' | 'xlUp' | 'xsDown' | 'smDown' | 'mdDown' | 'lgDown' | 'xlDown'
+  attributes?: { [key: string]: any };
 }
 
 export interface Settings {
@@ -40,6 +41,7 @@ export interface Settings {
   showHeader: boolean;
   showFooter: boolean;
   pagination: boolean;
+  selectable?: boolean;
 }
 
 const default_settings: Settings = {
@@ -51,6 +53,7 @@ const default_settings: Settings = {
   showHeader: true,
   showFooter: false,
   pagination: false,
+  selectable: false
 };
 
 const useStyles = makeStyles(theme => ({
@@ -82,6 +85,10 @@ const useStyles = makeStyles(theme => ({
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
+  rowSelected: {
+    backgroundColor: theme.palette.grey[200],
+    color: theme.palette.primary.contrastText
+  }
 }));
 
 interface Props {
@@ -112,6 +119,7 @@ const DataTable: React.FC<Props> = ({
   const [rowsPerPage, setRowsPerPage] = useState(
     settings.pagination ? 10 : 999999
   );
+  const [selectedRow, setSelectedRow] = useState<number | undefined>(undefined);
 
   const handleChangePage = (event: any, newPage: number) => {
     setPage(newPage);
@@ -194,7 +202,7 @@ const DataTable: React.FC<Props> = ({
     ) {
       const row = rows[i];
       rr.push(
-        <TableRow key={`row-${i}`}>
+        <TableRow key={`row-${i}`} className={settings.selectable && i === selectedRow ? classes.rowSelected : ''} onClick={() => { if (settings.selectable) setSelectedRow(i) }}>
           {columns.map((col, j) => {
             const value = (typeof col.property === 'string') ? row.value[col.property] : col.property(row.value);
             let val;
@@ -209,7 +217,7 @@ const DataTable: React.FC<Props> = ({
             } else if (col.type === 'Amount') {
               val = value.toFixed(2);
             } else if (col.type === 'Boolean') {
-              val = <Checkbox disableRipple checked={value === true} />
+              val = value === undefined && col.attributes?.hideUndefined ? <></> : <Checkbox disableRipple checked={value === true} indeterminate={value === undefined} />
             } else {
               val = value;
             }
@@ -289,6 +297,7 @@ const DataTable: React.FC<Props> = ({
     cellClasses,
     page,
     rowsPerPage,
+    selectedRow,
     settings,
     classes,
     onEdit,
@@ -304,7 +313,7 @@ const DataTable: React.FC<Props> = ({
       ) : null}
 
       <TableContainer>
-        <Table size="small">
+        <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>{headers}</TableRow>
           </TableHead>

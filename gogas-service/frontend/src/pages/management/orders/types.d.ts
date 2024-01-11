@@ -19,6 +19,7 @@ export interface ManagedOrder {
   amici: boolean;
   contabilizzato: boolean;
   contabilizzabile: boolean;
+  idaequos?: number;
 }
 
 export interface ManagedOrderQueryFilter {
