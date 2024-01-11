@@ -1,7 +1,6 @@
 import { ListItem, ListItemIcon, ListItemText } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
 import { MenuItem as MenuItemType } from "./types";
-import { menuIcons } from "./menuConfiguration";
 
 const useStyles = makeStyles((theme) => ({
   menuItem: {
@@ -26,7 +25,7 @@ const MenuItem: React.FC<Props> = ({ menu, onMenuClick }) => {
       onClick={() => onMenuClick(menu)}
     >
       <ListItemIcon className={classes.menuItemIcon}>
-        {menuIcons[menu.icon]}
+        {menu.icon}
       </ListItemIcon>
       <ListItemText>{menu.label}</ListItemText>
     </ListItem>
