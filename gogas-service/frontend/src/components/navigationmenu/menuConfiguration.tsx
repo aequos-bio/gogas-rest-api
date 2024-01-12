@@ -16,22 +16,22 @@ import {
 } from '@material-ui/icons';
 import { MenuChapter } from './types';
 
-export const menuIcons = [
-  <HomeSharp />,
-  <EventSharp />,
-  <EuroSharp />,
-  <GroupSharp />,
-  <SettingsSharp />,
-  <ViewListSharp />,
-  <ExploreSharp />,
-  <CodeSharp />,
-  <AccountBalanceSharp />,
-  <ReceiptSharp />,
-  <StoreSharp />,
-  <ShoppingBasketSharp />,
-  <ShoppingCartSharp />,
-  <HelpOutlineSharp />
-];
+const menuIcons: { [key: string]: JSX.Element } = {
+  home: <HomeSharp />,
+  years: <EventSharp />,
+  accounting: <EuroSharp />,
+  friends: <GroupSharp />,
+  settings: < SettingsSharp />,
+  ordertypes: <ViewListSharp />,
+  managers: <ExploreSharp />,
+  codes: <CodeSharp />,
+  gasaccounting: <AccountBalanceSharp />,
+  invoices: <ReceiptSharp />,
+  suppliers: <StoreSharp />,
+  orders: <ShoppingBasketSharp />,
+  products: <ShoppingCartSharp />,
+  help: <HelpOutlineSharp />
+}
 
 export const menuItems: MenuChapter[] = [
   {
@@ -40,17 +40,17 @@ export const menuItems: MenuChapter[] = [
       {
         label: 'Home',
         url: '/',
-        icon: 0
+        icon: menuIcons.home
       },
       {
         label: 'Situazione contabile',
         url: `/useraccountingdetails?userId=:userId`,
-        icon: 2,
+        icon: menuIcons.accounting,
       },
       {
         label: 'Guida',
         url: '/documentation/GoGas.pdf',
-        icon: 13,
+        icon: menuIcons.help,
         newWindow: true
       },
     ],
@@ -62,13 +62,13 @@ export const menuItems: MenuChapter[] = [
         label: 'Gestione amici',
         url: '/legacy/managefriends',
         restrictions: { friendsEnabled: true, roles: ['U'] },
-        icon: 3
+        icon: menuIcons.friends
       },
       {
         label: 'Situazione contabile amici',
         url: '/friendsaccounting',
         restrictions: { friendsEnabled: true, roles: ['U'] },
-        icon: 3
+        icon: menuIcons.accounting
       },
     ],
   },
@@ -79,43 +79,43 @@ export const menuItems: MenuChapter[] = [
         label: 'Anni contabili',
         url: '/years',
         restrictions: { roles: ['A'] },
-        icon: 1
+        icon: menuIcons.years
       },
       {
         label: 'Causali',
         url: '/reasons',
         restrictions: { roles: ['A'] },
-        icon: 4
+        icon: menuIcons.settings
       },
       {
         label: 'Codici contabili',
         url: '/accountingcodes',
         restrictions: { roles: ['A'] },
-        icon: 7,
+        icon: menuIcons.codes,
       },
       {
         label: 'Movimenti del gas',
         url: '/gasmovements',
         restrictions: { roles: ['A'] },
-        icon: 2,
+        icon: menuIcons.accounting,
       },
       {
         label: 'Situazione utenti',
         url: '/useraccounting',
         restrictions: { roles: ['A'] },
-        icon: 2,
+        icon: menuIcons.accounting,
       },
       {
         label: 'Fatture',
         url: '/invoices',
         restrictions: { roles: ['A'] },
-        icon: 9,
+        icon: menuIcons.invoices,
       },
       {
         label: 'Contabilità del GAS',
         url: '/gasaccounting',
         restrictions: { roles: ['A'] },
-        icon: 8,
+        icon: menuIcons.gasaccounting,
       },
     ],
   },
@@ -126,31 +126,31 @@ export const menuItems: MenuChapter[] = [
         label: 'Utenti',
         url: '/users',
         restrictions: { roles: ['A'] },
-        icon: 3
+        icon: menuIcons.friends
       },
       {
         label: 'Tipi ordine',
         url: '/ordertypes',
         restrictions: { roles: ['A'] },
-        icon: 5,
+        icon: menuIcons.ordertypes,
       },
       {
         label: 'Referenti',
         url: '/managers',
         restrictions: { roles: ['A'] },
-        icon: 6
+        icon: menuIcons.managers
       },
       {
         label: 'Produttori',
         url: '/legacy/suppliers',
         restrictions: { roles: ['A'] },
-        icon: 10
+        icon: menuIcons.suppliers
       },
       {
         label: 'Configurazione generale',
         url: '/legacy/configuration',
         restrictions: { roles: ['A'] },
-        icon: 4
+        icon: menuIcons.settings
       },
     ],
   },
@@ -161,13 +161,13 @@ export const menuItems: MenuChapter[] = [
         label: 'Prodotti',
         url: '/legacy/products',
         restrictions: { orderManager: true },
-        icon: 12
+        icon: menuIcons.products
       },
       {
         label: 'Gestione ordini',
         url: `/legacy/orderslist`,
         restrictions: { orderManager: true },
-        icon: 11
+        icon: menuIcons.orders
       },
     ],
   },

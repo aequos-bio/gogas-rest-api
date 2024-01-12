@@ -82,46 +82,49 @@ const Login: React.FC<Props> = ({ location, history }) => {
       {authentication.running ? (
         'loading ...'
       ) : (
-        <form className='' noValidate autoComplete='off' onSubmit={dologin}>
-          <div className={classes.title}>
-            <Logo height='50px' />
-            <h1 style={{ margin: '0px 15px' }}>
-              {info['gas.nome'] || 'GoGas'}
-            </h1>
-          </div>
+        <>
+          <form className='' noValidate autoComplete='off' onSubmit={dologin}>
+            <div className={classes.title}>
+              <Logo height='50px' />
+              <h1 style={{ margin: '0px 15px' }}>
+                {info['gas.nome'] || 'GoGas'}
+              </h1>
+            </div>
 
-          <TextField
-            name='username'
-            label='Nome utente'
-            margin='normal'
-            fullWidth
-          />
-          <TextField
-            name='password'
-            label='Password'
-            type='password'
-            margin='normal'
-            fullWidth
-          />
-
-          <div className={classes.buttons}>
-            <Button
-              variant='contained'
-              size='medium'
-              color='primary'
-              type='submit'
-              style={{ color: 'white' }}
+            <TextField
+              name='username'
+              label='Nome utente'
+              margin='normal'
               fullWidth
-            >
-              Login
-            </Button>
+            />
+            <TextField
+              name='password'
+              label='Password'
+              type='password'
+              margin='normal'
+              fullWidth
+            />
+
+            <div className={classes.buttons}>
+              <Button
+                variant='contained'
+                size='medium'
+                color='primary'
+                type='submit'
+                style={{ color: 'white' }}
+                fullWidth
+              >
+                Login
+              </Button>
+            </div>
+          </form>
+
+          <div className={classes.reset}>
+            Hai dimenticato la password? <a onClick={resetPassword} className={classes.resetLink}> Clicca qui per il reset.</a>
           </div>
-        </form>
+        </>
       )}
 
-      <div className={classes.reset}>
-        Hai dimenticato la password? <a onClick={resetPassword} className={classes.resetLink}> Clicca qui per il reset.</a>
-      </div>
 
       {authentication.running ? null : (
         <div className={classes.copyright}>
