@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class TelegramClient {
 
+    private static final String[] TO_BE_ESCAPED = new String[] {
+            "_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"
+    };
+
     private final TelegramBot bot;
 
     public TelegramClient(@Value("${telegram.bot-token}") String botToken) {
@@ -35,9 +39,9 @@ public class TelegramClient {
     }
 
     private String escapeMessage(String message) {
-        return message
-                .replace(".", "\\.")
-                .replace("!", "\\!")
-                .replace("-", "\\-");
+        for (String s : TO_BE_ESCAPED) {
+            message = message.replace(s, "\\" + s);
+        }
+        return message;
     }
 }
