@@ -1,6 +1,7 @@
 package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
@@ -45,7 +46,7 @@ public class OpenedNotificationBuilder implements OrderNotificationBuilder {
         String formattedDueDate = ConfigurationService.formatDate(order.getDueDate());
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
 
-        return String.format(template, orderType, formattedDueDate, order.getDueHour(), formattedDeliveryDate);
+        return TelegramTemplate.resolve(template, orderType, formattedDueDate, Integer.toString(order.getDueHour()), formattedDeliveryDate);
     }
 
     @Override

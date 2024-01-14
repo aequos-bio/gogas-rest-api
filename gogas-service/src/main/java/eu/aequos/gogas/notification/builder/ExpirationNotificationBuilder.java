@@ -1,6 +1,7 @@
 package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
@@ -44,7 +45,7 @@ public class ExpirationNotificationBuilder implements OrderNotificationBuilder {
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
 
-        return String.format(template, orderType, formattedDeliveryDate, order.getDueHour());
+        return TelegramTemplate.resolve(template, orderType, formattedDeliveryDate, Integer.toString(order.getDueHour()));
     }
 
     @Override
