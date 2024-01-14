@@ -48,7 +48,7 @@ public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "L'ordine *%s* consegnato il *%s* ti è stato addebitato.\n\uD83D\uDCB0 Controlla il tuo saldo! \uD83D\uDCB0";
+        String template = "L'ordine *%s* consegnato il *%s* ti è stato addebitato.\n\uD83D\uDCB0 Controlla il tuo saldo\\! \uD83D\uDCB0";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
