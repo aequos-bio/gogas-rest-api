@@ -33,7 +33,7 @@ public class TelegramNotificationChannel implements NotificationChannel {
 
     private String buildTelegramMessageForOrder(Order order, OrderNotificationBuilder notificationBuilder) {
         String eventMessage = notificationBuilder.getTelegramMessage(order);
-        String orderLink = "\n\n[Apri l'ordine su Go!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + order.getId() + ")";
+        String orderLink = "\n\n[Apri l'ordine su Go\\!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + order.getId() + ")";
 
         return eventMessage + orderLink;
     }
