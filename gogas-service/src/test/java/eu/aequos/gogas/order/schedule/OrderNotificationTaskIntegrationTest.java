@@ -82,7 +82,7 @@ class OrderNotificationTaskIntegrationTest extends OrderBaseIntegrationTest {
         assertThat(pushNotificationRequestsSent).hasSize(1);
 
         TelegramNotificationRequestDTO telegramRequest = telegramNotificationRequestsSent.get(0);
-        assertThat(telegramRequest.getText()).isEqualToIgnoringCase("L'ordine *Fresco Settimanale* in consegna il *26/10/2023* scade alle ore *12*.\n⏰ Affrettati! ⏰\n\n[Apri l'ordine su Go!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + expiringOrder.getId() + ")");
+        assertThat(telegramRequest.getText()).isEqualToIgnoringCase("L'ordine *Fresco Settimanale* in consegna il *26/10/2023* scade alle ore *12*.\n⏰ Affrettati\\! ⏰\n\n[Apri l'ordine su Go\\!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + expiringOrder.getId() + ")");
         assertThat(telegramRequest.getUserIds()).isNotEmpty();
 
         PushNotificationRequest pushRequest = pushNotificationRequestsSent.get(0);
@@ -139,7 +139,7 @@ class OrderNotificationTaskIntegrationTest extends OrderBaseIntegrationTest {
         assertThat(pushNotificationRequestsSent).hasSize(1);
 
         TelegramNotificationRequestDTO telegramRequest = telegramNotificationRequestsSent.get(0);
-        assertThat(telegramRequest.getText()).isEqualToIgnoringCase("L'ordine *Fresco Settimanale* è in consegna oggi.\n🚚 Controlla gli avvisi del referente 🚚\n\n[Apri l'ordine su Go!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + inDeliveryOrder.getId() + ")");
+        assertThat(telegramRequest.getText()).isEqualToIgnoringCase("L'ordine *Fresco Settimanale* è in consegna oggi.\n🚚 Controlla gli avvisi del referente 🚚\n\n[Apri l'ordine su Go\\!Gas](https://order.aequos.bio/order/gogas/dl.php?orderId=" + inDeliveryOrder.getId() + ")");
         assertThat(telegramRequest.getUserIds()).isEqualTo(Set.of(userId1, userId2));
 
         PushNotificationRequest pushRequest = pushNotificationRequestsSent.get(0);
