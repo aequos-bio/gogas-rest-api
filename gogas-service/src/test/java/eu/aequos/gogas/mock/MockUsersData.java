@@ -11,6 +11,7 @@ import eu.aequos.gogas.security.ShaPasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
@@ -59,9 +60,13 @@ public class MockUsersData implements MockDataLifeCycle {
         return userRepo.findByUsername(username);
     }
 
+    @Transactional
     public void deleteByUsername(String username) {
         userRepo.findByUsername(username)
-                .ifPresent(userRepo::delete);
+                .ifPresent(entity -> {
+                    notificationPreferencesRepo.deleteByUserId(entity.getId());
+                    userRepo.delete(entity);
+                });
     }
 
     private User createUser(String username, String password, String firstName, String lastName,
@@ -134,7 +139,7 @@ public class MockUsersData implements MockDataLifeCycle {
         return createdUsers.stream()
                 .filter(not(user -> excludeFriends && user.getRoleEnum() == User.Role.S))
                 .filter(not(user -> activeOnly && !user.isEnabled()))
-                .map(attributeExtractor::apply)
+                .map(attributeExtractor)
                 .collect(Collectors.toSet());
     }
 
