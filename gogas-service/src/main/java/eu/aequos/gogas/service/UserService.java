@@ -7,9 +7,11 @@ import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.notification.mail.MailNotificationChannel;
+import eu.aequos.gogas.persistence.entity.NotificationPreferences;
 import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
+import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
 import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.RandomPassword;
@@ -33,11 +35,14 @@ public class UserService extends CrudService<User, String> {
     private PasswordEncoder passwordEncoder;
     private MailNotificationChannel mailNotificationChannel;
     private PushTokenRepo pushTokenRepo;
+    private NotificationPreferencesRepo notificationPreferencesRepo;
 
     //TODO: cache users
 
     public UserService(ConfigurationService configurationService, UserRepo userRepo, PushTokenRepo pushTokenRepo,
-                       PasswordEncoder passwordEncoder, MailNotificationChannel mailNotificationChannel) {
+                       PasswordEncoder passwordEncoder, MailNotificationChannel mailNotificationChannel,
+                       NotificationPreferencesRepo notificationPreferencesRepo) {
+
         super(userRepo, "user");
 
         this.configurationService = configurationService;
@@ -45,12 +50,14 @@ public class UserService extends CrudService<User, String> {
         this.passwordEncoder = passwordEncoder;
         this.mailNotificationChannel = mailNotificationChannel;
         this.pushTokenRepo = pushTokenRepo;
+        this.notificationPreferencesRepo = notificationPreferencesRepo;
     }
 
     public List<SelectItemDTO> getUsersForSelect(User.Role role, boolean withAll, String allLabel) {
         return toSelectItems(userRepo.findByRole(role.name(), UserCoreInfo.class), withAll, allLabel);
     }
 
+    @Transactional
     public User create(UserDTO dto) throws MissingOrInvalidParameterException {
         if (userRepo.findByUsername(dto.getUsername()).isPresent())
             throw new DuplicatedItemException("user", dto.getUsername());
@@ -60,7 +67,32 @@ public class UserService extends CrudService<User, String> {
 
         dto.setHashedPassword(encodePassword(dto.getPassword()));
         dto.setPosition(userRepo.getMaxUserPosition() + 1);
-        return super.create(dto);
+        User createdUser = super.create(dto);
+
+        NotificationPreferences notificationPreferences = buildDefaultNotificationPreference(createdUser);
+        notificationPreferencesRepo.save(notificationPreferences);
+
+        return createdUser;
+    }
+
+    @Transactional
+    @Override
+    public void delete(String id) {
+        notificationPreferencesRepo.deleteByUserId(id);
+        super.delete(id);
+    }
+
+    private NotificationPreferences buildDefaultNotificationPreference(User createdUser) {
+        NotificationPreferences notificationPreferences = new NotificationPreferences();
+        notificationPreferences.setUserId(createdUser.getId());
+        notificationPreferences.setOnOrderOpened(true);
+        notificationPreferences.setOnOrderExpiration(true);
+        notificationPreferences.setOnOrderDelivery(true);
+        notificationPreferences.setOnOrderUpdatedQuantity(true);
+        notificationPreferences.setOnOrderAccounted(true);
+        notificationPreferences.setOnExpirationMinutesBefore(60);
+        notificationPreferences.setOnDeliveryMinutesBefore(60);
+        return notificationPreferences;
     }
 
     public User update(String s, UserDTO dto) throws ItemNotFoundException {
