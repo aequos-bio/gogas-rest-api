@@ -27,7 +27,7 @@ public class NotificationController {
 
     @PostMapping("{tenantId}/send")
     public NotificationResponseDTO sendNotification(@PathVariable @ValidTenant String tenantId, @RequestBody NotificationDTO notification) {
-        log.info("Sending notification for tenant {} and user ids {}", tenantId, notification.getUserIds());
+        log.info("Sending notification for tenant {} and {} user ids", tenantId, notification.getUserIds().size());
 
         List<Long> chatIds = userChatRepo.findByTenantIdAndUserIdIn(tenantId, notification.getUserIds()).stream()
                 .map(UserChatEntity::getChatId)
