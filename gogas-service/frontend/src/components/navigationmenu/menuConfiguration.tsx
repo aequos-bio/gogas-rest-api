@@ -169,6 +169,20 @@ export const menuItems: MenuChapter[] = [
         restrictions: { orderManager: true },
         icon: menuIcons.orders
       },
+      {
+        label: 'Tool smistamento (exe)',
+        url: '/tools/smistamento.exe',
+        restrictions: { orderManager: true },
+        icon: menuIcons.settings,
+        newWindow: true
+      },
+      {
+        label: 'Tool smistamento (jar)',
+        url: '/tools/smistamento.jar',
+        restrictions: { orderManager: true },
+        icon: menuIcons.settings,
+        newWindow: true
+      },
     ],
   },
 ];
