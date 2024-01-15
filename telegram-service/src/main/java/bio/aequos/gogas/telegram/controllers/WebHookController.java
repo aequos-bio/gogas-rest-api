@@ -65,7 +65,7 @@ public class WebHookController {
         UserChatEntity userChatEntity = buildUserChat(message, userByToken.get());
         userChatRepo.save(userChatEntity);
 
-        telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go!Gas_. Riceverai aggiornamenti sui tuoi ordini.", message.getChat().getFirstName()));
+        telegramClient.sendMessage(message.getChat().getId(), String.format("Ciao *%s*, benvenuto in _Go\\!Gas_. Riceverai aggiornamenti sui tuoi ordini.", message.getChat().getFirstName()));
     }
 
     private UserChatEntity buildUserChat(TelegramUpdateDTO.TelegramMessage message, TokenHandler.TokenInfo userByToken) {
