@@ -40,7 +40,7 @@ public class ExpirationNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "L'ordine *%s* in consegna il *%s* scade alle ore *%s*.\n\u23F0 Affrettati\\! \u23F0";
+        String template = "L'ordine *%s* in consegna il *%s* scade alle ore *%s*\\.\n\u23F0 Affrettati\\! \u23F0";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());

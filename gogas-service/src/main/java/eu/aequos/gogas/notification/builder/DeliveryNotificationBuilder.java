@@ -45,7 +45,7 @@ public class DeliveryNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "L'ordine *%s* è in consegna oggi.\n\uD83D\uDE9A Controlla gli avvisi del referente \uD83D\uDE9A";
+        String template = "L'ordine *%s* è in consegna oggi\\.\n\uD83D\uDE9A Controlla gli avvisi del referente \uD83D\uDE9A";
 
         String orderType = order.getOrderType().getDescription();
 
