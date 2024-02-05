@@ -683,7 +683,7 @@
             $("#DataChiusuraInizio").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.dueDateFrom), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
             $("#DataChiusuraFine").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.dueDateTo), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
             $("#DataConsegnaInizio").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.deliveryDateFrom), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
-            $("#DataConsegnaFine").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.deliveryDateTol), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
+            $("#DataConsegnaFine").jqxDateTimeInput({ value: formatDateForFilter(savedFilter.deliveryDateTo), firstDayOfWeek: 1, showFooter: true, theme: "bootstrap", width: '100%' });
 
             tableSource.url = gogas.api.baseUrl + 'order/manage/list';
             var dataAdapter = new $.jqx.dataAdapter(tableSource, { beforeSend: setJWT });
