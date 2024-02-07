@@ -98,7 +98,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         }
 
         AccountingEntry updatedEntry = super.createOrUpdate(existingEntry, dto);
-        log.info("Accounting entry updated for user {} (id: {})", updatedEntry.getUser().getId(), updateEntry.getId());
+        log.info("Accounting entry updated for user {} (id: {})", updatedEntry.getUser().getId(), updatedEntry.getId());
 
         BigDecimal amountDifference = getSignedAmount(updatedEntry).subtract(previousAmount);
         String userId = updatedEntry.getUser().getId();
