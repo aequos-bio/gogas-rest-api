@@ -123,6 +123,34 @@ GROUP BY o.idUtente,
          d.idDateOrdini,
          s.importo,
          'Totale ordine ' + t.tipoOrdine + ' in consegna ' + CONVERT(VARCHAR, d.dataConsegna, 3)
+
+-- Updating balance with sum of accounting entries
+UPDATE u
+SET u.balance = s.saldo
+FROM utenti u
+INNER JOIN (
+    SELECT COALESCE(idReferente, idUtente) AS idUtente, SUM(CASE WHEN segno = '-' THEN importo * -1 ELSE importo END) AS saldo
+    FROM movimenti m
+    INNER JOIN causale c ON m.causale = c.codiceCausale
+    GROUP BY COALESCE(idReferente, idUtente)
+) s ON u.idUtente = s.idUtente
+WHERE u.ruolo IN ('U', 'A')
+
+UPDATE u
+SET u.balance = s.saldo
+FROM utenti u
+INNER JOIN (
+    SELECT idUtente AS idUtente, SUM(CASE WHEN segno = '-' THEN importo * -1 ELSE importo END) AS saldo
+    FROM movimenti m
+    INNER JOIN causale c ON m.causale = c.codiceCausale
+    GROUP BY idUtente
+) s ON u.idUtente = s.idUtente
+WHERE u.ruolo = 'S'
+
+INSERT INTO auditUserBalance (id, ts, userId, entryType, operationType, referenceId, amount, currentBalance)
+SELECT newid(), CURRENT_TIMESTAMP, u.idUtente, 'MIGRATION', 'ADD', newid(), u.balance, 0 FROM utenti u
+WHERE u.balance > 0
+
 GO
 
 -- View used to check if list of accounting entries matches with old "SchedaContabile"
