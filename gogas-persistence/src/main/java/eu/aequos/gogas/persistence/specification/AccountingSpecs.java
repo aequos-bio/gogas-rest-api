@@ -14,10 +14,6 @@ public class AccountingSpecs {
 
     private AccountingSpecs() {}
 
-    /*public static Specification<AccountingEntry> user(String userId) {
-        return (entry, cq, cb) -> buildUserOrFriendPredicate(userId, entry, cb);
-    }*/
-
     public static Specification<AccountingEntry> user(String userId, boolean dateAscending) {
         return (entry, cq, cb) -> {
             //setting order by
@@ -35,7 +31,7 @@ public class AccountingSpecs {
     }
 
     public static Specification<AccountingEntry> users(Set<String> userIds) {
-        return (entry, cq, cb) -> entry.join("user").get("id").in(userIds);
+        return (entry, cq, cb) -> cb.or(entry.join("user").get("id").in(userIds), entry.get("friendReferralId").in(userIds));
     }
 
     public static Specification<AccountingEntry> userRole(User.Role role) {
