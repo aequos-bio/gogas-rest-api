@@ -5,10 +5,8 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
@@ -129,9 +127,5 @@ public class Order {
 
     public boolean isNotYetOpened() {
         return LocalDate.now().isBefore(openingDate);
-    }
-
-    private boolean isDateTimeWithinMinutesFromNow(LocalDateTime orderDate, int minutes, Clock clock) {
-        return ChronoUnit.MINUTES.between(LocalDateTime.now(clock), orderDate) < minutes;
     }
 }

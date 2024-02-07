@@ -2,11 +2,9 @@ package eu.aequos.gogas.order.manager;
 
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.persistence.entity.AuditUserBalance;
-import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import eu.aequos.gogas.persistence.repository.YearRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.io.File;
@@ -34,9 +32,6 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
 
     @MockBean
     private YearRepo yearRepo;
-
-    @Autowired
-    private AuditUserBalanceRepo auditUserBalanceRepo;
 
     @AfterEach
     void clearUserBalance() {
@@ -86,7 +81,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(mockUsersData.getSimpleUserId());
         checkEmptyBalance(mockUsersData.getDefaultAdminId());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -121,7 +116,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(userId2, -17.45);
         checkBalance(userId3, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -162,7 +157,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(mockUsersData.getSimpleUserId());
         checkEmptyBalance(mockUsersData.getDefaultAdminId());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -195,7 +190,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(friendId1b, -6.73);
         checkBalance(friendId2, -18.1);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -234,7 +229,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(friendId1b, -7.44);
         checkBalance(friendId2, -20.02);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -272,7 +267,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -312,7 +307,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -402,7 +397,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(userId2, -15.0);
         checkBalance(userId3, -12.5);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -439,7 +434,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(userId2, -19.0);
         checkBalance(userId3, -15.83);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -475,7 +470,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(userId2, -15.0);
         checkBalance(userId3, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -513,7 +508,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(userId3, -12.5);
         checkBalance(orderManagerId1, -25.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(4, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -554,7 +549,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(friendId1b, -5.59);
         checkBalance(friendId2, -21.38);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -600,7 +595,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkBalance(friendId1b, -6.23);
         checkBalance(friendId2, -23.83);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -644,7 +639,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
 
         mockOrdersData.forceSummaryRequired(orderTypeNotComputed, false);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -685,7 +680,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -723,7 +718,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(3, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -885,7 +880,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(userId2);
         checkEmptyBalance(userId3);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -922,7 +917,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(12, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -966,7 +961,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(userId2);
         checkEmptyBalance(userId3);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(6, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()
@@ -1010,7 +1005,7 @@ class OrderAccountingIntegrationTest extends OrderManagementBaseIntegrationTest 
         checkEmptyBalance(friendId1b);
         checkEmptyBalance(friendId2);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(12, auditEntries.size());
 
         Map<String, List<AuditUserBalance>> auditEntriesByUserId = auditEntries.stream()

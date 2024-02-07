@@ -1,10 +1,7 @@
 package eu.aequos.gogas.mock;
 
 import eu.aequos.gogas.mvc.WithTenant;
-import eu.aequos.gogas.persistence.entity.AccountingEntry;
-import eu.aequos.gogas.persistence.entity.AccountingEntryReason;
-import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.entity.Year;
+import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -97,6 +94,10 @@ public class MockAccountingData implements MockDataLifeCycle {
         List<User> allUsers = userRepo.findAll();
         allUsers.forEach(u -> u.setBalance(BigDecimal.ZERO));
         userRepo.saveAll(allUsers);
+    }
+
+    public List<AuditUserBalance> getAllAuditUserBalanceEntries() {
+        return auditUserBalanceRepo.findAllByOrderByTs();
     }
 
     @Override

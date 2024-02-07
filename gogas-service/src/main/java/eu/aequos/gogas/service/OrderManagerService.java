@@ -320,22 +320,12 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public List<OrderByUserDTO> getOrderDetailByUser(String orderId) throws ItemNotFoundException {
-        return getOrderDetailByUser(getRequiredWithType(orderId));
-    }
+        Order order = getRequiredWithType(orderId);
 
-    private List<OrderByUserDTO> getOrderDetailByUser(Order order) {
-        Map<String, UserOrderSummary> userOrderItems = userOrderSummaryService.findAggregatedByOrderId(order.getId()).stream()
+        Map<String, UserOrderSummary> userOrderItems = userOrderSummaryService.findByOrderId(order.getId()).stream()
                 .collect(toMap(UserOrderSummary::getUserId));
 
-        Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()
-                .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
-
-        List<User> users = userService.getFullUsers(userOrderItems.keySet());
-
-         return users.stream()
-                 .map(user -> getOrderByUser(user, userOrderItems.get(user.getId()), shippingCostMap.get(user.getId())))
-                 .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
-                 .collect(toList());
+        return buildOrderDetailByUser(order, userOrderItems);
     }
 
     private OrderByUserDTO getOrderByUser(User user, UserOrderSummary userOrderItem, BigDecimal shippingCost) {
@@ -359,7 +349,11 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     private List<OrderByUserDTO> distributeShippingCostsOnUserOrders(Order order) {
-        List<OrderByUserDTO> userOrders = getOrderDetailByUser(order);
+        Map<String, UserOrderSummary> aggregatedUserOrderItems = userOrderSummaryService.findAggregatedByOrderId(order.getId()).stream()
+                .collect(toMap(UserOrderSummary::getUserId));
+
+        List<OrderByUserDTO> userOrders = buildOrderDetailByUser(order, aggregatedUserOrderItems);
+
         BigDecimal totalOrderAmount = userOrders.stream()
                 .map(OrderByUserDTO::getNetAmount)
                 .filter(Objects::nonNull)
@@ -386,6 +380,18 @@ public class OrderManagerService extends CrudService<Order, String> {
         }
 
         return userOrders;
+    }
+
+    private List<OrderByUserDTO> buildOrderDetailByUser(Order order, Map<String, UserOrderSummary> userOrderItems) {
+        Map<String, BigDecimal> shippingCostMap = shippingCostRepo.findByOrderId(order.getId()).stream()
+                .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
+
+        List<User> users = userService.getFullUsers(userOrderItems.keySet());
+
+        return users.stream()
+                .map(user -> getOrderByUser(user, userOrderItems.get(user.getId()), shippingCostMap.get(user.getId())))
+                .sorted(Comparator.comparing(OrderByUserDTO::getUserFullName))
+                .collect(toList());
     }
 
     public List<OrderItemByUserDTO> getOrderItemsByUser(String orderId, String userId) throws ItemNotFoundException {

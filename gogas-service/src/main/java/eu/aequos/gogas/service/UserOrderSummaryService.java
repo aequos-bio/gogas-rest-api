@@ -29,6 +29,10 @@ public class UserOrderSummaryService {
 
     private final UserOrderSummaryRepo userOrderSummaryRepo;
 
+    public List<UserOrderSummary> findByOrderId(String orderId) {
+        return userOrderSummaryRepo.findUserOrderSummaryByOrder(orderId);
+    }
+
     public List<UserOrderSummary> findAggregatedByOrderId(String orderId) {
         return userOrderSummaryRepo.findAggregatedUserOrderSummaryByOrder(orderId);
     }
@@ -106,13 +110,13 @@ public class UserOrderSummaryService {
                 .collect(Collectors.groupingBy(OrderItem::getUser));
 
         List<UserOrderSummaryExtraction> extractedUserOrderSummaries = itemsByUser.entrySet().stream()
-                .map(entry -> buildUserorderSummary(computeAmount, entry))
+                .map(entry -> buildUserOrderSummary(computeAmount, entry))
                 .collect(Collectors.toList());
 
         updateUserOrderSummaries(orderId, extractedUserOrderSummaries);
     }
 
-    private InMemoryUserOrderSummaryExtraction buildUserorderSummary(boolean computeAmount, Entry<String, List<OrderItem>> entry) {
+    private InMemoryUserOrderSummaryExtraction buildUserOrderSummary(boolean computeAmount, Entry<String, List<OrderItem>> entry) {
         String userId = entry.getKey();
         List<OrderItem> orderItems = entry.getValue();
 

@@ -3,11 +3,9 @@ package eu.aequos.gogas.acconting;
 import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.persistence.entity.*;
-import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -38,9 +36,6 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
     private OrderType externalOrderType;
     private Order externalOrder;
-
-    @Autowired
-    private AuditUserBalanceRepo auditUserBalanceRepo;
 
     @BeforeAll
     void createUsersAndReasons() {
@@ -90,7 +85,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1b, 0.0);
         checkUserBalance(userId1, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
     }
@@ -111,7 +106,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertTrue(auditEntries.isEmpty());
     }
 
@@ -142,7 +137,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1a, -10.50);
         checkBalance(friendId1b, -20.75);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, -10.50, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1b, AuditUserBalance.OperationType.ADD, -20.75, 0.0);
@@ -229,11 +224,11 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message", is("Non è possibile modificare l'utente relativo al movimento")));
 
-        checkBalance(friendId1a, 0.0);
-        checkBalance(friendId1b, 200.0);
+        checkBalance(friendId1a, 200.0);
+        checkBalance(friendId1b, 0.0);
         checkUserBalance(userId1, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
     }
@@ -266,7 +261,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 5, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, -400.0, 200.0);
@@ -296,7 +291,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, 0.0, 200.0);
@@ -330,7 +325,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(50.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.UPDATE, -150.0, 200.0);
@@ -479,7 +474,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.REMOVE, -200.0, 200.0);
@@ -500,7 +495,7 @@ class FriendsAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(friendId1a, 0.0);
         checkBalance(friendId1b, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), friendId1a, AuditUserBalance.OperationType.ADD, -200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), friendId1a, AuditUserBalance.OperationType.REMOVE, 200.0, -200.0);

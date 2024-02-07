@@ -14,9 +14,9 @@ public class AccountingSpecs {
 
     private AccountingSpecs() {}
 
-    public static Specification<AccountingEntry> user(String userId) {
+    /*public static Specification<AccountingEntry> user(String userId) {
         return (entry, cq, cb) -> buildUserOrFriendPredicate(userId, entry, cb);
-    }
+    }*/
 
     public static Specification<AccountingEntry> user(String userId, boolean dateAscending) {
         return (entry, cq, cb) -> {

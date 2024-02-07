@@ -4,11 +4,9 @@ import eu.aequos.gogas.BaseGoGasIntegrationTest;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.AuditUserBalance.OperationType;
-import eu.aequos.gogas.persistence.repository.AuditUserBalanceRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,9 +38,6 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
 
     private OrderType externalOrderType;
     private Order externalOrder;
-
-    @Autowired
-    private AuditUserBalanceRepo auditUserBalanceRepo;
 
     @BeforeAll
     void createUsersAndReasons() {
@@ -89,7 +84,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(userId1, 200.0);
         checkBalance(userId2, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -113,7 +108,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(userId1, -10.50);
         checkBalance(userId2, -20.75);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, -10.50, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId2, OperationType.ADD, -20.75, 0.0);
@@ -208,7 +203,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message", is("Non è possibile modificare l'utente relativo al movimento")));
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -239,7 +234,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 5, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId1, OperationType.UPDATE, -400.0, 200.0);
@@ -268,7 +263,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(200.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId1, OperationType.UPDATE, 0.0, 200.0);
@@ -300,7 +295,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         assertEquals(LocalDate.of(2022, 4, 6), modifiedEntry.getDate());
         assertEquals(50.0, modifiedEntry.getAmount().doubleValue(), 0.001);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId1, OperationType.UPDATE, -150.0, 200.0);
@@ -316,7 +311,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + UUID.randomUUID(), accountingEntryUser)
                 .andExpect(status().isNotFound());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -357,7 +352,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -372,7 +367,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -387,7 +382,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -402,7 +397,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -417,7 +412,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -432,7 +427,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isBadRequest());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -449,7 +444,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.put("/api/accounting/user/entry/" + entryId, accountingEntryUser)
                 .andExpect(status().isForbidden());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
     }
@@ -481,7 +476,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(userId1, 0.0);
         checkBalance(userId2, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, 200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId1, OperationType.REMOVE, -200.0, 200.0);
@@ -502,7 +497,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         checkBalance(userId1, 0.0);
         checkBalance(userId2, 0.0);
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(2, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, -200.0, 0.0);
         checkBalanceAudit(auditEntries.get(1), userId1, OperationType.REMOVE, 200.0, -200.0);
@@ -527,7 +522,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
         mockMvcGoGas.delete("/api/accounting/user/entry/" + entryId)
                 .andExpect(status().isForbidden());
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertEquals(1, auditEntries.size());
         checkBalanceAudit(auditEntries.get(0), userId1, OperationType.ADD, -200.0, 0.0);
     }
@@ -542,7 +537,7 @@ class UserAccountingIntegrationTest extends BaseGoGasIntegrationTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message", is("Movimento relativo ad un ordine, non può essere eliminato")));
 
-        List<AuditUserBalance> auditEntries = auditUserBalanceRepo.findAllByOrderByTs();
+        List<AuditUserBalance> auditEntries = mockAccountingData.getAllAuditUserBalanceEntries();
         assertTrue(auditEntries.isEmpty());
     }
 
