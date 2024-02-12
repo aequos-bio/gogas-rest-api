@@ -22,7 +22,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
 
     @Query(value = "SELECT su.orderId, su.itemsCount, sf.friendCount, sf.friendAccounted, su.totalAmount + COALESCE(st.importo, 0) as totalAmount " +
             "FROM UserOrderSummary su " +
-            "LEFT OUTER JOIN (SELECT friendReferralId, SUM(itemsCount) AS friendCount, SUM(accountedItemsCount) AS friendAccounted " +
+            "LEFT OUTER JOIN (SELECT orderId, friendReferralId, SUM(itemsCount) AS friendCount, SUM(accountedItemsCount) AS friendAccounted " +
             "                 FROM UserOrderSummary sf " +
             "                 GROUP BY friendReferralId, orderId) sf ON su.userId = sf.friendReferralId AND su.orderId = sf.orderId " +
             "LEFT OUTER JOIN speseTrasporto st ON su.userId = sf.idUtente AND su.orderId = st.idDateOrdini " +
