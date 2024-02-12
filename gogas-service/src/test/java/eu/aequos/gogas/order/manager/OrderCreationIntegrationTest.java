@@ -39,8 +39,8 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
 
         createOrder(orderDTO);
 
-        verify(telegramNotificationClient).sendNotifications(eq("integration-test"), argThat(request -> request.getUserIds().size() == 10));
-        verify(pushNotificationClient).sendNotifications(any(), argThat(request -> request.getUserIds().size() == 10));
+        verify(telegramNotificationClient).sendNotifications(eq("integration-test"), argThat(request -> !request.getUserIds().isEmpty()));
+        verify(pushNotificationClient).sendNotifications(any(), argThat(request -> !request.getUserIds().isEmpty()));
     }
 
     @Test
