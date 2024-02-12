@@ -25,7 +25,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
             "LEFT OUTER JOIN (SELECT orderId, friendReferralId, SUM(itemsCount) AS friendCount, SUM(accountedItemsCount) AS friendAccounted " +
             "                 FROM UserOrderSummary sf " +
             "                 GROUP BY friendReferralId, orderId) sf ON su.userId = sf.friendReferralId AND su.orderId = sf.orderId " +
-            "LEFT OUTER JOIN speseTrasporto st ON su.userId = sf.idUtente AND su.orderId = st.idDateOrdini " +
+            "LEFT OUTER JOIN speseTrasporto st ON su.userId = st.idUtente AND su.orderId = st.idDateOrdini " +
             "WHERE su.userId = ?1 AND su.orderId IN ?2", nativeQuery = true)
     List<UserOrderSummaryDerived> findUserAndFriendOrderSummaryByUser(String userId, Set<String> orderIds);
 
