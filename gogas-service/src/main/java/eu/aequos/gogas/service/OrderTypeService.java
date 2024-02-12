@@ -9,10 +9,12 @@ import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.integration.AequosIntegrationService;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
+import eu.aequos.gogas.persistence.entity.OrderUserBlacklist;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.OrderManagerRepo;
 import eu.aequos.gogas.persistence.repository.OrderRepo;
 import eu.aequos.gogas.persistence.repository.OrderTypeRepo;
+import eu.aequos.gogas.persistence.repository.OrderUserBlacklistRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,7 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     private final OrderRepo orderRepo;
     private final OrderManagerRepo orderManagerRepo;
     private final AequosIntegrationService aequosIntegrationService;
+    private final OrderUserBlacklistRepo orderUserBlacklistRepo;
 
     @Override
     protected CrudRepository<OrderType, String> getCrudRepository() {
@@ -66,9 +69,7 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     }
 
     public Map<String, OrderType> getAllOrderTypesMapping() {
-        List<OrderType> list = StreamSupport.stream(orderTypeRepo.findAll().spliterator(), false)
-            .collect(Collectors.toList());
-        return list.stream()
+        return StreamSupport.stream(orderTypeRepo.findAll().spliterator(), false)
             .collect(Collectors.toMap(OrderType::getId, Function.identity()));
     }
 
@@ -105,6 +106,12 @@ public class OrderTypeService extends CrudService<OrderType, String> {
     public List<SelectItemDTO> getAllAsSelectItems(boolean extended, boolean firstEmpty) {
         List<OrderType> orderTypeStream = orderTypeRepo.findAllByOrderByDescription();
         return convertToSelectItems(extended, firstEmpty, orderTypeStream);
+    }
+
+    public List<SelectItemDTO> getBlacklistAsSelectItems(String userId) {
+        List<String> blacklistOrderIds = orderUserBlacklistRepo.getOrderIdsByUserId(userId);
+        List<OrderType> orderTypeStream = orderTypeRepo.findByIdInOrderByDescription(blacklistOrderIds);
+        return convertToSelectItems(false, false, orderTypeStream);
     }
 
     public List<SelectItemDTO> getManagedAsSelectItems(boolean extended, boolean firstEmpty, String userId, User.Role userRole) {
@@ -148,5 +155,30 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         int updatedRows = orderTypeRepo.updateAccountingCode(orderTypeId, accountingCode);
         if (updatedRows < 1)
             throw new ItemNotFoundException("orderType", orderTypeId);
+    }
+
+    @Transactional
+    public void updateUserBlacklist(String userId, List<String> orderTypeIds) {
+        orderUserBlacklistRepo.deleteByUserId(userId);
+
+        if (orderTypeIds.isEmpty()) {
+            return;
+        }
+
+        List<OrderUserBlacklist> orderUserBlacklists = orderTypeIds.stream()
+                .map(orderTypeId -> {
+                    OrderUserBlacklist orderUserBlacklist = new OrderUserBlacklist();
+                    orderUserBlacklist.setOrderTypeId(orderTypeId);
+                    orderUserBlacklist.setUserId(userId);
+                    return orderUserBlacklist;
+                })
+                .collect(toList());
+
+
+        orderUserBlacklistRepo.saveAll(orderUserBlacklists);
+    }
+
+    public void deleteFromBlacklist(String orderTypeId, String userId) {
+        orderUserBlacklistRepo.deleteById(new OrderUserBlacklist.Key(orderTypeId, userId));
     }
 }

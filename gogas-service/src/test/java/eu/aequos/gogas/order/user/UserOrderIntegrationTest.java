@@ -3,6 +3,7 @@ package eu.aequos.gogas.order.user;
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.order.OrderBaseIntegrationTest;
 import eu.aequos.gogas.persistence.entity.Order;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +32,11 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
         createdOrderIds.add(computedOrder.getId());
     }
 
+    @AfterEach
+    void deleteBlacklist() {
+        mockOrdersData.clearBlacklist();
+    }
+
     @Test
     void givenAnOpenOrder_whenGettingDetails_thenOrderDetailsAreCorrect() throws Exception {
         mockMvcGoGas.loginAs("user1", "password");
@@ -45,6 +51,31 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
         assertTrue(userOrderDetails.isEditable());
         assertFalse(userOrderDetails.isShowAdvance());
         assertFalse(userOrderDetails.isShowBoxCompletion());
+    }
+
+    @Test
+    void givenAnOpenOrderWithBlacklist_whenGettingOpenOrdersList_thenBlacklistedOrderIsNotVisible() throws Exception {
+        mockOrdersData.addBlacklist(userId1, orderTypeComputed);
+
+        Order notComputedOrder = mockOrdersData.createOpenOrder(orderTypeNotComputed);
+        createdOrderIds.add(notComputedOrder.getId());
+
+        mockMvcGoGas.loginAs("user1", "password");
+        List<OpenOrderDTO> openOrders = getOpenOrders();
+
+        assertEquals(1, openOrders.size());
+        assertEquals(notComputedOrder.getId().toUpperCase(), openOrders.get(0).getId());
+    }
+
+    @Test
+    void givenNoBlacklist_whenGettingOpenOrdersList_thenOrdersAreAllVisible() throws Exception {
+        Order notComputedOrder = mockOrdersData.createOpenOrder(orderTypeNotComputed);
+        createdOrderIds.add(notComputedOrder.getId());
+
+        mockMvcGoGas.loginAs("user1", "password");
+        List<OpenOrderDTO> openOrders = getOpenOrders();
+
+        assertEquals(2, openOrders.size());
     }
 
     @Test
@@ -657,6 +688,19 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
     }
 
     @Test
+    void givenABlackListedOrderTypeForUser_whenUpdatingUserOrderItem_thenErrorIsReturned() throws Exception {
+        mockOrdersData.addBlacklist(userId1, orderTypeComputed);
+
+        mockMvcGoGas.loginAs("user1", "password");
+
+        String productId = productsByCodeComputed.get("MELE1").getId();
+
+        OrderItemUpdateRequest request = buildOrderItemUpdateRequest(userId1, productId, 2.0, "KG");
+        mockMvcGoGas.post("/api/order/user/" + computedOrder.getId() + "/item", request)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void givenAClosedOrder_whenUpdatingUserOrderItem_thenErrorIsReturned() throws Exception {
         closeOrder(computedOrder.getId());
 
@@ -749,6 +793,10 @@ class UserOrderIntegrationTest extends OrderBaseIntegrationTest {
 
     private List<UserOrderItemDTO> getUserOrderItems(String orderId, String userId) throws Exception {
         return mockMvcGoGas.getDTOList("/api/order/user/" + orderId + "/items", UserOrderItemDTO.class, Map.of("userId", List.of(userId)));
+    }
+
+    private List<OpenOrderDTO> getOpenOrders() throws Exception {
+        return mockMvcGoGas.getDTOList("/api/order/user/open", OpenOrderDTO.class);
     }
 
     private SmallUserOrderItemDTO sendUserOrderItem(String orderId, String userId, String productId, Double qty, String um) throws Exception {

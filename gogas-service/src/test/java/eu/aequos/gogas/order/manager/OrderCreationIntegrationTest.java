@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +29,31 @@ public class OrderCreationIntegrationTest extends OrderManagementBaseIntegration
 
         verifyCreatedOrder(orderId, orderTypeComputed.getId().toUpperCase(), orderTypeComputed.getDescription(),
                  null, false, null, true, false);
+    }
+
+    @Test
+    void givenAValidOrderType_whenCreatingOrder_thenNotificationIsSentCorrectly() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeComputed.getId());
+
+        createOrder(orderDTO);
+
+        verify(telegramNotificationClient).sendNotifications(eq("integration-test"), argThat(request -> request.getUserIds().size() == 10));
+        verify(pushNotificationClient).sendNotifications(any(), argThat(request -> request.getUserIds().size() == 10));
+    }
+
+    @Test
+    void givenBlacklistForOrderType_whenCreatingOrder_thenNotificationIsNotSentToBlacklistedUsers() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+
+        OrderDTO orderDTO = buildValidOrderDTO(orderTypeComputed.getId());
+
+        mockOrdersData.addBlacklist(userId1, orderTypeComputed);
+        createOrder(orderDTO);
+
+        verify(telegramNotificationClient).sendNotifications(eq("integration-test"), argThat(request -> !request.getUserIds().contains(userId1)));
+        verify(pushNotificationClient).sendNotifications(any(), argThat(request -> !request.getUserIds().contains(userId1)));
     }
 
     @Test

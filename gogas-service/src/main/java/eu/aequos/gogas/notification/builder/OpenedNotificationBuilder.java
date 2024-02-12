@@ -4,14 +4,19 @@ import eu.aequos.gogas.notification.OrderEvent;
 import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.repository.OrderUserBlacklistRepo;
 import eu.aequos.gogas.service.ConfigurationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 @Component
+@RequiredArgsConstructor
 public class OpenedNotificationBuilder implements OrderNotificationBuilder {
+
+    private final OrderUserBlacklistRepo orderUserBlacklistRepo;
 
     @Override
     public boolean eventSupported(OrderEvent orderEvent) {
@@ -51,7 +56,10 @@ public class OpenedNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public Stream<NotificationPreferencesView> filterPreferences(Order order, List<NotificationPreferencesView> preferences) {
+        List<String> userIdsBlacklist = orderUserBlacklistRepo.getUserIdsByOrderId(order.getOrderType().getId());
+
         return preferences.stream()
+                .filter(pref -> !userIdsBlacklist.contains(pref.getUserId()))
                 .filter(NotificationPreferencesView::onOrderOpened);
     }
 }

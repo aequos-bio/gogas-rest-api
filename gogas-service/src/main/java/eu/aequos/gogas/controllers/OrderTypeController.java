@@ -2,6 +2,7 @@ package eu.aequos.gogas.controllers;
 
 import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.exception.ItemNotFoundException;
+import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.persistence.entity.OrderManager;
 import eu.aequos.gogas.persistence.entity.OrderType;
 import eu.aequos.gogas.persistence.entity.User;
@@ -12,30 +13,27 @@ import eu.aequos.gogas.security.annotations.IsManager;
 import eu.aequos.gogas.service.OrderTypeService;
 import eu.aequos.gogas.service.UserService;
 import io.swagger.annotations.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Api("Order types")
 @RestController
 @RequestMapping("api/ordertype")
+@RequiredArgsConstructor
 public class OrderTypeController {
 
-    private OrderTypeService orderTypeService;
-    private OrderManagerRepo orderManagerRepo;
-    private UserService userService;
-    private AuthorizationService authorizationService;
-
-    public OrderTypeController(OrderTypeService orderTypeService, OrderManagerRepo orderManagerRepo,
-                               UserService userService, AuthorizationService authorizationService) {
-
-        this.orderTypeService = orderTypeService;
-        this.orderManagerRepo = orderManagerRepo;
-        this.userService = userService;
-        this.authorizationService = authorizationService;
-    }
+    private final OrderTypeService orderTypeService;
+    private final OrderManagerRepo orderManagerRepo;
+    private final UserService userService;
+    private final AuthorizationService authorizationService;
 
     @ApiOperation(
         value = "List all for dropdown selection",
@@ -304,5 +302,30 @@ public class OrderTypeController {
     public BasicResponseDTO updateAcccountingCode(@PathVariable String orderTypeId, @RequestBody Map<String, String> value) {
         orderTypeService.updateAccountingCode(orderTypeId, value.get("accountingCode"));
         return new BasicResponseDTO("OK");
+    }
+
+    @ApiOperation(
+            value = "Get managers of all order types (and optionally filter by userId)",
+            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
+    )
+    @IsAdmin
+    @GetMapping(value = "blacklist/{userId}")
+    public List<SelectItemDTO> getBlacklistOrderTypes(@PathVariable String userId) {
+        return orderTypeService.getBlacklistAsSelectItems(userId);
+    }
+
+    @ApiOperation(
+            value = "Replace order type blacklist for a specific user",
+            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
+    )
+    @IsAdmin
+    @PutMapping(value = "blacklist/{userId}")
+    public BasicResponseDTO updateUserBlacklist(@PathVariable String userId, @RequestBody List<String> orderTypeIds) {
+        try {
+            orderTypeService.updateUserBlacklist(userId, orderTypeIds);
+            return new BasicResponseDTO("OK");
+        } catch (DataIntegrityViolationException ex) {
+            throw new MissingOrInvalidParameterException("Invalid user or order type");
+        }
     }
 }

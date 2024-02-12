@@ -30,6 +30,7 @@ public class MockOrdersData implements MockDataLifeCycle {
     private final AccountingRepo accountingRepo;
     private final ShippingCostRepo shippingCostRepo;
     private final UserOrderSummaryService userOrderSummaryService;
+    private final OrderUserBlacklistRepo orderUserBlacklistRepo;
 
     public OrderType createAequosOrderType(String name, Integer aequosId) {
         return createAequosOrderType(name, aequosId, null);
@@ -162,6 +163,13 @@ public class MockOrdersData implements MockDataLifeCycle {
         orderManagerRepo.save(orderManager);
     }
 
+    public void addBlacklist(String userId, OrderType orderType) {
+        OrderUserBlacklist orderUserBlacklist = new OrderUserBlacklist();
+        orderUserBlacklist.setOrderTypeId(orderType.getId());
+        orderUserBlacklist.setUserId(userId);
+        orderUserBlacklistRepo.save(orderUserBlacklist);
+    }
+
     public Order createOpenOrder(OrderType orderType) {
         return createOrder(orderType, LocalDate.now().minusDays(2), LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
                 Order.OrderStatus.Opened.getStatusCode(), BigDecimal.ZERO);
@@ -243,6 +251,11 @@ public class MockOrdersData implements MockDataLifeCycle {
     }
 
     @Transactional
+    public void clearBlacklist() {
+        orderUserBlacklistRepo.deleteAll();
+    }
+
+    @Transactional
     public void deleteOrder(String orderId) {
         orderItemRepo.deleteByOrderAndSummary(orderId, false);
         orderItemRepo.deleteByOrderAndSummary(orderId, true);
@@ -263,6 +276,7 @@ public class MockOrdersData implements MockDataLifeCycle {
         productRepo.deleteAll();
         supplierRepo.deleteAll();
         productCategoryRepo.deleteAll();
+        orderUserBlacklistRepo.deleteAll();
         orderManagerRepo.deleteAll();
         orderTypeRepo.deleteAll();
     }

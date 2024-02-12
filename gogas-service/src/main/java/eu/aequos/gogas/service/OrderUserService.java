@@ -7,15 +7,13 @@ import eu.aequos.gogas.dto.filter.OrderSearchFilter;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.exception.OrderClosedException;
+import eu.aequos.gogas.exception.UserNotAuthorizedException;
 import eu.aequos.gogas.persistence.entity.*;
 import eu.aequos.gogas.persistence.entity.derived.OpenOrderItem;
 import eu.aequos.gogas.persistence.entity.derived.OrderSummary;
 import eu.aequos.gogas.persistence.entity.derived.ProductTotalOrder;
 import eu.aequos.gogas.persistence.entity.derived.UserOrderSummaryDerived;
-import eu.aequos.gogas.persistence.repository.OrderRepo;
-import eu.aequos.gogas.persistence.repository.ProductCategoryRepo;
-import eu.aequos.gogas.persistence.repository.UserOrderSummaryRepo;
-import eu.aequos.gogas.persistence.repository.UserRepo;
+import eu.aequos.gogas.persistence.repository.*;
 import eu.aequos.gogas.persistence.specification.OrderSpecs;
 import eu.aequos.gogas.persistence.specification.SpecificationBuilder;
 import eu.aequos.gogas.service.OrderItemService.OrderItemUpdate;
@@ -51,9 +49,14 @@ public class OrderUserService {
     private final UserRepo userRepo;
     private final ProductCategoryRepo categoryRepo;
     private final UserOrderSummaryRepo userOrderSummaryRepo;
+    private final OrderUserBlacklistRepo orderUserBlacklistRepo;
 
     public List<OpenOrderDTO> getOpenOrders(String userId) {
-        List<Order> openOrders = orderRepo.getOpenOrders();
+        List<String> orderIdsBlacklist = orderUserBlacklistRepo.getOrderIdsByUserId(userId);
+
+        List<Order> openOrders = orderRepo.getOpenOrders().stream()
+                .filter(o -> !orderIdsBlacklist.contains(o.getOrderType().getId()))
+                .collect(Collectors.toList());
 
         if (openOrders.isEmpty())
             return new ArrayList<>();
@@ -148,6 +151,10 @@ public class OrderUserService {
         if (!order.getStatus().isOpen() || !order.isEditable())
             throw new OrderClosedException();
 
+        if (isOrderBlacklisted(order.getOrderType().getId(), updateRequest.getUserId())) {
+            throw new UserNotAuthorizedException();
+        }
+
         User user = userService.getRequired(updateRequest.getUserId());
         Product product = productService.getRequired(updateRequest.getProductId());
 
@@ -160,6 +167,11 @@ public class OrderUserService {
 
         return new SmallUserOrderItemDTO()
                 .fromModel(product, orderItemUpdate.getOrderItem(), orderItemUpdate.getItemsAdded(), productTotalOrder.orElse(null));
+    }
+
+    private boolean isOrderBlacklisted(String orderTypeId, String userId) {
+        OrderUserBlacklist.Key blacklistKey = new OrderUserBlacklist.Key(orderTypeId, userId);
+        return orderUserBlacklistRepo.existsById(blacklistKey);
     }
 
     private void validateUpdateRequest(OrderItemUpdateRequest updateRequest, Order order, Product product) {
@@ -296,6 +308,10 @@ public class OrderUserService {
     }
 
     public CategoryDTO getNotOrderedItemsByCategory(String userId, String orderId, String categoryId) {
+        if (isOrderBlacklisted(orderId, userId)) {
+            throw new UserNotAuthorizedException();
+        }
+
         Order order = orderManagerService.getRequiredWithType(orderId);
 
         ProductCategory category = categoryRepo.findByIdAndOrderTypeId(categoryId, order.getOrderType().getId())
