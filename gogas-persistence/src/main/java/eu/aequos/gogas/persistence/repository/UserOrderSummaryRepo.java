@@ -20,7 +20,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
     @Query("SELECT o FROM UserOrderSummary o WHERE o.userId = ?1 AND o.orderId IN ?2")
     Optional<UserOrderSummary> findUserOrderSummaryByUser(String userId, Set<String> orderIds);
 
-    @Query(value = "SELECT su.orderId, su.itemsCount, COALESCE(sf.friendCount, 0), COALESCE(sf.friendAccounted, 0), su.totalAmount + COALESCE(st.importo, 0) as totalAmount " +
+    @Query(value = "SELECT su.orderId, su.itemsCount, COALESCE(sf.friendCount, 0) as friendCount, COALESCE(sf.friendAccounted, 0) as friendAccounted, su.totalAmount + COALESCE(st.importo, 0) as totalAmount " +
             "FROM UserOrderSummary su " +
             "LEFT OUTER JOIN (SELECT orderId, friendReferralId, SUM(itemsCount) AS friendCount, SUM(accountedItemsCount) AS friendAccounted " +
             "                 FROM UserOrderSummary sf " +
