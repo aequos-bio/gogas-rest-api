@@ -52,7 +52,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
     List<OrderSummary> getOrdersTotal(Set<String> orderIds);
 
    @Query(value = "SELECT d.idDateOrdini as orderId, t.tipoOrdine as description, d.dataConsegna as deliveryDate, " +
-           " (SELECT SUM(s.totalAmount) FROM userOrderSummary s WHERE s.orderId = d.idDateOrdini) as total " +
+            "COALESCE((SELECT SUM(s.totalAmount) FROM userOrderSummary s WHERE s.orderId = d.idDateOrdini), 0) as total " +
             "FROM dateordini d " +
             "    inner join tipologiaOrdine t on d.idTipologiaOrdine = t.idTipologiaOrdine " +
             "WHERE d.stato = 2 " +

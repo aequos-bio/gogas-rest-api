@@ -104,6 +104,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(new RestApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), ex));
     }
 
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<Object> handleGenericException(Exception ex) {
+        return buildResponseEntity(new RestApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex));
+    }
+
     private ResponseEntity<Object> buildResponseEntity(RestApiError apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
