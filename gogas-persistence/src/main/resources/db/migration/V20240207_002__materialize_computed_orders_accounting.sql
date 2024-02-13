@@ -187,21 +187,33 @@ GO
 
 -- QUERIES TO VERIFY ALIGNMENT OF SCHEDA CONTABILE
 --
---select idUtente, FORMAT(data, 'yyyy-MM-dd') as data, descrizione, segno, FORMAT(SUM(importo), 'N2', 'it-it') as importo, idRiga, idDateOrdini FROM
---(
---  SELECT
---  CASE WHEN riepilogo = 0 THEN COALESCE(idReferente, idUtente) ELSE idUtente END as idUtente,
---  data, descrizione, segno, importo as importo, idRiga, idDateOrdini
---  from checkSchedaContabile
---  UNION ALL
---  select idUtente, data, descrizione, segno, importo, idRiga, idDateOrdini
---  from checkSchedaContabile
---  where idReferente IS NOT NULL
---) x
---group by idUtente, data, descrizione, segno, idRiga, idDateOrdini
---order by idUtente, data desc, idRiga, descrizione
+-- select idUtente, FORMAT(data, 'yyyy-MM-dd') as data, REPLACE(descrizione, CHAR(9), '') as descrizione, segno, FORMAT(SUM(importo), 'N2', 'it-it') as importo, idRiga, idDateOrdini FROM
+-- (
+--   SELECT
+--   CASE WHEN riepilogo = 0 THEN COALESCE(idReferente, idUtente) ELSE idUtente END as idUtente,
+--   data, descrizione, segno, importo as importo, idRiga, idDateOrdini
+--   from checkSchedaContabile
+--   UNION ALL
+--   select idUtente, data, descrizione, segno, importo, idRiga, idDateOrdini
+--   from checkSchedaContabile
+--   where idReferente IS NOT NULL
+-- ) x
+-- group by idUtente, data, descrizione, segno, idRiga, idDateOrdini
+-- order by idUtente, data desc, idRiga, descrizione
 --
---select idUtente, FORMAT(data, 'yyyy-MM-dd') as data, descrizione, segno, FORMAT(SUM(importo), 'N2', 'it-it') as importo, idRiga, idDateOrdini
---from schedacontabile
---group by idUtente, data, descrizione, segno, idRiga, idDateOrdini
---order by idUtente, data desc, idRiga, descrizione
+--
+-- select idUtente, FORMAT(data, 'yyyy-MM-dd') as data, REPLACE(descrizione, CHAR(9), '') as descrizione, segno, FORMAT(SUM(importo), 'N2', 'it-it') as importo, idRiga, idDateOrdini
+-- from schedacontabile
+-- group by idUtente, data, descrizione, segno, idRiga, idDateOrdini
+-- order by idUtente, data desc, idRiga, descrizione
+--
+-- QUERIES TO VERIFY ALIGNMENT OF BALANCE
+--
+-- select idUtente, format(balance, 'N2', 'it-it') as saldo, cognome, nome, nome + ' ' + cognome as nomecognome, attivo, idReferente, ruolo
+-- from utenti u
+-- where EXISTS (select idUtente from movimenti m where m.idUtente = u.idUtente)
+-- order by cognome, nome, ruolo
+--
+-- select idUtente, format(saldo, 'N2', 'it-it') as saldo, cognome, nome, nomecognome, attivo, idReferente, ruolo
+-- from SaldoContabile
+-- order by cognome, nome, ruolo

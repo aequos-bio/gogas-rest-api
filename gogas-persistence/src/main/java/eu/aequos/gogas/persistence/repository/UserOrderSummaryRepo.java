@@ -45,7 +45,7 @@ public interface UserOrderSummaryRepo extends CrudRepository<UserOrderSummary, U
             "WHERE (u.id = ?1 OR u.friendReferral.id = ?1) AND o.orderId IN ?2")
     List<UserOrderSummary> findOpenOrderSummaries(String userId, Set<String> orderIds);
 
-    @Query(value = "SELECT o.orderId, SUM(COALESCE(o.totalAmount, 0)) AS totalAmount " +
+    @Query(value = "SELECT o.orderId as orderId, SUM(COALESCE(o.totalAmount, 0)) AS totalAmount " +
             "FROM UserOrderSummary o " +
             "WHERE o.orderId IN ?1 AND o.aggregated = 1 " +
             "GROUP BY o.orderId")
