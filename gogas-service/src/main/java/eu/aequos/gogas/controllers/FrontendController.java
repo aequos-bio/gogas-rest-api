@@ -51,6 +51,12 @@ public class FrontendController {
     }
 
     @IsManager
+    @GetMapping(value = {"/legacy-ui/orders-report"})
+    public String legacyOrdersReport() {
+        return "legacy/referenti/orders-report";
+    }
+
+    @IsManager
     @GetMapping(value = {"/legacy-ui/suppliers"})
     public String legacySuppliers() {
         return "legacy/admin/suppliers";

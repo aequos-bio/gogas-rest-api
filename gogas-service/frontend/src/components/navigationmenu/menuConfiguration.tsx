@@ -170,6 +170,12 @@ export const menuItems: MenuChapter[] = [
         icon: menuIcons.orders
       },
       {
+        label: 'Report ordinanti',
+        url: `/legacy/ordersreport`,
+        restrictions: { orderManager: true },
+        icon: menuIcons.orders
+      },
+      {
         label: 'Tool smistamento (exe)',
         url: '/tools/smistamento.exe',
         restrictions: { orderManager: true },

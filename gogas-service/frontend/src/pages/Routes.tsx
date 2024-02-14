@@ -20,6 +20,7 @@ import { useAppDispatch } from '../store/store';
 import {
   LegacyOrderManagerPage,
   LegacyProductsManagerPage,
+  LegacyOrdersReportPage,
   LegacySuppliersManagerPage,
   LegacyConfigurationPage,
   LegacyUserOrderPage,
@@ -45,6 +46,7 @@ const privateRoutes = [
   { path: '/managers', component: ManagersPage },
   { path: '/legacy/orderslist', component: LegacyOrderManagerPage },
   { path: '/legacy/products', component: LegacyProductsManagerPage },
+  { path: '/legacy/ordersreport', component: LegacyOrdersReportPage },
   { path: '/legacy/suppliers', component: LegacySuppliersManagerPage },
   { path: '/legacy/configuration', component: LegacyConfigurationPage },
   { path: '/legacy/ordershistory', component: LegacyUserOrderPage },

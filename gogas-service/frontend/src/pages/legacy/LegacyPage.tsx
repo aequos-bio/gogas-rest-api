@@ -42,6 +42,10 @@ export const LegacyProductsManagerPage: React.FC = () => {
   return (<LegacyPage page='products' />)
 };
 
+export const LegacyOrdersReportPage: React.FC = () => {
+  return (<LegacyPage page='orders-report' />)
+};
+
 export const LegacySuppliersManagerPage: React.FC = () => {
   return (<LegacyPage page='suppliers' />)
 };

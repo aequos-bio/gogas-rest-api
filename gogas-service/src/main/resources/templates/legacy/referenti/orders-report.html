@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html layout:decorate="~{legacy/master}">
+
+    <div layout:fragment="content">
+        <div class="panel panel-default" style="margin-bottom:10px">
+            <div class="panel-heading">
+                <h5 class="panel-title">
+                    Report Ordinanti <span id="title-type" style="font-style:italic"></span>
+                    <a href="#" style="margin-left:10px" class="pull-right"><span id="collapse_icon" class="glyphicon glyphicon-chevron-up" data-toggle="collapse" data-target="#filter"></span></a>
+                </h5>
+            </div>
+            <div class="panel-body collapse in" id="filter" style="position:relative">
+                <form method="post" name = "filtroOrdini" class = "form-horizontal">
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Tipologia ordine</label>
+
+                        <div class="col-md-6 col-sm-10">
+                            <select id="FiltroTipologia"><option></option></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 col-sm-2 control-label">Data Consegna Da</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div class="input-group date">
+                                <input class="form-control text-box single-line" id="FiltroDataConsegnaInizio" name="FiltroDataConsegnaInizio" type="text">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="col-md-2 col-sm-2 control-label">Data Consegna A</label>
+                        <div class="col-md-2 col-sm-4">
+                            <div class="input-group date">
+                                <input class="form-control text-box single-line" id="FiltroDataConsegnaFine" name="FiltroDataConsegnaFine" type="text">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-8 col-sm-12">
+                            <button type="button" class="btn btn-primary pull-right" onclick="generateReport()">
+                                <span class="glyphicon glyphicon-search"></span>
+                                Ricerca
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div style="margin: 20px;">
+            <div id="nocontent" style="text-align: center; margin:50px 0px 150px 0px">Selezionare una tipologia di ordine.</div>
+            <div id="noresult" style="text-align: center; margin:50px 0px 150px 0px; display:none">Nessun ordine per la tipologia e il periodo selezionati.</div>
+
+            <div id="reportContainer"></div>
+        </div>
+    </div>
+
+    <div layout:fragment="js-libraries">
+        <script type="text/javascript" src="Scripts/DataTables/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="Scripts/DataTables/dataTables.bootstrap.min.js"></script>
+        <script type="text/javascript" src="Scripts/DataTables/dataTables.fixedColumns.min.js"></script>
+    </div>
+
+    <script layout:fragment="script">
+
+        function createTable(reportDef) {
+            //reset page
+            $('#nocontent').hide();
+            $('#reportContainer').html('');
+            $('#noresult').hide();
+
+            if (reportDef.orderDates.length == 0 || reportDef.buyers.length == 0) {
+                $('#noresult').show();
+                return;
+            }
+
+            $('#filter').collapse('hide');
+
+            $('#reportContainer').html(
+                '<table id="reportTable" class="table table-striped table-bordered">' +
+                '   <thead>' +
+                '       <tr>' +
+                '           <th>Utente</th>' +
+                '           <th class="body">Tot. ordini</th>' +
+                '       </tr>' +
+                '   </thead>' +
+                '   <tbody></tbody>' +
+                '</table>'
+            );
+
+            var columnDef = [
+                { width: 150, targets: 0 },
+                { width: 80, orderable: false, targets: 1 }
+            ];
+
+            // Prepare dynamic columns
+            $.each(reportDef.orderDates, function (k, colName) {
+                var cell = '<th>' + colName + '</th>';
+                $('#reportTable>thead>tr').append(cell);
+
+                columnDef.push({ orderable: false, className: "body", render: tickRenderer, targets: k + 2 });
+            });
+
+            var data = [];
+            for (var i = 0; i < reportDef.reportBody.length; i++) {
+                var row = [ reportDef.buyers[i] ];
+                data[i] = row.concat(reportDef.reportBody[i]);
+            }
+
+            $('#reportTable').DataTable({
+                scrollX: true,
+                scrollY: "380px",
+                scrollCollapse: true,
+                paging: false,
+                fixedColumns: {
+                    leftColumns: 2
+                },
+                data: data,
+                columnDefs: columnDef
+            });
+        }
+
+        function tickRenderer(data, type, row) {
+            return data === 1 ? '<i class="fa fa-check"></i>' : '';
+        }
+
+        function generateReport() {
+            if (!$("#FiltroTipologia").val())
+                return;
+
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'order/manage/' + $("#FiltroTipologia").val() + '/report/buyers',
+                async: true,
+                contentType: 'application/json;charset=UTF-8',
+                data: { dateFrom: $('#FiltroDataConsegnaInizio').val(), dateTo: $('#FiltroDataConsegnaFine').val() },
+                success: function (data, status, xhr) {
+                    if (data.error)
+                        createNotification('error', data.errorMessage);
+                    else {
+                        console.log(data);
+
+                        var tipologia = $('#FiltroTipologia').select2('data');
+                        $('#title-type').text(tipologia[0].text);
+
+                        createTable(data);
+                    }
+                },
+                error: ajaxErrorNoCommit
+            });
+        }
+
+        function fillSelectOrderType() {
+            $.ajax({
+                dataType: 'json',
+                method: 'get',
+                url: gogas.api.baseUrl + 'ordertype/select/manager',
+                data: { firstEmpty: false },
+                async: true,
+                success: function (data, status, xhr) {
+                    var filtroTipologia = $("#FiltroTipologia").select2({
+                        placeholder: 'Selezionare una tipologia...',
+                        data: convertItemsForSelect2(data),
+                        allowClear: true
+                    });
+
+                    documentReadyAsynch();
+                }
+            });
+        }
+
+        function documentReady() {
+            fillSelectOrderType();
+        }
+
+        function documentReadyAsynch() {
+
+            $('div.date').datepicker({
+                format: 'dd/mm/yyyy',
+                autoclose: true,
+                clearBtn: true,
+                todayHighlight: true,
+                language: 'it-IT',
+                container: '#filter'
+            });
+
+            $('#FiltroDataConsegnaInizio').val(moment().subtract(2, 'months').format('DD/MM/yyyy'));
+
+            $("#filter").on("hide.bs.collapse", function(){
+                $("#collapse_icon").toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+            $("#filter").on("show.bs.collapse", function(){
+                $("#collapse_icon").toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+
+            //complete page loading
+            pageLoaded();
+        }
+
+    </script>
+
+</html>
