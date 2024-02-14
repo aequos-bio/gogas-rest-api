@@ -167,35 +167,4 @@ public class UserController {
         userService.changePassword(currentUser.getId(), passwordChangeDTO);
         return new BasicResponseDTO("OK");
     }
-
-    @ApiOperation(
-            value = "Add push notification token",
-            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="any role", description = "any role") }) }
-    )
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
-            @ApiResponse(code = 400, message = "Missing or invalid parameter")
-    })
-    @PostMapping(value = "notification/push/token")
-    public BasicResponseDTO addPushNotificationToken(@Valid @RequestBody PushTokenDTO pushTokenDTO) {
-        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
-        userService.storePushToken(currentUser.getId(), pushTokenDTO);
-        return new BasicResponseDTO("OK");
-    }
-
-    @ApiOperation(
-            value = "Remove push notification token",
-            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="any role", description = "any role") }) }
-    )
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "OK", response = BasicResponseDTO.class),
-            @ApiResponse(code = 400, message = "Missing or invalid parameter"),
-            @ApiResponse(code = 404, message = "Item not found. Type: Push token, Id: <token>"),
-    })
-    @DeleteMapping(value = "notification/push/token")
-    public BasicResponseDTO removePushNotificationToken(@Valid @RequestBody PushTokenDTO pushTokenDTO) {
-        GoGasUserDetails currentUser = authorizationService.getCurrentUser();
-        userService.deletePushToken(currentUser.getId(), pushTokenDTO);
-        return new BasicResponseDTO("OK");
-    }
 }

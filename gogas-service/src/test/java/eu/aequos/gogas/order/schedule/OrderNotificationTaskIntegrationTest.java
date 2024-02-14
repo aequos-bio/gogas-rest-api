@@ -63,10 +63,6 @@ class OrderNotificationTaskIntegrationTest extends OrderBaseIntegrationTest {
             responseDTO.setSentCount(1);
             return responseDTO;
         });
-
-        mockUsersData.addPushNotificationToken(userId1, "token1");
-        mockUsersData.addPushNotificationToken(userId2, "token2");
-        mockUsersData.addPushNotificationToken(userId3, "token3");
     }
 
     @Test

@@ -1,18 +1,19 @@
 package eu.aequos.gogas.service;
 
 import eu.aequos.gogas.converter.ListConverter;
-import eu.aequos.gogas.dto.*;
+import eu.aequos.gogas.dto.PasswordChangeDTO;
+import eu.aequos.gogas.dto.PasswordResetDTO;
+import eu.aequos.gogas.dto.SelectItemDTO;
+import eu.aequos.gogas.dto.UserDTO;
 import eu.aequos.gogas.exception.DuplicatedItemException;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.exception.ItemNotFoundException;
 import eu.aequos.gogas.exception.MissingOrInvalidParameterException;
 import eu.aequos.gogas.notification.mail.MailNotificationChannel;
 import eu.aequos.gogas.persistence.entity.NotificationPreferences;
-import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
-import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.RandomPassword;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,6 @@ public class UserService extends CrudService<User, String> {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
     private final MailNotificationChannel mailNotificationChannel;
-    private final PushTokenRepo pushTokenRepo;
     private final NotificationPreferencesRepo notificationPreferencesRepo;
 
     //TODO: cache users
@@ -89,8 +89,6 @@ public class UserService extends CrudService<User, String> {
         notificationPreferences.setOnOrderDelivery(true);
         notificationPreferences.setOnOrderUpdatedQuantity(true);
         notificationPreferences.setOnOrderAccounted(true);
-        notificationPreferences.setOnExpirationMinutesBefore(60);
-        notificationPreferences.setOnDeliveryMinutesBefore(60);
         return notificationPreferences;
     }
 
@@ -267,24 +265,5 @@ public class UserService extends CrudService<User, String> {
 
     public boolean userAlreadyExists(String username) {
         return userRepo.findByUsername(username).isPresent();
-    }
-
-    @Transactional
-    public void storePushToken(String userId, PushTokenDTO pushTokenDTO) {
-        PushToken pushToken = new PushToken();
-        pushToken.setUserId(userId);
-        pushToken.setToken(pushTokenDTO.getToken());
-        pushToken.setDeviceId(pushTokenDTO.getDeviceId());
-
-        pushTokenRepo.save(pushToken);
-    }
-
-    @Transactional
-    public void deletePushToken(String userId, PushTokenDTO pushTokenDTO) {
-        int deletedRows = pushTokenRepo.deleteByUserIdAndToken(userId, pushTokenDTO.getToken());
-
-        if (deletedRows <= 0) {
-            throw new ItemNotFoundException("Push token", pushTokenDTO.getToken());
-        }
     }
 }

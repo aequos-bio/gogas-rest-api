@@ -26,14 +26,8 @@ public class NotificationPreferences {
     @Column(name = "scadenza")
     private boolean onOrderExpiration;
 
-    @Column(name = "minutiscadenza")
-    private int onExpirationMinutesBefore;
-
     @Column(name = "consegna")
     private boolean onOrderDelivery;
-
-    @Column(name = "minuticonsegna")
-    private int onDeliveryMinutesBefore;
 
     @Column(name = "aggiornamentoqta")
     private boolean onOrderUpdatedQuantity;

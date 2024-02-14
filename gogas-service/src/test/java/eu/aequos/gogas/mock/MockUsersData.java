@@ -2,10 +2,8 @@ package eu.aequos.gogas.mock;
 
 import eu.aequos.gogas.mvc.WithTenant;
 import eu.aequos.gogas.persistence.entity.NotificationPreferences;
-import eu.aequos.gogas.persistence.entity.PushToken;
 import eu.aequos.gogas.persistence.entity.User;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesRepo;
-import eu.aequos.gogas.persistence.repository.PushTokenRepo;
 import eu.aequos.gogas.persistence.repository.UserRepo;
 import eu.aequos.gogas.security.ShaPasswordEncoder;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +29,6 @@ public class MockUsersData implements MockDataLifeCycle {
 
     private final UserRepo userRepo;
     private final NotificationPreferencesRepo notificationPreferencesRepo;
-    private final PushTokenRepo pushTokenRepo;
 
     private final PasswordEncoder passwordEncoder = new ShaPasswordEncoder();
     private final List<User> createdUsers = new ArrayList<>();
@@ -100,15 +97,6 @@ public class MockUsersData implements MockDataLifeCycle {
         return storedUser;
     }
 
-    public void addPushNotificationToken(String userId, String token) {
-        PushToken pushToken = new PushToken();
-        pushToken.setUserId(userId);
-        pushToken.setDeviceId(token + "_device");
-        pushToken.setToken(token);
-
-        pushTokenRepo.save(pushToken);
-    }
-
     public String getSimpleUserId() {
         return createdUsers.get(0).getId();
     }
@@ -121,7 +109,6 @@ public class MockUsersData implements MockDataLifeCycle {
     }
 
     public void deleteUsers() {
-        pushTokenRepo.deleteAll();
         notificationPreferencesRepo.deleteAll();
 
         createdUsers.sort(Comparator.comparing(User::getRole));
