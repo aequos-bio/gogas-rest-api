@@ -111,9 +111,9 @@
                 data[i] = row.concat(reportDef.reportBody[i]);
             }
 
-            $('#reportTable').DataTable({
+            var oTable = $('#reportTable').DataTable({
                 scrollX: true,
-                scrollY: "380px",
+                scrollY: calcDataTableHeight(),
                 scrollCollapse: true,
                 paging: false,
                 fixedColumns: {
@@ -122,7 +122,16 @@
                 data: data,
                 columnDefs: columnDef
             });
+
+            $(window).resize(function() {
+              $('.dataTables_scrollBody').css('max-height', calcDataTableHeight());
+              $('.DTFC_LeftBodyWrapper').css('max-height', calcDataTableHeight() - 20);
+            });
         }
+
+        var calcDataTableHeight = function() {
+          return $(window).height() - 240;
+        };
 
         function tickRenderer(data, type, row) {
             return data === 1 ? '<i class="fa fa-check"></i>' : '';
