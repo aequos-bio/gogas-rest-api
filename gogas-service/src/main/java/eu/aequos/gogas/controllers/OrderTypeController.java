@@ -305,13 +305,23 @@ public class OrderTypeController {
     }
 
     @ApiOperation(
-            value = "Get managers of all order types (and optionally filter by userId)",
+            value = "Get order type blacklist for a specific user",
             authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
     )
     @IsAdmin
     @GetMapping(value = "blacklist/{userId}")
     public List<SelectItemDTO> getBlacklistOrderTypes(@PathVariable String userId) {
         return orderTypeService.getBlacklistAsSelectItems(userId);
+    }
+
+    @ApiOperation(
+            value = "Get count of order type blacklist entries for each user",
+            authorizations = { @Authorization(value = "jwt", scopes = { @AuthorizationScope(scope ="admin", description = "admin") }) }
+    )
+    @IsAdmin
+    @GetMapping(value = "blacklist/count")
+    public List<SelectItemDTO> countBlacklistOrderTypesByUser() {
+        return orderTypeService.getBlacklistCountByUser();
     }
 
     @ApiOperation(

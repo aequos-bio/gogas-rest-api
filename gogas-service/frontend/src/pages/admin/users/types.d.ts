@@ -12,11 +12,17 @@ export interface User {
   ruololabel: string;
   telefono?: string;
   username: string;
+  blacklistCount?: int;
 }
 
 export interface Friend {
   id: string;
   description: string;
   attivo: boolean;
+}
+
+export interface BlacklistItem {
+  id: string;
+  description: string;
 }
 

@@ -7,10 +7,12 @@ import {
   DialogTitle,
   Button,
   Grid,
+  CircularProgress,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiDelete, apiPut } from '../../../utils/axios_utils';
 import { User } from '../users/types';
+import { OrderTypeManager } from './types';
 import ManagedOrderType from './ManagedOrderType';
 import { AxiosResponse } from 'axios';
 import { useOrderTypesAPI } from '../orderTypes/useOrderTypesAPI';
@@ -21,6 +23,11 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     flexDirection: 'column',
   },
+  loading: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  }
 }));
 
 interface Props {
@@ -33,21 +40,23 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
   const classes = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const { orderTypes, reload: reloadOrderTypes } = useOrderTypesAPI();
-  const { managers, reload: reloadManagers } = useManagersAPI();
-  const originallyManagedOrderTypes = managers[manager?.idUtente || ''] || [];
+  const { reloadSync: reloadManagers, loading } = useManagersAPI();
   const [managedOrderTypes, setManagedOrderTypes] = useState<string[]>([]);
+  const [originallyManagedOrderTypes, setOriginallyManagedOrderTypes] = useState<OrderTypeManager[]>([]);
 
   useEffect(() => {
-    if (!manager) return;
     reloadOrderTypes();
-    reloadManagers();
-  }, [manager]);
+  }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!manager || !open) return;
 
-    setManagedOrderTypes(originallyManagedOrderTypes.map(orderType => orderType.orderTypeId));
-  }, [open]);
+    reloadManagers().then((managers) => {
+      var o = managers[manager?.idUtente || ''] || [];
+      setManagedOrderTypes(o.map(orderType => orderType.orderTypeId));
+      setOriginallyManagedOrderTypes(o);
+    });
+  }, [manager, open]);
 
   const sliceSize = useMemo(() => {
     return Math.max(7, orderTypes.length / 3 + 1);
@@ -120,6 +129,7 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
   const save = useCallback(() => {
     const toAdd: string[] = [];
     const toRemove: string[] = [];
+
     managedOrderTypes.forEach(orderType => {
       if (
         !originallyManagedOrderTypes.find(
@@ -176,21 +186,22 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
       <DialogTitle>
         {manager?.nome} {manager?.cognome}
       </DialogTitle>
-
-      <DialogContent>
-        <Grid container spacing={2}>
-          <Grid item xs={4} className={classes.column}>
-            {column1}
+      { loading ?
+        <div className={classes.loading}><CircularProgress /></div> :
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={4} className={classes.column}>
+              {column1}
+            </Grid>
+            <Grid item xs={4} className={classes.column}>
+              {column2}
+            </Grid>
+            <Grid item xs={4} className={classes.column}>
+              {column3}
+            </Grid>
           </Grid>
-          <Grid item xs={4} className={classes.column}>
-            {column2}
-          </Grid>
-          <Grid item xs={4} className={classes.column}>
-            {column3}
-          </Grid>
-        </Grid>
-      </DialogContent>
-
+        </DialogContent>
+      }
       <DialogActions>
         {allSelected ? null : (
           <Button onClick={selectAll}>Seleziona tutto</Button>
@@ -203,6 +214,7 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
 
         <Button onClick={save}>Salva</Button>
       </DialogActions>
+
     </Dialog>
   );
 };

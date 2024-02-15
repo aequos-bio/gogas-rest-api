@@ -36,6 +36,19 @@ export const useManagersAPI = () => {
     });
   }, [enqueueSnackbar]);
 
-  return { managers, loading, reload };
+  const reloadSync = useCallback(async () => {
+    setLoading(true);
+    var managersList = await apiGetJson<OrderTypeManager[] | ErrorResponse>('/api/ordertype/manager/list', {});
+    setLoading(false);
+
+    if (typeof managersList === 'object' && (managersList as ErrorResponse).error) {
+      enqueueSnackbar((managersList as ErrorResponse).errorMessage, { variant: 'error' });
+      return {};
+    }
+
+    return buildManagersMap(managersList as OrderTypeManager[] || []);
+  }, [enqueueSnackbar]);
+
+  return { managers, loading, reload, reloadSync };
 }
 

@@ -114,6 +114,12 @@ public class OrderTypeService extends CrudService<OrderType, String> {
         return convertToSelectItems(false, false, orderTypeStream);
     }
 
+    public List<SelectItemDTO> getBlacklistCountByUser() {
+        return orderUserBlacklistRepo.countOrderIdsByUser().stream()
+                .map(entry -> new SelectItemDTO(entry.getUserId(), Integer.toString(entry.getBlacklistEntriesCount())))
+                .collect(toList());
+    }
+
     public List<SelectItemDTO> getManagedAsSelectItems(boolean extended, boolean firstEmpty, String userId, User.Role userRole) {
         if (userRole.isAdmin())
             return getAllAsSelectItems(extended, firstEmpty);

@@ -11,8 +11,9 @@ import {
   Menu,
   MenuItem,
   Chip,
+  Tooltip,
 } from '@material-ui/core';
-import { MoreVert as MoreVertIcon } from '@material-ui/icons';
+import { MoreVert as MoreVertIcon, ShoppingCartSharp, ShoppingBasketSharp, Block } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { Friend, User } from './types';
 
@@ -43,7 +44,21 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     flexWrap: 'wrap',
     overflowX: 'hidden',
+    alignItems: 'center',
   },
+  stack: {
+    position: 'absolute',
+    marginTop: '2px',
+    marginLeft: '4px',
+    fontSize: '1.5em'
+  },
+  stackOver: {
+    position: 'absolute',
+    marginTop: '-3px',
+    marginLeft: '-1px',
+    fontSize: '2.5em',
+    color: 'red'
+  }
 }));
 
 interface Props {
@@ -55,6 +70,7 @@ interface Props {
   onPasswordReset: (user: User) => void;
   onEnable: (user: User) => void;
   onDisable: (user: User) => void;
+  onEditBlacklist: (user: User) => void;
 }
 
 const UserRow: React.FC<Props> = ({
@@ -66,6 +82,7 @@ const UserRow: React.FC<Props> = ({
   onPasswordReset,
   onEnable,
   onDisable,
+  onEditBlacklist,
 }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -85,6 +102,11 @@ const UserRow: React.FC<Props> = ({
     setAnchorEl(null);
     onEdit(user);
   }, [user, onEdit]);
+
+  const handleEditBlacklist = useCallback(() => {
+    setAnchorEl(null);
+    onEditBlacklist(user);
+  }, [user, onEditBlacklist]);
 
   const handleDelete = useCallback(() => {
     setAnchorEl(null);
@@ -163,6 +185,14 @@ const UserRow: React.FC<Props> = ({
               {user.ruolo === 'U' ? null : (
                 <Chip size="small" label={user.ruololabel} color="secondary" />
               )}
+              {user.blacklistCount ? (
+                <Tooltip title={user.blacklistCount + (user.blacklistCount > 1 ? ' ordini bloccati' : ' ordine bloccato')} arrow>
+                  <Chip size="small"
+                    avatar={<div><ShoppingBasketSharp className={classes.stack}/><Block className={classes.stackOver} /></div>}
+                    label={'\u00A0' + user.blacklistCount}
+                  />
+                </Tooltip>
+              ) : null}
             </>
           }
           secondaryTypographyProps={{
@@ -192,6 +222,7 @@ const UserRow: React.FC<Props> = ({
             {user.attivo ? (
               <MenuItem onClick={handleDisable}>Disattiva</MenuItem>
             ) : null}
+            <MenuItem onClick={handleEditBlacklist}>Blocco ordini</MenuItem>
             <MenuItem onClick={handleDelete}>Elimina</MenuItem>
             <MenuItem onClick={handlePasswordReset}>Reset password</MenuItem>
           </Menu>

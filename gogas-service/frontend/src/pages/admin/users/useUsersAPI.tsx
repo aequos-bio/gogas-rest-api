@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { orderBy } from 'lodash';
 import { apiDelete, apiGetJson, apiPut } from "../../../utils/axios_utils";
-import { User } from "./types";
+import { User, BlacklistItem } from "./types";
 import { ErrorResponse } from "../../../store/types";
 import { useSnackbar } from "notistack";
 
@@ -12,23 +12,43 @@ export const useUsersAPI = (sort: string) => {
 
   const reload = useCallback(() => {
     setLoading(true);
-    apiGetJson<User[] | ErrorResponse>('/api/user/list', {}).then((uu) => {
+
+    Promise.all([
+      apiGetJson<User[] | ErrorResponse>('/api/user/list', {}),
+      apiGetJson<BlacklistItem[] | ErrorResponse>('/api/ordertype/blacklist/count', {})
+    ]).then(([uu, bl]) => {
       setLoading(false);
+
       if (typeof uu === 'object' && (uu as ErrorResponse).error) {
         enqueueSnackbar((uu as ErrorResponse).errorMessage, { variant: 'error' });
-      } else {
-        setUsers(
-          orderBy(
-            uu,
-            [
-              'attivo',
-              sort === 'NC' ? 'nome' : 'cognome',
-              sort === 'NC' ? 'cognome' : 'nome',
-            ],
-            ['desc', 'asc', 'asc'],
-          ),
-        );
+        return;
       }
+
+      if (typeof bl === 'object' && (bl as ErrorResponse).error) {
+        enqueueSnackbar((bl as ErrorResponse).errorMessage, { variant: 'error' });
+        return;
+      }
+
+      var blacklistMap = (bl as BlacklistItem[]).reduce(function(map: Map<string, number>, entry) {
+          map.set(entry.id, Number(entry.description));
+          return map;
+      }, new Map<string, number>);
+
+      (uu as User[]).forEach(function (user) {
+        user.blacklistCount = blacklistMap.get(user.idUtente);
+      });
+
+      setUsers(
+        orderBy(
+          uu,
+          [
+            'attivo',
+            sort === 'NC' ? 'nome' : 'cognome',
+            sort === 'NC' ? 'cognome' : 'nome',
+          ],
+          ['desc', 'asc', 'asc'],
+        ),
+      );
     });
   }, [sort, enqueueSnackbar]);
 

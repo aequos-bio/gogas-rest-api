@@ -12,6 +12,7 @@ import PageTitle from '../../../components/PageTitle';
 import UserRow from './UserRow';
 import LoadingListItem from '../../../components/LoadingListItem';
 import UserEditDialog from './UserEditDialog';
+import OrderBlacklistEditDialog from './OrderBlacklistEditDialog';
 import ActionDialog from '../../../components/ActionDialog';
 import { useAppSelector } from '../../../store/store';
 import { useUsersAPI } from './useUsersAPI';
@@ -48,6 +49,7 @@ const Users: React.FC = () => {
   const [hideDisabled, setHideDisabled] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const info = useAppSelector((state) => state.info);
@@ -74,6 +76,20 @@ const Users: React.FC = () => {
   const editDialogClosed = useCallback(
     (refresh) => {
       setEditDialogOpen(false);
+      setSelectedUser(undefined);
+      if (refresh) reload();
+    },
+    [reload],
+  );
+
+  const editUserBlacklist = useCallback((user) => {
+    setSelectedUser(user);
+    setBlacklistDialogOpen(true);
+  }, []);
+
+  const editDialogBlacklistClosed = useCallback(
+    (refresh) => {
+      setBlacklistDialogOpen(false);
       setSelectedUser(undefined);
       if (refresh) reload();
     },
@@ -147,6 +163,7 @@ const Users: React.FC = () => {
           onPasswordReset={passwordReset}
           onEnable={_enableUser}
           onDisable={_disableUser}
+          onEditBlacklist={editUserBlacklist}
         />
       ));
   }, [
@@ -159,6 +176,7 @@ const Users: React.FC = () => {
     passwordReset,
     enableUser,
     disableUser,
+    editUserBlacklist
   ]);
 
   return (
@@ -186,6 +204,12 @@ const Users: React.FC = () => {
       <UserEditDialog
         open={editDialogOpen}
         onClose={editDialogClosed}
+        user={selectedUser}
+      />
+
+      <OrderBlacklistEditDialog
+        open={blacklistDialogOpen}
+        onClose={editDialogBlacklistClosed}
         user={selectedUser}
       />
 
