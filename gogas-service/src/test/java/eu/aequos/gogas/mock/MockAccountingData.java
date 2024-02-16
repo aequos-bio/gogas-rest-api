@@ -10,12 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 
 @RequiredArgsConstructor
 @Component
 @WithTenant("integration-test")
 public class MockAccountingData implements MockDataLifeCycle {
+
+    private static final Set<String> DEFAULT_ACCOUNTING_REASONS = Set.of("ORDINE", "ORDINE_CAL");
 
     private final AccountingReasonRepo accountingReasonRepo;
     private final AccountingRepo accountingRepo;
@@ -108,7 +111,7 @@ public class MockAccountingData implements MockDataLifeCycle {
         deleteAllEntries();
 
         StreamSupport.stream(accountingReasonRepo.findAll().spliterator(), false)
-                .filter(reason -> !reason.getReasonCode().equals("ORDINE"))
+                .filter(reason -> !DEFAULT_ACCOUNTING_REASONS.contains(reason.getReasonCode()))
                 .forEach(accountingReasonRepo::delete);
     }
 }
