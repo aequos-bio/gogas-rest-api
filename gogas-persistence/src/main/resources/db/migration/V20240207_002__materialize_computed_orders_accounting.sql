@@ -149,7 +149,7 @@ WHERE u.ruolo = 'S'
 
 INSERT INTO auditUserBalance (id, ts, userId, entryType, operationType, referenceId, amount, currentBalance)
 SELECT newid(), CURRENT_TIMESTAMP, u.idUtente, 'MIGRATION', 'ADD', newid(), u.balance, 0 FROM utenti u
-WHERE u.balance > 0
+WHERE u.balance <> 0
 
 GO
 

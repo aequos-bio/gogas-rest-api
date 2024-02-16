@@ -297,7 +297,7 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         Map<String, BigDecimal> shippingCostsByUserId = shippingCostRepo.findByOrderId(order.getId()).stream()
                 .collect(Collectors.toMap(ShippingCost::getUserId, ShippingCost::getAmount));
 
-        boolean accountingEntryConfirmed = order.getOrderType().isComputedAmount(); //for backward compatibility and verification
+        boolean accountingEntryConfirmed = !order.getOrderType().isComputedAmount(); //for backward compatibility and verification
 
         List<AccountingEntry> orderAccountingEntries = userOrderSummaries.stream()
                 .map(s -> buildAccountingEntryForOrder(order, s.getUserId(), s.getFriendReferralId(), s.getTotalAmount(), shippingCostsByUserId.get(s.getUserId()), accountingEntryConfirmed))
@@ -350,8 +350,10 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
         entry.setUser(user);
         entry.setOrderId(order.getId());
         entry.setDate(order.getDeliveryDate());
-        entry.setReason(new AccountingEntryReason().withReasonCode("ORDINE"));
         entry.setDescription("Totale ordine " + order.getOrderType().getDescription() + " in consegna " + ConfigurationService.formatDate(order.getDeliveryDate()));
+
+        String accountingReasonCode = confirmed ? "ORDINE" : "ORDINE_CAL";
+        entry.setReason(new AccountingEntryReason().withReasonCode(accountingReasonCode));
 
         //used to compare previous way to aggregate balance "schedacontabile"
         entry.setConfirmed(confirmed);
