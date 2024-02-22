@@ -32,8 +32,9 @@ public class DeliveryController {
     }
 
     @PostMapping(value = "{orderId}")
-    public BasicResponseDTO updateQuantityFromDelivered(@PathVariable String orderId, @RequestBody DeliveryOrderDTO deliveredOrder) throws GoGasException {
-        deliveryService.updateQuantityFromDelivered(orderId, deliveredOrder);
+    public BasicResponseDTO updateQuantityFromDelivered(@PathVariable String orderId, @RequestBody DeliveryOrderDTO deliveredOrder,
+                                                        @RequestParam(required = false, defaultValue = "false") boolean skipEmptyQuantities) throws GoGasException {
+        deliveryService.updateQuantityFromDelivered(orderId, deliveredOrder, skipEmptyQuantities);
         return new BasicResponseDTO("OK");
     }
 
