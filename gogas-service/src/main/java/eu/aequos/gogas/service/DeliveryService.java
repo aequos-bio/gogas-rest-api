@@ -34,6 +34,7 @@ public class DeliveryService {
 
     private final OrderManagerService orderManagerService;
     private final OrderItemRepo orderItemRepo;
+    private final UserOrderSummaryService userOrderSummaryService;
     private final UserService userService;
     private final ProductService productService;
     private final NotificationSender notificationSender;
@@ -123,11 +124,13 @@ public class DeliveryService {
     @Transactional
     public void updateQuantityFromFile(String orderId, byte[] deliveredOrderFileContent) throws GoGasException, IOException {
         DeliveryOrderDTO deliveredOrder = objectMapper.readValue(deliveredOrderFileContent, DeliveryOrderDTO.class);
-        updateQuantityFromDelivered(orderId, deliveredOrder);
+        updateQuantityFromDelivered(orderId, deliveredOrder, false);
     }
 
     @Transactional
-    public void updateQuantityFromDelivered(String orderId, DeliveryOrderDTO deliveredOrder) throws GoGasException {
+    public void updateQuantityFromDelivered(String orderId, DeliveryOrderDTO deliveredOrder,
+                                            boolean skipEmptyQuantities) throws GoGasException {
+
         if (deliveredOrder == null)
             throw new GoGasException("Invalid content");
 
@@ -150,7 +153,7 @@ public class DeliveryService {
             }
 
             for (DeliveryOrderItemDTO deliveredItem : productDTO.getOrderItems()) {
-                Optional<OrderItem> createdOrderItem = updateOrCreateQuantity(orderId, usersReferralMap, productDTO, deliveredItem);
+                Optional<OrderItem> createdOrderItem = updateOrCreateQuantity(orderId, usersReferralMap, productDTO, deliveredItem, skipEmptyQuantities);
                 createdOrderItem.ifPresent(itemsCreated::add);
             }
         }
@@ -158,10 +161,19 @@ public class DeliveryService {
         if (!itemsCreated.isEmpty())
             orderItemRepo.saveAll(itemsCreated);
 
+        userOrderSummaryService.recomputeAllUsersTotalForComputedOrder(orderId);
+
         notificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
 
-    private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap, DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem) {
+    private Optional<OrderItem> updateOrCreateQuantity(String orderId, Map<String, String> usersReferralMap,
+                                                       DeliveryProductDTO deliveredProduct, DeliveryOrderItemDTO deliveredItem,
+                                                       boolean skipEmptyQuantities) {
+
+        if (skipEmptyQuantities && deliveredItem.getFinalDeliveredQty() == null) {
+            return Optional.empty();
+        }
+
         if (updateQuantity(orderId, deliveredProduct.getProductId(), deliveredItem))
             return Optional.empty();
 

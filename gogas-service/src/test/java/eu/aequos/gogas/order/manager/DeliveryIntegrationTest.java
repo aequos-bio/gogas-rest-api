@@ -1,9 +1,6 @@
 package eu.aequos.gogas.order.manager;
 
-import eu.aequos.gogas.dto.BasicResponseDTO;
-import eu.aequos.gogas.dto.OrderByProductDTO;
-import eu.aequos.gogas.dto.OrderItemByProductDTO;
-import eu.aequos.gogas.dto.UserDTO;
+import eu.aequos.gogas.dto.*;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryOrderItemDTO;
 import eu.aequos.gogas.dto.delivery.DeliveryProductDTO;
@@ -351,6 +348,39 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
     }
 
     @Test
+    void givenModifiedQuantities_whenUploadingDeliveryData_thenOrderUserTotalsAreRecomputed() throws Exception {
+        addComputedUserOrdersNoFriends(orderId);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        closeOrder(orderId);
+
+        verifyUserOrderTotal("user1", orderId, 14.1);
+        verifyUserOrderTotal("user2", orderId, 27.0);
+        verifyUserOrderTotal("user3", orderId, 13.4);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        DeliveryOrderDTO deliveryData = mockMvcGoGas.getDTO("/api/delivery/" + orderId, DeliveryOrderDTO.class);
+
+        Map<String, Map<String, DeliveryOrderItemDTO>> deliveryDataMap = extractDeliveryOrderItemDTO(deliveryData);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("BIRRA1").getId(), userId1, 0.0);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId1, 2.754);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("PATATE").getId(), userId1, 4.072);
+
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId2, 8.572);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("PATATE").getId(), userId2, 4.395);
+
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId3, 3.286);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("PATATE").getId(), userId3, 4.768);
+
+        BasicResponseDTO basicResponseDTO = mockMvcGoGas.postDTO("/api/delivery/" + orderId, deliveryData, BasicResponseDTO.class);
+        assertEquals("OK", basicResponseDTO.getData());
+
+        verifyUserOrderTotal("user1", orderId, 10.17);
+        verifyUserOrderTotal("user2", orderId, 26.96);
+        verifyUserOrderTotal("user3", orderId, 12.01);
+    }
+
+    @Test
     void givenRemovedQuantities_whenUploadingDeliveryData_thenOrdersAreCorrectlyChanged() throws Exception {
         addComputedUserOrdersNoFriends(orderId);
 
@@ -382,6 +412,49 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         assertEquals(0.0, orderItems1.get(userId1).getDeliveredQty().doubleValue(), 0.0001);
         assertEquals(0.0, orderItems1.get(userId2).getDeliveredQty().doubleValue(), 0.0001);
         assertEquals(0.0, orderItems1.get(userId3).getDeliveredQty().doubleValue(), 0.0001);
+
+        Map<String, OrderItemByProductDTO> orderItems2 = getProductItems(orderId, "PATATE");
+        assertEquals(4.0, orderItems2.get(userId1).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(4.5, orderItems2.get(userId2).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(4.768, orderItems2.get(userId3).getDeliveredQty().doubleValue(), 0.0001);
+
+        Map<String, OrderItemByProductDTO> orderItems3 = getProductItems(orderId, "BIRRA1");
+        assertEquals(0.0, orderItems3.get(userId1).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(2.0, orderItems3.get(userId2).getDeliveredQty().doubleValue(), 0.0001);
+    }
+
+    @Test
+    void givenRemovedQuantitiesAndSkipEmptyQuantitiesActivated_whenUploadingDeliveryData_thenEmptyQuantitiesAreNotApplied() throws Exception {
+        addComputedUserOrdersNoFriends(orderId);
+
+        mockMvcGoGas.loginAs("manager", "password");
+        closeOrder(orderId);
+
+        DeliveryOrderDTO deliveryData = mockMvcGoGas.getDTO("/api/delivery/" + orderId, DeliveryOrderDTO.class);
+
+        Map<String, Map<String, DeliveryOrderItemDTO>> deliveryDataMap = extractDeliveryOrderItemDTO(deliveryData);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("BIRRA1").getId(), userId1, 0.0);
+        deleteDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId1);
+
+        deleteDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId2);
+
+        deleteDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("MELE1").getId(), userId3);
+        changeDeliveredQuantity(deliveryDataMap, productsByCodeComputed.get("PATATE").getId(), userId3, 4.768);
+
+        BasicResponseDTO basicResponseDTO = mockMvcGoGas.postDTO("/api/delivery/" + orderId, deliveryData, BasicResponseDTO.class, Map.of("skipEmptyQuantities", List.of("true")));
+        assertEquals("OK", basicResponseDTO.getData());
+
+        Map<String, OrderByProductDTO> products = mockMvcGoGas.getDTOList("/api/order/manage/" + orderId + "/product", OrderByProductDTO.class).stream()
+                .collect(Collectors.toMap(OrderByProductDTO::getProductId, Function.identity()));
+
+        assertEquals(15.0, products.get(productsByCodeComputed.get("MELE1").getId().toUpperCase()).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(13.268, products.get(productsByCodeComputed.get("PATATE").getId().toUpperCase()).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(2.0, products.get(productsByCodeComputed.get("BIRRA1").getId().toUpperCase()).getDeliveredQty().doubleValue(), 0.0001);
+
+        Map<String, OrderItemByProductDTO> orderItems1 = getProductItems(orderId, "MELE1");
+        assertEquals(3.0, orderItems1.get(userId1).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(8.5, orderItems1.get(userId2).getDeliveredQty().doubleValue(), 0.0001);
+        assertEquals(3.5, orderItems1.get(userId3).getDeliveredQty().doubleValue(), 0.0001);
 
         Map<String, OrderItemByProductDTO> orderItems2 = getProductItems(orderId, "PATATE");
         assertEquals(4.0, orderItems2.get(userId1).getDeliveredQty().doubleValue(), 0.0001);
@@ -881,5 +954,11 @@ public class DeliveryIntegrationTest extends OrderManagementBaseIntegrationTest 
         mockMvcGoGas.loginAs("user3", "password");
         addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
         addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
+    }
+
+    private void verifyUserOrderTotal(String userName, String orderId, double expectedAmount) throws Exception {
+        mockMvcGoGas.loginAs(userName, "password");
+        UserOrderDetailsDTO userOrderDetailsDTO = mockMvcGoGas.getDTO("/api/order/user/" + orderId, UserOrderDetailsDTO.class, Map.of("includeTotalAmount", List.of("true")));
+        assertEquals(expectedAmount, userOrderDetailsDTO.getTotalAmount().doubleValue());
     }
 }
