@@ -53,6 +53,12 @@ export const menuItems: MenuChapter[] = [
         icon: menuIcons.help,
         newWindow: true
       },
+      {
+        label: 'Guida Smistamento',
+        url: '/documentation/Smisto.pdf',
+        icon: menuIcons.help,
+        newWindow: true
+      },
     ],
   },
   {
