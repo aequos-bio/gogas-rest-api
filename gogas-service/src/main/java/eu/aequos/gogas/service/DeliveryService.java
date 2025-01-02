@@ -34,7 +34,6 @@ public class DeliveryService {
 
     private final OrderManagerService orderManagerService;
     private final OrderItemRepo orderItemRepo;
-    private final UserOrderSummaryService userOrderSummaryService;
     private final UserService userService;
     private final ProductService productService;
     private final NotificationSender notificationSender;
@@ -160,8 +159,6 @@ public class DeliveryService {
 
         if (!itemsCreated.isEmpty())
             orderItemRepo.saveAll(itemsCreated);
-
-        userOrderSummaryService.recomputeAllUsersTotalForComputedOrder(orderId);
 
         notificationSender.sendOrderNotification(order, OrderEvent.QuantityUpdated);
     }
