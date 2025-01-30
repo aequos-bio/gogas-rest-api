@@ -194,7 +194,7 @@
                                 var html = "<div style='margin-top:5px; margin-left:5px; cursor:pointer;'><a title=\"Clicca per visualizzare il dettaglio dell'ordine\" href='user-order-details?orderId=" + idDataOrdine + "&userId=" + gogas.api.user.id + "'><span class='comando'>dettaglio</span></a>";
 
                                 if (rowData.amici && rowData.contabilizzabile)
-                                    html += " <a title=\"Clicca per gestire la ripartizione con gli amici delle quantità ritirate\" href='GestioneOrdineAmici?idDataOrdine=" + idDataOrdine + "&idTipologiaOrdine=" + rowData.idtipoordine + "'><span class='comando'>Gestisci ripartizione amici</span></a>";
+                                    html += " <a title=\"Clicca per gestire la ripartizione con gli amici delle quantità ritirate\" href='friend-order-details?orderId=" + idDataOrdine + "'><span class='comando'>Gestisci ripartizione amici</span></a>";
 
                                 html += "</div>";
 

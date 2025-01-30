@@ -77,11 +77,9 @@ public class FrontendController {
     }
 
     @GetMapping(value = {"/legacy-ui/friend-order-details"})
-    public String legacyFriendOrderDetails(@RequestParam String orderId, @RequestParam String userId,
-                                           Model model) {
+    public String legacyFriendOrderDetails(@RequestParam String orderId, Model model) {
 
         model.addAttribute("orderId", orderId);
-        model.addAttribute("userId", userId);
         return "legacy/user/friend-order";
     }
 

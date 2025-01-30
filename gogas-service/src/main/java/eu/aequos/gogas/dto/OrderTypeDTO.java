@@ -5,6 +5,7 @@ import eu.aequos.gogas.persistence.entity.OrderType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.Optional;
@@ -136,7 +137,9 @@ public class OrderTypeDTO implements ConvertibleDTO<OrderType> {
         model.setExcelAllUsers(this.excelAllUsers);
         model.setExternal(this.external);
         model.setExternallink(this.externalLink);
-        model.setAccountingCode(this.accountingCode);
+
+        String accountingCode = StringUtils.isEmpty(this.accountingCode) ? null : this.accountingCode;
+        model.setAccountingCode(accountingCode);
 
         return model;
     }
