@@ -3,7 +3,9 @@ package eu.aequos.gogas.notification;
 import eu.aequos.gogas.notification.builder.OrderNotificationBuilder;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
+import eu.aequos.gogas.persistence.entity.derived.UserCoreInfo;
 import eu.aequos.gogas.persistence.repository.NotificationPreferencesViewRepo;
+import eu.aequos.gogas.persistence.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ public class NotificationSender {
     private final List<OrderNotificationBuilder> orderNotificationBuilders;
     private final List<NotificationChannel> notificationChannels;
     private final UserNotificationsCache userNotificationsCache;
+    private final UserRepo userRepo;
 
     public void sendOrderNotification(Order order, OrderEvent event) {
         if (userNotificationsCache.isNotificationAlreadySent(order.getId(), event)) {
@@ -56,8 +59,13 @@ public class NotificationSender {
         String orderTypeId = order.getOrderType().getId();
         List<NotificationPreferencesView> notificationPrefs = notificationPreferencesViewRepo.findByOrderTypeId(orderTypeId);
 
+        Set<String> enabledUsers = userRepo.findByEnabled(true, UserCoreInfo.class).stream()
+                .map(UserCoreInfo::getId)
+                .collect(Collectors.toSet());
+
         return notificationBuilder.filterPreferences(order, notificationPrefs)
                 .map(NotificationPreferencesView::getUserId)
+                .filter(enabledUsers::contains)
                 .collect(Collectors.toSet());
     }
 }
