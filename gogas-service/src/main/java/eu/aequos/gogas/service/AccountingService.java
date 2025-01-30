@@ -1,5 +1,6 @@
 package eu.aequos.gogas.service;
 
+import com.google.common.collect.Iterables;
 import eu.aequos.gogas.dto.AccountingEntryDTO;
 import eu.aequos.gogas.dto.UserBalanceDTO;
 import eu.aequos.gogas.dto.UserBalanceEntryDTO;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static eu.aequos.gogas.converter.ListConverter.toMap;
 import static eu.aequos.gogas.persistence.entity.AccountingEntryReason.Sign;
@@ -275,7 +277,8 @@ public class AccountingService extends CrudService<AccountingEntry, String> {
             return Collections.emptyMap();
         }
 
-        return orderRepo.findByIdIn(orderIds).stream()
+        return StreamSupport.stream(Iterables.partition(orderIds, 2000).spliterator(), false)
+                .flatMap(orderIdsPartition -> orderRepo.findByIdIn(orderIdsPartition).stream())
                 .collect(toMap(Order::getId));
     }
 
