@@ -1,14 +1,15 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Container, Button, TextField } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import { makeStyles } from '@material-ui/core/styles';
 import { Redirect } from 'react-router-dom';
 import queryString from 'query-string';
-import Logo from '../../assets/logo_aequos.png';
+import Logo from '../../components/Logo';
 import useJwt from '../../hooks/JwtHooks';
 import { login } from '../../store/features/authentication.slice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { History, Location } from 'history';
+import ResetPasswordDialog from './ResetPasswordDialog'
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -26,6 +27,17 @@ const useStyles = makeStyles((theme) => ({
   copyright: {
     textAlign: 'center',
     color: theme.palette.grey[500],
+    fontSize: 'small',
+    marginBottom: '20px',
+  },
+  reset: {
+    textAlign: 'center',
+    color: theme.palette.grey[500],
+    margin: '30px 0px',
+  },
+  resetLink: {
+    color: 'blue',
+    cursor: 'pointer'
   },
 }));
 
@@ -39,6 +51,7 @@ const Login: React.FC<Props> = ({ location, history }) => {
   const search = queryString.parse(location.search);
   const info = useAppSelector((state) => state.info);
   const authentication = useAppSelector((state) => state.authentication);
+  const [showDlg, setShowDlg] = useState(false);
   const dispatch = useAppDispatch();
   const validJwt = useJwt();
 
@@ -54,6 +67,14 @@ const Login: React.FC<Props> = ({ location, history }) => {
     [dispatch, history],
   );
 
+  const resetPassword = useCallback(() => {
+    setShowDlg(true);
+  }, []);
+
+  const closeResetPassword = useCallback(() => {
+    setShowDlg(false);
+  }, []);
+
   return validJwt ? (
     <Redirect to={location.state ? location.state.from : '/'} />
   ) : (
@@ -61,42 +82,49 @@ const Login: React.FC<Props> = ({ location, history }) => {
       {authentication.running ? (
         'loading ...'
       ) : (
-        <form className='' noValidate autoComplete='off' onSubmit={dologin}>
-          <div className={classes.title}>
-            <img src={Logo} width='50px' height='50px' alt='' />
-            <h1 style={{ margin: '0px 15px' }}>
-              {info['gas.nome'] || 'GoGas'}
-            </h1>
-          </div>
+        <>
+          <form className='' noValidate autoComplete='off' onSubmit={dologin}>
+            <div className={classes.title}>
+              <Logo height='50px' />
+              <h1 style={{ margin: '0px 15px' }}>
+                {info['gas.nome'] || 'GoGas'}
+              </h1>
+            </div>
 
-          <TextField
-            name='username'
-            label='Nome utente'
-            margin='normal'
-            fullWidth
-          />
-          <TextField
-            name='password'
-            label='Password'
-            type='password'
-            margin='normal'
-            fullWidth
-          />
-
-          <div className={classes.buttons}>
-            <Button
-              variant='contained'
-              size='medium'
-              color='primary'
-              type='submit'
-              style={{ color: 'white' }}
+            <TextField
+              name='username'
+              label='Nome utente'
+              margin='normal'
               fullWidth
-            >
-              Login
-            </Button>
+            />
+            <TextField
+              name='password'
+              label='Password'
+              type='password'
+              margin='normal'
+              fullWidth
+            />
+
+            <div className={classes.buttons}>
+              <Button
+                variant='contained'
+                size='medium'
+                color='primary'
+                type='submit'
+                style={{ color: 'white' }}
+                fullWidth
+              >
+                Login
+              </Button>
+            </div>
+          </form>
+
+          <div className={classes.reset}>
+            Hai dimenticato la password? <a onClick={resetPassword} className={classes.resetLink}> Clicca qui per il reset.</a>
           </div>
-        </form>
+        </>
       )}
+
 
       {authentication.running ? null : (
         <div className={classes.copyright}>
@@ -107,12 +135,13 @@ const Login: React.FC<Props> = ({ location, history }) => {
       )}
       {authentication.error_message ? (
         <Alert severity='error'>
-          Username/password non validi o nessun diritto di accedere
+          {authentication.error_message}
         </Alert>
       ) : null}
       {'disconnect' in search ? (
         <Alert severity='success'>Ti sei disconnesso</Alert>
       ) : null}
+      <ResetPasswordDialog open={showDlg} handleClose={closeResetPassword} />
     </Container>
   );
 };

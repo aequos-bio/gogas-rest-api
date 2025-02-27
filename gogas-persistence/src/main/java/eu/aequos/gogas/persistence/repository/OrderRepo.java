@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,7 +25,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t WHERE o.id = ?1")
     Optional<Order> findByIdWithType(String orderId);
 
-    List<Order> findByIdIn(Set<String> orderIds);
+    List<Order> findByIdIn(Collection<String> orderIds);
 
     List<Order> findByOrderTypeIdAndDueDateAndDeliveryDate(String orderType, LocalDate dueDate, LocalDate deliveryDate);
 
@@ -110,7 +111,7 @@ public interface OrderRepo extends CrudRepository<Order, String>, JpaSpecificati
     @Query("SELECT o FROM Order o JOIN FETCH o.orderType t " +
             "WHERE function('DateAdd', hh, o.dueHour, o.dueDate) < CURRENT_TIMESTAMP AND o.deliveryDate >= function('convert', date, CURRENT_TIMESTAMP) " +
             "AND (t.external = true OR EXISTS (SELECT i.id FROM OrderItem i WHERE i.user = ?1 AND i.order = o.id)) " +
-            "ORDER BY o.deliveryDate DESC, t.description ASC")
+            "ORDER BY o.deliveryDate ASC, t.description ASC")
     List<Order> getInDeliveryOrders(String userId, Pageable pageable);
 
     @Query(value = "SELECT d.idDateOrdini AS orderId, o.idUtente as userId, " +

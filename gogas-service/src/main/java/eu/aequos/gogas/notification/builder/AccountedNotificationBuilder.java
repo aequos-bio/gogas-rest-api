@@ -1,6 +1,7 @@
 package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.AccountingService;
@@ -47,12 +48,12 @@ public class AccountedNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "L'ordine *%s* consegnato il *%s* ti è stato addebitato.\n\uD83D\uDCB0 Controlla il tuo saldo! \uD83D\uDCB0";
+        String template = "L'ordine *%s* consegnato il *%s* ti è stato addebitato\\.\n\uD83D\uDCB0 Controlla il tuo saldo\\! \uD83D\uDCB0";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
 
-        return String.format(template, orderType, formattedDeliveryDate);
+        return TelegramTemplate.resolve(template, orderType, formattedDeliveryDate);
     }
 
     @Override

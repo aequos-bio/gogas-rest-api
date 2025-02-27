@@ -60,6 +60,6 @@ public class HomeController {
         GoGasUserDetails currentUser = authorizationService.getCurrentUser();
 
         TelegramActivationDTO telegramActivationDTO = telegramNotificationClient.activateUser(tenantId, currentUser.getId());
-        return new BasicResponseDTO("DarthLoruBot?start=" + telegramActivationDTO.getCode());
+        return new BasicResponseDTO("GoGasAppBot?start=" + telegramActivationDTO.getCode());
     }
 }

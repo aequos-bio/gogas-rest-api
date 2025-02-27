@@ -47,7 +47,7 @@ const ManagerEditDialog: React.FC<Props> = ({ open, onClose, manager }) => {
     if (!open) return;
 
     setManagedOrderTypes(originallyManagedOrderTypes.map(orderType => orderType.orderTypeId));
-  }, [open, originallyManagedOrderTypes]);
+  }, [open]);
 
   const sliceSize = useMemo(() => {
     return Math.max(7, orderTypes.length / 3 + 1);

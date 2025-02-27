@@ -43,7 +43,8 @@ const ExternalOrder = ({ order }: { order: UserOpenOrder }) => {
 const UserSuborderDescription = ({ order, suborder, onOpenDetail }: { order: UserOpenOrder, suborder: UserSubOrder, onOpenDetail: (orderId: string, userId: string) => void }) => {
   const classes = useStyles();
   const info = useAppSelector((state) => state.info);
-  const userNameOrder = info['visualizzazione.utenti']
+  const userNameOrder = info['visualizzazione.utenti'];
+  const amount = suborder.totalAmount != null ? suborder.totalAmount.toFixed(2) + ' €' : '-';
 
   return (
     <div className={classes.orderDetail}>
@@ -51,7 +52,7 @@ const UserSuborderDescription = ({ order, suborder, onOpenDetail }: { order: Use
         {userNameOrder === 'NC'
           ? `${suborder.firstname} ${suborder.lastname}`
           : `${suborder.lastname} ${suborder.firstname}`}
-        , {suborder.itemsCount} articoli, {suborder.totalAmount.toFixed(2)} €
+        , {suborder.itemsCount} articoli, {amount}
       </span>
       <IconButton
         onClick={() => onOpenDetail(order.id, suborder.userId)}

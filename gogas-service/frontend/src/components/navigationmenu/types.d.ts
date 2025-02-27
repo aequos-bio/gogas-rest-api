@@ -6,8 +6,9 @@ export interface MenuChapter {
 export interface MenuItem {
   label: string;
   url: string;
-  icon: number;
+  icon: JSX.Element;
   restrictions?: Restrictions;
+  newWindow?: boolean;
 }
 
 export interface Restrictions {

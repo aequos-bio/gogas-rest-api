@@ -1,6 +1,7 @@
 package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.ConfigurationService;
@@ -39,12 +40,12 @@ public class QuantityUpdatedNotificationBuilder implements OrderNotificationBuil
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "Sono state le quantità aggiornate per l'ordine *%s* consegnato il *%s*.\n\u2714 Verifica se hai ricevuto tutto! \u2714";
+        String template = "Sono state le quantità aggiornate per l'ordine *%s* consegnato il *%s*\\.\n\u2714 Verifica se hai ricevuto tutto\\! \u2714";
 
         String orderType = order.getOrderType().getDescription();
         String formattedDeliveryDate = ConfigurationService.formatDate(order.getDeliveryDate());
 
-        return String.format(template, orderType, formattedDeliveryDate);
+        return TelegramTemplate.resolve(template, orderType, formattedDeliveryDate);
     }
 
     @Override

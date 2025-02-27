@@ -1,6 +1,7 @@
 package eu.aequos.gogas.notification.builder;
 
 import eu.aequos.gogas.notification.OrderEvent;
+import eu.aequos.gogas.notification.telegram.TelegramTemplate;
 import eu.aequos.gogas.persistence.entity.NotificationPreferencesView;
 import eu.aequos.gogas.persistence.entity.Order;
 import eu.aequos.gogas.service.OrderItemService;
@@ -44,11 +45,11 @@ public class DeliveryNotificationBuilder implements OrderNotificationBuilder {
 
     @Override
     public String getTelegramMessage(Order order) {
-        String template = "L'ordine *%s* è in consegna oggi.\n\uD83D\uDE9A Controlla gli avvisi del referente \uD83D\uDE9A";
+        String template = "L'ordine *%s* è in consegna oggi\\.\n\uD83D\uDE9A Controlla gli avvisi del referente \uD83D\uDE9A";
 
         String orderType = order.getOrderType().getDescription();
 
-        return String.format(template, orderType);
+        return TelegramTemplate.resolve(template, orderType);
     }
 
     @Override

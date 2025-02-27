@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 
 export const apiGet = (url: string) => axios.get(url);
 export const apiPost = (url: string, data?: any) => axios.post(url, data);
@@ -23,4 +23,12 @@ export function apiGetJson<T>(url: string, data?: any) {
 
 export function apiPostJson<T>(url: string, data?: any) {
   return apiPost(url, data).then(json<T>);
+};
+
+export function extractResponseFromError(error: any) : AxiosResponse | undefined | null {
+  if (!axios.isAxiosError(error)) {
+    return null;
+  }
+
+  return (error as AxiosError).response;
 }
