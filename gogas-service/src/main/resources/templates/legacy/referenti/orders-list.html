@@ -402,7 +402,7 @@
             $("#filter").collapse("hide");
         }
 
-        function checkAequosAvailableOrders() {
+        function checkAequosAvailableOrders(popupStatus) {
             $.ajax({
                 dataType: 'json',
                 method: 'get',
@@ -411,12 +411,19 @@
                 success: function (data, status, xhr) {
                     if (!data.error) {
                         $.each(data, function(index, value) {
+                            console.log(popupStatus, value.idtipoordine);
+                            if (popupStatus.includes(value.idtipoordine)) {
+                                console.log('Popup dismissed', value.idtipoordine);
+                                return;
+                            }
+
                             aequosOrderNotify[index] = new PNotify({
                                 title: 'Ordine disponibile',
                                 text: "E' disponibile un nuovo ordine di <i>" + value.tipoordine + "</i>, " +
                                         "<a href='#' onclick=\"newItemFromAequos(" + index + ", '" + value.idtipoordine + "', '" + value.dataapertura + "', '" + value.datachiusura + "', '" + value.dataconsegna + "')\">aprilo ora!</a>",
                                 hide: false,
                                 width: "400px",
+                                after_close: () => { console.log('Closing', value.idtipoordine); savePopStatus(value.idtipoordine); }
                             });
                         });
                     }
@@ -520,6 +527,7 @@
 
         function documentReady() {
 			var savedFilter = loadFilter();
+			var popStatus = loadPopStatus();
 
             $("#closeOrderDialog").jqxWindow({
                 width: 350,
@@ -753,7 +761,7 @@
 			])
 			.then((values) => { cerca(); });
 
-            checkAequosAvailableOrders();
+            checkAequosAvailableOrders(popStatus);
         }
 
 		function saveFilter(filter) {
@@ -779,6 +787,25 @@
 
 			console.log('load: ' + filterAsString)
 			return JSON.parse(filterAsString);
+        }
+
+        function savePopStatus(orderTypeId) {
+			var status = loadPopStatus();
+			status.push(orderTypeId);
+			var statusAsString = JSON.stringify(status);
+			console.log("save: " + statusAsString);
+			sessionStorage.setItem('orderManagerPopStatus', statusAsString);
+		}
+
+		function loadPopStatus() {
+			var statusAsString = sessionStorage.getItem('orderManagerPopStatus');
+
+			if (statusAsString === null) {
+				return [];
+			}
+
+			console.log('load: ' + statusAsString)
+			return JSON.parse(statusAsString);
 		}
 
 		function fieldNotEmpty(value) {
