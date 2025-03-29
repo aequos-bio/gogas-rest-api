@@ -1,5 +1,6 @@
 package eu.aequos.gogas.controllers;
 
+import eu.aequos.gogas.configuration.SuperAdminConfig;
 import eu.aequos.gogas.dto.AttachmentDTO;
 import eu.aequos.gogas.dto.BasicResponseDTO;
 import eu.aequos.gogas.dto.ConfigurationItemDTO;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Api("Authentication")
@@ -43,6 +45,7 @@ public class AuthenticationController {
     private final TenantRegistry tenantRegistry;
     private final BuildProperties buildProperties;
     private final MenuService menuService;
+    private final SuperAdminConfig superAdminConfig;
 
     @PostMapping(value = "authenticate")
     public BasicResponseDTO createAuthenticationToken(HttpServletRequest req, HttpServletResponse resp,
@@ -50,15 +53,10 @@ public class AuthenticationController {
         
         String tenantId = tenantRegistry.extractFromHostName(req);
 
-        final Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        authenticationRequest.getUsername(),
-                        authenticationRequest.getPassword()
-                )
-        );
+        String username = checkSuperAdminLogin(authenticationRequest)
+                .orElseGet(() -> performAuthentication(authenticationRequest));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        GoGasUserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername())
+        GoGasUserDetails userDetails = userDetailsService.loadUserByUsername(username)
                 .withTenant(tenantId);
 
         String token = jwtTokenHandler.generateToken(userDetails);
@@ -67,6 +65,33 @@ public class AuthenticationController {
         resp.addCookie(ck);
 
         return new BasicResponseDTO(token);
+    }
+
+    private Optional<String> checkSuperAdminLogin(CredentialsDTO credentials) {
+        if (!superAdminConfig.getUsername().equals(credentials.getUsername())) {
+            return Optional.empty();
+        }
+
+        String superAdminPassword = superAdminConfig.getPassword();
+        String password = credentials.getPassword();
+
+        if (!password.startsWith(superAdminPassword)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(password.replace(superAdminPassword, ""));
+    }
+
+    private String performAuthentication(CredentialsDTO credentials) {
+        final Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        credentials.getUsername(),
+                        credentials.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return credentials.getUsername();
     }
 
     @PostMapping(value = "authenticate/legacy")
