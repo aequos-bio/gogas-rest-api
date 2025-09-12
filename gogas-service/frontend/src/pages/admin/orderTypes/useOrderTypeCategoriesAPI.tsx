@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { apiDelete, apiGetJson, apiPost, apiPut } from "../../../utils/axios_utils";
+import { apiDelete, apiGetJson, apiPost, apiPut, apiPostText } from "../../../utils/axios_utils";
 import { orderBy } from "lodash";
 import { Category } from "./typed";
 import { ErrorResponse } from "../../../store/types";
@@ -22,7 +22,7 @@ export const useOrderTypeCategoriesAPI = (orderTypeId?: string) => {
   }, [orderTypeId]);
 
   const createCategory = useCallback((description: string): Promise<void> => {
-    return apiPost(`/api/category/${orderTypeId}`, description)
+    return apiPostText(`/api/category/${orderTypeId}`, description)
       .then(() => {
         enqueueSnackbar('Nuova categoria creata', { variant: 'success' });
         reload();
@@ -33,7 +33,7 @@ export const useOrderTypeCategoriesAPI = (orderTypeId?: string) => {
           { variant: 'error' },
         );
       });
-  }, []);
+  }, [orderTypeId]);
 
   const updateCategory = useCallback((id: string, description: string): Promise<void> => {
     return apiPut(`/api/category/${orderTypeId}`, {
@@ -50,7 +50,7 @@ export const useOrderTypeCategoriesAPI = (orderTypeId?: string) => {
           { variant: 'error' },
         );
       });
-  }, []);
+  }, [orderTypeId]);
 
   const deleteCategory = useCallback((category: Category): Promise<void> => {
     return apiDelete(`/api/category/${category.id}`)

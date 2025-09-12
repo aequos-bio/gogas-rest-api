@@ -5,6 +5,8 @@ export const apiPost = (url: string, data?: any) => axios.post(url, data);
 export const apiPut = (url: string, data?: any) => axios.put(url, data);
 export const apiDelete = (url: string) => axios.delete(url);
 
+export const apiPostText = (url: string, data?: any) => axios.post(url, data, { headers: { 'Content-Type': 'text/plain' }});
+
 export function json<T>(response: AxiosResponse<string>) {
   return response ? response.data as T : undefined;
 };
