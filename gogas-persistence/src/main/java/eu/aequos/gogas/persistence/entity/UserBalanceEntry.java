@@ -2,17 +2,22 @@ package eu.aequos.gogas.persistence.entity;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @Entity
 @Table(name = "schedacontabile")
+@IdClass(UserBalanceEntry.Key.class)
 public class UserBalanceEntry {
+
+    @Data
+    public static class Key implements Serializable {
+        private String id;
+        private BigDecimal amount;
+    }
 
     @Id
     @Column(name = "idriga" , columnDefinition="uniqueidentifier", nullable = false)
@@ -30,6 +35,7 @@ public class UserBalanceEntry {
     @Column(name = "segno", nullable = false)
     private String sign;
 
+    @Id
     @Column(name = "importo", nullable = false, precision = 18, scale = 2)
     private BigDecimal amount;
 
