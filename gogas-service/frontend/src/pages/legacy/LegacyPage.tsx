@@ -34,25 +34,7 @@ const LegacyPage: React.FC<Props> = ({ page }) => {
   )
 }
 
-export const LegacyOrderManagerPage: React.FC = () => {
-  return (<LegacyPage page='orders-list' />)
-};
-
-export const LegacyProductsManagerPage: React.FC = () => {
-  return (<LegacyPage page='products' />)
-};
-
-export const LegacySuppliersManagerPage: React.FC = () => {
-  return (<LegacyPage page='suppliers' />)
-};
-
-export const LegacyConfigurationPage: React.FC = () => {
-  return (<LegacyPage page='configuration' />)
-};
-
-export const LegacyUserOrderPage: React.FC = () => {
-  return (<LegacyPage page='user-orders-list' />)
-};
+// Remaining legacy iframe pages (to be migrated in Phase 5: user/friend order details).
 
 export const LegacyUserOrderDetailsPage: React.FC = () => {
   const search = queryString.parse(location.search);
@@ -62,8 +44,4 @@ export const LegacyUserOrderDetailsPage: React.FC = () => {
 export const LegacyFriendOrderDetailsPage: React.FC = () => {
   const search = queryString.parse(location.search);
   return (<LegacyPage page={'friend-order-details?orderId=' + search.orderId + '&userId=' + search.userId} />);
-}
-
-export const LegacyManageFriendsPage: React.FC = () => {
-  return (<LegacyPage page='manage-friends' />)
 }

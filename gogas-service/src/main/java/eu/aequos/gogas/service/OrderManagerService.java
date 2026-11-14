@@ -62,6 +62,7 @@ public class OrderManagerService extends CrudService<Order, String> {
     private final AttachmentService attachmentService;
     private final ExcelGenerationService reportService;
     private final PdfReportService pdfReportService;
+    private final ExcelUserSheetsService excelUserSheetsService;
     private final OrderPlaningService orderPlaningService;
 
     public OrderManagerService(OrderRepo orderRepo, OrderManagerRepo orderManagerRepo,
@@ -71,6 +72,7 @@ public class OrderManagerService extends CrudService<Order, String> {
                                AccountingService accountingService, AequosIntegrationService aequosIntegrationService,
                                NotificationSender notificationSender, AttachmentService attachmentService,
                                ExcelGenerationService reportService, PdfReportService pdfReportService,
+                               ExcelUserSheetsService excelUserSheetsService,
                                OrderPlaningService orderPlaningService) {
 
         super(orderRepo, "order");
@@ -89,6 +91,7 @@ public class OrderManagerService extends CrudService<Order, String> {
         this.attachmentService = attachmentService;
         this.reportService = reportService;
         this.pdfReportService = pdfReportService;
+        this.excelUserSheetsService = excelUserSheetsService;
         this.orderPlaningService = orderPlaningService;
     }
 
@@ -512,9 +515,35 @@ public class OrderManagerService extends CrudService<Order, String> {
     }
 
     public OrderDetailsDTO getOrderDetails(String orderId) throws GoGasException {
+        return getOrderDetails(orderId, User.Role.U);
+    }
+
+    public OrderDetailsDTO getOrderDetails(String orderId, User.Role userRole) throws GoGasException {
         Order order = getRequiredWithType(orderId);
         boolean hasAttachment = attachmentService.hasAttachment(AttachmentType.INVOICE, orderId);
-        return new OrderDetailsDTO().fromModel(order, hasAttachment);
+
+        boolean isOpen = order.getStatus().isOpen();
+
+        BigDecimal totalAmount = orderRepo.findOrderSummary(Collections.singleton(orderId)).stream()
+                .findFirst()
+                .map(OrderSummary::getTotalAmount)
+                .orElse(BigDecimal.ZERO);
+
+        // Distinct ordering users, computed consistently with the by-user view:
+        // the union of users with order items and users with accounting entries.
+        Set<String> orderingUsers = new HashSet<>();
+        orderItemService.getItemsCountAndAmountByUser(orderId, !isOpen)
+                .forEach(item -> orderingUsers.add(item.getUserId()));
+        accountingService.getOrderAccountingEntries(orderId)
+                .forEach(entry -> orderingUsers.add(entry.getUser().getId()));
+        int userCount = orderingUsers.size();
+
+        int productCount = orderItemService.getTotalQuantityByProduct(orderId, isOpen).size();
+
+        return new OrderDetailsDTO()
+                .fromModel(order, hasAttachment)
+                .withMetadata(totalAmount, userCount, productCount)
+                .withActions(orderWorkflowHandler.getAvailableActions(order, userRole));
     }
 
     public AttachmentDTO readInvoiceAttachment(String orderId) throws GoGasException {
@@ -534,8 +563,15 @@ public class OrderManagerService extends CrudService<Order, String> {
         return attachmentService.buildAttachmentDTO(order, excelReportContent, contentType);
     }
 
-    public AttachmentDTO extractUserSheets(String orderId) throws GoGasException {
+    public AttachmentDTO extractUserSheets(String orderId, String type) throws GoGasException {
         Order order = getRequiredWithType(orderId);
+
+        if ("excel".equalsIgnoreCase(type)) {
+            byte[] excelReportContent = excelUserSheetsService.generateUserSheets(order);
+            String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            return attachmentService.buildAttachmentDTO(order, excelReportContent, "_schede", contentType);
+        }
+
         byte[] pdfReportContent = pdfReportService.generateUserSheets(order);
         String contentType = "application/pdf";
         return attachmentService.buildAttachmentDTO(order, pdfReportContent, contentType);

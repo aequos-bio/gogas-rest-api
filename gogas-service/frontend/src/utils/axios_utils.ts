@@ -7,6 +7,20 @@ export const apiDelete = (url: string) => axios.delete(url);
 
 export const apiPostText = (url: string, data?: any) => axios.post(url, data, { headers: { 'Content-Type': 'text/plain' }});
 
+/**
+ * PUT/POST with an explicit JSON body + Content-Type. Needed for endpoints that
+ * accept a bare scalar (e.g. a number) as @RequestBody: axios does not set the
+ * application/json content type for primitive bodies, which the backend rejects
+ * with HTTP 415. These helpers serialize the value and set the header.
+ */
+const JSON_HEADERS = { 'Content-Type': 'application/json;charset=UTF-8' };
+
+export const apiPutJson = (url: string, data: any) =>
+  axios.put(url, JSON.stringify(data), { headers: JSON_HEADERS });
+
+export const apiPostJsonBody = (url: string, data: any) =>
+  axios.post(url, JSON.stringify(data), { headers: JSON_HEADERS });
+
 export function json<T>(response: AxiosResponse<string>) {
   return response ? response.data as T : undefined;
 };

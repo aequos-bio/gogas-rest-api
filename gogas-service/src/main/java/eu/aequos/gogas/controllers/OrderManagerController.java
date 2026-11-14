@@ -70,7 +70,8 @@ public class OrderManagerController {
 
     @GetMapping(value = "{orderId}")
     public OrderDetailsDTO getOrderDetails(@PathVariable String orderId) throws ItemNotFoundException, GoGasException {
-        return orderManagerService.getOrderDetails(orderId);
+        User.Role userRole = User.Role.valueOf(authorizationService.getCurrentUser().getRole());
+        return orderManagerService.getOrderDetails(orderId, userRole);
     }
 
     @GetMapping(value = "{orderId}/product")
@@ -164,9 +165,10 @@ public class OrderManagerController {
     }
 
     @GetMapping(value = "{orderId}/byUser/sheets")
-    public void exportByUserSheets(HttpServletResponse response, @PathVariable String orderId) throws IOException, ItemNotFoundException, GoGasException {
-        AttachmentDTO excelAttachment = orderManagerService.extractUserSheets(orderId);
-        excelAttachment.writeToHttpResponse(response);
+    public void exportByUserSheets(HttpServletResponse response, @PathVariable String orderId,
+                                   @RequestParam(required = false, defaultValue = "pdf") String type) throws IOException, ItemNotFoundException, GoGasException {
+        AttachmentDTO attachment = orderManagerService.extractUserSheets(orderId, type);
+        attachment.writeToHttpResponse(response);
     }
 
     @PostMapping(value = "{orderId}/shippingCost")

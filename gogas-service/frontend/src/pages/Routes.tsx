@@ -14,18 +14,20 @@ import ReasonsPage from './accounting/reasons/ReasonsPage';
 import OrderTypesPage from './admin/orderTypes/OrderTypesPage';
 import AccountingCodesPage from './accounting/accountingcodes/AccountingCodesPage';
 import ManagersPage from './admin/managers/ManagersPage';
+import SuppliersPage from './admin/suppliers/SuppliersPage';
+import ConfigurationPage from './admin/configuration/ConfigurationPage';
+import ProductsPage from './admin/products/ProductsPage';
+import UserOrdersListPage from './orders/user/UserOrdersListPage';
+import ManagerOrdersListPage from './orders/manager/ManagerOrdersListPage';
+import OrderByProductPage from './orders/manager/detail/OrderByProductPage';
+import OrderByUserPage from './orders/manager/detail/OrderByUserPage';
+import ManageFriendsPage from './friends/ManageFriendsPage';
 import PrivateRoute from '../components/PrivateRoute';
 import { init } from '../store/features/info.slice';
 import { useAppDispatch } from '../store/store';
 import {
-  LegacyOrderManagerPage,
-  LegacyProductsManagerPage,
-  LegacySuppliersManagerPage,
-  LegacyConfigurationPage,
-  LegacyUserOrderPage,
   LegacyUserOrderDetailsPage,
-  LegacyFriendOrderDetailsPage,
-  LegacyManageFriendsPage
+  LegacyFriendOrderDetailsPage
 } from './legacy/LegacyPage';
 
 const privateRoutes = [
@@ -43,14 +45,16 @@ const privateRoutes = [
   { path: '/ordertypes', component: OrderTypesPage },
   { path: '/accountingcodes', component: AccountingCodesPage },
   { path: '/managers', component: ManagersPage },
-  { path: '/legacy/orderslist', component: LegacyOrderManagerPage },
-  { path: '/legacy/products', component: LegacyProductsManagerPage },
-  { path: '/legacy/suppliers', component: LegacySuppliersManagerPage },
-  { path: '/legacy/configuration', component: LegacyConfigurationPage },
-  { path: '/legacy/ordershistory', component: LegacyUserOrderPage },
+  { path: '/legacy/orderslist', component: ManagerOrdersListPage },
+  { path: '/legacy/orderdetails', component: OrderByProductPage },
+  { path: '/legacy/orderdetailsbyuser', component: OrderByUserPage },
+  { path: '/legacy/products', component: ProductsPage },
+  { path: '/legacy/suppliers', component: SuppliersPage },
+  { path: '/legacy/configuration', component: ConfigurationPage },
+  { path: '/legacy/ordershistory', component: UserOrdersListPage },
   { path: '/legacy/ordersdetails', component: LegacyUserOrderDetailsPage },
   { path: '/legacy/friendorders', component: LegacyFriendOrderDetailsPage },
-  { path: '/legacy/managefriends', component: LegacyManageFriendsPage },
+  { path: '/legacy/managefriends', component: ManageFriendsPage },
 ];
 
 export const Routes = () => {

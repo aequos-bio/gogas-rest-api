@@ -14,7 +14,6 @@ import eu.aequos.gogas.service.ConfigurationService;
 import eu.aequos.gogas.service.MenuService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,8 +26,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,7 +40,6 @@ public class AuthenticationController {
     private final AuthorizationService userDetailsService;
     private final ConfigurationService configurationService;
     private final TenantRegistry tenantRegistry;
-    private final BuildProperties buildProperties;
     private final MenuService menuService;
     private final SuperAdminConfig superAdminConfig;
 
@@ -143,12 +139,5 @@ public class AuthenticationController {
     public void getGasLogo(HttpServletResponse response) throws IOException, GoGasException {
         AttachmentDTO invoiceAttachment = configurationService.readLogo();
         invoiceAttachment.writeToHttpResponse(response);
-    }
-
-    @GetMapping(value = "info/build")
-    public String getBuildTimestamp() {
-        return buildProperties.getTime()
-                .atOffset(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }

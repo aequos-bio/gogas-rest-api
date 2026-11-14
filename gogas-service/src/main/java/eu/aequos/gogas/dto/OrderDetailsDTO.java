@@ -30,6 +30,10 @@ public class OrderDetailsDTO {
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate deliveryDate;
 
+    @JsonProperty("datachiusura")
+    @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
+    private LocalDate dueDate;
+
     @JsonProperty("idaequos")
     private Integer aequosId;
 
@@ -63,6 +67,9 @@ public class OrderDetailsDTO {
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDate paymentDate;
 
+    @JsonProperty("invioOrdineConsentito")
+    private boolean sendOrderAllowed;
+
     @JsonProperty("invioPesiRichiesto")
     private boolean sendWeightsRequired;
 
@@ -85,11 +92,44 @@ public class OrderDetailsDTO {
     @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
     private LocalDateTime syncDate;
 
+    @JsonProperty("dataapertura")
+    @JsonFormat(shape = STRING, pattern = "dd/MM/yyyy")
+    private LocalDate openingDate;
+
+    /** Grand total of the order (sum of user/product amounts). */
+    @JsonProperty("totaleOrdine")
+    private BigDecimal totalAmount;
+
+    /** Number of distinct users that placed an order. */
+    @JsonProperty("numeroUtenti")
+    private Integer userCount;
+
+    /** Number of distinct products ordered. */
+    @JsonProperty("numeroProdotti")
+    private Integer productCount;
+
+    /** Available workflow actions for the current user (comma-separated). */
+    private String actions;
+
+    public OrderDetailsDTO withActions(java.util.List<String> availableActions) {
+        this.actions = String.join(",", availableActions);
+        return this;
+    }
+
+    public OrderDetailsDTO withMetadata(BigDecimal totalAmount, int userCount, int productCount) {
+        this.totalAmount = totalAmount;
+        this.userCount = userCount;
+        this.productCount = productCount;
+        return this;
+    }
+
     public OrderDetailsDTO fromModel(Order order, boolean hasAttachment) {
         this.id = order.getId();
         this.orderTypeId = order.getOrderType().getId();
         this.orderTypeName = order.getOrderType().getDescription();
         this.deliveryDate = order.getDeliveryDate();
+        this.dueDate = order.getDueDate();
+        this.openingDate = order.getOpeningDate();
         this.aequosId = order.getOrderType().getAequosOrderId();
         this.computedAmount = order.getOrderType().isComputedAmount();
         this.shippingCost = order.getShippingCost();
@@ -103,6 +143,7 @@ public class OrderDetailsDTO {
         this.paymentDate = order.getPaymentDate();
         this.sendWeightsRequired = AEQUOS_FRESCO_ORDER_ID.equals(order.getOrderType().getAequosOrderId());
         this.sendWeightsAllowed = sendWeightAllowed(order.getDeliveryDate());
+        this.sendOrderAllowed = sendOrderAllowed(order);
         this.weightsSentDate = order.getLastWeightUpdate();
         this.hasAttachment = hasAttachment;
         this.sent = order.isSent();
@@ -115,5 +156,14 @@ public class OrderDetailsDTO {
     private boolean sendWeightAllowed(LocalDate deliveryDate) {
         long diffInDays = ChronoUnit.DAYS.between(deliveryDate, LocalDate.now());
         return diffInDays >= 0 && diffInDays <= 4;
+    }
+
+    private boolean sendOrderAllowed(Order order) {
+        if (order.getOrderType().getAequosOrderId() == null) {
+            return false;
+        }
+
+        long diffInDays = ChronoUnit.DAYS.between(order.getDueDate(), LocalDate.now());
+        return diffInDays <= 1;
     }
 }

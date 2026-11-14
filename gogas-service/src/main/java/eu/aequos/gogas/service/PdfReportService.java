@@ -15,28 +15,16 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.VerticalAlignment;
 import eu.aequos.gogas.exception.GoGasException;
 import eu.aequos.gogas.persistence.entity.Order;
-import eu.aequos.gogas.persistence.entity.OrderItem;
-import eu.aequos.gogas.persistence.entity.Product;
-import eu.aequos.gogas.persistence.entity.User;
-import eu.aequos.gogas.persistence.repository.OrderItemRepo;
-import eu.aequos.gogas.persistence.repository.ProductRepo;
-import eu.aequos.gogas.persistence.repository.UserRepo;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.itextpdf.layout.properties.TextAlignment.*;
 
@@ -50,32 +38,26 @@ public class PdfReportService {
     private static final DeviceGray CATEGORY_COLOR = new DeviceGray(0.96f);
     private static final DeviceRgb ODD_COLOR = new DeviceRgb(244, 245, 220);
 
-    private static final DecimalFormat QUANTITY_FORMAT = new DecimalFormat("0.000", new DecimalFormatSymbols(Locale.ITALIAN));
     private static final DecimalFormat PRICE_FORMAT = new DecimalFormat("€ 0.00", new DecimalFormatSymbols(Locale.ITALIAN));
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final OrderItemRepo orderItemRepo;
-    private final UserRepo userRepo;
-    private final ProductRepo productRepo;
+    private final UserOrderSheetsExtractor userOrderSheetsExtractor;
 
     public byte[] generateUserSheets(Order order) {
-        List<OrderItem> orderItems = orderItemRepo.findByOrderAndSummary(order.getId(), true);
-        List<User> usersList = getUsersForExport(orderItems);
-        List<Product> productsForExport = getProductsForExport(orderItems);
+        List<UserOrderSheetData> userSheets = userOrderSheetsExtractor.extract(order);
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfWriter writer = new PdfWriter(out);
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document doc = new Document(pdfDoc);
 
-            for (int userIndex = 0; userIndex < usersList.size(); userIndex++) {
-                User user = usersList.get(userIndex);
-                List<OrderItemPdfExport> orderItemsForExport = extractUserOrderItems(orderItems, user, productsForExport);
+            for (int userIndex = 0; userIndex < userSheets.size(); userIndex++) {
+                UserOrderSheetData userSheet = userSheets.get(userIndex);
 
-                doc.add(buildUserTable(doc, user, order, orderItemsForExport));
+                doc.add(buildUserTable(doc, userSheet, order));
 
-                if (userIndex < usersList.size() - 1) {
+                if (userIndex < userSheets.size() - 1) {
                     doc.add(new AreaBreak());
                 }
             }
@@ -88,24 +70,13 @@ public class PdfReportService {
         }
     }
 
-    private List<OrderItemPdfExport> extractUserOrderItems(List<OrderItem> orderItems, User user, List<Product> productsForExport) {
-        Map<String, OrderItem> userOrderItemsByProduct = orderItems.stream()
-                .filter(i -> i.getUser().equals(user.getId()))
-                .collect(Collectors.toMap(OrderItem::getProduct, Function.identity()));
-
-        return productsForExport.stream()
-                .filter(product -> userOrderItemsByProduct.containsKey(product.getId()))
-                .map(product -> getOrderItemsForExport(userOrderItemsByProduct.get(product.getId()), product))
-                .collect(Collectors.toList());
-    }
-
-    private Table buildUserTable(Document doc, User user, Order order, List<OrderItemPdfExport> orderItemsForExport) {
-        doc.add(buildTitle(user));
+    private Table buildUserTable(Document doc, UserOrderSheetData userSheet, Order order) {
+        doc.add(buildTitle(userSheet));
 
         Table table = new Table(COLUMN_WIDTHS);
         table.setBorder(TABLE_BORDER);
 
-        table.addHeaderCell(buildUserHeaderCell(user, order));
+        table.addHeaderCell(buildUserHeaderCell(userSheet, order));
 
         table.addCell(buildHeaderCell("Prodotto", LEFT));
         table.addCell(buildHeaderCell("UM", CENTER));
@@ -115,8 +86,9 @@ public class PdfReportService {
 
         String currentCategory = "";
 
-        for (int index = 0; index < orderItemsForExport.size(); index++) {
-            OrderItemPdfExport orderItemExport = orderItemsForExport.get(index);
+        List<UserOrderSheetData.Item> items = userSheet.getItems();
+        for (int index = 0; index < items.size(); index++) {
+            UserOrderSheetData.Item orderItemExport = items.get(index);
 
             if (!currentCategory.equals(orderItemExport.getCategory())) {
                 table.addCell(buildCategoryCell(orderItemExport.getCategory()));
@@ -149,9 +121,9 @@ public class PdfReportService {
         return table;
     }
 
-    private Cell buildUserHeaderCell(User user, Order order) {
+    private Cell buildUserHeaderCell(UserOrderSheetData userSheet, Order order) {
         String text = "Ordine " + order.getOrderType().getDescription() + " in consegna " + DATE_FORMAT.format(order.getDeliveryDate()) +
-                " - " + user.getFirstName() + " " + user.getLastName();
+                " - " + userSheet.getFirstName() + " " + userSheet.getLastName();
 
         return new Cell(1, 5)
                 .add(new Paragraph(text))
@@ -160,9 +132,9 @@ public class PdfReportService {
                 .setBorder(TABLE_BORDER);
     }
 
-    private Table buildTitle(User user) {
+    private Table buildTitle(UserOrderSheetData userSheet) {
         Cell titleCell = new Cell()
-                .add(new Paragraph(Integer.toString(user.getPosition())))
+                .add(new Paragraph(Integer.toString(userSheet.getPosition())))
                 .setFontSize(14)
                 .setTextAlignment(CENTER)
                 .setBorder(Border.NO_BORDER);
@@ -216,60 +188,4 @@ public class PdfReportService {
         return cell;
     }
 
-    private OrderItemPdfExport getOrderItemsForExport(OrderItem item, Product product) {
-        OrderItemPdfExport exportItem = new OrderItemPdfExport();
-        exportItem.setProductName(product.getDescription());
-        exportItem.setUm(product.getUm());
-        exportItem.setCategory(product.getCategory().getDescription());
-        exportItem.setFormattedQuantity(formatQuantity(item, product));
-        exportItem.setUnitPrice(item.getPrice());
-        return exportItem;
-    }
-
-    private static String formatQuantity(OrderItem item, Product product) {
-        if (isCompleteBox(item, product)) {
-            int boxes = (int) (item.getOrderedQuantity().doubleValue() / product.getBoxWeight().doubleValue());
-            return boxes + " cass" + (boxes > 1.0 ? 'e' : 'a');
-        }
-
-        return QUANTITY_FORMAT.format(item.getDeliveredQuantity());
-    }
-
-    private static boolean isCompleteBox(OrderItem item, Product product) {
-        if (product.getBoxUm() == null) {
-            return false;
-        }
-
-        if (product.getBoxWeight().doubleValue() == 1.0) {
-            return false;
-        }
-
-        double remainder = item.getOrderedQuantity().doubleValue() % product.getBoxWeight().doubleValue();
-        return remainder == 0.0;
-    }
-
-    private List<User> getUsersForExport(List<OrderItem> orderItems) {
-        Set<String> userIdsInOrder = orderItems.stream()
-                .map(OrderItem::getUser)
-                .collect(Collectors.toSet());
-
-        return userRepo.findByIdIn(userIdsInOrder, User.class);
-    }
-
-    private List<Product> getProductsForExport(List<OrderItem> orderItems) {
-        Set<String> productIdsInOrder = orderItems.stream()
-                .map(OrderItem::getProduct)
-                .collect(Collectors.toSet());
-
-        return productRepo.findByIdInOrderByPriceList(productIdsInOrder);
-    }
-
-    @Data
-    private static class OrderItemPdfExport {
-        private String productName;
-        private String um;
-        private String category;
-        private BigDecimal unitPrice;
-        private String formattedQuantity;
-    }
 }

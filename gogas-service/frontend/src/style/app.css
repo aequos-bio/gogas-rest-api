@@ -21,3 +21,10 @@ input::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Cancelled order rows/cells (ported from the legacy UI) */
+.barrato,
+.barrato td {
+  text-decoration: line-through;
+  color: #9e9e9e;
+}

@@ -25,6 +25,9 @@
                 <button id="stampa" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/byUser/sheets'">
                 <span class="glyphicon glyphicon-print"></span> Stampa schede utenti
                 </button>
+                <button id="stampa2" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Stampa le schede utenti per lo smistamento" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/byUser/sheets?type=excel'">
+                    <span class="glyphicon glyphicon-print"></span> Stampa schede utenti XLS
+                </button>
                 <button id="excel" type="button" class="btn btn-default btn-sm" data-toggle="tooltip" data-placement="bottom" title="Esporta l'ordine in formato excel" onclick="document.location.href=gogas.api.baseUrl + 'order/manage/' + orderDetails.id + '/export'">
                 <span class="glyphicon glyphicon-save"></span> Export in excel
                 </button>
