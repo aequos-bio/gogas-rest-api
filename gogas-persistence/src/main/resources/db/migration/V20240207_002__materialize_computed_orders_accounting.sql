@@ -3,7 +3,7 @@ CREATE TABLE userOrderSummary (
   userId uniqueidentifier NOT NULL,
   friendReferralId  uniqueidentifier,
   orderId uniqueidentifier NOT NULL,
-  totalAmount decimal (5, 2),
+  totalAmount decimal (18, 5),
   itemsCount int NOT NULL DEFAULT 0,
   accountedItemsCount int NOT NULL DEFAULT 0,
   aggregated bit NOT NULL DEFAULT 0,
