@@ -43,7 +43,6 @@ public class AuthenticationController {
     private final AuthorizationService userDetailsService;
     private final ConfigurationService configurationService;
     private final TenantRegistry tenantRegistry;
-    private final BuildProperties buildProperties;
     private final MenuService menuService;
     private final SuperAdminConfig superAdminConfig;
 
@@ -143,12 +142,5 @@ public class AuthenticationController {
     public void getGasLogo(HttpServletResponse response) throws IOException, GoGasException {
         AttachmentDTO invoiceAttachment = configurationService.readLogo();
         invoiceAttachment.writeToHttpResponse(response);
-    }
-
-    @GetMapping(value = "info/build")
-    public String getBuildTimestamp() {
-        return buildProperties.getTime()
-                .atOffset(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }
