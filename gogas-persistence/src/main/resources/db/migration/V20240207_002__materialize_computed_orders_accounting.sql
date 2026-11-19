@@ -13,6 +13,9 @@ CREATE TABLE userOrderSummary (
 )
 GO
 
+-- fixing referralId as same user issue
+UPDATE ordini SET idReferenteAmico = NULL WHERE idUtente = idReferenteAmico;
+
 -- fixing any missing friend referral info in orders
 UPDATE o
 SET o.idReferenteAmico = u.idReferente
