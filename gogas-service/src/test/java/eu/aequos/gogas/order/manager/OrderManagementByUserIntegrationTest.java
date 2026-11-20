@@ -115,7 +115,7 @@ class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegratio
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDownLocal() {
         mockOrdersData.deleteOrder(orderComputed.getId());
     }
 

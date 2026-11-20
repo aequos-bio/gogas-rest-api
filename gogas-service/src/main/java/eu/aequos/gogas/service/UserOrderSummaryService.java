@@ -165,6 +165,7 @@ public class UserOrderSummaryService {
             return createUserOrderSummary(orderId, extractedSummary);
         }
 
+        existingSummary.setItemsCount(extractedSummary.getItemsCount());
         existingSummary.setAggregated(extractedSummary.isAggregated());
         existingSummary.setTotalAmount(extractedSummary.getTotalAmount());
         return existingSummary;
