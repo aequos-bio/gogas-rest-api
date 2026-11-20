@@ -322,7 +322,11 @@ public class OrderManagerService extends CrudService<Order, String> {
     public List<OrderByUserDTO> getOrderDetailByUser(String orderId) throws ItemNotFoundException {
         Order order = getRequiredWithType(orderId);
 
-        Map<String, UserOrderSummary> userOrderItems = userOrderSummaryService.findByOrderId(order.getId()).stream()
+        List<UserOrderSummary> userOrderSummaries = order.getStatus().isOpen()
+                ? userOrderSummaryService.findByOrderId(order.getId())
+                : userOrderSummaryService.findAggregatedByOrderId(order.getId());
+
+        Map<String, UserOrderSummary> userOrderItems = userOrderSummaries.stream()
                 .collect(toMap(UserOrderSummary::getUserId));
 
         return buildOrderDetailByUser(order, userOrderItems);

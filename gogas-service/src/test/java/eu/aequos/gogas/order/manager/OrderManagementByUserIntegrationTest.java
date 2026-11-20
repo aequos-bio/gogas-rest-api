@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +34,8 @@ class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegratio
 
     @BeforeEach
     protected void setUp() {
+        super.setUp(); //initializes the list of orders created through the APIs
+
         orderComputed = mockOrdersData.createOrder(orderTypeComputed, "2022-03-20", "2022-03-30", "2022-04-05", Order.OrderStatus.Closed);
 
         Map<String, Integer> boxQuantities = Map.ofEntries(
@@ -125,6 +129,54 @@ class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegratio
         verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 25.74);
         verifyUserOrder(userTotals.get(userId2), "user2 user2", 3, 17.22);
         verifyUserOrder(userTotals.get(userId3), "user3 user3", 3, 16.05);
+    }
+
+    @Test
+    void givenAClosedOrderWithSummaryRequiredAndFriendsItems_whenGettingSummaryByUser_thenOnlyNonFriendUsersAreReturned() throws Exception {
+        mockOrdersData.forceSummaryRequired(orderTypeComputed, true);
+
+        try {
+            String orderId = createClosedOrderWithFriendsItems();
+
+            mockMvcGoGas.loginAs("manager", "password");
+            Map<String, OrderByUserDTO> userTotals = getSummaryByUser(orderId);
+
+            //friends' items are rolled up on their referral, friends must not be listed
+            assertEquals(Set.of(userId1, userId2, userId3), userTotals.keySet());
+
+            verifyUserOrder(userTotals.get(userId1), "user1 user1", 4, 35.7);
+            verifyUserOrder(userTotals.get(userId2), "user2 user2", 4, 45.1);
+            verifyUserOrder(userTotals.get(userId3), "user3 user3", 2, 13.4);
+        } finally {
+            mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
+        }
+    }
+
+    @Test
+    void givenAClosedOrderWithoutSummaryRequiredAndFriendsItems_whenGettingSummaryByUser_thenFriendsAreListedAsUsers() throws Exception {
+        String orderId = createClosedOrderWithFriendsItems();
+
+        mockMvcGoGas.loginAs("manager", "password");
+        Map<String, OrderByUserDTO> userTotals = getSummaryByUser(orderId);
+
+        assertEquals(Set.of(userId1, userId2, userId3, friendId1a, friendId1b, friendId2), userTotals.keySet());
+    }
+
+    @Test
+    void givenAnOpenOrderWithSummaryRequiredAndFriendsItems_whenGettingSummaryByUser_thenFriendsAreListedAsUsers() throws Exception {
+        mockOrdersData.forceSummaryRequired(orderTypeComputed, true);
+
+        try {
+            String orderId = createOrderWithFriendsItems();
+
+            mockMvcGoGas.loginAs("manager", "password");
+            Map<String, OrderByUserDTO> userTotals = getSummaryByUser(orderId);
+
+            //nothing is aggregated until the order is closed: every user, friends included, is listed
+            assertEquals(Set.of(userId1, userId2, userId3, friendId1a, friendId1b, friendId2), userTotals.keySet());
+        } finally {
+            mockOrdersData.forceSummaryRequired(orderTypeComputed, false);
+        }
     }
 
     @Test
@@ -629,5 +681,47 @@ class OrderManagementByUserIntegrationTest extends OrderManagementBaseIntegratio
         mockMvcGoGas.loginAs("user3", "password");
         addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
         addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
+    }
+
+    private Map<String, OrderByUserDTO> getSummaryByUser(String orderId) throws Exception {
+        return mockMvcGoGas.getDTOList("/api/order/manage/" + orderId + "/byUser/list", OrderByUserDTO.class).stream()
+                .collect(Collectors.toMap(OrderByUserDTO::getUserId, Function.identity()));
+    }
+
+    private String createOrderWithFriendsItems() throws Exception {
+        mockMvcGoGas.loginAs("manager", "password");
+        String orderId = createOrder(buildValidOrderDTO(orderTypeComputed.getId()));
+
+        mockMvcGoGas.loginAs("user1", "password");
+        addComputedUserOrder(orderId, userId1, "MELE1", 3.5, "KG");
+        addComputedUserOrder(orderId, userId1, "PATATE", 4.0, "KG");
+        addComputedUserOrder(orderId, userId1, "BIRRA1", 1.0, "PZ");
+        addComputedUserOrder(orderId, friendId1a, "BIRRA1", 2.0, "PZ");
+        addComputedUserOrder(orderId, friendId1a, "MELE2", 4.0, "KG");
+        addComputedUserOrder(orderId, friendId1b, "MELE1", 2.0, "KG");
+        addComputedUserOrder(orderId, friendId1b, "PATATE", 2.5, "KG");
+
+        mockMvcGoGas.loginAs("user2", "password");
+        addComputedUserOrder(orderId, userId2, "MELE1", 1.0, "Cassa");
+        addComputedUserOrder(orderId, userId2, "PATATE", 4.5, "KG");
+        addComputedUserOrder(orderId, userId2, "BIRRA1", 2.0, "PZ");
+        addComputedUserOrder(orderId, friendId2, "MELE2", 1.0, "Cassa");
+        addComputedUserOrder(orderId, friendId2, "BIRRA1", 1.0, "PZ");
+
+        mockMvcGoGas.loginAs("user3", "password");
+        addComputedUserOrder(orderId, userId3, "MELE1", 3.5, "KG");
+        addComputedUserOrder(orderId, userId3, "PATATE", 5.5, "KG");
+
+        return orderId;
+    }
+
+    private String createClosedOrderWithFriendsItems() throws Exception {
+        String orderId = createOrderWithFriendsItems();
+
+        mockMvcGoGas.loginAs("manager", "password");
+        mockOrdersData.forceOrderDates(orderId, LocalDate.now().minusDays(2), LocalDateTime.now().minusHours(1), LocalDate.now().plusDays(7));
+        performAction(orderId, "close");
+
+        return orderId;
     }
 }
